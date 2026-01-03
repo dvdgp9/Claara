@@ -57,54 +57,58 @@
   // === Mapas de opciones para construir prompts ===
   const styleMap = {
     '': '',
-    'photographic': 'photorealistic photography style, captured with a professional DSLR camera',
-    'digital-art': 'digital art illustration style, clean vector-like rendering',
-    'corporate': 'professional corporate style, clean and modern business aesthetic',
-    'minimalist': 'minimalist design, simple shapes, clean lines, lots of negative space',
-    '3d-render': '3D rendered image, realistic materials and textures, CGI quality',
-    'flat-design': 'flat design style, simple geometric shapes, no gradients or shadows',
-    'isometric': 'isometric view, 3D isometric illustration style'
+    'photographic': 'Hyper-realistic professional photography, shot on Sony A7R IV with 35mm G Master lens, 8k resolution, extreme detail, natural skin texture with visible pores',
+    'digital-art': 'High-end digital art illustration, intricate details, vibrant colors, clean vector lines, trending on ArtStation, 8k',
+    'corporate': 'Professional Silicon Valley corporate style, modern business aesthetic, clean and crisp, high-end commercial look',
+    'minimalist': 'Minimalist fine art photography, simple geometric balance, clean lines, vast negative space, high contrast, elegant',
+    '3d-render': 'Ultra-realistic 3D octane render, Ray tracing, 8k, Unreal Engine 5 style, professional CGI, masterpiece textures',
+    'flat-design': 'Premium flat design illustration, modern corporate palette, clean shapes, no gradients, sophisticated minimalism',
+    'isometric': 'Isometric 3D illustration, professional architectural visualization style, clean and detailed',
+    // Nuevos estilos Pro basados en la biblioteca
+    'headshot-pro': 'Professional studio headshot, shot on 85mm f/1.8 lens, shallow depth of field, sharp focus on eyes, soft bokeh, premium charcoal smart casual blazer, neutral studio background',
+    'silicon-valley': 'Silicon Valley executive portrait, navy blue business suit, white shirt, solid dark gray studio backdrop with subtle vignette, shot on Sony A7III, 85mm lens',
+    'luxury-product': 'Luxury high-end product photography, commercial advertising style, professional studio lighting, sophisticated reflections, elegant composition'
   };
 
   const colorMap = {
     '': '',
-    'warm': 'warm color palette with oranges, reds, and yellows',
-    'cool': 'cool color palette with blues, teals, and greens',
-    'corporate': 'corporate color scheme with professional blues and teals (#23AAC5 accent)',
-    'monochrome': 'monochromatic color scheme, single color with different shades',
-    'pastel': 'soft pastel colors, muted and gentle tones',
-    'bw': 'black and white, high contrast monochrome',
-    'vibrant': 'vibrant and saturated colors, bold and eye-catching'
+    'warm': 'Warm cinematic color grading, golden hour hues, soft oranges and ambers, inviting atmosphere',
+    'cool': 'Cool professional color palette, crisp teals and blues, clean and modern aesthetic',
+    'corporate': 'Ebonia corporate color scheme (#23AAC5 accent), professional blue-teal tones, sophisticated business palette',
+    'monochrome': 'Fine art monochromatic scheme, rich tonal range, elegant single-color depth',
+    'pastel': 'Soft sophisticated pastel tones, muted and gentle professional colors, airy feel',
+    'bw': 'Classic black and white film photography, high dynamic range, deep blacks and crisp whites, timeless',
+    'vibrant': 'Vibrant and rich color saturation, bold commercial appeal, eye-catching and sharp'
   };
 
   const lightingMap = {
     '': '',
-    'natural': 'natural daylight lighting, soft and even illumination',
-    'studio': 'professional studio lighting setup, three-point lighting',
-    'dramatic': 'dramatic lighting with strong shadows and highlights, chiaroscuro',
-    'soft': 'soft diffused lighting, gentle shadows, flattering illumination',
-    'backlight': 'backlit scene with rim lighting, silhouette effect',
-    'golden': 'golden hour lighting, warm sunset/sunrise glow',
-    'volumetric': 'volumetric lighting with visible light rays, atmospheric'
+    'natural': 'Natural diffused daylight, soft window light, realistic environment illumination',
+    'studio': 'Classic three-point studio lighting setup, professional key and fill lights, soft defining shadows',
+    'dramatic': 'Cinematic dramatic lighting, high contrast, chiaroscuro effect, strong highlights and deep shadows',
+    'soft': 'Bright and airy soft diffused lighting, gentle illumination, flattering and clean',
+    'backlight': 'Elegant rim lighting, subtle hair light, professional separation from background',
+    'golden': 'Golden hour sunset lighting, warm glow, long soft shadows, nostalgic atmosphere',
+    'volumetric': 'Volumetric lighting with subtle light rays, atmospheric depth, cinematic mist'
   };
 
   const compositionMap = {
     '': '',
-    'bokeh': 'shallow depth of field, beautiful bokeh background blur',
-    'closeup': 'close-up shot, detailed macro view of the subject',
-    'wide': 'wide-angle shot, expansive view showing full scene',
-    'above': 'bird\'s eye view, shot from directly above, top-down perspective',
-    'below': 'low angle shot from below, looking upward, dramatic perspective',
-    'macro': 'macro photography, extreme close-up showing tiny details',
-    'negative-space': 'composition with lots of negative space, subject isolated'
+    'bokeh': 'Shallow depth of field, exquisite soft bokeh background, sharp focus on subject',
+    'closeup': 'Close-up portrait framing, detailed view, professional headshot composition',
+    'wide': 'Cinematic wide-angle shot, expansive professional scene, storytelling perspective',
+    'above': 'Bird\'s eye view, professional top-down perspective, clean architectural composition',
+    'below': 'Low angle heroic shot, dramatic upward perspective, powerful composition',
+    'macro': 'Extreme macro photography, hyper-detailed textures, professional scientific-style focus',
+    'negative-space': 'Fine art composition with vast negative space, subject isolated for impact, minimalist balance'
   };
 
   const formatMap = {
-    '1:1': 'square format (1:1 aspect ratio)',
-    '3:4': 'portrait format (3:4 aspect ratio)',
-    '4:3': 'landscape format (4:3 aspect ratio)',
-    '16:9': 'widescreen format (16:9 aspect ratio)',
-    '9:16': 'vertical mobile format (9:16 aspect ratio)'
+    '1:1': 'Square aspect ratio (1:1)',
+    '3:4': 'Portrait aspect ratio (3:4)',
+    '4:3': 'Landscape aspect ratio (4:3)',
+    '16:9': 'Widescreen cinematic format (16:9)',
+    '9:16': 'Vertical social media format (9:16)'
   };
 
   // Estado para regenerar
@@ -219,7 +223,8 @@
     const styleLabels = {
       '': 'Sin estilo', 'photographic': 'Fotográfico', 'digital-art': 'Digital Art',
       'corporate': 'Corporativo', 'minimalist': 'Minimalista', '3d-render': '3D Render',
-      'flat-design': 'Flat Design', 'isometric': 'Isométrico'
+      'flat-design': 'Flat Design', 'isometric': 'Isométrico',
+      'headshot-pro': 'Headshot Pro', 'silicon-valley': 'Silicon Valley', 'luxury-product': 'Producto Lujo'
     };
     const colorLabels = {
       '': '', 'warm': 'Cálidos', 'cool': 'Fríos', 'corporate': 'Corporativo',
@@ -251,8 +256,13 @@
   function buildPrompt(description, options) {
     const { format, style, color, lighting, composition } = options;
 
-    // Construir el prompt estructurado
-    let prompt = `Create an image: ${description}`;
+    // Prefijo de alta calidad según modo
+    let prompt = `Create an ultra-realistic, high-resolution masterpiece image: ${description}`;
+    
+    // Instrucciones específicas de preservación si es edición (aunque aquí estamos en buildPrompt general)
+    if (currentModeInput.value === 'edit') {
+        prompt = `Keep the facial features and identity of the person in the input image exactly consistent. ${description}`;
+    }
     
     // Añadir especificaciones técnicas
     const specs = [];
@@ -278,15 +288,15 @@
     }
 
     if (specs.length > 0) {
-      prompt += '\n\nStyle specifications:\n- ' + specs.join('\n- ');
+      prompt += '\n\nTechnical Specifications and Style:\n- ' + specs.join('\n- ');
     }
 
-    // Añadir calidad
-    prompt += '\n\nQuality: High resolution, professional quality, detailed, sharp focus, 8K.';
+    // Añadir calidad suprema
+    prompt += '\n\nFinal Quality: 8k resolution, photorealistic, cinematic color grading, sharp focus, extreme attention to detail, high dynamic range (HDR).';
 
-    // Añadir semilla aleatoria interna para evitar problemas de caché/duplicados
+    // Semilla aleatoria para evitar caché
     const seed = Math.floor(Math.random() * 1000000);
-    prompt += `\n\nInternal ID: ${seed}`;
+    prompt += `\n\nInternal Seed: ${seed}`;
 
     return prompt;
   }

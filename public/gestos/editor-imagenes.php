@@ -286,11 +286,36 @@ $headerDrawerId = 'gesture-history-drawer';
                         <span class="text-[10px] sm:text-xs font-medium truncate">Flat Design</span>
                       </div>
                     </label>
-                    <label class="cursor-pointer">
+                    <label class="relative cursor-pointer group">
                       <input type="radio" name="style" value="isometric" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-cube text-lg shrink-0"></i>
                         <span class="text-[10px] sm:text-xs font-medium truncate">Isométrico</span>
+                      </div>
+                    </label>
+
+                    <!-- Nuevos Estilos Pro -->
+                    <label class="relative cursor-pointer group">
+                      <input type="radio" name="style" value="headshot-pro" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-user text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Headshot Pro</span>
+                      </div>
+                    </label>
+
+                    <label class="relative cursor-pointer group">
+                      <input type="radio" name="style" value="silicon-valley" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-bright-crown text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Silicon Valley</span>
+                      </div>
+                    </label>
+
+                    <label class="relative cursor-pointer group">
+                      <input type="radio" name="style" value="luxury-product" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-diamond text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Producto Lujo</span>
                       </div>
                     </label>
                   </div>
