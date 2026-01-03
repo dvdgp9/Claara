@@ -50,7 +50,7 @@ if ($imageMode) {
 // Opcional: permitir elegir modelo desde el cliente (formato: provider/model)
 $modelName = isset($input['model']) && $input['model'] !== ''
     ? (string)$input['model']
-    : 'qwen/qwen-plus';
+    : 'google/gemini-3-flash-preview';
 
 // Si es modo imagen, forzar modelo de generación de imágenes
 if ($imageMode) {
