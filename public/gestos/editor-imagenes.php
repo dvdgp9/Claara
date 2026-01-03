@@ -253,47 +253,47 @@ $headerDrawerId = 'gesture-history-drawer';
                 </span>
                 <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
               </summary>
-              <div class="pt-2 pb-1 grid grid-cols-2 lg:grid-cols-6 gap-1.5">
+              <div class="pt-2 pb-1 grid grid-cols-3 gap-1.5">
                 <label class="cursor-pointer">
                   <input type="radio" name="format" value="" class="hidden peer" checked />
-                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-prohibition text-sm"></i>
-                    <span class="text-[10px] font-medium">Ninguno</span>
+                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex flex-col items-center justify-center h-full min-h-[52px]">
+                    <i class="iconoir-prohibition text-lg"></i>
+                    <span class="text-[10px] mt-1 font-medium">Ninguno</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="format" value="1:1" class="hidden peer" />
-                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all text-center">
-                    <div class="w-5 h-5 mx-auto border border-current rounded-sm"></div>
-                    <span class="text-[10px] mt-1 block">1:1</span>
+                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex flex-col items-center justify-center h-full min-h-[52px]">
+                    <div class="w-4 h-4 border border-current rounded-sm mb-1"></div>
+                    <span class="text-[10px] font-medium">1:1</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="format" value="3:4" class="hidden peer" />
-                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all text-center">
-                    <div class="w-4 h-5 mx-auto border border-current rounded-sm"></div>
-                    <span class="text-[10px] mt-1 block">3:4</span>
+                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex flex-col items-center justify-center h-full min-h-[52px]">
+                    <div class="w-3 h-4 border border-current rounded-sm mb-1"></div>
+                    <span class="text-[10px] font-medium">3:4</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="format" value="4:3" class="hidden peer" />
-                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all text-center">
-                    <div class="w-5 h-4 mx-auto border border-current rounded-sm"></div>
-                    <span class="text-[10px] mt-1 block">4:3</span>
+                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex flex-col items-center justify-center h-full min-h-[52px]">
+                    <div class="w-4 h-3 border border-current rounded-sm mb-1"></div>
+                    <span class="text-[10px] font-medium">4:3</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="format" value="16:9" class="hidden peer" />
-                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all text-center">
-                    <div class="w-6 h-3 mx-auto border border-current rounded-sm"></div>
-                    <span class="text-[10px] mt-1 block">16:9</span>
+                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex flex-col items-center justify-center h-full min-h-[52px]">
+                    <div class="w-5 h-3 border border-current rounded-sm mb-1"></div>
+                    <span class="text-[10px] font-medium">16:9</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="format" value="9:16" class="hidden peer" />
-                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all text-center">
-                    <div class="w-3 h-6 mx-auto border border-current rounded-sm"></div>
-                    <span class="text-[10px] mt-1 block">9:16</span>
+                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex flex-col items-center justify-center h-full min-h-[52px]">
+                    <div class="w-2.5 h-5 border border-current rounded-sm mb-1"></div>
+                    <span class="text-[10px] font-medium">9:16</span>
                   </div>
                 </label>
               </div>
