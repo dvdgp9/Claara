@@ -57,18 +57,43 @@ if (!$gestureType || !$prompt) {
     Response::error('missing_params', 'Faltan parámetros requeridos', 400);
 }
 
-// Modelo para generación de imágenes (Gemini con capacidad de imagen)
-// Opciones: google/gemini-2.0-flash-exp:free, google/gemini-2.5-flash-preview-05-20
-$model = 'google/gemini-2.0-flash-exp:free';
+// Modelo solicitado por el usuario
+$model = 'qwen-image-edit-plus-2025-12-15';
 
-// Crear cliente OpenRouter
-$client = new OpenRouterClient(
-    null,  // API key from env
-    $model,
-    null,  // No system instruction for image generation
-    null,  // temperature
-    null   // max_tokens
-);
+// Si es el modelo de Qwen, usamos su API directamente (Alibaba DashScope)
+// La API de DashScope es compatible con el formato OpenAI en su mayoría
+if (strpos($model, 'qwen-image') !== false) {
+    $qwenApiKey = Env::get('QWEN_API_KEY');
+    if (!$qwenApiKey) {
+        Response::error('qwen_api_key_missing', 'Falta QWEN_API_KEY en .env', 500);
+    }
+    
+    // Crear cliente OpenRouter pero configurado para Qwen (DashScope)
+    // DashScope tiene un endpoint específico para compatibilidad con OpenAI
+    $client = new OpenRouterClient(
+        $qwenApiKey,
+        $model,
+        null, 
+        null, 
+        null
+    );
+    
+    // Reflejar el cambio de base URL internamente para este cliente específico
+    // DashScope OpenAI-compatible endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+    $reflection = new \ReflectionClass($client);
+    $baseUrlProp = $reflection->getProperty('baseUrl');
+    $baseUrlProp->setAccessible(true);
+    $baseUrlProp->setValue($client, 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions');
+} else {
+    // Cliente estándar de OpenRouter
+    $client = new OpenRouterClient(
+        null,  // API key from env
+        $model,
+        null,
+        null,
+        null
+    );
+}
 
 // Generar imagen con modalities
 try {
