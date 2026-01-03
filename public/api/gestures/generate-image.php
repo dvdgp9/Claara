@@ -62,11 +62,14 @@ if (!$gestureType || !$prompt) {
 $mode = $inputData['mode'] ?? 'generate';
 $sourceImage = $inputData['source_image'] ?? null; // Base64 de imagen fuente (para edición)
 $targetImage = $inputData['target_image'] ?? null; // Base64 de imagen objetivo (opcional, para edición)
-$selectedProvider = $inputData['provider'] ?? 'qwen'; // 'qwen' o 'nanobanana'
+$selectedProvider = $inputData['provider'] ?? 'qwen'; // 'qwen', 'nanobanana' o 'flux'
 
 // Seleccionar modelo según el proveedor y el modo
 if ($selectedProvider === 'qwen') {
     $model = ($mode === 'edit') ? 'qwen-image-edit-plus-2025-12-15' : 'qwen-image-max';
+} elseif ($selectedProvider === 'flux') {
+    // FLUX - Modelo de alta calidad de Black Forest Labs
+    $model = 'black-forest-labs/flux.2-max';
 } else {
     // Nanobanana (Gemini) - Nota: Gemini en OpenRouter soporta generación de imágenes vía modalities
     $model = 'google/gemini-3-pro-image-preview';

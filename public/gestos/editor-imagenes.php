@@ -98,23 +98,37 @@ $headerDrawerId = 'gesture-history-drawer';
                 <p class="text-slate-500">Genera o edita imágenes con inteligencia artificial</p>
               </div>
               
-              <div class="flex items-center gap-2">
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <!-- Selector de Motor -->
-                <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 mr-2">
-                  <button type="button" id="provider-qwen" class="provider-toggle-btn px-4 py-2 rounded-lg text-sm font-medium transition-all active" data-provider="qwen">
-                    Qwen
+                <div class="flex bg-white p-1.5 rounded-xl border-2 border-slate-200 shadow-sm">
+                  <button type="button" id="provider-qwen" class="provider-toggle-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 active" data-provider="qwen">
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                      Qwen
+                    </span>
                   </button>
-                  <button type="button" id="provider-nanobanana" class="provider-toggle-btn px-4 py-2 rounded-lg text-sm font-medium transition-all" data-provider="nanobanana">
-                    Nanobanana
+                  <button type="button" id="provider-nanobanana" class="provider-toggle-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200" data-provider="nanobanana">
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                      Nanobanana
+                    </span>
+                  </button>
+                  <button type="button" id="provider-flux" class="provider-toggle-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200" data-provider="flux">
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      FLUX
+                    </span>
                   </button>
                   <input type="hidden" name="provider" id="current-provider" value="qwen" />
                 </div>
 
-                <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
-                  <button type="button" id="mode-generate" class="mode-toggle-btn px-4 py-2 rounded-lg text-sm font-medium transition-all active">
+                <div class="flex bg-white p-1.5 rounded-xl border-2 border-slate-200 shadow-sm">
+                  <button type="button" id="mode-generate" class="mode-toggle-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 active">
+                    <i class="iconoir-sparks mr-1.5"></i>
                     Generar
                   </button>
-                  <button type="button" id="mode-edit" class="mode-toggle-btn px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                  <button type="button" id="mode-edit" class="mode-toggle-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200">
+                    <i class="iconoir-edit mr-1.5"></i>
                     Editar
                   </button>
                   <input type="hidden" name="mode" id="current-mode" value="generate" />
@@ -599,13 +613,39 @@ $headerDrawerId = 'gesture-history-drawer';
   <!-- Estilos adicionales para los selectores -->
   <style>
     .option-pill.active {
-      @apply border-amber-500 bg-amber-50 text-amber-700 shadow-sm;
+      border-color: #f59e0b !important;
+      background: rgba(245, 158, 11, 0.1);
+      color: #b45309;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
+    
+    .mode-toggle-btn {
+      color: #64748b;
+      background: transparent;
+    }
+    
     .mode-toggle-btn.active {
-      @apply bg-white text-slate-900 shadow-sm;
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%) !important;
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+      transform: translateY(-1px);
     }
+    
+    .provider-toggle-btn {
+      color: #64748b;
+      background: transparent;
+      position: relative;
+    }
+    
     .provider-toggle-btn.active {
-      @apply bg-white text-slate-900 shadow-sm;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+      transform: translateY(-1px);
+    }
+    
+    .provider-toggle-btn.active span span {
+      background: white !important;
     }
     .option-tab.active {
       color: #f59e0b;

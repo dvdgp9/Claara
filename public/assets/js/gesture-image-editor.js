@@ -29,6 +29,7 @@
   const currentModeInput = document.getElementById('current-mode');
   const providerQwenBtn = document.getElementById('provider-qwen');
   const providerNanobananaBtn = document.getElementById('provider-nanobanana');
+  const providerFluxBtn = document.getElementById('provider-flux');
   const currentProviderInput = document.getElementById('current-provider');
 
   const editImagesSection = document.getElementById('edit-images-section');
@@ -155,12 +156,19 @@
   // === Gestión de Selector de Motor ===
   function setProvider(provider) {
     currentProviderInput.value = provider;
-    if (provider === 'qwen') {
+    
+    // Remover clase active de todos los botones de proveedor
+    document.querySelectorAll('.provider-toggle-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    
+    // Añadir clase active al botón seleccionado
+    if (provider === 'qwen' && providerQwenBtn) {
       providerQwenBtn.classList.add('active');
-      providerNanobananaBtn.classList.remove('active');
-    } else {
+    } else if (provider === 'nanobanana' && providerNanobananaBtn) {
       providerNanobananaBtn.classList.add('active');
-      providerQwenBtn.classList.remove('active');
+    } else if (provider === 'flux' && providerFluxBtn) {
+      providerFluxBtn.classList.add('active');
     }
   }
 
@@ -169,6 +177,9 @@
   }
   if (providerNanobananaBtn) {
     providerNanobananaBtn.addEventListener('click', () => setProvider('nanobanana'));
+  }
+  if (providerFluxBtn) {
+    providerFluxBtn.addEventListener('click', () => setProvider('flux'));
   }
 
   // === Gestión de uploads de imágenes ===
