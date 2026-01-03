@@ -86,6 +86,13 @@ $gesturesList = [
         'icon' => 'iconoir-share-android',
         'href' => '/gestos/redes-sociales.php',
         'description' => 'Crea posts para redes'
+    ],
+    [
+        'type' => 'image-editor',
+        'name' => 'Editor de imágenes',
+        'icon' => 'iconoir-media-image',
+        'href' => '/gestos/editor-imagenes.php',
+        'description' => 'Genera imágenes con IA'
     ]
 ];
 

@@ -656,6 +656,106 @@ CREATE TABLE lex_chunks (
 
 ---
 
+## Feature: Editor de Imágenes con Nanobanana 🍌
+
+### Motivación
+Nuevo gesto para generar imágenes corporativas usando Nanobanana (Gemini 3 Pro Vision en OpenRouter). Interfaz con selectores visuales para formato, estilo, paleta de color, iluminación y composición. Los prompts se construyen automáticamente combinando las opciones seleccionadas con la descripción del usuario.
+
+### Opciones del selector (adaptadas para contexto corporativo)
+
+**Formato (Ratio)**:
+- 1:1 (Cuadrado - redes sociales)
+- 3:4 (Vertical - stories)
+- 4:3 (Horizontal - presentaciones)
+- 16:9 (Panorámico - banners)
+- 9:16 (Móvil vertical)
+
+**Estilo**:
+- Ninguno
+- Fotográfico (realista)
+- Ilustración digital
+- Corporativo moderno
+- Minimalista
+- 3D Render
+- Flat Design
+- Isométrico
+
+**Paleta de Color**:
+- Ninguno
+- Tonos cálidos
+- Tonos fríos
+- Colores corporativos (Ebone)
+- Monocromático
+- Pasteles
+- Blanco y negro
+- Vibrante
+
+**Iluminación**:
+- Ninguno
+- Luz natural / Sunlight
+- Estudio profesional
+- Dramática
+- Suave/Difusa
+- Contraluz (Backlight)
+- Hora dorada (Golden Hour)
+- Luz volumétrica
+
+**Composición**:
+- Ninguno
+- Fondo desenfocado (Bokeh)
+- Primer plano (Close up)
+- Plano general (Wide angle)
+- Vista cenital (From above)
+- Contrapicado (From below)
+- Macrofotografía
+- Espacio negativo
+
+### Construcción de prompts
+El sistema construirá prompts estructurados combinando:
+1. Descripción del usuario
+2. Estilo visual seleccionado
+3. Paleta de colores
+4. Iluminación
+5. Composición
+6. Calidad (8K, alta resolución, etc.)
+
+### Tareas de implementación
+
+1. [x] **Crear página del gesto** `/public/gestos/editor-imagenes.php`
+   - Estructura: left-tabs + sidebar historial + header unificado
+   - Selectores visuales con tabs (Formato, Estilo, Color, Luz, Composición)
+   - Campo de descripción principal con textarea
+   - Preview de imagen generada + lightbox
+   - ✅ Completado
+
+2. [x] **Crear JS del gesto** `/public/assets/js/gesture-image-editor.js`
+   - Lógica de selectores con radio buttons y tabs
+   - Construcción del prompt profesional con mapas de opciones
+   - Llamada a API con modalities=['image', 'text']
+   - Renderizado de imagen base64 + descarga
+   - Historial funcional
+   - ✅ Completado
+
+3. [x] **Crear endpoint** `/public/api/gestures/generate-image.php`
+   - Usa OpenRouterClient con modalities=['text', 'image']
+   - Modelo: google/gemini-2.0-flash-exp:free
+   - Guarda en gesture_executions (output_data con imagen base64)
+   - ✅ Completado
+
+4. [x] **Actualizar registros**
+   - Añadir gesto a $gesturesList en left-tabs.php
+   - Añadir tarjeta en /gestos/index.php
+   - Crear migración docs/migrations/008_add_image_editor_gesture.sql
+   - ✅ Completado
+
+5. [ ] **Testing** (pendiente de usuario)
+   - Ejecutar migración: `php scripts/migrate.php` o aplicar SQL manualmente
+   - Verificar acceso al gesto
+   - Probar generación de imágenes
+   - Verificar historial y descarga
+
+---
+
 ## Feature: Podcast en Background (generación asíncrona)
 
 ### Motivación
