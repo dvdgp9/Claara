@@ -62,19 +62,24 @@ if (!$gestureType || !$prompt) {
 $mode = $inputData['mode'] ?? 'generate';
 $sourceImage = $inputData['source_image'] ?? null; // Base64 de imagen fuente (para edición)
 $targetImage = $inputData['target_image'] ?? null; // Base64 de imagen objetivo (opcional, para edición)
+$selectedProvider = $inputData['provider'] ?? 'qwen'; // 'qwen' o 'nanobanana'
 
-// Seleccionar modelo según el modo
-$model = ($mode === 'edit') ? 'qwen-image-edit-plus-2025-12-15' : 'qwen-image-max';
+// Seleccionar modelo según el proveedor y el modo
+if ($selectedProvider === 'qwen') {
+    $model = ($mode === 'edit') ? 'qwen-image-edit-plus-2025-12-15' : 'qwen-image-max';
+} else {
+    // Nanobanana (Gemini) - Nota: Gemini en OpenRouter soporta generación de imágenes vía modalities
+    $model = 'google/gemini-2.0-pro-exp-02-05:free';
+}
 
 // Generar/Editar imagen
 try {
-    $qwenApiKey = Env::get('QWEN_API_KEY');
-    if (!$qwenApiKey) {
-        Response::error('qwen_api_key_missing', 'Falta QWEN_API_KEY en .env', 500);
-    }
-    
-    // Si es el modelo de Qwen (que son todos los actuales), usamos llamada directa a DashScope International
-    if (strpos($model, 'qwen-image') !== false) {
+    if ($selectedProvider === 'qwen') {
+        $qwenApiKey = Env::get('QWEN_API_KEY');
+        if (!$qwenApiKey) {
+            Response::error('qwen_api_key_missing', 'Falta QWEN_API_KEY en .env', 500);
+        }
+        
         // Endpoint Internacional para Qwen Image
         $url = 'https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
         
@@ -159,12 +164,25 @@ try {
             }
         }
     } else {
-        // Usar OpenRouter para otros modelos si fuera necesario
+        // Usar OpenRouter para Nanobanana (Gemini)
         $client = new OpenRouterClient(null, $model, null, null, null);
-        $text = $client->generateWithMessages(
-            [['role' => 'user', 'content' => $prompt]],
-            ['text', 'image']
-        );
+        
+        // Si hay imágenes (modo edición), las pasamos
+        $messages = [];
+        if ($mode === 'edit' && $sourceImage) {
+            $content = [
+                ['type' => 'text', 'text' => $prompt],
+                ['type' => 'image_url', 'image_url' => ['url' => 'data:image/png;base64,' . $sourceImage]]
+            ];
+            if ($targetImage) {
+                $content[] = ['type' => 'image_url', 'image_url' => ['url' => 'data:image/png;base64,' . $targetImage]];
+            }
+            $messages[] = ['role' => 'user', 'content' => $content];
+        } else {
+            $messages[] = ['role' => 'user', 'content' => $prompt];
+        }
+
+        $text = $client->generateWithMessages($messages, ['image', 'text']);
         $images = $client->getLastImages();
         $usedModel = $client->getModel();
     }

@@ -27,6 +27,10 @@
   const modeGenerateBtn = document.getElementById('mode-generate');
   const modeEditBtn = document.getElementById('mode-edit');
   const currentModeInput = document.getElementById('current-mode');
+  const providerQwenBtn = document.getElementById('provider-qwen');
+  const providerNanobananaBtn = document.getElementById('provider-nanobanana');
+  const currentProviderInput = document.getElementById('current-provider');
+
   const editImagesSection = document.getElementById('edit-images-section');
   const styleOptionsSection = document.getElementById('style-options-section');
   const selectionSummary = document.getElementById('selection-summary');
@@ -146,6 +150,25 @@
   }
   if (modeEditBtn) {
     modeEditBtn.addEventListener('click', () => setMode('edit'));
+  }
+
+  // === Gestión de Selector de Motor ===
+  function setProvider(provider) {
+    currentProviderInput.value = provider;
+    if (provider === 'qwen') {
+      providerQwenBtn.classList.add('active');
+      providerNanobananaBtn.classList.remove('active');
+    } else {
+      providerNanobananaBtn.classList.add('active');
+      providerQwenBtn.classList.remove('active');
+    }
+  }
+
+  if (providerQwenBtn) {
+    providerQwenBtn.addEventListener('click', () => setProvider('qwen'));
+  }
+  if (providerNanobananaBtn) {
+    providerNanobananaBtn.addEventListener('click', () => setProvider('nanobanana'));
   }
 
   // === Gestión de uploads de imágenes ===
@@ -338,13 +361,19 @@
       };
 
       prompt = buildPrompt(description, options);
-      inputData = { mode: 'generate', description, ...options };
+      inputData = { 
+        mode: 'generate', 
+        description, 
+        provider: currentProviderInput?.value || 'qwen',
+        ...options 
+      };
     } else {
       // Modo edición: prompt directo + imágenes
       prompt = description;
       inputData = {
         mode: 'edit',
         description,
+        provider: currentProviderInput?.value || 'qwen',
         source_image: sourceImageBase64,
         target_image: targetImageBase64 || null
       };

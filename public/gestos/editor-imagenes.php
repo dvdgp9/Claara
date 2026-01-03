@@ -91,18 +91,36 @@ $headerDrawerId = 'gesture-history-drawer';
           <!-- Formulario del gesto -->
           <form id="image-editor-form" class="space-y-6 glass-strong rounded-2xl border border-slate-200/50 p-6 shadow-sm">
             
-            <!-- Toggle Generar / Editar -->
-            <div class="flex gap-2 p-1 bg-slate-100 rounded-xl">
-              <button type="button" id="mode-generate" class="mode-btn active flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2">
-                <i class="iconoir-sparks"></i>
-                Generar
-              </button>
-              <button type="button" id="mode-edit" class="mode-btn flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2">
-                <i class="iconoir-edit"></i>
-                Editar
-              </button>
+            <!-- Título y Toggle de Modo -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div>
+                <h1 class="text-2xl font-bold text-slate-800">Editor de Imágenes</h1>
+                <p class="text-slate-500">Genera o edita imágenes con inteligencia artificial</p>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <!-- Selector de Motor -->
+                <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 mr-2">
+                  <button type="button" id="provider-qwen" class="px-4 py-2 rounded-lg text-sm font-medium transition-all active" data-provider="qwen">
+                    Qwen
+                  </button>
+                  <button type="button" id="provider-nanobanana" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" data-provider="nanobanana">
+                    Nanobanana
+                  </button>
+                  <input type="hidden" name="provider" id="current-provider" value="qwen" />
+                </div>
+
+                <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                  <button type="button" id="mode-generate" class="px-4 py-2 rounded-lg text-sm font-medium transition-all active">
+                    Generar
+                  </button>
+                  <button type="button" id="mode-edit" class="px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    Editar
+                  </button>
+                  <input type="hidden" name="mode" id="current-mode" value="generate" />
+                </div>
+              </div>
             </div>
-            <input type="hidden" id="current-mode" value="generate" />
 
             <!-- Sección de imágenes para modo Editar (oculta por defecto) -->
             <div id="edit-images-section" class="hidden space-y-4">
