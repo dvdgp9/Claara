@@ -1,18 +1,20 @@
 <?php
-session_start();
-require_once __DIR__ . '/../../src/App/Env.php';
-require_once __DIR__ . '/../../src/App/DB.php';
+require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 
-// Verificar sesión
-if (!isset($_SESSION['user_id'])) {
-    header('Location: /login');
+use App\Session;
+use Repos\UserFeatureAccessRepo;
+
+Session::start();
+$user = Session::user();
+if (!$user) {
+    header('Location: /login.php');
     exit;
 }
 
 // Verificar acceso a este gesto
 $accessRepo = new UserFeatureAccessRepo();
-if (!$accessRepo->hasGestureAccess((int)$_SESSION['user_id'], 'image-editor')) {
+if (!$accessRepo->hasGestureAccess((int)$user['id'], 'image-editor')) {
     header('Location: /gestos/?error=no_access');
     exit;
 }
