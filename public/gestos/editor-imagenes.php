@@ -12,6 +12,7 @@ if (!$user) {
     exit;
 }
 
+// Verificar acceso a este gesto
 $accessRepo = new UserFeatureAccessRepo();
 if (!$accessRepo->hasGestureAccess((int)$user['id'], 'image-editor')) {
     header('Location: /gestos/?error=no_access');
@@ -20,883 +21,711 @@ if (!$accessRepo->hasGestureAccess((int)$user['id'], 'image-editor')) {
 
 $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = 'gestures';
+
+// Configuración del header unificado
+$headerBackUrl = '/gestos/';
+$headerBackText = 'Todos los gestos';
+$headerTitle = 'Editor de imágenes';
+$headerIcon = 'iconoir-media-image';
+$headerIconColor = 'from-amber-500 to-orange-600';
+$headerDrawerId = 'gesture-history-drawer';
 ?><!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Studio · Editor de Imágenes</title>
-  <link rel="stylesheet" href="/assets/css/app.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/iconoir@7.9.0/css/iconoir.min.css">
-  <style>
-    /* === STUDIO MODE === */
-    .studio-container {
-      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);
-      min-height: 100vh;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    /* Subtle grid pattern */
-    .studio-container::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: 
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 50px 50px;
-      pointer-events: none;
-    }
-    
-    /* === PROMPT BAR (Spotlight style) === */
-    .prompt-bar {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90%;
-      max-width: 700px;
-      z-index: 100;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      box-shadow: 
-        0 25px 50px -12px rgba(0,0,0,0.4),
-        0 0 0 1px rgba(255,255,255,0.1),
-        inset 0 1px 0 rgba(255,255,255,0.2);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .prompt-bar:focus-within {
-      transform: translateX(-50%) scale(1.02);
-      box-shadow: 
-        0 30px 60px -15px rgba(0,0,0,0.5),
-        0 0 0 2px rgba(245, 158, 11, 0.5),
-        inset 0 1px 0 rgba(255,255,255,0.2);
-    }
-    
-    .prompt-input {
-      width: 100%;
-      padding: 18px 60px 18px 24px;
-      font-size: 17px;
-      border: none;
-      background: transparent;
-      outline: none;
-      color: #1a1a2e;
-    }
-    
-    .prompt-input::placeholder {
-      color: #94a3b8;
-    }
-    
-    .prompt-actions {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      gap: 4px;
-    }
-    
-    .prompt-action-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      color: #64748b;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-    }
-    
-    .prompt-action-btn:hover {
-      background: #f1f5f9;
-      color: #1e293b;
-    }
-    
-    .prompt-action-btn.generate {
-      background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-      color: white;
-    }
-    
-    .prompt-action-btn.generate:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
-    }
-    
-    /* === OPTIONS PANEL (slides down from prompt bar) === */
-    .options-panel {
-      position: fixed;
-      top: 85px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      width: 90%;
-      max-width: 700px;
-      z-index: 99;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 16px;
-      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
-      padding: 16px 20px;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .options-panel.visible {
-      opacity: 1;
-      visibility: visible;
-      transform: translateX(-50%) translateY(0);
-    }
-    
-    .option-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-    
-    .option-group:last-child {
-      margin-bottom: 0;
-    }
-    
-    .option-label {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #64748b;
-      width: 100%;
-      margin-bottom: 4px;
-    }
-    
-    .option-chip {
-      padding: 6px 12px;
-      font-size: 12px;
-      font-weight: 500;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      background: white;
-      color: #475569;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    
-    .option-chip:hover {
-      border-color: #f59e0b;
-      background: #fffbeb;
-    }
-    
-    .option-chip.active {
-      background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-    }
-    
-    /* === CANVAS AREA === */
-    .canvas-area {
-      position: fixed;
-      top: 100px;
-      left: 80px;
-      right: 0;
-      bottom: 140px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-    }
-    
-    @media (max-width: 1023px) {
-      .canvas-area {
-        left: 0;
-        top: 90px;
-        bottom: 180px;
-        padding: 20px;
-      }
-    }
-    
-    /* Empty state */
-    .canvas-empty {
-      text-align: center;
-      color: rgba(255,255,255,0.5);
-    }
-    
-    .canvas-empty-icon {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 24px;
-      background: rgba(255,255,255,0.05);
-      border: 2px dashed rgba(255,255,255,0.1);
-      border-radius: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 48px;
-    }
-    
-    .canvas-empty h3 {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: rgba(255,255,255,0.7);
-    }
-    
-    .canvas-empty p {
-      font-size: 14px;
-      color: rgba(255,255,255,0.4);
-    }
-    
-    /* Loading state */
-    .canvas-loading {
-      text-align: center;
-    }
-    
-    .loading-spinner {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 20px;
-      position: relative;
-    }
-    
-    .loading-spinner::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border: 3px solid rgba(245, 158, 11, 0.2);
-      border-radius: 50%;
-    }
-    
-    .loading-spinner::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border: 3px solid transparent;
-      border-top-color: #f59e0b;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    
-    .loading-emoji {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    /* Result state */
-    .canvas-result {
-      position: relative;
-      max-width: 100%;
-      max-height: 100%;
-    }
-    
-    .result-image {
-      max-width: 100%;
-      max-height: 100%;
-      border-radius: 16px;
-      box-shadow: 
-        0 50px 100px -20px rgba(0,0,0,0.5),
-        0 30px 60px -30px rgba(0,0,0,0.3);
-      cursor: zoom-in;
-      transition: transform 0.3s ease;
-    }
-    
-    .result-image:hover {
-      transform: scale(1.01);
-    }
-    
-    /* Floating actions on image */
-    .result-actions {
-      position: absolute;
-      bottom: -60px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(10px);
-      padding: 8px 12px;
-      border-radius: 16px;
-      opacity: 0;
-      transition: all 0.3s ease;
-    }
-    
-    .canvas-result:hover .result-actions {
-      opacity: 1;
-      bottom: 16px;
-    }
-    
-    .result-action {
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 500;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
-      color: white;
-      background: rgba(255,255,255,0.1);
-    }
-    
-    .result-action:hover {
-      background: rgba(255,255,255,0.2);
-    }
-    
-    .result-action.primary {
-      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-    }
-    
-    .result-action.primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-    }
-    
-    /* === FILMSTRIP (History) === */
-    .filmstrip {
-      position: fixed;
-      bottom: 0;
-      left: 80px;
-      right: 0;
-      height: 130px;
-      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 70%, transparent 100%);
-      padding: 16px 24px 20px;
-      z-index: 50;
-    }
-    
-    @media (max-width: 1023px) {
-      .filmstrip {
-        left: 0;
-        height: 170px;
-        padding-bottom: 80px;
-      }
-    }
-    
-    .filmstrip-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    
-    .filmstrip-title {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: rgba(255,255,255,0.5);
-    }
-    
-    .filmstrip-scroll {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      scroll-behavior: smooth;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255,255,255,0.2) transparent;
-    }
-    
-    .filmstrip-scroll::-webkit-scrollbar {
-      height: 4px;
-    }
-    
-    .filmstrip-scroll::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    
-    .filmstrip-scroll::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.2);
-      border-radius: 2px;
-    }
-    
-    .filmstrip-item {
-      flex-shrink: 0;
-      width: 70px;
-      height: 70px;
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.2s;
-      position: relative;
-    }
-    
-    .filmstrip-item:hover {
-      border-color: rgba(255,255,255,0.3);
-      transform: translateY(-4px);
-    }
-    
-    .filmstrip-item.active {
-      border-color: #f59e0b;
-      box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
-    }
-    
-    .filmstrip-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    .filmstrip-item-delete {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 20px;
-      height: 20px;
-      background: rgba(0,0,0,0.7);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.2s;
-      border: none;
-      cursor: pointer;
-      color: white;
-      font-size: 10px;
-    }
-    
-    .filmstrip-item:hover .filmstrip-item-delete {
-      opacity: 1;
-    }
-    
-    .filmstrip-empty {
-      color: rgba(255,255,255,0.3);
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    /* === MODE TOGGLE (floating) === */
-    .mode-toggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 100;
-      display: flex;
-      gap: 4px;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(10px);
-      padding: 4px;
-      border-radius: 12px;
-    }
-    
-    .mode-btn {
-      padding: 8px 14px;
-      font-size: 12px;
-      font-weight: 500;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      color: rgba(255,255,255,0.6);
-      background: transparent;
-      transition: all 0.2s;
-    }
-    
-    .mode-btn:hover {
-      color: white;
-    }
-    
-    .mode-btn.active {
-      background: rgba(255,255,255,0.15);
-      color: white;
-    }
-    
-    /* === PROVIDER TOGGLE (floating) === */
-    .provider-toggle {
-      position: fixed;
-      top: 20px;
-      left: 100px;
-      z-index: 100;
-      display: flex;
-      gap: 4px;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(10px);
-      padding: 4px;
-      border-radius: 12px;
-    }
-    
-    @media (max-width: 1023px) {
-      .provider-toggle {
-        left: 20px;
-        top: auto;
-        bottom: 190px;
-      }
-    }
-    
-    .provider-btn {
-      padding: 8px 12px;
-      font-size: 11px;
-      font-weight: 600;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      color: rgba(255,255,255,0.5);
-      background: transparent;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
-    .provider-btn:hover {
-      color: rgba(255,255,255,0.8);
-    }
-    
-    .provider-btn.active {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      color: white;
-    }
-    
-    .provider-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-    }
-    
-    /* === BACK BUTTON === */
-    .back-btn {
-      position: fixed;
-      top: 20px;
-      left: 100px;
-      z-index: 100;
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 500;
-      color: rgba(255,255,255,0.6);
-      background: rgba(0,0,0,0.4);
-      backdrop-filter: blur(10px);
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-    
-    .back-btn:hover {
-      color: white;
-      background: rgba(0,0,0,0.6);
-    }
-    
-    @media (max-width: 1023px) {
-      .back-btn {
-        left: 20px;
-      }
-    }
-    
-    /* === EDIT MODE OVERLAY === */
-    .edit-overlay {
-      position: fixed;
-      top: 85px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 98;
-      background: rgba(139, 92, 246, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 12px 20px;
-      border-radius: 12px;
-      display: none;
-      align-items: center;
-      gap: 16px;
-      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
-    }
-    
-    .edit-overlay.visible {
-      display: flex;
-    }
-    
-    .edit-preview {
-      display: flex;
-      gap: 8px;
-    }
-    
-    .edit-preview-img {
-      width: 50px;
-      height: 50px;
-      border-radius: 8px;
-      object-fit: cover;
-      border: 2px solid rgba(255,255,255,0.3);
-    }
-    
-    .edit-preview-placeholder {
-      width: 50px;
-      height: 50px;
-      border-radius: 8px;
-      border: 2px dashed rgba(255,255,255,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255,255,255,0.5);
-      font-size: 18px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .edit-preview-placeholder:hover {
-      border-color: white;
-      color: white;
-    }
-    
-    .edit-label {
-      color: white;
-      font-size: 12px;
-      font-weight: 500;
-    }
-    
-    .edit-close {
-      padding: 6px;
-      background: rgba(255,255,255,0.2);
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    
-    .edit-close:hover {
-      background: rgba(255,255,255,0.3);
-    }
-    
-    /* === LIGHTBOX === */
-    .lightbox {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.95);
-      z-index: 200;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-    }
-    
-    .lightbox.visible {
-      display: flex;
-    }
-    
-    .lightbox img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      border-radius: 8px;
-    }
-    
-    .lightbox-close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 44px;
-      height: 44px;
-      background: rgba(255,255,255,0.1);
-      border: none;
-      border-radius: 12px;
-      color: white;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    
-    .lightbox-close:hover {
-      background: rgba(255,255,255,0.2);
-    }
-    
-    /* Hidden file inputs */
-    .hidden-input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-  </style>
-</head>
-<body>
-  <div class="studio-container">
+<?php include __DIR__ . '/../includes/head.php'; ?>
+<body class="bg-mesh text-slate-900 overflow-hidden">
+  <div class="min-h-screen flex h-screen">
     <?php include __DIR__ . '/../includes/left-tabs.php'; ?>
     
-    <!-- Back Button -->
-    <a href="/gestos/" class="back-btn">
-      <i class="iconoir-nav-arrow-left"></i>
-      Gestos
-    </a>
-    
-    <!-- Provider Toggle -->
-    <div class="provider-toggle">
-      <button type="button" id="provider-qwen" class="provider-btn active">
-        <span class="provider-dot" style="background: #a855f7;"></span>
-        Qwen
-      </button>
-      <button type="button" id="provider-nanobanana" class="provider-btn">
-        <span class="provider-dot" style="background: #3b82f6;"></span>
-        Gemini
-      </button>
-      <button type="button" id="provider-flux" class="provider-btn">
-        <span class="provider-dot" style="background: #10b981;"></span>
-        FLUX
-      </button>
-    </div>
-    
-    <!-- Mode Toggle -->
-    <div class="mode-toggle">
-      <button type="button" id="mode-generate" class="mode-btn active">Crear</button>
-      <button type="button" id="mode-edit" class="mode-btn">Editar</button>
-    </div>
-    
-    <!-- Prompt Bar (Spotlight style) -->
-    <div class="prompt-bar">
-      <input type="text" id="prompt-input" class="prompt-input" placeholder="Describe la imagen que quieres crear..." autocomplete="off" />
-      <div class="prompt-actions">
-        <button type="button" id="options-toggle" class="prompt-action-btn" title="Opciones de estilo">
-          <i class="iconoir-settings"></i>
-        </button>
-        <button type="button" id="generate-btn" class="prompt-action-btn generate" title="Generar">
-          <i class="iconoir-sparks"></i>
-        </button>
-      </div>
-    </div>
-    
-    <!-- Options Panel -->
-    <div id="options-panel" class="options-panel">
-      <div class="option-group">
-        <span class="option-label">Formato</span>
-        <button type="button" class="option-chip active" data-option="format" data-value="1:1">1:1</button>
-        <button type="button" class="option-chip" data-option="format" data-value="3:4">3:4</button>
-        <button type="button" class="option-chip" data-option="format" data-value="4:3">4:3</button>
-        <button type="button" class="option-chip" data-option="format" data-value="16:9">16:9</button>
-        <button type="button" class="option-chip" data-option="format" data-value="9:16">9:16</button>
-      </div>
-      <div class="option-group">
-        <span class="option-label">Estilo</span>
-        <button type="button" class="option-chip active" data-option="style" data-value="">Auto</button>
-        <button type="button" class="option-chip" data-option="style" data-value="photographic">Foto</button>
-        <button type="button" class="option-chip" data-option="style" data-value="corporate">Corporativo</button>
-        <button type="button" class="option-chip" data-option="style" data-value="headshot-pro">Retrato</button>
-        <button type="button" class="option-chip" data-option="style" data-value="3d-render">3D</button>
-        <button type="button" class="option-chip" data-option="style" data-value="minimalist">Minimal</button>
-      </div>
-      <div class="option-group">
-        <span class="option-label">Color</span>
-        <button type="button" class="option-chip active" data-option="color" data-value="">Auto</button>
-        <button type="button" class="option-chip" data-option="color" data-value="warm">Cálido</button>
-        <button type="button" class="option-chip" data-option="color" data-value="cool">Frío</button>
-        <button type="button" class="option-chip" data-option="color" data-value="bw">B/N</button>
-        <button type="button" class="option-chip" data-option="color" data-value="vibrant">Vibrante</button>
-      </div>
-      <div class="option-group">
-        <span class="option-label">Luz</span>
-        <button type="button" class="option-chip active" data-option="lighting" data-value="">Auto</button>
-        <button type="button" class="option-chip" data-option="lighting" data-value="natural">Natural</button>
-        <button type="button" class="option-chip" data-option="lighting" data-value="studio">Estudio</button>
-        <button type="button" class="option-chip" data-option="lighting" data-value="dramatic">Drama</button>
-        <button type="button" class="option-chip" data-option="lighting" data-value="golden">Dorada</button>
-      </div>
-    </div>
-    
-    <!-- Edit Mode Overlay -->
-    <div id="edit-overlay" class="edit-overlay">
-      <div class="edit-preview">
-        <label class="edit-preview-placeholder" id="source-upload-trigger" title="Subir imagen fuente">
-          <i class="iconoir-plus"></i>
-          <img id="source-preview" class="edit-preview-img" style="display:none;" />
-        </label>
-        <label class="edit-preview-placeholder" id="target-upload-trigger" title="Imagen objetivo (opcional)">
-          <i class="iconoir-plus"></i>
-          <img id="target-preview" class="edit-preview-img" style="display:none;" />
-        </label>
-      </div>
-      <span class="edit-label">Sube la imagen a editar →</span>
-      <button type="button" id="edit-close" class="edit-close">
-        <i class="iconoir-xmark"></i>
-      </button>
-    </div>
-    
-    <!-- Hidden file inputs -->
-    <input type="file" id="source-input" class="hidden-input" accept="image/*" />
-    <input type="file" id="target-input" class="hidden-input" accept="image/*" />
-    
-    <!-- Canvas Area -->
-    <div class="canvas-area">
-      <!-- Empty State -->
-      <div id="canvas-empty" class="canvas-empty">
-        <div class="canvas-empty-icon">🍌</div>
-        <h3>Crea algo increíble</h3>
-        <p>Escribe lo que quieres y pulsa Enter o el botón ✨</p>
+    <!-- Sidebar de historial (solo desktop) -->
+    <aside id="history-sidebar" class="hidden lg:flex w-72 glass-strong border-r border-slate-200/50 flex-col shrink-0">
+      <div class="p-4 border-b border-slate-200/50">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold text-slate-800 flex items-center gap-2">
+            <i class="iconoir-clock text-amber-500"></i>
+            Historial
+          </h2>
+          <button id="new-image-btn" class="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Nueva imagen">
+            <i class="iconoir-plus text-lg"></i>
+          </button>
+        </div>
       </div>
       
-      <!-- Loading State -->
-      <div id="canvas-loading" class="canvas-loading" style="display:none;">
-        <div class="loading-spinner">
-          <span class="loading-emoji">🍌</span>
-        </div>
-        <p style="color: rgba(255,255,255,0.6); font-size: 14px;">Generando tu imagen...</p>
-      </div>
-      
-      <!-- Result State -->
-      <div id="canvas-result" class="canvas-result" style="display:none;">
-        <img id="result-image" class="result-image" src="" alt="Imagen generada" />
-        <div class="result-actions">
-          <button type="button" id="action-edit" class="result-action primary">
-            <i class="iconoir-edit"></i>
-            Editar
-          </button>
-          <button type="button" id="action-regenerate" class="result-action">
-            <i class="iconoir-refresh"></i>
-            Regenerar
-          </button>
-          <button type="button" id="action-download" class="result-action">
-            <i class="iconoir-download"></i>
-            Descargar
-          </button>
+      <div id="history-list" class="flex-1 overflow-auto">
+        <div class="p-4 text-center text-slate-400 text-sm">
+          <i class="iconoir-refresh animate-spin"></i>
+          Cargando...
         </div>
       </div>
-    </div>
+    </aside>
     
-    <!-- Filmstrip (History) -->
-    <div class="filmstrip">
-      <div class="filmstrip-header">
-        <span class="filmstrip-title">Historial</span>
-      </div>
-      <div id="filmstrip-scroll" class="filmstrip-scroll">
-        <div id="filmstrip-empty" class="filmstrip-empty">
-          <i class="iconoir-media-image"></i>
-          Las imágenes que generes aparecerán aquí
-        </div>
-      </div>
-    </div>
+    <!-- Mobile Drawer para historial -->
+    <?php 
+    $drawerId = 'gesture-history-drawer';
+    $drawerTitle = 'Historial';
+    $drawerIcon = 'iconoir-clock';
+    $drawerIconColor = 'text-amber-500';
+    include __DIR__ . '/../includes/mobile-drawer.php'; 
+    ?>
     
-    <!-- Lightbox -->
-    <div id="lightbox" class="lightbox">
-      <button type="button" id="lightbox-close" class="lightbox-close">
-        <i class="iconoir-xmark"></i>
-      </button>
-      <img id="lightbox-image" src="" alt="Imagen ampliada" />
-    </div>
+    <!-- Main content area -->
+    <main class="flex-1 flex flex-col overflow-hidden min-w-0">
+      <?php include __DIR__ . '/../includes/header-unified.php'; ?>
+
+      <!-- Scrollable content -->
+      <div class="flex-1 overflow-auto p-4 lg:p-6 pb-20 lg:pb-6">
+        <div class="max-w-4xl mx-auto">
+          <!-- Header del gesto -->
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
+              <i class="iconoir-media-image text-xl"></i>
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                Editor de imágenes
+                <span class="text-lg">🍌</span>
+              </h1>
+              <p class="text-sm text-slate-600">Genera imágenes con Nanobanana</p>
+            </div>
+          </div>
+    
+          <!-- Formulario del gesto -->
+          <form id="image-editor-form" class="space-y-6 glass-strong rounded-2xl border border-slate-200/50 p-6 shadow-sm">
+            
+            <!-- Título y Toggle de Modo -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div>
+                <h1 class="text-2xl font-bold text-slate-800">Editor de Imágenes</h1>
+                <p class="text-slate-500">Genera o edita imágenes con inteligencia artificial</p>
+              </div>
+              
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <!-- Selector de Motor -->
+                <div class="flex bg-white p-1.5 rounded-xl border-2 border-slate-200 shadow-sm">
+                  <button type="button" id="provider-qwen" class="provider-toggle-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 active" data-provider="qwen">
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                      Qwen
+                    </span>
+                  </button>
+                  <button type="button" id="provider-nanobanana" class="provider-toggle-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200" data-provider="nanobanana">
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                      Nanobanana
+                    </span>
+                  </button>
+                  <button type="button" id="provider-flux" class="provider-toggle-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200" data-provider="flux">
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      FLUX
+                    </span>
+                  </button>
+                  <input type="hidden" name="provider" id="current-provider" value="qwen" />
+                </div>
+
+                <div class="flex bg-white p-1.5 rounded-xl border-2 border-slate-200 shadow-sm">
+                  <button type="button" id="mode-generate" class="mode-toggle-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 active">
+                    <i class="iconoir-sparks mr-1.5"></i>
+                    Generar
+                  </button>
+                  <button type="button" id="mode-edit" class="mode-toggle-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200">
+                    <i class="iconoir-edit mr-1.5"></i>
+                    Editar
+                  </button>
+                  <input type="hidden" name="mode" id="current-mode" value="generate" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección de imágenes para modo Editar (oculta por defecto) -->
+            <div id="edit-images-section" class="hidden space-y-4">
+              <div class="p-4 bg-purple-50/50 border border-purple-200/50 rounded-xl">
+                <p class="text-sm text-purple-700 mb-3 flex items-center gap-2">
+                  <i class="iconoir-info-circle"></i>
+                  <span><strong>Modo edición:</strong> Sube una imagen fuente para editarla. Opcionalmente, añade una imagen objetivo para fusionar elementos.</span>
+                </p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <!-- Imagen Fuente -->
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">Imagen fuente <span class="text-red-500">*</span></label>
+                    <div id="source-image-dropzone" class="relative border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
+                      <input type="file" id="source-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                      <div id="source-image-placeholder" class="flex flex-col items-center gap-2">
+                        <i class="iconoir-upload text-2xl text-slate-400"></i>
+                        <span class="text-xs text-slate-500">Arrastra o haz clic</span>
+                      </div>
+                      <img id="source-image-preview" src="" alt="Fuente" class="hidden max-h-24 rounded-lg object-contain" />
+                      <button type="button" id="source-image-clear" class="hidden absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full text-xs hover:bg-red-600">
+                        <i class="iconoir-xmark"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Imagen Objetivo (opcional) -->
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">Imagen objetivo <span class="text-slate-400">(opcional)</span></label>
+                    <div id="target-image-dropzone" class="relative border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
+                      <input type="file" id="target-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                      <div id="target-image-placeholder" class="flex flex-col items-center gap-2">
+                        <i class="iconoir-upload text-2xl text-slate-400"></i>
+                        <span class="text-xs text-slate-500">Arrastra o haz clic</span>
+                      </div>
+                      <img id="target-image-preview" src="" alt="Objetivo" class="hidden max-h-24 rounded-lg object-contain" />
+                      <button type="button" id="target-image-clear" class="hidden absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full text-xs hover:bg-red-600">
+                        <i class="iconoir-xmark"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Campo principal: Descripción -->
+            <div>
+              <label id="description-label" class="block text-sm font-semibold text-slate-700 mb-2">¿Qué imagen quieres crear?</label>
+              <textarea id="image-description" rows="3" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white/80" placeholder="Describe la imagen que necesitas. Sé específico: objetos, escena, ambiente, colores..."></textarea>
+            </div>
+
+            <!-- Selectores en tabs horizontales (solo para modo generar) -->
+            <div id="style-options-section">
+            <div class="border border-slate-200/50 rounded-xl overflow-hidden">
+              <!-- Tab headers -->
+              <div class="flex border-b border-slate-200/50 bg-slate-50/50 overflow-x-auto">
+                <button type="button" data-tab="format" class="option-tab active flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
+                  <i class="iconoir-frame"></i>
+                  <span>Formato</span>
+                </button>
+                <button type="button" data-tab="style" class="option-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
+                  <i class="iconoir-design-pencil"></i>
+                  <span>Estilo</span>
+                </button>
+                <button type="button" data-tab="color" class="option-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
+                  <i class="iconoir-color-filter"></i>
+                  <span>Color</span>
+                </button>
+                <button type="button" data-tab="lighting" class="option-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
+                  <i class="iconoir-sun-light"></i>
+                  <span>Luz</span>
+                </button>
+                <button type="button" data-tab="composition" class="option-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
+                  <i class="iconoir-frame-select"></i>
+                  <span>Composición</span>
+                </button>
+              </div>
+
+              <!-- Tab contents -->
+              <div class="p-4">
+                <!-- FORMATO -->
+                <div id="tab-format" class="tab-content">
+                  <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="format" value="1:1" class="hidden peer" checked />
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
+                        <div class="w-8 h-8 mx-auto mb-1 border-2 border-current rounded flex items-center justify-center">
+                          <div class="w-5 h-5 bg-current/20 rounded-sm"></div>
+                        </div>
+                        <span class="text-xs font-medium">1:1</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="format" value="3:4" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
+                        <div class="w-6 h-8 mx-auto mb-1 border-2 border-current rounded flex items-center justify-center">
+                          <div class="w-4 h-6 bg-current/20 rounded-sm"></div>
+                        </div>
+                        <span class="text-xs font-medium">3:4</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="format" value="4:3" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
+                        <div class="w-8 h-6 mx-auto mb-1 border-2 border-current rounded flex items-center justify-center">
+                          <div class="w-6 h-4 bg-current/20 rounded-sm"></div>
+                        </div>
+                        <span class="text-xs font-medium">4:3</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="format" value="16:9" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
+                        <div class="w-10 h-6 mx-auto mb-1 border-2 border-current rounded flex items-center justify-center">
+                          <div class="w-8 h-4 bg-current/20 rounded-sm"></div>
+                        </div>
+                        <span class="text-xs font-medium">16:9</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="format" value="9:16" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
+                        <div class="w-5 h-9 mx-auto mb-1 border-2 border-current rounded flex items-center justify-center">
+                          <div class="w-3 h-7 bg-current/20 rounded-sm"></div>
+                        </div>
+                        <span class="text-xs font-medium">9:16</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- ESTILO -->
+                <div id="tab-style" class="tab-content hidden">
+                  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="style" value="" class="hidden peer" checked />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-prohibition text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Ninguno</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="style" value="photographic" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-camera text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Fotográfico</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="style" value="digital-art" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-design-pencil text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Digital Art</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="style" value="corporate" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-building text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Corporativo</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="style" value="minimalist" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-minus text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Minimalista</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="style" value="3d-render" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-3d-select-face text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">3D Render</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="style" value="flat-design" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-crop text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Flat Design</span>
+                      </div>
+                    </label>
+                    <label class="relative cursor-pointer group">
+                      <input type="radio" name="style" value="isometric" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-cube text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Isométrico</span>
+                      </div>
+                    </label>
+
+                    <!-- Nuevos Estilos Pro -->
+                    <label class="relative cursor-pointer group">
+                      <input type="radio" name="style" value="headshot-pro" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-user text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Retrato Pro</span>
+                      </div>
+                    </label>
+
+                    <label class="relative cursor-pointer group">
+                      <input type="radio" name="style" value="silicon-valley" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-bright-crown text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Corporativo Pro</span>
+                      </div>
+                    </label>
+
+                    <label class="relative cursor-pointer group">
+                      <input type="radio" name="style" value="luxury-product" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-diamond text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Producto Lujo</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- COLOR -->
+                <div id="tab-color" class="tab-content hidden">
+                  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="color" value="" class="hidden peer" checked />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-prohibition text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Ninguno</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="color" value="warm" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500"></div>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Cálidos</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="color" value="cool" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500"></div>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Fríos</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="color" value="corporate" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c]"></div>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Corporativo</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="color" value="monochrome" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-slate-300 to-slate-600"></div>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Monocromo</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="color" value="pastel" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-pink-200 to-purple-200"></div>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Pastel</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="color" value="bw" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-r from-black to-white"></div>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">B/N</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="color" value="vibrant" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-red-500 via-yellow-500 to-green-500"></div>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Vibrante</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- ILUMINACIÓN -->
+                <div id="tab-lighting" class="tab-content hidden">
+                  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="lighting" value="" class="hidden peer" checked />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-prohibition text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Ninguno</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="lighting" value="natural" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-sun-light text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Natural</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="lighting" value="studio" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-flash text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Estudio</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="lighting" value="dramatic" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-half-moon text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Dramática</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="lighting" value="soft" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-cloud text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Suave</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="lighting" value="backlight" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-lens text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Contraluz</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="lighting" value="golden" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-sunrise text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Hora dorada</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="lighting" value="volumetric" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-sparks text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Volumétrica</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- COMPOSICIÓN -->
+                <div id="tab-composition" class="tab-content hidden">
+                  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="composition" value="" class="hidden peer" checked />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-prohibition text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Ninguno</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="composition" value="bokeh" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-focus text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Bokeh</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="composition" value="closeup" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-zoom-in text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Primer plano</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="composition" value="wide" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-zoom-out text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Plano general</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="composition" value="above" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-arrow-down text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Cenital</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="composition" value="below" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-arrow-up text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Contrapicado</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="composition" value="macro" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-eye-alt text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Macro</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="composition" value="negative-space" class="hidden peer" />
+                      <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
+                        <i class="iconoir-square text-lg shrink-0"></i>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Espacio negativo</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div><!-- /style-options-section -->
+
+            <!-- Resumen de selección actual -->
+            <div id="selection-summary" class="p-3 bg-amber-50/50 border border-amber-200/50 rounded-xl text-sm text-amber-800">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="iconoir-info-circle"></i>
+                <span class="font-medium">Configuración actual</span>
+              </div>
+              <p id="summary-text" class="text-xs text-amber-700">Formato 1:1 • Sin estilo específico</p>
+            </div>
+            
+            <!-- Botón generar -->
+            <div class="flex justify-end pt-2 border-t border-slate-200/50">
+              <button type="submit" id="generate-image-btn" class="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                <i class="iconoir-sparks"></i>
+                <span>Generar imagen</span>
+              </button>
+            </div>
+          </form>
+    
+          <!-- Resultado (oculto inicialmente) -->
+          <div id="image-result" class="hidden mt-8 glass-strong rounded-2xl border border-slate-200/50 p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-slate-800">Imagen generada</h2>
+              <div class="flex gap-2">
+                <button id="download-image-btn" class="px-3 py-1.5 text-sm text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-smooth flex items-center gap-1.5">
+                  <i class="iconoir-download"></i> Descargar
+                </button>
+                <button id="regenerate-image-btn" class="px-3 py-1.5 text-sm text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-smooth flex items-center gap-1.5">
+                  <i class="iconoir-refresh"></i> Regenerar
+                </button>
+              </div>
+            </div>
+            <div id="image-container" class="flex justify-center">
+              <img id="generated-image" src="" alt="Imagen generada" class="max-w-full rounded-xl shadow-lg cursor-pointer hover:shadow-xl transition-shadow" />
+            </div>
+            <div id="image-caption" class="mt-4 text-sm text-slate-600 text-center hidden"></div>
+          </div>
+    
+          <!-- Loading -->
+          <div id="image-loading" class="hidden mt-8 text-center py-12">
+            <div class="inline-flex flex-col items-center gap-4 px-8 py-6 bg-amber-500/10 rounded-xl">
+              <div class="relative w-16 h-16">
+                <div class="absolute inset-0 border-4 border-amber-500/30 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-2xl">🍌</div>
+              </div>
+              <span class="text-amber-700 font-medium">Generando imagen con Nanobanana...</span>
+              <span class="text-amber-600 text-sm">Esto puede tardar unos segundos</span>
+            </div>
+          </div>
+        </div><!-- /max-w-4xl -->
+      </div><!-- /scrollable content -->
+    </main>
+  </div><!-- /main container -->
+
+  <!-- Lightbox para ver imagen en grande -->
+  <div id="image-lightbox" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
+    <button id="lightbox-close" class="absolute top-4 right-4 text-white/80 hover:text-white p-2">
+      <i class="iconoir-xmark text-2xl"></i>
+    </button>
+    <img id="lightbox-image" src="" alt="Imagen ampliada" class="max-w-full max-h-full object-contain rounded-lg" />
   </div>
 
-  <?php include __DIR__ . '/../includes/bottom-nav.php'; ?>
-  
   <script>window.CSRF_TOKEN = '<?php echo htmlspecialchars($csrfToken); ?>';</script>
   <script src="/assets/js/gesture-image-editor.js"></script>
+  
+  <!-- Bottom Navigation (móvil) -->
+  <?php include __DIR__ . '/../includes/bottom-nav.php'; ?>
+  
+  <!-- Estilos adicionales para los selectores -->
+  <style>
+    .option-pill.active {
+      border-color: #f59e0b !important;
+      background: rgba(245, 158, 11, 0.1);
+      color: #b45309;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    
+    .mode-toggle-btn {
+      color: #64748b;
+      background: transparent;
+    }
+    
+    .mode-toggle-btn.active {
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%) !important;
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+      transform: translateY(-1px);
+    }
+    
+    .provider-toggle-btn {
+      color: #64748b;
+      background: transparent;
+      position: relative;
+    }
+    
+    .provider-toggle-btn.active {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+      transform: translateY(-1px);
+    }
+    
+    .provider-toggle-btn.active span span {
+      background: white !important;
+    }
+    .option-tab.active {
+      color: #f59e0b;
+      border-bottom-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.05);
+    }
+    .option-pill.active,
+    .option-pill:has(input:checked) {
+      border-color: #f59e0b !important;
+      background: rgba(245, 158, 11, 0.1);
+      color: #b45309;
+    }
+    .mode-btn {
+      color: #64748b;
+      background: transparent;
+    }
+    .mode-btn.active {
+      color: #fff;
+      background: linear-gradient(to right, #f59e0b, #ea580c);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+    .mode-btn:not(.active):hover {
+      background: rgba(245, 158, 11, 0.1);
+      color: #f59e0b;
+    }
+  </style>
+  
+  <script>
+    // Sincronizar historial con drawer móvil
+    document.addEventListener('DOMContentLoaded', () => {
+      const desktopHistory = document.getElementById('history-list');
+      const mobileDrawerContent = document.getElementById('gesture-history-drawer-content');
+      
+      function syncDrawerContent() {
+        if (desktopHistory && mobileDrawerContent) {
+          mobileDrawerContent.innerHTML = desktopHistory.innerHTML;
+          mobileDrawerContent.querySelectorAll('.opacity-0, .lg\\:opacity-0').forEach(el => {
+            el.classList.remove('opacity-0', 'lg:opacity-0');
+            el.classList.add('opacity-100');
+          });
+        }
+      }
+      
+      if (desktopHistory && mobileDrawerContent) {
+        syncDrawerContent();
+        
+        const observer = new MutationObserver(syncDrawerContent);
+        observer.observe(desktopHistory, { childList: true, subtree: true });
+        
+        mobileDrawerContent.addEventListener('click', (e) => {
+          const deleteBtn = e.target.closest('.history-item-delete');
+          if (deleteBtn) {
+            const historyItem = deleteBtn.closest('.history-item');
+            if (historyItem) {
+              const id = historyItem.dataset.id;
+              const desktopItem = desktopHistory.querySelector(`.history-item[data-id="${id}"] .history-item-delete`);
+              if (desktopItem) {
+                e.stopPropagation();
+                desktopItem.click();
+              }
+            }
+            return;
+          }
+          
+          const historyItemMain = e.target.closest('.history-item-main');
+          if (historyItemMain) {
+            const historyItem = historyItemMain.closest('.history-item');
+            if (historyItem) {
+              const id = historyItem.dataset.id;
+              const desktopItemMain = desktopHistory.querySelector(`.history-item[data-id="${id}"] .history-item-main`);
+              if (desktopItemMain) {
+                closeMobileDrawer('gesture-history-drawer');
+                desktopItemMain.click();
+              }
+            }
+            return;
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>
