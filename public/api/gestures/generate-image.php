@@ -25,6 +25,7 @@ require_once __DIR__ . '/../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../src/Chat/OpenRouterClient.php';
 require_once __DIR__ . '/../../../src/Repos/UsageLogRepo.php';
 
+use App\Env;
 use App\Session;
 use App\Response;
 use Chat\OpenRouterClient;
