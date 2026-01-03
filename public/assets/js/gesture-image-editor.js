@@ -73,6 +73,8 @@
 
   // === Panel Tabs ===
   function switchTab(tab) {
+    if (!tabGenerate || !tabEdit || !panelGenerate || !panelEdit) return;
+    
     if (tab === 'generate') {
       tabGenerate.classList.add('active');
       tabEdit.classList.remove('active');
@@ -85,17 +87,25 @@
       panelEdit.style.display = 'block';
       
       // If there's a current image, auto-fill the edit panel
-      if (currentImageBase64 && !editImageBase64.value) {
+      if (currentImageBase64 && editImageBase64 && !editImageBase64.value) {
         editImageBase64.value = currentImageBase64;
-        editPreview.src = `data:image/png;base64,${currentImageBase64}`;
-        editPreview.style.display = 'block';
-        editUploadPlaceholder.style.display = 'none';
+        if (editPreview) {
+          editPreview.src = `data:image/png;base64,${currentImageBase64}`;
+          editPreview.style.display = 'block';
+        }
+        if (editUploadPlaceholder) {
+          editUploadPlaceholder.style.display = 'none';
+        }
       }
     }
   }
 
-  tabGenerate.addEventListener('click', () => switchTab('generate'));
-  tabEdit.addEventListener('click', () => switchTab('edit'));
+  if (tabGenerate) {
+    tabGenerate.addEventListener('click', () => switchTab('generate'));
+  }
+  if (tabEdit) {
+    tabEdit.addEventListener('click', () => switchTab('edit'));
+  }
 
   // === Provider Selector ===
   document.querySelectorAll('.provider-option').forEach(btn => {
@@ -125,62 +135,70 @@
   });
 
   // === Edit Upload ===
-  editUploadZone.addEventListener('click', () => editFileInput.click());
+  if (editUploadZone) {
+    editUploadZone.addEventListener('click', () => editFileInput && editFileInput.click());
+    
+    // Drag & Drop for edit zone
+    editUploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      editUploadZone.style.borderColor = 'rgba(234, 179, 8, 0.6)';
+      editUploadZone.style.background = 'rgba(234, 179, 8, 0.1)';
+    });
+
+    editUploadZone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      editUploadZone.style.borderColor = '';
+      editUploadZone.style.background = '';
+    });
+
+    editUploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      editUploadZone.style.borderColor = '';
+      editUploadZone.style.background = '';
+      
+      const file = e.dataTransfer.files[0];
+      if (!file || !file.type.startsWith('image/')) {
+        alert('Por favor, arrastra una imagen válida');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64 = ev.target.result.split(',')[1];
+        if (editImageBase64) editImageBase64.value = base64;
+        if (editPreview) {
+          editPreview.src = ev.target.result;
+          editPreview.style.display = 'block';
+        }
+        if (editUploadPlaceholder) editUploadPlaceholder.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
   
-  editFileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecciona una imagen válida');
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target.result.split(',')[1];
-      editImageBase64.value = base64;
-      editPreview.src = ev.target.result;
-      editPreview.style.display = 'block';
-      editUploadPlaceholder.style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // Drag & Drop for edit zone
-  editUploadZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    editUploadZone.style.borderColor = 'rgba(234, 179, 8, 0.6)';
-    editUploadZone.style.background = 'rgba(234, 179, 8, 0.1)';
-  });
-
-  editUploadZone.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    editUploadZone.style.borderColor = '';
-    editUploadZone.style.background = '';
-  });
-
-  editUploadZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    editUploadZone.style.borderColor = '';
-    editUploadZone.style.background = '';
-    
-    const file = e.dataTransfer.files[0];
-    if (!file || !file.type.startsWith('image/')) {
-      alert('Por favor, arrastra una imagen válida');
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target.result.split(',')[1];
-      editImageBase64.value = base64;
-      editPreview.src = ev.target.result;
-      editPreview.style.display = 'block';
-      editUploadPlaceholder.style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-  });
+  if (editFileInput) {
+    editFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecciona una imagen válida');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64 = ev.target.result.split(',')[1];
+        if (editImageBase64) editImageBase64.value = base64;
+        if (editPreview) {
+          editPreview.src = ev.target.result;
+          editPreview.style.display = 'block';
+        }
+        if (editUploadPlaceholder) editUploadPlaceholder.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 
   // === Build Prompt ===
   function buildPrompt(description) {
@@ -323,28 +341,36 @@
   }
 
   // === Quick Actions ===
-  actionEdit.addEventListener('click', () => {
-    if (!currentImageBase64) return;
-    switchTab('edit');
-    editImageBase64.value = currentImageBase64;
-    editPreview.src = `data:image/png;base64,${currentImageBase64}`;
-    editPreview.style.display = 'block';
-    editUploadPlaceholder.style.display = 'none';
-  });
+  if (actionEdit) {
+    actionEdit.addEventListener('click', () => {
+      if (!currentImageBase64) return;
+      switchTab('edit');
+      if (editImageBase64) editImageBase64.value = currentImageBase64;
+      if (editPreview) {
+        editPreview.src = `data:image/png;base64,${currentImageBase64}`;
+        editPreview.style.display = 'block';
+      }
+      if (editUploadPlaceholder) editUploadPlaceholder.style.display = 'none';
+    });
+  }
 
-  actionRegenerate.addEventListener('click', () => {
-    if (lastPrompt) sendRequest(lastPrompt, lastInputData);
-  });
+  if (actionRegenerate) {
+    actionRegenerate.addEventListener('click', () => {
+      if (lastPrompt) sendRequest(lastPrompt, lastInputData);
+    });
+  }
 
-  actionVariation.addEventListener('click', () => {
-    if (!currentImageBase64 || !lastInputData.description) return;
-    
-    // Create a variation by slightly modifying the prompt
-    const variationPrompt = lastInputData.description + ' (create a variation with different composition)';
-    const inputData = { ...lastInputData, description: variationPrompt };
-    
-    sendRequest(variationPrompt, inputData);
-  });
+  if (actionVariation) {
+    actionVariation.addEventListener('click', () => {
+      if (!currentImageBase64 || !lastInputData.description) return;
+      
+      // Create a variation by slightly modifying the prompt
+      const variationPrompt = lastInputData.description + ' (create a variation with different composition)';
+      const inputData = { ...lastInputData, description: variationPrompt };
+      
+      sendRequest(variationPrompt, inputData);
+    });
+  }
 
   // === Download ===
   function downloadImage() {
@@ -358,29 +384,33 @@
     document.body.removeChild(link);
   }
 
-  actionDownload.addEventListener('click', downloadImage);
-  downloadHeaderBtn.addEventListener('click', downloadImage);
+  if (actionDownload) actionDownload.addEventListener('click', downloadImage);
+  if (downloadHeaderBtn) downloadHeaderBtn.addEventListener('click', downloadImage);
 
   // === New Image ===
-  newImageBtn.addEventListener('click', () => {
-    currentImageBase64 = null;
-    currentExecutionId = null;
-    lastPrompt = '';
-    lastInputData = {};
-    
-    promptInput.value = '';
-    editPromptInput.value = '';
-    editImageBase64.value = '';
-    editPreview.src = '';
-    editPreview.style.display = 'none';
-    editUploadPlaceholder.style.display = 'block';
-    
-    canvasImage.style.display = 'none';
-    quickActions.style.display = 'none';
-    canvasEmpty.style.display = 'block';
-    
-    switchTab('generate');
-  });
+  if (newImageBtn) {
+    newImageBtn.addEventListener('click', () => {
+      currentImageBase64 = null;
+      currentExecutionId = null;
+      lastPrompt = '';
+      lastInputData = {};
+      
+      if (promptInput) promptInput.value = '';
+      if (editPromptInput) editPromptInput.value = '';
+      if (editImageBase64) editImageBase64.value = '';
+      if (editPreview) {
+        editPreview.src = '';
+        editPreview.style.display = 'none';
+      }
+      if (editUploadPlaceholder) editUploadPlaceholder.style.display = 'block';
+      
+      if (canvasImage) canvasImage.style.display = 'none';
+      if (quickActions) quickActions.style.display = 'none';
+      if (canvasEmpty) canvasEmpty.style.display = 'block';
+      
+      switchTab('generate');
+    });
+  }
 
   // === History ===
   async function loadHistory() {
@@ -495,29 +525,37 @@
   }
 
   // === Lightbox ===
-  canvasImage.addEventListener('click', () => {
-    if (currentImageBase64) {
-      lightboxImage.src = `data:image/png;base64,${currentImageBase64}`;
-      lightbox.classList.add('visible');
-      lightbox.style.display = 'flex';
-    }
-  });
+  if (canvasImage) {
+    canvasImage.addEventListener('click', () => {
+      if (currentImageBase64 && lightboxImage && lightbox) {
+        lightboxImage.src = `data:image/png;base64,${currentImageBase64}`;
+        lightbox.classList.add('visible');
+        lightbox.style.display = 'flex';
+      }
+    });
+  }
 
-  lightboxClose.addEventListener('click', () => {
-    lightbox.classList.remove('visible');
-    lightbox.style.display = 'none';
-  });
+  if (lightboxClose) {
+    lightboxClose.addEventListener('click', () => {
+      if (lightbox) {
+        lightbox.classList.remove('visible');
+        lightbox.style.display = 'none';
+      }
+    });
+  }
 
-  lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox) {
-      lightbox.classList.remove('visible');
-      lightbox.style.display = 'none';
-    }
-  });
+  if (lightbox) {
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        lightbox.classList.remove('visible');
+        lightbox.style.display = 'none';
+      }
+    });
+  }
 
   // === Event Listeners ===
-  generateBtn.addEventListener('click', generateImage);
-  editBtn.addEventListener('click', editImage);
+  if (generateBtn) generateBtn.addEventListener('click', generateImage);
+  if (editBtn) editBtn.addEventListener('click', editImage);
 
   // === Utilities ===
   function formatTimeAgo(date) {
