@@ -133,8 +133,8 @@
       modeEditBtn.classList.add('active');
       modeGenerateBtn.classList.remove('active');
       editImagesSection.classList.remove('hidden');
-      styleOptionsSection.classList.add('hidden');
-      selectionSummary.classList.add('hidden');
+      styleOptionsSection.classList.remove('hidden'); // Ahora lo mostramos en ambos
+      selectionSummary.classList.remove('hidden');   // Ahora lo mostramos en ambos
       descriptionLabel.textContent = '¿Qué cambios quieres hacer?';
       descriptionField.placeholder = 'Describe la edición: "Cambia el fondo por una playa", "Añade gafas de sol", "Fusiona el estilo de la imagen objetivo"...';
       generateBtn.innerHTML = '<i class="iconoir-edit"></i><span>Editar imagen</span>';
@@ -224,7 +224,7 @@
       '': 'Sin estilo', 'photographic': 'Fotográfico', 'digital-art': 'Digital Art',
       'corporate': 'Corporativo', 'minimalist': 'Minimalista', '3d-render': '3D Render',
       'flat-design': 'Flat Design', 'isometric': 'Isométrico',
-      'headshot-pro': 'Headshot Pro', 'silicon-valley': 'Silicon Valley', 'luxury-product': 'Producto Lujo'
+      'headshot-pro': 'Retrato Pro', 'silicon-valley': 'Corporativo Pro', 'luxury-product': 'Producto Lujo'
     };
     const colorLabels = {
       '': '', 'warm': 'Cálidos', 'cool': 'Fríos', 'corporate': 'Corporativo',

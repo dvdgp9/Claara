@@ -299,7 +299,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="style" value="headshot-pro" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-user text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Headshot Pro</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Retrato Pro</span>
                       </div>
                     </label>
 
@@ -307,7 +307,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="style" value="silicon-valley" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-bright-crown text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Silicon Valley</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Corporativo Pro</span>
                       </div>
                     </label>
 
