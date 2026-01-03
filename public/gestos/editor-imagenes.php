@@ -298,6 +298,74 @@ $headerDrawerId = 'gesture-history-drawer';
                 </label>
               </div>
             </details>
+
+            <!-- Acordeón: Composición -->
+            <details class="group">
+              <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <i class="iconoir-frame-select text-amber-500"></i> Composición
+                </span>
+                <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+              </summary>
+              <div class="pt-2 pb-1 grid grid-cols-2 gap-1.5">
+                <label class="cursor-pointer">
+                  <input type="radio" name="composition" value="" class="hidden peer" checked />
+                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
+                    <i class="iconoir-prohibition text-sm"></i>
+                    <span class="text-[10px] font-medium">Ninguno</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="composition" value="bokeh" class="hidden peer" />
+                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
+                    <i class="iconoir-focus text-sm"></i>
+                    <span class="text-[10px] font-medium">Bokeh</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="composition" value="closeup" class="hidden peer" />
+                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
+                    <i class="iconoir-zoom-in text-sm"></i>
+                    <span class="text-[10px] font-medium">Primer plano</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="composition" value="wide" class="hidden peer" />
+                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
+                    <i class="iconoir-zoom-out text-sm"></i>
+                    <span class="text-[10px] font-medium">Plano general</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="composition" value="above" class="hidden peer" />
+                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
+                    <i class="iconoir-arrow-down text-sm"></i>
+                    <span class="text-[10px] font-medium">Cenital</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="composition" value="below" class="hidden peer" />
+                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
+                    <i class="iconoir-arrow-up text-sm"></i>
+                    <span class="text-[10px] font-medium">Contrapicado</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="composition" value="macro" class="hidden peer" />
+                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
+                    <i class="iconoir-eye-alt text-sm"></i>
+                    <span class="text-[10px] font-medium">Macro</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="composition" value="negative-space" class="hidden peer" />
+                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
+                    <i class="iconoir-square text-sm"></i>
+                    <span class="text-[10px] font-medium">Espacio neg.</span>
+                  </div>
+                </label>
+              </div>
+            </details>
             
             <!-- Acordeón: Estilo -->
             <details class="group">
@@ -380,75 +448,7 @@ $headerDrawerId = 'gesture-history-drawer';
                 </label>
               </div>
             </details>
-            
-            <!-- Acordeón: Color -->
-            <details class="group">
-              <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
-                <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
-                  <i class="iconoir-color-filter text-amber-500"></i> Color
-                </span>
-                <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
-              </summary>
-              <div class="pt-2 pb-1 grid grid-cols-2 gap-1.5">
-                <label class="cursor-pointer">
-                  <input type="radio" name="color" value="" class="hidden peer" checked />
-                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-prohibition text-sm"></i>
-                    <span class="text-[10px] font-medium">Ninguno</span>
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="color" value="warm" class="hidden peer" />
-                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500"></div>
-                    <span class="text-[10px] font-medium">Cálidos</span>
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="color" value="cool" class="hidden peer" />
-                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500"></div>
-                    <span class="text-[10px] font-medium">Fríos</span>
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="color" value="corporate" class="hidden peer" />
-                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c]"></div>
-                    <span class="text-[10px] font-medium">Corporativo</span>
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="color" value="monochrome" class="hidden peer" />
-                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-slate-300 to-slate-600"></div>
-                    <span class="text-[10px] font-medium">Monocromo</span>
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="color" value="pastel" class="hidden peer" />
-                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-pink-200 to-purple-200"></div>
-                    <span class="text-[10px] font-medium">Pastel</span>
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="color" value="bw" class="hidden peer" />
-                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-black to-white"></div>
-                    <span class="text-[10px] font-medium">B/N</span>
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="color" value="vibrant" class="hidden peer" />
-                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-red-500 via-yellow-500 to-green-500"></div>
-                    <span class="text-[10px] font-medium">Vibrante</span>
-                  </div>
-                </label>
-              </div>
-            </details>
-            
+
             <!-- Acordeón: Iluminación -->
             <details class="group">
               <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
@@ -516,75 +516,75 @@ $headerDrawerId = 'gesture-history-drawer';
                 </label>
               </div>
             </details>
-            
-            <!-- Acordeón: Composición -->
+
+            <!-- Acordeón: Color -->
             <details class="group">
               <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
                 <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
-                  <i class="iconoir-frame-select text-amber-500"></i> Composición
+                  <i class="iconoir-color-filter text-amber-500"></i> Color
                 </span>
                 <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
               </summary>
               <div class="pt-2 pb-1 grid grid-cols-2 gap-1.5">
                 <label class="cursor-pointer">
-                  <input type="radio" name="composition" value="" class="hidden peer" checked />
+                  <input type="radio" name="color" value="" class="hidden peer" checked />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-prohibition text-sm"></i>
                     <span class="text-[10px] font-medium">Ninguno</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
-                  <input type="radio" name="composition" value="bokeh" class="hidden peer" />
+                  <input type="radio" name="color" value="warm" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-focus text-sm"></i>
-                    <span class="text-[10px] font-medium">Bokeh</span>
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500"></div>
+                    <span class="text-[10px] font-medium">Cálidos</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
-                  <input type="radio" name="composition" value="closeup" class="hidden peer" />
+                  <input type="radio" name="color" value="cool" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-zoom-in text-sm"></i>
-                    <span class="text-[10px] font-medium">Primer plano</span>
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500"></div>
+                    <span class="text-[10px] font-medium">Fríos</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
-                  <input type="radio" name="composition" value="wide" class="hidden peer" />
+                  <input type="radio" name="color" value="corporate" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-zoom-out text-sm"></i>
-                    <span class="text-[10px] font-medium">Plano general</span>
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c]"></div>
+                    <span class="text-[10px] font-medium">Corporativo</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
-                  <input type="radio" name="composition" value="above" class="hidden peer" />
+                  <input type="radio" name="color" value="monochrome" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-arrow-down text-sm"></i>
-                    <span class="text-[10px] font-medium">Cenital</span>
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-slate-300 to-slate-600"></div>
+                    <span class="text-[10px] font-medium">Monocromo</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
-                  <input type="radio" name="composition" value="below" class="hidden peer" />
+                  <input type="radio" name="color" value="pastel" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-arrow-up text-sm"></i>
-                    <span class="text-[10px] font-medium">Contrapicado</span>
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-pink-200 to-purple-200"></div>
+                    <span class="text-[10px] font-medium">Pastel</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
-                  <input type="radio" name="composition" value="macro" class="hidden peer" />
+                  <input type="radio" name="color" value="bw" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-eye-alt text-sm"></i>
-                    <span class="text-[10px] font-medium">Macro</span>
+                    <div class="w-4 h-4 rounded-full bg-gradient-r from-black to-white"></div>
+                    <span class="text-[10px] font-medium">B/N</span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
-                  <input type="radio" name="composition" value="negative-space" class="hidden peer" />
+                  <input type="radio" name="color" value="vibrant" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-square text-sm"></i>
-                    <span class="text-[10px] font-medium">Espacio neg.</span>
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-red-500 via-yellow-500 to-green-500"></div>
+                    <span class="text-[10px] font-medium">Vibrante</span>
                   </div>
                 </label>
               </div>
             </details>
-            
+          </div>  
           </div><!-- /controles scroll -->
         </aside>
         
