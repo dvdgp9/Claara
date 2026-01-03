@@ -101,7 +101,12 @@ class OpenRouterClient {
             
             // Agregar texto
             if (!empty($m['content'])) {
-                if (!empty($content)) {
+                if (is_array($m['content'])) {
+                    // Si ya es un array (multimodal), lo añadimos tal cual
+                    foreach ($m['content'] as $item) {
+                        $content[] = $item;
+                    }
+                } else if (!empty($content)) {
                     // Si hay archivo, usar formato array de contenido
                     $content[] = [
                         'type' => 'text',

@@ -101,20 +101,20 @@ $headerDrawerId = 'gesture-history-drawer';
               <div class="flex items-center gap-2">
                 <!-- Selector de Motor -->
                 <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 mr-2">
-                  <button type="button" id="provider-qwen" class="px-4 py-2 rounded-lg text-sm font-medium transition-all active" data-provider="qwen">
+                  <button type="button" id="provider-qwen" class="provider-toggle-btn px-4 py-2 rounded-lg text-sm font-medium transition-all active" data-provider="qwen">
                     Qwen
                   </button>
-                  <button type="button" id="provider-nanobanana" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" data-provider="nanobanana">
+                  <button type="button" id="provider-nanobanana" class="provider-toggle-btn px-4 py-2 rounded-lg text-sm font-medium transition-all" data-provider="nanobanana">
                     Nanobanana
                   </button>
                   <input type="hidden" name="provider" id="current-provider" value="qwen" />
                 </div>
 
                 <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
-                  <button type="button" id="mode-generate" class="px-4 py-2 rounded-lg text-sm font-medium transition-all active">
+                  <button type="button" id="mode-generate" class="mode-toggle-btn px-4 py-2 rounded-lg text-sm font-medium transition-all active">
                     Generar
                   </button>
-                  <button type="button" id="mode-edit" class="px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                  <button type="button" id="mode-edit" class="mode-toggle-btn px-4 py-2 rounded-lg text-sm font-medium transition-all">
                     Editar
                   </button>
                   <input type="hidden" name="mode" id="current-mode" value="generate" />
@@ -598,6 +598,15 @@ $headerDrawerId = 'gesture-history-drawer';
   
   <!-- Estilos adicionales para los selectores -->
   <style>
+    .option-pill.active {
+      @apply border-amber-500 bg-amber-50 text-amber-700 shadow-sm;
+    }
+    .mode-toggle-btn.active {
+      @apply bg-white text-slate-900 shadow-sm;
+    }
+    .provider-toggle-btn.active {
+      @apply bg-white text-slate-900 shadow-sm;
+    }
     .option-tab.active {
       color: #f59e0b;
       border-bottom-color: #f59e0b;
