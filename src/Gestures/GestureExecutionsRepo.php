@@ -66,7 +66,7 @@ class GestureExecutionsRepo
      */
     public function listByUserAndType(int $userId, string $gestureType, int $limit = 20): array
     {
-        $sql = "SELECT id, title, content_type, business_line, is_favorite, created_at
+        $sql = "SELECT id, title, model, content_type, business_line, is_favorite, created_at
                 FROM gesture_executions 
                 WHERE user_id = :user_id AND gesture_type = :gesture_type
                 ORDER BY created_at DESC
