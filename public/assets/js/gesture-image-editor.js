@@ -312,13 +312,9 @@
 
     if (summaryText) {
       if (parts.length > 0) {
-        summaryText.innerHTML = parts.join(' <span class="text-slate-300 mx-1">·</span> ');
+        summaryText.textContent = parts.join(' · ');
       } else {
         summaryText.textContent = 'Decisión del modelo (IA)';
-      }
-      // Asegurar que el modal móvil se refresque si está abierto
-      if (typeof refreshModalVisuals === 'function') {
-        refreshModalVisuals();
       }
     }
   }

@@ -78,24 +78,24 @@ $headerDrawerId = 'gesture-history-drawer';
           <!-- Controles superiores: Resumen + Prompt + Controles -->
           <div class="shrink-0 mb-4 space-y-3">
             <!-- Fila 1: Resumen de parámetros -->
-            <div class="px-4 py-2.5 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
-              <div class="flex items-center justify-between mb-1.5">
-                <div class="flex items-center gap-2 text-sm">
-                  <i class="iconoir-frame text-slate-600"></i>
-                  <span class="font-medium text-slate-700">Parámetros:</span>
+            <div class="px-3 py-2 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-xs text-slate-600 shrink-0">
+                  <i class="iconoir-frame"></i>
+                  <span class="font-medium">Parámetros:</span>
                 </div>
                 <!-- Desktop hint -->
                 <div class="text-xs text-slate-500 hidden lg:block">
                   Ajusta en el panel derecho →
                 </div>
                 <!-- Mobile button to open parameters -->
-                <button type="button" id="open-params-mobile" class="lg:hidden px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors flex items-center gap-1.5">
+                <button type="button" id="open-params-mobile" class="lg:hidden px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors flex items-center gap-1 shrink-0">
                   <i class="iconoir-settings"></i>
                   Ajustar
                 </button>
               </div>
-              <!-- Parámetros seleccionados (segunda línea) -->
-              <div id="summary-text" class="text-sm text-slate-600 pl-6">Formato: 1:1</div>
+              <!-- Valores seleccionados en línea separada -->
+              <div id="summary-text" class="mt-1.5 text-xs text-slate-500 leading-relaxed">Decisión del modelo (IA)</div>
             </div>
             
             <!-- Fila 2: Prompt principal -->
@@ -156,47 +156,42 @@ $headerDrawerId = 'gesture-history-drawer';
             </div>
             
             <!-- Sección imágenes (modo edición) -->
-            <div id="edit-source-section" class="hidden absolute inset-0 flex items-center justify-center p-8">
-              <div class="flex flex-col lg:flex-row gap-6 items-center">
+            <div id="edit-source-section" class="hidden absolute inset-0 flex items-center justify-center p-4">
+              <div class="flex flex-row gap-3 sm:gap-6 items-start">
                 <!-- Imagen fuente -->
-                <div class="text-center">
-                  <div id="source-image-dropzone" class="relative w-40 h-40 sm:w-48 sm:h-48 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer">
+                <div class="text-center flex-1 max-w-[140px] sm:max-w-[200px]">
+                  <div id="source-image-dropzone" class="relative aspect-square w-full border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer">
                     <input type="file" id="source-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <div id="source-image-placeholder" class="flex flex-col items-center gap-3">
-                      <i class="iconoir-upload text-4xl text-slate-400"></i>
-                      <span class="text-sm font-medium text-slate-700">Imagen fuente</span>
-                      <span class="text-xs text-slate-400">Arrastra o haz clic</span>
+                    <div id="source-image-placeholder" class="flex flex-col items-center gap-2 p-2">
+                      <i class="iconoir-upload text-2xl sm:text-3xl text-slate-400"></i>
+                      <span class="text-xs sm:text-sm font-medium text-slate-700">Imagen fuente</span>
+                      <span class="text-[10px] sm:text-xs text-slate-400">Arrastra o haz clic</span>
                     </div>
-                    <img id="source-image-preview" src="" alt="Imagen fuente" class="hidden w-full h-full object-contain rounded-2xl" />
-                    <button type="button" id="source-image-clear" class="hidden absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 shadow-lg">
-                      <i class="iconoir-xmark"></i>
+                    <img id="source-image-preview" src="" alt="Imagen fuente" class="hidden w-full h-full object-contain rounded-xl" />
+                    <button type="button" id="source-image-clear" class="hidden absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 shadow-lg">
+                      <i class="iconoir-xmark text-xs"></i>
                     </button>
                   </div>
-                  <p class="mt-2 text-xs font-medium text-slate-600">Imagen a editar</p>
-                  <p class="text-xs text-slate-400">(requerida)</p>
-                </div>
-                
-                <!-- Plus icon -->
-                <div class="hidden lg:block text-slate-300">
-                  <i class="iconoir-plus text-3xl"></i>
+                  <p class="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-600">Imagen a editar</p>
+                  <p class="text-[10px] text-slate-400">(requerida)</p>
                 </div>
                 
                 <!-- Imagen objetivo (opcional) -->
-                <div class="text-center">
-                  <div id="target-image-dropzone" class="relative w-40 h-40 sm:w-48 sm:h-48 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-purple-400 hover:bg-purple-50/30 transition-all cursor-pointer">
+                <div class="text-center flex-1 max-w-[140px] sm:max-w-[200px]">
+                  <div id="target-image-dropzone" class="relative aspect-square w-full border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center hover:border-purple-400 hover:bg-purple-50/30 transition-all cursor-pointer">
                     <input type="file" id="target-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <div id="target-image-placeholder" class="flex flex-col items-center gap-3">
-                      <i class="iconoir-add-media-image text-4xl text-slate-400"></i>
-                      <span class="text-sm font-medium text-slate-700">Imagen referencia</span>
-                      <span class="text-xs text-slate-400">Arrastra o haz clic</span>
+                    <div id="target-image-placeholder" class="flex flex-col items-center gap-2 p-2">
+                      <i class="iconoir-add-media-image text-2xl sm:text-3xl text-slate-400"></i>
+                      <span class="text-xs sm:text-sm font-medium text-slate-700">Referencia</span>
+                      <span class="text-[10px] sm:text-xs text-slate-400">Arrastra o haz clic</span>
                     </div>
-                    <img id="target-image-preview" src="" alt="Imagen referencia" class="hidden w-full h-full object-contain rounded-2xl" />
-                    <button type="button" id="target-image-clear" class="hidden absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 shadow-lg">
-                      <i class="iconoir-xmark"></i>
+                    <img id="target-image-preview" src="" alt="Imagen referencia" class="hidden w-full h-full object-contain rounded-xl" />
+                    <button type="button" id="target-image-clear" class="hidden absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 shadow-lg">
+                      <i class="iconoir-xmark text-xs"></i>
                     </button>
                   </div>
-                  <p class="mt-2 text-xs font-medium text-slate-600">Imagen objetivo</p>
-                  <p class="text-xs text-slate-400">(opcional, para mezclar)</p>
+                  <p class="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-600">Imagen objetivo</p>
+                  <p class="text-[10px] text-slate-400">(opcional)</p>
                 </div>
               </div>
             </div>
@@ -684,49 +679,43 @@ $headerDrawerId = 'gesture-history-drawer';
       // Sincronizar contenido del panel desktop al modal móvil
       let modalInitialized = false;
       
+      // Función para sincronizar el estado visual de todos los radios checked
+      function syncAllRadioStates() {
+        // Obtener todos los radios checked del desktop
+        const checkedRadios = desktopParamsPanel.querySelectorAll('input[type="radio"]:checked');
+        
+        checkedRadios.forEach(desktopRadio => {
+          const modalRadio = paramsModalContent.querySelector(`input[name="${desktopRadio.name}"][value="${desktopRadio.value}"]`);
+          if (modalRadio) {
+            modalRadio.checked = true;
+          }
+        });
+      }
+      
       function syncParamsContent() {
         if (desktopParamsPanel && paramsModalContent) {
+          // Solo copiar HTML la primera vez
           if (!modalInitialized) {
             paramsModalContent.innerHTML = desktopParamsPanel.innerHTML;
             modalInitialized = true;
             
-            // Re-vincular eventos change en el modal para que actualicen desktop
+            // Añadir listeners a los radios del modal para sincronizar con desktop
             paramsModalContent.querySelectorAll('input[type="radio"]').forEach(radio => {
               radio.addEventListener('change', () => {
+                // Encontrar el radio correspondiente en desktop y marcarlo
                 const desktopRadio = desktopParamsPanel.querySelector(`input[name="${radio.name}"][value="${radio.value}"]`);
                 if (desktopRadio) {
                   desktopRadio.checked = true;
+                  // Disparar evento change en desktop para que se actualice el resumen
                   desktopRadio.dispatchEvent(new Event('change', { bubbles: true }));
-                  // Después de que desktop se actualiza, refrescamos visualmente el modal
-                  refreshModalVisuals();
                 }
               });
             });
           }
-          refreshModalVisuals();
+          
+          // SIEMPRE sincronizar el estado de todos los radios al abrir
+          syncAllRadioStates();
         }
-      }
-
-      function refreshModalVisuals() {
-        if (!paramsModalContent || !desktopParamsPanel) return;
-        
-        // Sincronizar estado checked de desktop a modal
-        desktopParamsPanel.querySelectorAll('input[type="radio"]').forEach(desktopRadio => {
-          const modalRadio = paramsModalContent.querySelector(`input[name="${desktopRadio.name}"][value="${desktopRadio.value}"]`);
-          if (modalRadio) {
-            modalRadio.checked = desktopRadio.checked;
-            
-            // Actualizar clases visuales en el modal
-            const pill = modalRadio.closest('.format-pill, .style-pill');
-            if (pill) {
-              if (modalRadio.checked) {
-                pill.classList.add('active');
-              } else {
-                pill.classList.remove('active');
-              }
-            }
-          }
-        });
       }
       
       // Abrir modal
