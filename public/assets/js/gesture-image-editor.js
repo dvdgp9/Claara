@@ -44,6 +44,10 @@
   const sourceImagePreview = document.getElementById('source-image-preview');
   const sourceImagePlaceholder = document.getElementById('source-image-placeholder');
   const sourceImageClear = document.getElementById('source-image-clear');
+  const targetImageInput = document.getElementById('target-image-input');
+  const targetImagePreview = document.getElementById('target-image-preview');
+  const targetImagePlaceholder = document.getElementById('target-image-placeholder');
+  const targetImageClear = document.getElementById('target-image-clear');
 
   // Lightbox
   const lightbox = document.getElementById('image-lightbox');
@@ -52,6 +56,7 @@
 
   // === State ===
   let sourceImageBase64 = null;
+  let targetImageBase64 = null;
   let currentImageBase64 = null;
   let lastPrompt = '';
   let lastInputData = {};
@@ -226,6 +231,48 @@
     sourceImageClear?.classList.add('hidden');
   }
 
+  function setupTargetImageUpload() {
+    if (!targetImageInput) return;
+
+    targetImageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecciona una imagen válida');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        targetImageBase64 = ev.target.result.split(',')[1];
+        if (targetImagePreview) {
+          targetImagePreview.src = ev.target.result;
+          targetImagePreview.classList.remove('hidden');
+        }
+        targetImagePlaceholder?.classList.add('hidden');
+        targetImageClear?.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    targetImageClear?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearTargetImage();
+    });
+  }
+
+  function clearTargetImage() {
+    targetImageBase64 = null;
+    if (targetImageInput) targetImageInput.value = '';
+    if (targetImagePreview) {
+      targetImagePreview.src = '';
+      targetImagePreview.classList.add('hidden');
+    }
+    targetImagePlaceholder?.classList.remove('hidden');
+    targetImageClear?.classList.add('hidden');
+  }
+
   function setSourceImageFromBase64(base64) {
     sourceImageBase64 = base64;
     if (sourceImagePreview) {
@@ -237,6 +284,7 @@
   }
 
   setupSourceImageUpload();
+  setupTargetImageUpload();
 
   // === Update Summary ===
   function updateSummary() {
@@ -246,7 +294,7 @@
     const lighting = document.querySelector('input[name="lighting"]:checked')?.value || '';
     const composition = document.querySelector('input[name="composition"]:checked')?.value || '';
 
-    const parts = [format];
+    const parts = [`Formato: ${format}`];
 
     const labels = {
       style: { 'photographic': 'Foto', 'digital-art': 'Digital', 'corporate': 'Corp', 'minimalist': 'Min', '3d-render': '3D', 'flat-design': 'Flat', 'isometric': 'Iso', 'headshot-pro': 'Retrato', 'luxury-product': 'Producto' },
@@ -336,7 +384,7 @@
       inputData = { mode: 'generate', description, provider: currentProviderInput?.value || 'qwen', ...options };
     } else {
       prompt = description;
-      inputData = { mode: 'edit', description, provider: currentProviderInput?.value || 'qwen', source_image: sourceImageBase64 };
+      inputData = { mode: 'edit', description, provider: currentProviderInput?.value || 'qwen', source_image: sourceImageBase64, target_image: targetImageBase64 || null };
     }
 
     lastPrompt = prompt;
@@ -633,12 +681,14 @@
     // Clear state
     currentImageBase64 = null;
     sourceImageBase64 = null;
+    targetImageBase64 = null;
     lastPrompt = '';
     lastInputData = {};
 
     // Clear form
     if (descriptionField) descriptionField.value = '';
     clearSourceImage();
+    clearTargetImage();
 
     // Reset all radios to defaults
     document.querySelectorAll('input[name="format"][value="1:1"]').forEach(r => r.checked = true);

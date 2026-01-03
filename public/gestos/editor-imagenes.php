@@ -77,16 +77,16 @@ $headerDrawerId = 'gesture-history-drawer';
           
           <!-- Controles superiores: Resumen + Prompt + Controles -->
           <div class="shrink-0 mb-4 space-y-3">
-            <!-- Fila 1: Resumen de configuración -->
-            <div class="px-4 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/50 rounded-xl">
+            <!-- Fila 1: Resumen de parámetros -->
+            <div class="px-4 py-2.5 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2 text-sm">
-                  <i class="iconoir-settings text-amber-600"></i>
-                  <span class="font-medium text-amber-800">Configuración:</span>
-                  <span id="summary-text" class="text-amber-700">1:1</span>
+                  <i class="iconoir-frame text-slate-600"></i>
+                  <span class="font-medium text-slate-700">Parámetros:</span>
+                  <span id="summary-text" class="text-slate-600">Formato: 1:1</span>
                 </div>
-                <div class="text-xs text-amber-600 hidden lg:block">
-                  Ajusta los parámetros en el panel derecho →
+                <div class="text-xs text-slate-500 hidden lg:block">
+                  Ajusta en el panel derecho →
                 </div>
               </div>
             </div>
@@ -146,22 +146,49 @@ $headerDrawerId = 'gesture-history-drawer';
               <p class="text-sm text-slate-500 max-w-sm">Describe lo que quieres crear y ajusta los parámetros en el panel derecho</p>
             </div>
             
-            <!-- Sección imagen fuente (modo edición) -->
-            <div id="edit-source-section" class="hidden absolute inset-0 flex items-center justify-center">
-              <div class="text-center">
-                <div id="source-image-dropzone" class="relative w-64 h-64 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer">
-                  <input type="file" id="source-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                  <div id="source-image-placeholder" class="flex flex-col items-center gap-3">
-                    <i class="iconoir-upload text-4xl text-slate-400"></i>
-                    <span class="text-sm text-slate-500">Sube la imagen a editar</span>
-                    <span class="text-xs text-slate-400">Arrastra o haz clic</span>
+            <!-- Sección imágenes (modo edición) -->
+            <div id="edit-source-section" class="hidden absolute inset-0 flex items-center justify-center p-8">
+              <div class="flex flex-col lg:flex-row gap-6 items-center">
+                <!-- Imagen fuente -->
+                <div class="text-center">
+                  <div id="source-image-dropzone" class="relative w-64 h-64 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer">
+                    <input type="file" id="source-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <div id="source-image-placeholder" class="flex flex-col items-center gap-3">
+                      <i class="iconoir-upload text-4xl text-slate-400"></i>
+                      <span class="text-sm font-medium text-slate-700">Imagen fuente</span>
+                      <span class="text-xs text-slate-400">Arrastra o haz clic</span>
+                    </div>
+                    <img id="source-image-preview" src="" alt="Imagen fuente" class="hidden w-full h-full object-contain rounded-2xl" />
+                    <button type="button" id="source-image-clear" class="hidden absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 shadow-lg">
+                      <i class="iconoir-xmark"></i>
+                    </button>
                   </div>
-                  <img id="source-image-preview" src="" alt="Imagen fuente" class="hidden w-full h-full object-contain rounded-2xl" />
-                  <button type="button" id="source-image-clear" class="hidden absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 shadow-lg">
-                    <i class="iconoir-xmark"></i>
-                  </button>
+                  <p class="mt-2 text-xs font-medium text-slate-600">Imagen a editar</p>
+                  <p class="text-xs text-slate-400">(requerida)</p>
                 </div>
-                <p class="mt-3 text-xs text-slate-500">Sube una imagen para editarla con IA</p>
+                
+                <!-- Plus icon -->
+                <div class="hidden lg:block text-slate-300">
+                  <i class="iconoir-plus text-3xl"></i>
+                </div>
+                
+                <!-- Imagen objetivo (opcional) -->
+                <div class="text-center">
+                  <div id="target-image-dropzone" class="relative w-64 h-64 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-purple-400 hover:bg-purple-50/30 transition-all cursor-pointer">
+                    <input type="file" id="target-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <div id="target-image-placeholder" class="flex flex-col items-center gap-3">
+                      <i class="iconoir-add-media-image text-4xl text-slate-400"></i>
+                      <span class="text-sm font-medium text-slate-700">Imagen referencia</span>
+                      <span class="text-xs text-slate-400">Arrastra o haz clic</span>
+                    </div>
+                    <img id="target-image-preview" src="" alt="Imagen referencia" class="hidden w-full h-full object-contain rounded-2xl" />
+                    <button type="button" id="target-image-clear" class="hidden absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 shadow-lg">
+                      <i class="iconoir-xmark"></i>
+                    </button>
+                  </div>
+                  <p class="mt-2 text-xs font-medium text-slate-600">Imagen objetivo</p>
+                  <p class="text-xs text-slate-400">(opcional, para mezclar)</p>
+                </div>
               </div>
             </div>
             
