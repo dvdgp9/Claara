@@ -756,6 +756,89 @@ El sistema construirá prompts estructurados combinando:
 
 ---
 
+## Feature: Rediseño UX Editor de Imágenes
+
+### Motivación
+La UX actual del editor de imágenes tiene problemas:
+1. **Scroll excesivo**: Hay que desplazar para ver la imagen generada
+2. **Sin edición iterativa**: No se pueden solicitar ediciones a la imagen recibida
+3. **Controles dispersos**: Formulario largo que dificulta el flujo de trabajo
+
+### Propuesta de diseño (layout 3 columnas)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    HEADER (título + botones)                    │
+├──────────┬────────────────────────────────┬─────────────────────┤
+│          │       CONTROLES SUPERIORES     │                     │
+│          │   (prompt + modo + provider)   │                     │
+│ HISTORIAL│────────────────────────────────│   CONTROLES DERECHA │
+│          │                                │    (estilo, color,  │
+│          │       IMAGEN CENTRAL           │     luz, composic.) │
+│          │      (max-height, centrada)    │                     │
+│          │────────────────────────────────│                     │
+│          │     CONTROLES INFERIORES       │                     │
+│          │ (acciones: regenerar, editar)  │                     │
+└──────────┴────────────────────────────────┴─────────────────────┘
+```
+
+### Características clave
+
+1. **Imagen siempre visible**: Centro de la interfaz, sin scroll
+2. **Edición iterativa**: Campo de prompt debajo de la imagen para pedir cambios
+3. **Controles compactos**: Selectores en columna derecha (colapsables)
+4. **Historial accesible**: Columna izquierda fija
+5. **Flujo natural**: Generar → Ver → Editar → Regenerar
+
+### UX de edición de imagen generada
+- Al generar imagen, se muestra botón "Editar esta imagen"
+- Al hacer clic, la imagen generada se convierte en imagen fuente
+- El modo cambia automáticamente a "Editar"
+- El usuario escribe los cambios deseados y regenera
+
+### Archivos a crear/modificar
+- **NUEVO**: `/public/gestos/editor-imagenes-v2.php` - Nueva UI
+- **NUEVO**: `/public/assets/js/gesture-image-editor-v2.js` - Lógica nueva
+- **RENOMBRAR**: `editor-imagenes.php` → `editor-imagenes-old.php`
+- **RENOMBRAR**: `gesture-image-editor.js` → `gesture-image-editor-old.js`
+
+### Tareas de implementación
+
+1. [x] **Crear estructura HTML del nuevo layout**
+   - Layout 3 columnas: historial | main | controles
+   - Imagen centrada con aspect-ratio preservado
+   - Header con título y acciones principales
+   - ✅ Completado: `editor-imagenes.php`
+
+2. [x] **Implementar panel de controles derecho**
+   - Acordeones para: Formato, Estilo, Color, Luz, Composición
+   - Compacto y colapsable
+   - ✅ Completado: Panel lateral con 5 acordeones
+
+3. [x] **Implementar zona central con imagen**
+   - Placeholder cuando no hay imagen
+   - Imagen generada con lightbox
+   - Acciones flotantes sobre imagen (editar, regenerar, descargar, fullscreen)
+   - ✅ Completado: Imagen centrada sin scroll
+
+4. [x] **Implementar flujo de edición iterativa**
+   - Botón "Editar esta imagen" sobre imagen generada
+   - Auto-switch a modo edición
+   - Imagen generada → imagen fuente
+   - ✅ Completado: `editThisImageBtn` implementado
+
+5. [x] **Migrar lógica JS**
+   - Reutilizar prompts y llamadas API
+   - Añadir lógica de edición iterativa
+   - ✅ Completado: `gesture-image-editor.js`
+
+6. [ ] **Testing y ajustes**
+   - Responsive (móvil: layout vertical)
+   - Verificar flujo completo
+   - Pendiente: Usuario debe probar
+
+---
+
 ## Feature: Podcast en Background (generación asíncrona)
 
 ### Motivación
