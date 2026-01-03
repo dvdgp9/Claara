@@ -494,7 +494,8 @@
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-media-image text-xl text-slate-400"></i>
           </div>
-          <p class="text-sm text-slate-500">Sin imágenes aún</p>
+          <p class="text-sm text-slate-500">Aún no has generado imágenes</p>
+          <p class="text-xs text-slate-400 mt-1">Usa el formulario para empezar</p>
         </div>
       `;
       return;
@@ -503,21 +504,30 @@
     historyList.innerHTML = items.map(item => {
       const timeAgo = formatTimeAgo(new Date(item.created_at));
       const description = item.input_data?.description || item.title || 'Imagen generada';
-      const truncatedDesc = description.length > 50 ? description.substring(0, 50) + '...' : description;
+      const mode = item.input_data?.mode || 'generate';
+      const provider = item.input_data?.provider || 'qwen';
+      
+      // Provider badge colors
+      const providerColors = {
+        'qwen': 'bg-purple-100 text-purple-700',
+        'nanobanana': 'bg-blue-100 text-blue-700',
+        'flux': 'bg-emerald-100 text-emerald-700'
+      };
+      const providerClass = providerColors[provider] || 'bg-slate-100 text-slate-600';
+      const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
 
       return `
-        <div class="history-item w-full p-4 hover:bg-slate-50/80 border-b border-slate-100/50 transition-all group flex items-start gap-3 cursor-pointer" data-id="${item.id}">
-          <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 group-hover:bg-amber-100 transition-colors">
-            <i class="iconoir-media-image text-amber-500 text-lg"></i>
-          </div>
-          <div class="flex-1 min-w-0 history-item-main py-0.5">
-            <p class="text-sm font-semibold text-slate-700 leading-snug group-hover:text-amber-700 transition-colors">${escapeHtml(truncatedDesc)}</p>
+        <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2" data-id="${item.id}">
+          <i class="iconoir-media-image text-amber-500 mt-0.5"></i>
+          <div class="flex-1 min-w-0 cursor-pointer history-item-main">
+            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-amber-700">${escapeHtml(description)}</p>
             <div class="flex items-center gap-2 mt-1">
-              <span class="text-[11px] font-medium text-slate-400">${timeAgo}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded ${providerClass}">${providerLabel}</span>
+              <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-all text-slate-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50" data-id="${item.id}" title="Eliminar">
-            <i class="iconoir-trash text-sm"></i>
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" data-id="${item.id}" title="Eliminar">
+            <i class="iconoir-trash"></i>
           </button>
         </div>
       `;
@@ -533,7 +543,8 @@
     historyList.querySelectorAll('.history-item-delete').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        deleteExecution(btn.dataset.id);
+        const id = btn.dataset.id;
+        deleteExecution(id);
       });
     });
   }
@@ -654,10 +665,10 @@
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'ahora';
-    if (diffMins < 60) return `${diffMins}m`;
-    if (diffHours < 24) return `${diffHours}h`;
+    if (diffMins < 60) return `hace ${diffMins} min`;
+    if (diffHours < 24) return `hace ${diffHours}h`;
     if (diffDays === 1) return 'ayer';
-    if (diffDays < 7) return `${diffDays}d`;
+    if (diffDays < 7) return `hace ${diffDays} días`;
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   }
 

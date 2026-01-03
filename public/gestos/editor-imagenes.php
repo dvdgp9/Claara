@@ -37,10 +37,10 @@ $headerDrawerId = 'gesture-history-drawer';
     <?php include __DIR__ . '/../includes/left-tabs.php'; ?>
     
     <!-- Sidebar de historial (solo desktop) -->
-    <aside id="history-sidebar" class="hidden lg:flex w-72 glass-strong border-r border-slate-200/50 flex-col shrink-0">
+    <aside id="history-sidebar" class="hidden lg:flex w-64 glass-strong border-r border-slate-200/50 flex-col shrink-0">
       <div class="p-4 border-b border-slate-200/50">
         <div class="flex items-center justify-between">
-          <h2 class="font-bold text-slate-800 flex items-center gap-2 text-base">
+          <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-amber-500"></i>
             Historial
           </h2>
@@ -75,10 +75,31 @@ $headerDrawerId = 'gesture-history-drawer';
         <!-- Zona central: imagen + controles superiores/inferiores -->
         <div class="flex-1 flex flex-col overflow-hidden p-4 lg:p-6">
           
-          <!-- Controles superiores: Prompt + Modo + Provider -->
+          <!-- Controles superiores: Resumen + Prompt + Controles -->
           <div class="shrink-0 mb-4 space-y-3">
-            <!-- Fila 1: Modo y Provider -->
-            <div class="flex flex-wrap items-center gap-3">
+            <!-- Fila 1: Resumen de configuración -->
+            <div class="px-4 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/50 rounded-xl">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 text-sm">
+                  <i class="iconoir-settings text-amber-600"></i>
+                  <span class="font-medium text-amber-800">Configuración:</span>
+                  <span id="summary-text" class="text-amber-700">1:1</span>
+                </div>
+                <div class="text-xs text-amber-600 hidden lg:block">
+                  Ajusta los parámetros en el panel derecho →
+                </div>
+              </div>
+            </div>
+            
+            <!-- Fila 2: Prompt principal -->
+            <div class="flex-1 relative">
+              <textarea id="image-description" rows="2" 
+                class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white/80 text-sm"
+                placeholder="Describe la imagen que quieres crear..."></textarea>
+            </div>
+            
+            <!-- Fila 3: Modo, Provider y Botón -->
+            <div class="flex flex-wrap items-center gap-2">
               <!-- Toggle Modo -->
               <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
                 <button type="button" id="mode-generate" class="mode-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active">
@@ -101,22 +122,16 @@ $headerDrawerId = 'gesture-history-drawer';
                   <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span>FLUX
                 </button>
               </div>
+              
+              <!-- Botón generar -->
+              <button type="button" id="generate-image-btn" 
+                class="ml-auto px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                <i class="iconoir-sparks"></i>
+                <span>Generar</span>
+              </button>
+              
               <input type="hidden" id="current-mode" value="generate" />
               <input type="hidden" id="current-provider" value="qwen" />
-            </div>
-            
-            <!-- Fila 2: Prompt principal -->
-            <div class="flex gap-3 items-stretch">
-              <div class="flex-1 relative">
-                <textarea id="image-description" rows="2" 
-                  class="w-full border-2 border-slate-200 rounded-2xl px-5 py-4 pr-12 focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all resize-none bg-white/90 text-base leading-relaxed"
-                  placeholder="Describe la imagen que quieres crear..."></textarea>
-              </div>
-              <button type="button" id="generate-image-btn" 
-                class="shrink-0 px-8 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 min-w-[140px]">
-                <i class="iconoir-sparks text-xl"></i>
-                <span class="hidden sm:inline">Generar</span>
-              </button>
             </div>
           </div>
           
@@ -194,23 +209,15 @@ $headerDrawerId = 'gesture-history-drawer';
         </div><!-- /zona central -->
         
         <!-- Panel derecho: Controles de estilo (solo desktop) -->
-        <aside id="controls-panel" class="hidden lg:flex w-80 glass-strong border-l border-slate-200/50 flex-col shrink-0 overflow-hidden">
-          <div class="p-4 border-b border-slate-200/50 bg-slate-50/50">
-            <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
+        <aside id="controls-panel" class="hidden lg:flex w-72 glass-strong border-l border-slate-200/50 flex-col shrink-0 overflow-hidden">
+          <div class="p-4 border-b border-slate-200/50">
+            <h3 class="font-semibold text-slate-800 flex items-center gap-2">
               <i class="iconoir-settings text-amber-500"></i>
               Parámetros
             </h3>
           </div>
-
-          <!-- Resumen de selección (arriba) -->
-          <div class="p-4 border-b border-amber-200/30 bg-amber-50/40">
-            <div class="flex flex-col gap-1">
-              <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Configuración actual</span>
-              <span id="summary-text" class="text-xs font-semibold text-amber-800 leading-snug">1:1</span>
-            </div>
-          </div>
           
-          <div class="flex-1 overflow-auto p-4 space-y-4">
+          <div class="flex-1 overflow-auto p-4 space-y-3">
             <!-- Acordeón: Formato -->
             <details class="group" open>
               <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
@@ -570,19 +577,8 @@ $headerDrawerId = 'gesture-history-drawer';
     .format-pill.active, .format-pill:has(input:checked),
     .style-pill.active, .style-pill:has(input:checked) {
       border-color: #f59e0b !important;
-      background: rgba(245, 158, 11, 0.08) !important;
-      color: #b45309 !important;
-      box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
-    }
-    
-    .format-pill, .style-pill {
-      transition: all 0.2s ease;
-      border-width: 1.5px;
-    }
-
-    .format-pill:hover, .style-pill:hover {
-      border-color: #fbbf24;
-      background: rgba(245, 158, 11, 0.03);
+      background: rgba(245, 158, 11, 0.1);
+      color: #b45309;
     }
     
     .mode-toggle-btn {
@@ -593,13 +589,7 @@ $headerDrawerId = 'gesture-history-drawer';
     .mode-toggle-btn.active {
       background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%) !important;
       color: white !important;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
-      transform: translateY(-1px);
-    }
-    
-    .mode-toggle-btn:not(.active):hover {
-      background: rgba(245, 158, 11, 0.05);
-      color: #d97706;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
     }
     
     .provider-toggle-btn {
