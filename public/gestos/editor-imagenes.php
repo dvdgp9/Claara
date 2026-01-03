@@ -85,9 +85,15 @@ $headerDrawerId = 'gesture-history-drawer';
                   <span class="font-medium text-slate-700">Parámetros:</span>
                   <span id="summary-text" class="text-slate-600">Formato: 1:1</span>
                 </div>
+                <!-- Desktop hint -->
                 <div class="text-xs text-slate-500 hidden lg:block">
                   Ajusta en el panel derecho →
                 </div>
+                <!-- Mobile button to open parameters -->
+                <button type="button" id="open-params-mobile" class="lg:hidden px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors flex items-center gap-1.5">
+                  <i class="iconoir-settings"></i>
+                  Ajustar
+                </button>
               </div>
             </div>
             
@@ -99,33 +105,35 @@ $headerDrawerId = 'gesture-history-drawer';
             </div>
             
             <!-- Fila 3: Modo, Provider y Botón -->
-            <div class="flex flex-wrap items-center gap-2">
-              <!-- Toggle Modo -->
-              <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                <button type="button" id="mode-generate" class="mode-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active">
-                  <i class="iconoir-sparks mr-1"></i>Generar
-                </button>
-                <button type="button" id="mode-edit" class="mode-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
-                  <i class="iconoir-edit mr-1"></i>Editar
-                </button>
-              </div>
-              
-              <!-- Toggle Provider -->
-              <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                <button type="button" id="provider-qwen" class="provider-toggle-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all active" data-provider="qwen">
-                  <span class="w-2 h-2 rounded-full bg-purple-500 inline-block mr-1"></span>Qwen
-                </button>
-                <button type="button" id="provider-nanobanana" class="provider-toggle-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all" data-provider="nanobanana">
-                  <span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-1"></span>Nanobanana
-                </button>
-                <button type="button" id="provider-flux" class="provider-toggle-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all" data-provider="flux">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span>FLUX
-                </button>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Toggle Modo -->
+                <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                  <button type="button" id="mode-generate" class="mode-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active">
+                    <i class="iconoir-sparks mr-1"></i>Generar
+                  </button>
+                  <button type="button" id="mode-edit" class="mode-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                    <i class="iconoir-edit mr-1"></i>Editar
+                  </button>
+                </div>
+                
+                <!-- Toggle Provider -->
+                <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                  <button type="button" id="provider-qwen" class="provider-toggle-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all active" data-provider="qwen">
+                    <span class="w-2 h-2 rounded-full bg-purple-500 inline-block mr-1"></span>Qwen
+                  </button>
+                  <button type="button" id="provider-nanobanana" class="provider-toggle-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all" data-provider="nanobanana">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-1"></span>Nanobanana
+                  </button>
+                  <button type="button" id="provider-flux" class="provider-toggle-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all" data-provider="flux">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span>FLUX
+                  </button>
+                </div>
               </div>
               
               <!-- Botón generar -->
               <button type="button" id="generate-image-btn" 
-                class="ml-auto px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                class="w-full sm:w-auto sm:ml-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 <i class="iconoir-sparks"></i>
                 <span>Generar</span>
               </button>
@@ -143,7 +151,7 @@ $headerDrawerId = 'gesture-history-drawer';
                 <i class="iconoir-media-image text-4xl text-amber-500"></i>
               </div>
               <h3 class="text-lg font-semibold text-slate-700 mb-2">Genera tu primera imagen</h3>
-              <p class="text-sm text-slate-500 max-w-sm">Describe lo que quieres crear y ajusta los parámetros en el panel derecho</p>
+              <p class="text-sm text-slate-500 max-w-sm">Describe lo que quieres crear y ajusta los parámetros</p>
             </div>
             
             <!-- Sección imágenes (modo edición) -->
@@ -600,6 +608,27 @@ $headerDrawerId = 'gesture-history-drawer';
     <img id="lightbox-image" src="" alt="Imagen ampliada" class="max-w-full max-h-full object-contain" />
   </div>
 
+  <!-- Modal de parámetros para móvil -->
+  <div id="params-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 lg:hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+      <!-- Header -->
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800 flex items-center gap-2">
+          <i class="iconoir-settings text-amber-500"></i>
+          Parámetros de imagen
+        </h3>
+        <button id="close-params-modal" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+          <i class="iconoir-xmark text-xl"></i>
+        </button>
+      </div>
+      
+      <!-- Content (scroll) -->
+      <div id="params-modal-content" class="flex-1 overflow-auto p-4 space-y-3">
+        <!-- Content will be synced from desktop params panel -->
+      </div>
+    </div>
+  </div>
+
   <script>window.CSRF_TOKEN = '<?php echo htmlspecialchars($csrfToken); ?>';</script>
   <script src="/assets/js/gesture-image-editor.js"></script>
   
@@ -643,8 +672,62 @@ $headerDrawerId = 'gesture-history-drawer';
   </style>
   
   <script>
-    // Sincronizar historial con drawer móvil
+    // === Parámetros Modal (Móvil) ===
     document.addEventListener('DOMContentLoaded', () => {
+      const openParamsBtn = document.getElementById('open-params-mobile');
+      const paramsModal = document.getElementById('params-modal');
+      const closeParamsBtn = document.getElementById('close-params-modal');
+      const paramsModalContent = document.getElementById('params-modal-content');
+      const desktopParamsPanel = document.querySelector('#controls-panel .flex-1.overflow-auto');
+      
+      // Sincronizar contenido del panel desktop al modal móvil
+      function syncParamsContent() {
+        if (desktopParamsPanel && paramsModalContent) {
+          paramsModalContent.innerHTML = desktopParamsPanel.innerHTML;
+          
+          // Añadir listeners a los radios del modal para sincronizar con desktop
+          paramsModalContent.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+              // Encontrar el radio correspondiente en desktop y marcarlo
+              const desktopRadio = desktopParamsPanel.querySelector(`input[name="${radio.name}"][value="${radio.value}"]`);
+              if (desktopRadio) {
+                desktopRadio.checked = true;
+                // Disparar evento change en desktop para que se actualice el resumen
+                desktopRadio.dispatchEvent(new Event('change', { bubbles: true }));
+              }
+            });
+          });
+        }
+      }
+      
+      // Abrir modal
+      if (openParamsBtn && paramsModal) {
+        openParamsBtn.addEventListener('click', () => {
+          syncParamsContent();
+          paramsModal.classList.remove('hidden');
+          paramsModal.classList.add('flex');
+        });
+      }
+      
+      // Cerrar modal
+      if (closeParamsBtn && paramsModal) {
+        closeParamsBtn.addEventListener('click', () => {
+          paramsModal.classList.add('hidden');
+          paramsModal.classList.remove('flex');
+        });
+      }
+      
+      // Cerrar al hacer clic fuera
+      if (paramsModal) {
+        paramsModal.addEventListener('click', (e) => {
+          if (e.target === paramsModal) {
+            paramsModal.classList.add('hidden');
+            paramsModal.classList.remove('flex');
+          }
+        });
+      }
+      
+      // === Sincronizar historial con drawer móvil ===
       const desktopHistory = document.getElementById('history-list');
       const mobileDrawerContent = document.getElementById('gesture-history-drawer-content');
       
