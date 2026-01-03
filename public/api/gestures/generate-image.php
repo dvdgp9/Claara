@@ -69,7 +69,7 @@ if ($selectedProvider === 'qwen') {
     $model = ($mode === 'edit') ? 'qwen-image-edit-plus-2025-12-15' : 'qwen-image-max';
 } else {
     // Nanobanana (Gemini) - Nota: Gemini en OpenRouter soporta generación de imágenes vía modalities
-    $model = 'google/gemini-2.0-pro-exp-02-05:free';
+    $model = 'google/gemini-3-pro-image-preview';
 }
 
 // Generar/Editar imagen
