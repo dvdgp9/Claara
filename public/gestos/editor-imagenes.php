@@ -79,11 +79,10 @@ $headerDrawerId = 'gesture-history-drawer';
           <div class="shrink-0 mb-4 space-y-3">
             <!-- Fila 1: Resumen de parámetros -->
             <div class="px-4 py-2.5 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between mb-1.5">
                 <div class="flex items-center gap-2 text-sm">
                   <i class="iconoir-frame text-slate-600"></i>
                   <span class="font-medium text-slate-700">Parámetros:</span>
-                  <span id="summary-text" class="text-slate-600">Formato: 1:1</span>
                 </div>
                 <!-- Desktop hint -->
                 <div class="text-xs text-slate-500 hidden lg:block">
@@ -95,6 +94,8 @@ $headerDrawerId = 'gesture-history-drawer';
                   Ajustar
                 </button>
               </div>
+              <!-- Parámetros seleccionados (segunda línea) -->
+              <div id="summary-text" class="text-sm text-slate-600 pl-6">Formato: 1:1</div>
             </div>
             
             <!-- Fila 2: Prompt principal -->
@@ -159,7 +160,7 @@ $headerDrawerId = 'gesture-history-drawer';
               <div class="flex flex-col lg:flex-row gap-6 items-center">
                 <!-- Imagen fuente -->
                 <div class="text-center">
-                  <div id="source-image-dropzone" class="relative w-64 h-64 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer">
+                  <div id="source-image-dropzone" class="relative w-40 h-40 sm:w-48 sm:h-48 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer">
                     <input type="file" id="source-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div id="source-image-placeholder" class="flex flex-col items-center gap-3">
                       <i class="iconoir-upload text-4xl text-slate-400"></i>
@@ -182,7 +183,7 @@ $headerDrawerId = 'gesture-history-drawer';
                 
                 <!-- Imagen objetivo (opcional) -->
                 <div class="text-center">
-                  <div id="target-image-dropzone" class="relative w-64 h-64 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-purple-400 hover:bg-purple-50/30 transition-all cursor-pointer">
+                  <div id="target-image-dropzone" class="relative w-40 h-40 sm:w-48 sm:h-48 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-purple-400 hover:bg-purple-50/30 transition-all cursor-pointer">
                     <input type="file" id="target-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div id="target-image-placeholder" class="flex flex-col items-center gap-3">
                       <i class="iconoir-add-media-image text-4xl text-slate-400"></i>
@@ -704,10 +705,29 @@ $headerDrawerId = 'gesture-history-drawer';
             });
           } else {
             // Si ya está inicializado, solo sincronizar el estado de los radios
+            // Primero, desmarcar todos en el modal
+            paramsModalContent.querySelectorAll('input[type="radio"]').forEach(radio => {
+              radio.checked = false;
+            });
+            
+            // Luego, marcar los que están activos en desktop
             desktopParamsPanel.querySelectorAll('input[type="radio"]:checked').forEach(desktopRadio => {
               const modalRadio = paramsModalContent.querySelector(`input[name="${desktopRadio.name}"][value="${desktopRadio.value}"]`);
-              if (modalRadio && !modalRadio.checked) {
+              if (modalRadio) {
                 modalRadio.checked = true;
+                // Forzar actualización visual trigger del parent
+                const pill = modalRadio.closest('.format-pill, .style-pill, label');
+                if (pill) {
+                  pill.classList.add('active');
+                }
+              }
+            });
+            
+            // Limpiar clases 'active' de elementos no marcados
+            paramsModalContent.querySelectorAll('.format-pill, .style-pill').forEach(pill => {
+              const radio = pill.querySelector('input[type="radio"]');
+              if (radio && !radio.checked) {
+                pill.classList.remove('active');
               }
             });
           }
