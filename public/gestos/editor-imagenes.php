@@ -178,60 +178,60 @@ $headerDrawerId = 'gesture-history-drawer';
 
                 <!-- ESTILO -->
                 <div id="tab-style" class="tab-content hidden">
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="" class="hidden peer" checked />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-prohibition text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-prohibition text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Ninguno</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="photographic" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-camera text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-camera text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Fotográfico</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="digital-art" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-design-pencil text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-design-pencil text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Digital Art</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="corporate" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-building text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-building text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Corporativo</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="minimalist" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-minus text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-minus text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Minimalista</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="3d-render" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-3d-select-face text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-3d-select-face text-lg shrink-0"></i>
                         <span class="text-xs font-medium">3D Render</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="flat-design" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-crop text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-crop text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Flat Design</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="isometric" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-cube text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-cube text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Isométrico</span>
                       </div>
                     </label>
@@ -240,60 +240,60 @@ $headerDrawerId = 'gesture-history-drawer';
 
                 <!-- COLOR -->
                 <div id="tab-color" class="tab-content hidden">
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="" class="hidden peer" checked />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-prohibition text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-prohibition text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Ninguno</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="warm" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <div class="w-6 h-6 mx-auto mb-1 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500"></div>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500"></div>
                         <span class="text-xs font-medium">Cálidos</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="cool" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <div class="w-6 h-6 mx-auto mb-1 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500"></div>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500"></div>
                         <span class="text-xs font-medium">Fríos</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="corporate" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <div class="w-6 h-6 mx-auto mb-1 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c]"></div>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c]"></div>
                         <span class="text-xs font-medium">Corporativo</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="monochrome" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <div class="w-6 h-6 mx-auto mb-1 rounded-full bg-gradient-to-br from-slate-300 to-slate-600"></div>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-slate-300 to-slate-600"></div>
                         <span class="text-xs font-medium">Monocromo</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="pastel" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <div class="w-6 h-6 mx-auto mb-1 rounded-full bg-gradient-to-br from-pink-200 to-purple-200"></div>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-pink-200 to-purple-200"></div>
                         <span class="text-xs font-medium">Pastel</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="bw" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <div class="w-6 h-6 mx-auto mb-1 rounded-full bg-gradient-to-r from-black to-white"></div>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-r from-black to-white"></div>
                         <span class="text-xs font-medium">B/N</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="vibrant" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <div class="w-6 h-6 mx-auto mb-1 rounded-full bg-gradient-to-br from-red-500 via-yellow-500 to-green-500"></div>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-red-500 via-yellow-500 to-green-500"></div>
                         <span class="text-xs font-medium">Vibrante</span>
                       </div>
                     </label>
@@ -302,60 +302,60 @@ $headerDrawerId = 'gesture-history-drawer';
 
                 <!-- ILUMINACIÓN -->
                 <div id="tab-lighting" class="tab-content hidden">
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="" class="hidden peer" checked />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-prohibition text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-prohibition text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Ninguno</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="natural" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-sun-light text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-sun-light text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Natural</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="studio" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-flash text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-flash text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Estudio</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="dramatic" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-half-moon text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-half-moon text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Dramática</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="soft" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-cloud text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-cloud text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Suave</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="backlight" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-lens text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-lens text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Contraluz</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="golden" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-sunrise text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-sunrise text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Hora dorada</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="volumetric" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-sparks text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-sparks text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Volumétrica</span>
                       </div>
                     </label>
@@ -364,60 +364,60 @@ $headerDrawerId = 'gesture-history-drawer';
 
                 <!-- COMPOSICIÓN -->
                 <div id="tab-composition" class="tab-content hidden">
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="" class="hidden peer" checked />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-prohibition text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-prohibition text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Ninguno</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="bokeh" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-focus text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-focus text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Bokeh</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="closeup" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-zoom-in text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-zoom-in text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Primer plano</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="wide" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-zoom-out text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-zoom-out text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Plano general</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="above" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-arrow-down text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-arrow-down text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Cenital</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="below" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-arrow-up text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-arrow-up text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Contrapicado</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="macro" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-eye-alt text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-eye-alt text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Macro</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="negative-space" class="hidden peer" />
-                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all text-center">
-                        <i class="iconoir-square text-lg mb-1 block"></i>
+                      <div class="option-pill peer-checked:active p-3 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-3">
+                        <i class="iconoir-square text-lg shrink-0"></i>
                         <span class="text-xs font-medium">Espacio negativo</span>
                       </div>
                     </label>

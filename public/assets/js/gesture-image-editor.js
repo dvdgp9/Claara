@@ -184,6 +184,10 @@
     // Añadir calidad
     prompt += '\n\nQuality: High resolution, professional quality, detailed, sharp focus, 8K.';
 
+    // Añadir semilla aleatoria interna para evitar problemas de caché/duplicados
+    const seed = Math.floor(Math.random() * 1000000);
+    prompt += `\n\nInternal ID: ${seed}`;
+
     return prompt;
   }
 
