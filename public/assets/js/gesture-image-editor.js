@@ -503,17 +503,21 @@
     historyList.innerHTML = items.map(item => {
       const timeAgo = formatTimeAgo(new Date(item.created_at));
       const description = item.input_data?.description || item.title || 'Imagen generada';
-      const truncatedDesc = description.length > 30 ? description.substring(0, 30) + '...' : description;
+      const truncatedDesc = description.length > 50 ? description.substring(0, 50) + '...' : description;
 
       return `
-        <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2 cursor-pointer" data-id="${item.id}">
-          <i class="iconoir-media-image text-amber-500 mt-0.5 shrink-0"></i>
-          <div class="flex-1 min-w-0 history-item-main">
-            <p class="text-xs font-medium text-slate-700 truncate group-hover:text-amber-700">${escapeHtml(truncatedDesc)}</p>
-            <span class="text-[10px] text-slate-400">${timeAgo}</span>
+        <div class="history-item w-full p-4 hover:bg-slate-50/80 border-b border-slate-100/50 transition-all group flex items-start gap-3 cursor-pointer" data-id="${item.id}">
+          <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 group-hover:bg-amber-100 transition-colors">
+            <i class="iconoir-media-image text-amber-500 text-lg"></i>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded shrink-0" data-id="${item.id}" title="Eliminar">
-            <i class="iconoir-trash text-xs"></i>
+          <div class="flex-1 min-w-0 history-item-main py-0.5">
+            <p class="text-sm font-semibold text-slate-700 leading-snug group-hover:text-amber-700 transition-colors">${escapeHtml(truncatedDesc)}</p>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-[11px] font-medium text-slate-400">${timeAgo}</span>
+            </div>
+          </div>
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-all text-slate-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50" data-id="${item.id}" title="Eliminar">
+            <i class="iconoir-trash text-sm"></i>
           </button>
         </div>
       `;
