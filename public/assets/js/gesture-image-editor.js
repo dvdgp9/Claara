@@ -288,13 +288,15 @@
 
   // === Update Summary ===
   function updateSummary() {
-    const format = document.querySelector('input[name="format"]:checked')?.value || '1:1';
+    const format = document.querySelector('input[name="format"]:checked')?.value || '';
     const style = document.querySelector('input[name="style"]:checked')?.value || '';
     const color = document.querySelector('input[name="color"]:checked')?.value || '';
     const lighting = document.querySelector('input[name="lighting"]:checked')?.value || '';
     const composition = document.querySelector('input[name="composition"]:checked')?.value || '';
 
-    const parts = [`Formato: ${format}`];
+    const parts = [];
+
+    if (format) parts.push(`Formato: ${format}`);
 
     const labels = {
       style: { 'photographic': 'Estilo: Foto', 'digital-art': 'Estilo: Digital', 'corporate': 'Estilo: Corp', 'minimalist': 'Estilo: Min', '3d-render': 'Estilo: 3D', 'flat-design': 'Estilo: Flat', 'isometric': 'Estilo: Iso', 'headshot-pro': 'Estilo: Retrato', 'luxury-product': 'Estilo: Producto' },
@@ -308,7 +310,13 @@
     if (lighting && labels.lighting[lighting]) parts.push(labels.lighting[lighting]);
     if (composition && labels.composition[composition]) parts.push(labels.composition[composition]);
 
-    if (summaryText) summaryText.textContent = parts.join(' · ');
+    if (summaryText) {
+      if (parts.length > 0) {
+        summaryText.textContent = parts.join(' · ');
+      } else {
+        summaryText.textContent = 'Decisión del modelo (IA)';
+      }
+    }
   }
 
   document.querySelectorAll('input[type="radio"]').forEach(radio => {
@@ -691,7 +699,7 @@
     clearTargetImage();
 
     // Reset all radios to defaults
-    document.querySelectorAll('input[name="format"][value="1:1"]').forEach(r => r.checked = true);
+    document.querySelectorAll('input[name="format"][value=""]').forEach(r => r.checked = true);
     document.querySelectorAll('input[name="style"][value=""]').forEach(r => r.checked = true);
     document.querySelectorAll('input[name="color"][value=""]').forEach(r => r.checked = true);
     document.querySelectorAll('input[name="lighting"][value=""]').forEach(r => r.checked = true);

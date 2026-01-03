@@ -253,9 +253,16 @@ $headerDrawerId = 'gesture-history-drawer';
                 </span>
                 <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
               </summary>
-              <div class="pt-2 pb-1 grid grid-cols-5 gap-1.5">
+              <div class="pt-2 pb-1 grid grid-cols-2 lg:grid-cols-6 gap-1.5">
                 <label class="cursor-pointer">
-                  <input type="radio" name="format" value="1:1" class="hidden peer" checked />
+                  <input type="radio" name="format" value="" class="hidden peer" checked />
+                  <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
+                    <i class="iconoir-prohibition text-sm"></i>
+                    <span class="text-[10px] font-medium">Ninguno</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="format" value="1:1" class="hidden peer" />
                   <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all text-center">
                     <div class="w-5 h-5 mx-auto border border-current rounded-sm"></div>
                     <span class="text-[10px] mt-1 block">1:1</span>
