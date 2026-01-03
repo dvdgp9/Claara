@@ -136,17 +136,17 @@ $headerShowLogo = true;
               <div class="bg-white rounded-3xl p-4 lg:p-5 border border-slate-200 shadow-lg max-w-2xl mx-auto">
                 <form id="chat-form-empty" class="w-full">
                   <!-- Preview de archivo adjunto en estado vacío -->
-                  <div id="file-preview-empty" class="hidden mb-3 p-3 bg-slate-50 rounded-xl flex items-center gap-3">
-                    <div class="flex-1 flex items-center gap-3">
+                  <div id="file-preview-empty" class="hidden mb-3 p-3 bg-slate-50 rounded-xl flex items-center gap-3 overflow-hidden min-w-0">
+                    <div class="flex-1 flex items-center gap-3 min-w-0">
                       <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#23AAC5]/10 to-[#115c6c]/10 flex items-center justify-center flex-shrink-0">
                         <i id="file-icon-empty" class="iconoir-page text-xl text-[#23AAC5]"></i>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div id="file-name-empty" class="text-sm font-medium text-slate-800 truncate"></div>
+                        <div id="file-name-empty" class="text-sm font-medium text-slate-800 truncate block w-full"></div>
                         <div id="file-size-empty" class="text-xs text-slate-500"></div>
                       </div>
                     </div>
-                    <button type="button" id="remove-file-empty" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-smooth">
+                    <button type="button" id="remove-file-empty" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-smooth flex-shrink-0">
                       <i class="iconoir-xmark"></i>
                     </button>
                   </div>
@@ -342,17 +342,17 @@ $headerShowLogo = true;
         <form id="chat-form" class="max-w-3xl mx-auto">
           <div class="bg-white rounded-2xl lg:rounded-3xl p-3 lg:p-4 border border-slate-200 shadow-lg">
             <!-- Preview de archivo adjunto -->
-            <div id="file-preview" class="hidden mb-3 p-3 bg-slate-50 rounded-xl flex items-center gap-3">
-              <div class="flex-1 flex items-center gap-3">
+            <div id="file-preview" class="hidden mb-3 p-3 bg-slate-50 rounded-xl flex items-center gap-3 overflow-hidden min-w-0">
+              <div class="flex-1 flex items-center gap-3 min-w-0">
                 <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#23AAC5]/10 to-[#115c6c]/10 flex items-center justify-center flex-shrink-0">
                   <i id="file-icon" class="iconoir-page text-xl text-[#23AAC5]"></i>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div id="file-name" class="text-sm font-medium text-slate-800 truncate"></div>
+                  <div id="file-name" class="text-sm font-medium text-slate-800 truncate block w-full"></div>
                   <div id="file-size" class="text-xs text-slate-500"></div>
                 </div>
               </div>
-              <button type="button" id="remove-file" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <button type="button" id="remove-file" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
                 <i class="iconoir-xmark"></i>
               </button>
             </div>
