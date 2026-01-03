@@ -62,10 +62,11 @@ class GestureExecutionsRepo
     }
 
     /**
-     * Lista ejecuciones de un usuario para un tipo de gesto específico
+     * Lista ejecuciones de un usuario para un tipo de gesto específico (optimizado para imágenes)
      */
     public function listByUserAndType(int $userId, string $gestureType, int $limit = 20): array
     {
+        // En gestos de imagen, evitamos traer output_data que contiene el base64 pesado
         $sql = "SELECT id, title, input_data, content_type, business_line, is_favorite, created_at
                 FROM gesture_executions 
                 WHERE user_id = :user_id AND gesture_type = :gesture_type
@@ -86,7 +87,7 @@ class GestureExecutionsRepo
     }
 
     /**
-     * Lista todas las ejecuciones de un usuario
+     * Lista todas las ejecuciones de un usuario (optimizado)
      */
     public function listByUser(int $userId, int $limit = 50): array
     {
