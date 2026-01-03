@@ -686,52 +686,47 @@ $headerDrawerId = 'gesture-history-drawer';
       
       function syncParamsContent() {
         if (desktopParamsPanel && paramsModalContent) {
-          // Solo copiar HTML la primera vez
           if (!modalInitialized) {
             paramsModalContent.innerHTML = desktopParamsPanel.innerHTML;
             modalInitialized = true;
             
-            // Añadir listeners a los radios del modal para sincronizar con desktop
+            // Re-vincular eventos change en el modal para que actualicen desktop
             paramsModalContent.querySelectorAll('input[type="radio"]').forEach(radio => {
               radio.addEventListener('change', () => {
-                // Encontrar el radio correspondiente en desktop y marcarlo
                 const desktopRadio = desktopParamsPanel.querySelector(`input[name="${radio.name}"][value="${radio.value}"]`);
                 if (desktopRadio) {
                   desktopRadio.checked = true;
-                  // Disparar evento change en desktop para que se actualice el resumen
                   desktopRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                  // Después de que desktop se actualiza, refrescamos visualmente el modal
+                  refreshModalVisuals();
                 }
               });
             });
-          } else {
-            // Si ya está inicializado, solo sincronizar el estado de los radios
-            // Primero, desmarcar todos en el modal
-            paramsModalContent.querySelectorAll('input[type="radio"]').forEach(radio => {
-              radio.checked = false;
-            });
+          }
+          refreshModalVisuals();
+        }
+      }
+
+      function refreshModalVisuals() {
+        if (!paramsModalContent || !desktopParamsPanel) return;
+        
+        // Sincronizar estado checked de desktop a modal
+        desktopParamsPanel.querySelectorAll('input[type="radio"]').forEach(desktopRadio => {
+          const modalRadio = paramsModalContent.querySelector(`input[name="${desktopRadio.name}"][value="${desktopRadio.value}"]`);
+          if (modalRadio) {
+            modalRadio.checked = desktopRadio.checked;
             
-            // Luego, marcar los que están activos en desktop
-            desktopParamsPanel.querySelectorAll('input[type="radio"]:checked').forEach(desktopRadio => {
-              const modalRadio = paramsModalContent.querySelector(`input[name="${desktopRadio.name}"][value="${desktopRadio.value}"]`);
-              if (modalRadio) {
-                modalRadio.checked = true;
-                // Forzar actualización visual trigger del parent
-                const pill = modalRadio.closest('.format-pill, .style-pill, label');
-                if (pill) {
-                  pill.classList.add('active');
-                }
-              }
-            });
-            
-            // Limpiar clases 'active' de elementos no marcados
-            paramsModalContent.querySelectorAll('.format-pill, .style-pill').forEach(pill => {
-              const radio = pill.querySelector('input[type="radio"]');
-              if (radio && !radio.checked) {
+            // Actualizar clases visuales en el modal
+            const pill = modalRadio.closest('.format-pill, .style-pill');
+            if (pill) {
+              if (modalRadio.checked) {
+                pill.classList.add('active');
+              } else {
                 pill.classList.remove('active');
               }
-            });
+            }
           }
-        }
+        });
       }
       
       // Abrir modal
