@@ -559,18 +559,11 @@
 
     historyList.innerHTML = items.map(item => {
       const timeAgo = formatTimeAgo(new Date(item.created_at));
-      const description = item.input_data?.description || item.title || 'Imagen generada';
-      const mode = item.input_data?.mode || 'generate';
-      const provider = item.input_data?.provider || 'qwen';
+      const description = item.title || 'Imagen generada';
       
-      // Provider badge colors
-      const providerColors = {
-        'qwen': 'bg-purple-100 text-purple-700',
-        'nanobanana': 'bg-blue-100 text-blue-700',
-        'flux': 'bg-emerald-100 text-emerald-700'
-      };
-      const providerClass = providerColors[provider] || 'bg-slate-100 text-slate-600';
-      const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
+      // Default colors if we don't have provider info in the list
+      const providerClass = 'bg-slate-100 text-slate-600';
+      const providerLabel = 'IA';
 
       return `
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2" data-id="${item.id}">

@@ -62,12 +62,11 @@ class GestureExecutionsRepo
     }
 
     /**
-     * Lista ejecuciones de un usuario para un tipo de gesto específico (optimizado para imágenes)
+     * Lista ejecuciones de un usuario para un tipo de gesto específico
      */
     public function listByUserAndType(int $userId, string $gestureType, int $limit = 20): array
     {
-        // En gestos de imagen, evitamos traer output_data que contiene el base64 pesado
-        $sql = "SELECT id, title, input_data, content_type, business_line, is_favorite, created_at
+        $sql = "SELECT id, title, content_type, business_line, is_favorite, created_at
                 FROM gesture_executions 
                 WHERE user_id = :user_id AND gesture_type = :gesture_type
                 ORDER BY created_at DESC
@@ -79,15 +78,11 @@ class GestureExecutionsRepo
         $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($rows as &$row) {
-            $row['input_data'] = json_decode($row['input_data'] ?? '{}', true);
-        }
-        return $rows;
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Lista todas las ejecuciones de un usuario (optimizado)
+     * Lista todas las ejecuciones de un usuario
      */
     public function listByUser(int $userId, int $limit = 50): array
     {
