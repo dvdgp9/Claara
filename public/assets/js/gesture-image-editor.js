@@ -297,10 +297,10 @@
     const parts = [`Formato: ${format}`];
 
     const labels = {
-      style: { 'photographic': 'Foto', 'digital-art': 'Digital', 'corporate': 'Corp', 'minimalist': 'Min', '3d-render': '3D', 'flat-design': 'Flat', 'isometric': 'Iso', 'headshot-pro': 'Retrato', 'luxury-product': 'Producto' },
-      color: { 'warm': 'Cálido', 'cool': 'Frío', 'corporate': 'Corp', 'monochrome': 'Mono', 'pastel': 'Pastel', 'bw': 'B/N', 'vibrant': 'Vibr' },
-      lighting: { 'natural': 'Natural', 'studio': 'Estudio', 'dramatic': 'Drama', 'soft': 'Suave', 'backlight': 'Contra', 'golden': 'Dorada', 'volumetric': 'Volum' },
-      composition: { 'bokeh': 'Bokeh', 'closeup': 'Cerca', 'wide': 'Amplio', 'above': 'Cenital', 'below': 'Bajo', 'macro': 'Macro', 'negative-space': 'Neg' }
+      style: { 'photographic': 'Estilo: Foto', 'digital-art': 'Estilo: Digital', 'corporate': 'Estilo: Corp', 'minimalist': 'Estilo: Min', '3d-render': 'Estilo: 3D', 'flat-design': 'Estilo: Flat', 'isometric': 'Estilo: Iso', 'headshot-pro': 'Estilo: Retrato', 'luxury-product': 'Estilo: Producto' },
+      color: { 'warm': 'Color: Cálido', 'cool': 'Color: Frío', 'corporate': 'Color: Corp', 'monochrome': 'Color: Mono', 'pastel': 'Color: Pastel', 'bw': 'Color: B/N', 'vibrant': 'Color: Vibr' },
+      lighting: { 'natural': 'Luz: Natural', 'studio': 'Luz: Estudio', 'dramatic': 'Luz: Drama', 'soft': 'Luz: Suave', 'backlight': 'Luz: Contra', 'golden': 'Luz: Dorada', 'volumetric': 'Luz: Volum' },
+      composition: { 'bokeh': 'Compos: Bokeh', 'closeup': 'Compos: Cerca', 'wide': 'Compos: Amplio', 'above': 'Compos: Cenital', 'below': 'Compos: Bajo', 'macro': 'Compos: Macro', 'negative-space': 'Compos: Neg' }
     };
 
     if (style && labels.style[style]) parts.push(labels.style[style]);
