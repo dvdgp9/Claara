@@ -58,74 +58,111 @@ if (!$gestureType || !$prompt) {
     Response::error('missing_params', 'Faltan parámetros requeridos', 400);
 }
 
-// Modelo solicitado por el usuario
-$model = 'qwen-image-edit-plus-2025-12-15';
+// Modo de operación: 'generate' o 'edit'
+$mode = $inputData['mode'] ?? 'generate';
+$sourceImage = $inputData['source_image'] ?? null; // Base64 de imagen fuente (para edición)
+$targetImage = $inputData['target_image'] ?? null; // Base64 de imagen objetivo (opcional, para edición)
 
-// Generar imagen
+// Seleccionar modelo según el modo
+$model = ($mode === 'edit') ? 'qwen-image-edit-plus-2025-12-15' : 'qwen-image-max';
+
+// Generar/Editar imagen
 try {
-    // Si es el modelo de Qwen, usamos llamada directa a DashScope
-    if (strpos($model, 'qwen-image') !== false) {
-        $qwenApiKey = Env::get('QWEN_API_KEY');
-        if (!$qwenApiKey) {
-            Response::error('qwen_api_key_missing', 'Falta QWEN_API_KEY en .env', 500);
+    $qwenApiKey = Env::get('QWEN_API_KEY');
+    if (!$qwenApiKey) {
+        Response::error('qwen_api_key_missing', 'Falta QWEN_API_KEY en .env', 500);
+    }
+    
+    // Endpoint para Qwen Image (multimodal-generation)
+    $url = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
+    
+    // Construir contenido del mensaje según el modo
+    $content = [];
+    
+    if ($mode === 'edit') {
+        // Modo edición: requiere al menos imagen fuente
+        if (!$sourceImage) {
+            Response::error('missing_source_image', 'Se requiere una imagen fuente para el modo edición', 400);
         }
         
-        // Llamada directa a DashScope (compatible con OpenAI)
-        $url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+        // Añadir imagen fuente
+        $content[] = ['image' => 'data:image/png;base64,' . $sourceImage];
         
-        $payload = [
-            'model' => $model,
+        // Añadir imagen objetivo si existe
+        if ($targetImage) {
+            $content[] = ['image' => 'data:image/png;base64,' . $targetImage];
+        }
+    }
+    
+    // Añadir el texto/prompt
+    $content[] = ['text' => $prompt];
+    
+    // Formato de payload para Qwen Image
+    $payload = [
+        'model' => $model,
+        'input' => [
             'messages' => [
-                ['role' => 'user', 'content' => $prompt]
+                [
+                    'role' => 'user',
+                    'content' => $content
+                ]
             ]
-        ];
-        
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $qwenApiKey,
-                'Content-Type: application/json'
-            ],
-            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            CURLOPT_TIMEOUT => 180,
-            CURLOPT_CONNECTTIMEOUT => 10,
-        ]);
-        
-        $raw = curl_exec($ch);
-        $err = curl_error($ch);
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($raw === false || $err) {
-            Response::error('qwen_request_failed', 'Fallo al contactar con DashScope: ' . $err, 502);
+        ],
+        'parameters' => [
+            'n' => 1,
+            'negative_prompt' => 'low quality, blurry, distorted, deformed',
+            'prompt_extend' => true,
+            'watermark' => false
+        ]
+    ];
+    
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer ' . $qwenApiKey,
+            'Content-Type: application/json',
+            'X-DashScope-Async: disable'
+        ],
+        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        CURLOPT_TIMEOUT => 180,
+        CURLOPT_CONNECTTIMEOUT => 10,
+    ]);
+    
+    $raw = curl_exec($ch);
+    $err = curl_error($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($raw === false || $err) {
+        Response::error('qwen_request_failed', 'Fallo al contactar con DashScope: ' . $err, 502);
+    }
+    
+    $data = json_decode($raw, true);
+    if ($status < 200 || $status >= 300) {
+        $msg = $data['error']['message'] ?? $data['message'] ?? ('HTTP '.$status);
+        Response::error('qwen_bad_response', 'Error de DashScope: ' . $msg, 502);
+    }
+    
+    // Extraer resultado de Qwen Image
+    $output = $data['output'] ?? [];
+    $results = $output['choices'][0]['message']['content'] ?? [];
+    $text = '';
+    $images = [];
+    
+    foreach ($results as $item) {
+        if (isset($item['text'])) {
+            $text = $item['text'];
         }
-        
-        $data = json_decode($raw, true);
-        if ($status < 200 || $status >= 300) {
-            $msg = $data['error']['message'] ?? $data['message'] ?? ('HTTP '.$status);
-            Response::error('qwen_bad_response', 'Error de DashScope: ' . $msg, 502);
+        if (isset($item['image'])) {
+            // La imagen viene como URL, necesitamos descargarla y convertir a base64
+            $imageUrl = $item['image'];
+            $imageData = @file_get_contents($imageUrl);
+            if ($imageData !== false) {
+                $images[] = base64_encode($imageData);
+            }
         }
-        
-        $message = $data['choices'][0]['message'] ?? [];
-        $text = $message['content'] ?? '';
-        
-        // Capturar imágenes generadas si existen
-        $images = null;
-        if (isset($message['images']) && is_array($message['images'])) {
-            $images = $message['images'];
-        }
-        
-    } else {
-        // Usar OpenRouter para otros modelos
-        $client = new OpenRouterClient(null, $model, null, null, null);
-        $text = $client->generateWithMessages(
-            [['role' => 'user', 'content' => $prompt]],
-            ['text', 'image']
-        );
-        $images = $client->getLastImages();
-        $model = $client->getModel();
     }
     
 } catch (\Exception $e) {

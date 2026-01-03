@@ -20,7 +20,30 @@
   const historyList = document.getElementById('history-list');
   const newImageBtn = document.getElementById('new-image-btn');
   const descriptionField = document.getElementById('image-description');
+  const descriptionLabel = document.getElementById('description-label');
   const summaryText = document.getElementById('summary-text');
+
+  // Modo Generar/Editar
+  const modeGenerateBtn = document.getElementById('mode-generate');
+  const modeEditBtn = document.getElementById('mode-edit');
+  const currentModeInput = document.getElementById('current-mode');
+  const editImagesSection = document.getElementById('edit-images-section');
+  const styleOptionsSection = document.getElementById('style-options-section');
+  const selectionSummary = document.getElementById('selection-summary');
+
+  // Uploads de imágenes para edición
+  const sourceImageInput = document.getElementById('source-image-input');
+  const sourceImagePreview = document.getElementById('source-image-preview');
+  const sourceImagePlaceholder = document.getElementById('source-image-placeholder');
+  const sourceImageClear = document.getElementById('source-image-clear');
+  const targetImageInput = document.getElementById('target-image-input');
+  const targetImagePreview = document.getElementById('target-image-preview');
+  const targetImagePlaceholder = document.getElementById('target-image-placeholder');
+  const targetImageClear = document.getElementById('target-image-clear');
+
+  // Estado de imágenes para edición
+  let sourceImageBase64 = null;
+  let targetImageBase64 = null;
 
   // Lightbox
   const lightbox = document.getElementById('image-lightbox');
@@ -88,6 +111,83 @@
   let lastPrompt = '';
   let lastInputData = {};
   let currentImageBase64 = '';
+
+  // === Gestión de modo Generar/Editar ===
+  function setMode(mode) {
+    currentModeInput.value = mode;
+    
+    if (mode === 'generate') {
+      modeGenerateBtn.classList.add('active');
+      modeEditBtn.classList.remove('active');
+      editImagesSection.classList.add('hidden');
+      styleOptionsSection.classList.remove('hidden');
+      selectionSummary.classList.remove('hidden');
+      descriptionLabel.textContent = '¿Qué imagen quieres crear?';
+      descriptionField.placeholder = 'Describe la imagen que necesitas. Sé específico: objetos, escena, ambiente, colores...';
+      generateBtn.innerHTML = '<i class="iconoir-sparks"></i><span>Generar imagen</span>';
+    } else {
+      modeEditBtn.classList.add('active');
+      modeGenerateBtn.classList.remove('active');
+      editImagesSection.classList.remove('hidden');
+      styleOptionsSection.classList.add('hidden');
+      selectionSummary.classList.add('hidden');
+      descriptionLabel.textContent = '¿Qué cambios quieres hacer?';
+      descriptionField.placeholder = 'Describe la edición: "Cambia el fondo por una playa", "Añade gafas de sol", "Fusiona el estilo de la imagen objetivo"...';
+      generateBtn.innerHTML = '<i class="iconoir-edit"></i><span>Editar imagen</span>';
+    }
+  }
+
+  if (modeGenerateBtn) {
+    modeGenerateBtn.addEventListener('click', () => setMode('generate'));
+  }
+  if (modeEditBtn) {
+    modeEditBtn.addEventListener('click', () => setMode('edit'));
+  }
+
+  // === Gestión de uploads de imágenes ===
+  function handleImageUpload(input, preview, placeholder, clearBtn, setBase64) {
+    if (!input) return;
+    
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecciona una imagen válida');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64 = ev.target.result.split(',')[1];
+        setBase64(base64);
+        preview.src = ev.target.result;
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        clearBtn.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setBase64(null);
+      input.value = '';
+      preview.src = '';
+      preview.classList.add('hidden');
+      placeholder.classList.remove('hidden');
+      clearBtn.classList.add('hidden');
+    });
+  }
+
+  handleImageUpload(
+    sourceImageInput, sourceImagePreview, sourceImagePlaceholder, sourceImageClear,
+    (b64) => { sourceImageBase64 = b64; }
+  );
+  handleImageUpload(
+    targetImageInput, targetImagePreview, targetImagePlaceholder, targetImageClear,
+    (b64) => { targetImageBase64 = b64; }
+  );
 
   // === Gestión de tabs ===
   optionTabs.forEach(tab => {
@@ -202,22 +302,43 @@
   // === Generar imagen ===
   async function generateImage() {
     const description = descriptionField.value.trim();
+    const mode = currentModeInput?.value || 'generate';
+    
     if (!description) {
-      alert('Por favor, describe la imagen que quieres crear');
+      alert(mode === 'generate' ? 'Por favor, describe la imagen que quieres crear' : 'Por favor, describe los cambios que quieres hacer');
       descriptionField.focus();
       return;
     }
 
-    const options = {
-      format: document.querySelector('input[name="format"]:checked')?.value || '1:1',
-      style: document.querySelector('input[name="style"]:checked')?.value || '',
-      color: document.querySelector('input[name="color"]:checked')?.value || '',
-      lighting: document.querySelector('input[name="lighting"]:checked')?.value || '',
-      composition: document.querySelector('input[name="composition"]:checked')?.value || ''
-    };
+    // Validar imagen fuente en modo edición
+    if (mode === 'edit' && !sourceImageBase64) {
+      alert('Por favor, sube una imagen fuente para editar');
+      return;
+    }
 
-    const prompt = buildPrompt(description, options);
-    const inputData = { description, ...options };
+    let prompt, inputData;
+
+    if (mode === 'generate') {
+      const options = {
+        format: document.querySelector('input[name="format"]:checked')?.value || '1:1',
+        style: document.querySelector('input[name="style"]:checked')?.value || '',
+        color: document.querySelector('input[name="color"]:checked')?.value || '',
+        lighting: document.querySelector('input[name="lighting"]:checked')?.value || '',
+        composition: document.querySelector('input[name="composition"]:checked')?.value || ''
+      };
+
+      prompt = buildPrompt(description, options);
+      inputData = { mode: 'generate', description, ...options };
+    } else {
+      // Modo edición: prompt directo + imágenes
+      prompt = description;
+      inputData = {
+        mode: 'edit',
+        description,
+        source_image: sourceImageBase64,
+        target_image: targetImageBase64 || null
+      };
+    }
 
     // Guardar para regenerar
     lastPrompt = prompt;
