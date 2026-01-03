@@ -61,49 +61,72 @@ if (!$gestureType || !$prompt) {
 // Modelo solicitado por el usuario
 $model = 'qwen-image-edit-plus-2025-12-15';
 
-// Si es el modelo de Qwen, usamos su API directamente (Alibaba DashScope)
-// La API de DashScope es compatible con el formato OpenAI en su mayoría
-if (strpos($model, 'qwen-image') !== false) {
-    $qwenApiKey = Env::get('QWEN_API_KEY');
-    if (!$qwenApiKey) {
-        Response::error('qwen_api_key_missing', 'Falta QWEN_API_KEY en .env', 500);
-    }
-    
-    // Crear cliente OpenRouter pero configurado para Qwen (DashScope)
-    // DashScope tiene un endpoint específico para compatibilidad con OpenAI
-    $client = new OpenRouterClient(
-        $qwenApiKey,
-        $model,
-        null, 
-        null, 
-        null
-    );
-    
-    // Reflejar el cambio de base URL internamente para este cliente específico
-    // DashScope OpenAI-compatible endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
-    $reflection = new \ReflectionClass($client);
-    $baseUrlProp = $reflection->getProperty('baseUrl');
-    $baseUrlProp->setAccessible(true);
-    $baseUrlProp->setValue($client, 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions');
-} else {
-    // Cliente estándar de OpenRouter
-    $client = new OpenRouterClient(
-        null,  // API key from env
-        $model,
-        null,
-        null,
-        null
-    );
-}
-
-// Generar imagen con modalities
+// Generar imagen
 try {
-    $text = $client->generateWithMessages(
-        [['role' => 'user', 'content' => $prompt]],
-        ['text', 'image']  // Modalities para generación de imagen
-    );
-    
-    $images = $client->getLastImages();
+    // Si es el modelo de Qwen, usamos llamada directa a DashScope
+    if (strpos($model, 'qwen-image') !== false) {
+        $qwenApiKey = Env::get('QWEN_API_KEY');
+        if (!$qwenApiKey) {
+            Response::error('qwen_api_key_missing', 'Falta QWEN_API_KEY en .env', 500);
+        }
+        
+        // Llamada directa a DashScope (compatible con OpenAI)
+        $url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+        
+        $payload = [
+            'model' => $model,
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt]
+            ]
+        ];
+        
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $qwenApiKey,
+                'Content-Type: application/json'
+            ],
+            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            CURLOPT_TIMEOUT => 180,
+            CURLOPT_CONNECTTIMEOUT => 10,
+        ]);
+        
+        $raw = curl_exec($ch);
+        $err = curl_error($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($raw === false || $err) {
+            Response::error('qwen_request_failed', 'Fallo al contactar con DashScope: ' . $err, 502);
+        }
+        
+        $data = json_decode($raw, true);
+        if ($status < 200 || $status >= 300) {
+            $msg = $data['error']['message'] ?? $data['message'] ?? ('HTTP '.$status);
+            Response::error('qwen_bad_response', 'Error de DashScope: ' . $msg, 502);
+        }
+        
+        $message = $data['choices'][0]['message'] ?? [];
+        $text = $message['content'] ?? '';
+        
+        // Capturar imágenes generadas si existen
+        $images = null;
+        if (isset($message['images']) && is_array($message['images'])) {
+            $images = $message['images'];
+        }
+        
+    } else {
+        // Usar OpenRouter para otros modelos
+        $client = new OpenRouterClient(null, $model, null, null, null);
+        $text = $client->generateWithMessages(
+            [['role' => 'user', 'content' => $prompt]],
+            ['text', 'image']
+        );
+        $images = $client->getLastImages();
+        $model = $client->getModel();
+    }
     
 } catch (\Exception $e) {
     Response::error('llm_error', 'Error al generar imagen: ' . $e->getMessage(), 500);
