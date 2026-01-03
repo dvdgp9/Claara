@@ -106,7 +106,7 @@ $headerDrawerId = 'gesture-history-drawer';
             
             <!-- Fila 3: Modo, Provider y Botón -->
             <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-              <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center gap-2">
                 <!-- Toggle Modo -->
                 <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
                   <button type="button" id="mode-generate" class="mode-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active">
@@ -681,22 +681,36 @@ $headerDrawerId = 'gesture-history-drawer';
       const desktopParamsPanel = document.querySelector('#controls-panel .flex-1.overflow-auto');
       
       // Sincronizar contenido del panel desktop al modal móvil
+      let modalInitialized = false;
+      
       function syncParamsContent() {
         if (desktopParamsPanel && paramsModalContent) {
-          paramsModalContent.innerHTML = desktopParamsPanel.innerHTML;
-          
-          // Añadir listeners a los radios del modal para sincronizar con desktop
-          paramsModalContent.querySelectorAll('input[type="radio"]').forEach(radio => {
-            radio.addEventListener('change', () => {
-              // Encontrar el radio correspondiente en desktop y marcarlo
-              const desktopRadio = desktopParamsPanel.querySelector(`input[name="${radio.name}"][value="${radio.value}"]`);
-              if (desktopRadio) {
-                desktopRadio.checked = true;
-                // Disparar evento change en desktop para que se actualice el resumen
-                desktopRadio.dispatchEvent(new Event('change', { bubbles: true }));
+          // Solo copiar HTML la primera vez
+          if (!modalInitialized) {
+            paramsModalContent.innerHTML = desktopParamsPanel.innerHTML;
+            modalInitialized = true;
+            
+            // Añadir listeners a los radios del modal para sincronizar con desktop
+            paramsModalContent.querySelectorAll('input[type="radio"]').forEach(radio => {
+              radio.addEventListener('change', () => {
+                // Encontrar el radio correspondiente en desktop y marcarlo
+                const desktopRadio = desktopParamsPanel.querySelector(`input[name="${radio.name}"][value="${radio.value}"]`);
+                if (desktopRadio) {
+                  desktopRadio.checked = true;
+                  // Disparar evento change en desktop para que se actualice el resumen
+                  desktopRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+              });
+            });
+          } else {
+            // Si ya está inicializado, solo sincronizar el estado de los radios
+            desktopParamsPanel.querySelectorAll('input[type="radio"]:checked').forEach(desktopRadio => {
+              const modalRadio = paramsModalContent.querySelector(`input[name="${desktopRadio.name}"][value="${desktopRadio.value}"]`);
+              if (modalRadio && !modalRadio.checked) {
+                modalRadio.checked = true;
               }
             });
-          });
+          }
         }
       }
       
