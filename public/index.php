@@ -638,7 +638,7 @@ $headerShowLogo = true;
       const bubble = document.createElement('div');
       bubble.className = role === 'user' 
         ? 'gradient-brand text-white px-5 py-3.5 rounded-2xl rounded-tr-sm shadow-md text-conversation' 
-        : 'bg-white border border-slate-200 text-slate-800 px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-sm text-conversation';
+        : 'bg-white/30 backdrop-blur-sm border border-slate-200 text-slate-800 px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-sm text-conversation';
       bubble.style.wordBreak = 'break-word';
       
       if (role === 'assistant') {

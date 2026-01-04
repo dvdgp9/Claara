@@ -913,7 +913,7 @@ $userName = htmlspecialchars($user['first_name'] ?? 'Usuario');
     
     const bubbleClass = role === 'user'
       ? 'gradient-brand text-white rounded-2xl rounded-tr-sm'
-      : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm';
+      : 'bg-white/30 backdrop-blur-sm border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm';
     
     const contentHtml = role === 'assistant' ? mdToHtml(content) : escapeHtml(content);
     
