@@ -19,7 +19,24 @@ $userName = htmlspecialchars($user['first_name'] ?? 'Usuario');
   <title>Ebonia — Tu asistente inteligente</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
-  <script>window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';</script>
+  <script>
+    window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';
+    // Refresh CSRF token periódicamente para evitar expiración por inactividad
+    (function() {
+      const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutos
+      setInterval(async () => {
+        try {
+          const res = await fetch('/api/auth/me.php', { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.csrf_token) {
+              window.CSRF_TOKEN = data.csrf_token;
+            }
+          }
+        } catch (e) { /* silencioso */ }
+      }, REFRESH_INTERVAL);
+    })();
+  </script>
   <style>
     :root {
       --brand-primary: #23AAC5;
