@@ -427,7 +427,7 @@
     
     const bubbleClass = role === 'user'
       ? 'gradient-brand text-white rounded-2xl rounded-tr-sm'
-      : 'bg-white/30 backdrop-blur-sm border border-slate-200/50 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm';
+      : 'glass border border-slate-200/50 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm';
     
     const contentHtml = role === 'assistant' ? mdToHtml(content) : escapeHtml(content);
     
@@ -449,22 +449,37 @@
     appendMessage('user', text);
     messageHistory.push({ role: 'user', content: text });
     
-    chatInput.value = '';
+    // Show typing
     typingIndicator?.classList.remove('hidden');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
+    
     try {
-      const data = await api('/api/voices/chat.php', {
+      const res = await fetch('/api/voices/chat.php', {
         method: 'POST',
-        body: {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': window.CSRF_TOKEN
+        },
+        body: JSON.stringify({
           voice_id: VOICE_ID,
           message: text,
-          history: messageHistory.slice(0, -1)
-        }
+          history: messageHistory.slice(0, -1), // Sin el mensaje actual
+          execution_id: currentExecutionId
+        }),
+        credentials: 'include'
       });
       
       typingIndicator?.classList.add('hidden');
-
+      
+      if (!res.ok) {
+        const err = await res.json();
+        appendMessage('assistant', 'Error: ' + (err.error?.message || 'No se pudo procesar la consulta'));
+        return;
+      }
+      
+      const data = await res.json();
+      
+      // Update execution ID
       if (data.execution_id) {
         currentExecutionId = data.execution_id;
       }
@@ -472,7 +487,7 @@
       // Add response
       const reply = data.reply || data.message?.content || 'Sin respuesta';
       messageHistory.push({ role: 'assistant', content: reply });
-      appendMessage('assistant', reply, true);
+      appendMessage('assistant', reply);
       
       // Refresh history
       loadHistory();
@@ -480,7 +495,6 @@
     } catch (e) {
       typingIndicator?.classList.add('hidden');
       appendMessage('assistant', 'Error de conexión. Por favor, inténtalo de nuevo.');
-      console.error('Error in sendMessage:', e);
     }
   }
 

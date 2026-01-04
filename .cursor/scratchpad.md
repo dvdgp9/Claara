@@ -4,24 +4,72 @@ Ebonia: plataforma interna de inteligencia corporativa (Grupo Ebone) basada en P
 
 # Key Challenges and Analysis
 
-- **Sesiones y CSRF**: Se ha detectado que tras periodos de inactividad, las acciones fallan con "Invalid CSRF token".
-  - **Causa probable 1**: La sesión de PHP expira por `session.gc_maxlifetime` o el navegador cierra la sesión (cookie con lifetime 0), pero el frontend mantiene el token antiguo en memoria.
-  - **Causa probable 2**: El token CSRF solo se genera una vez al inicio de la sesión y no se refresca. Si la sesión se regenera en el backend, el token en el frontend queda invalidado.
-  - **Causa probable 3**: Discrepancia entre la duración de la cookie de sesión y el tiempo de vida del token en el servidor.
+- Abstracción de proveedor LLM (arranque con Gemini 1.5 Flash, extensible a otros modelos).
+- Modelo de datos escalable: users/departments/companies, conversations/messages, folders, roles/permissions.
+- Seguridad: sesiones PHP, hashing Argon2id, HTTPS/HSTS/CSP, saneamiento inputs/CSRF.
+- UI mínima con Tailwind CDN y JS vanilla manteniendo escalabilidad.
+- Documentación de tablas en repo (única fuente de verdad de la BD).
 
 # High-level Task Breakdown
 
-1. [x] **Analizar y corregir consistencia de sesión**
-   - Asegurar que `session.gc_maxlifetime` sea coherente con la experiencia de usuario deseada (actualmente 30 días en `Session.php`).
-   - Verificar si el servidor (Apache/Nginx/PHP-FPM) tiene un proceso de limpieza de sesiones (cron) que ignore el `ini_set`.
-   - Implementar un mecanismo de refresco automático si el token está próximo a expirar.
+1. Definir y acordar esquema BD (tablas, claves, índices) y documentarlo.
+2. Definir estructura de proyecto (public/, api/, src/, config/, docs/, assets/...).
+3. Preparar configuración: `.env.example`, `.gitignore`, configuración sesiones seguras.
+4. Implementar autenticación (login/logout, registro admin inicial, RBAC mínimo: admin/user).
+5. UI MVP: escritorio (chat central + sidebar), Tailwind CDN, layout base.
+6. Endpoint `/api/chat` con Gemini 1.5 Flash (request→response), capa proveedor.
+7. Persistencia de conversaciones/mensajes y CRUD básico (renombrar, archivar, folders, mover).
+8. Semillas iniciales: empresas y departamentos proporcionados.
+9. README con setup (PHP 8.2+, MySQL, variables entorno) y decisiones.
 
-2. [x] **Refrescar token CSRF en respuestas de error**
-   - Si una petición falla por CSRF, intentar obtener un nuevo token si la sesión aún es válida (vía `me.php`).
-   - Actualizar el cliente `api()` en el frontend para manejar reintentos tras refresco de token.
+---
 
-3. [x] **Mejorar gestión de errores en UI**
-   - En lugar de un aviso genérico, si falla el CSRF, intentar refrescar silenciosamente. Si falla la sesión, redirigir a login de forma elegante.
+## Feature: FAQ Chatbot (Dudas Rápidas) con QWEN Turbo
+
+### Motivación
+Chatbot ligero para preguntas rápidas sobre el Grupo Ebone. Usa QWEN Turbo (`qwen-turbo`) por su velocidad. Sin persistencia en BD, pero con historial en memoria del modal para poder hacer seguimiento de la conversación.
+
+### Decisiones técnicas
+- **Modelo**: `qwen-turbo` (1M tokens contexto, optimizado velocidad) via Alibaba Cloud API
+- **Endpoint**: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions` (ya configurado en QwenClient)
+- **Sin RAG**: El contexto corporativo (~4.5KB) cabe perfectamente en el system prompt
+- **Historial en sesión JS**: El modal mantiene array de mensajes en memoria para continuidad de conversación
+- **Sin persistencia BD**: No se guardan mensajes FAQ (diferencia clave con chat principal)
+
+### Tareas de implementación
+
+1. [x] **Crear endpoint `/api/faq.php`**
+   - Recibe: `{ message: string, history: array }`
+   - Usa QwenClient con modelo `qwen-turbo`
+   - System prompt optimizado para FAQ cortas
+   - Retorna: `{ reply: string }`
+   - Success: Respuesta en <2s para preguntas simples
+
+2. [x] **Crear system prompt FAQ** (`docs/context/faq_prompt.md`)
+   - Instrucciones para respuestas concisas
+   - Incluye contexto corporativo inline
+   - Directriz: responder en 2-3 párrafos máximo
+   - Success: Respuestas focalizadas y breves
+
+3. [x] **Agregar modal FAQ en `index.php`**
+   - Botón "?" junto a la lupa en header
+   - Modal con input + historial de mensajes
+   - Sugerencias de preguntas frecuentes
+   - Indicador de "escribiendo..."
+   - Success: Modal funcional con UX fluida
+
+4. [x] **Implementar lógica JS del modal**
+   - Array `faqHistory` en memoria
+   - Envío de historial completo en cada request
+   - Renderizado de conversación en el modal
+   - Botón para limpiar/nueva conversación
+   - Success: Poder hacer follow-up questions
+
+5. [ ] **Testing y ajustes**
+   - Verificar velocidad de respuesta
+   - Ajustar system prompt si respuestas muy largas
+   - Probar límite de historial (~20 mensajes)
+   - Success: UX fluida, respuestas relevantes
 
 # Project Status Board
 
@@ -36,12 +84,6 @@ Ebonia: plataforma interna de inteligencia corporativa (Grupo Ebone) basada en P
 - [x] Scaffolding MVP (public/api/src) y utilidades base.
 - [x] Endpoints mínimos auth/login, auth/logout y chat.
 - [x] `.env` local configurado.
-- [x] **Investigar y solucionar "Invalid CSRF token" tras inactividad.**
-
-# Lessons
-
-- **CSRF Refresh**: En aplicaciones SPA o con mucha interacción JS, el token CSRF en memoria puede quedar desincronizado si la sesión de PHP se refresca o si el token expira antes que la sesión. Implementar un mecanismo de reintento automático en el cliente API (frontend) que solicite un nuevo token a un endpoint como `/api/auth/me.php` soluciona las interrupciones de usuario sin requerir re-login, siempre que la sesión de PHP siga siendo válida.
-- **Session Lifetimes**: Es crucial que `session.gc_maxlifetime` y `session.cookie_lifetime` estén alineados. En `Session.php` se configuraron 30 días para evitar limpiezas prematuras por parte del garbage collector de PHP.
 
 ## Gesto: Redes Sociales (en progreso)
 

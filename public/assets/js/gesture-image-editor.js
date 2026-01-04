@@ -411,30 +411,18 @@
     if (generateBtn) generateBtn.disabled = true;
 
     try {
-      const data = await api('/api/gestures/generate-image.php', {
+      const res = await fetch('/api/gestures/generate-image.php', {
         method: 'POST',
-        body: { gesture_type: GESTURE_TYPE, prompt, input_data: inputData }
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
+        body: JSON.stringify({ gesture_type: GESTURE_TYPE, prompt, input_data: inputData }),
+        credentials: 'include'
       });
-      
+
+      const data = await res.json();
       imageLoading?.classList.add('hidden');
       if (generateBtn) generateBtn.disabled = false;
-      
-      // El backend devuelve { success, image, text, ... } directamente
-      if (data.success && data.image) {
-        currentImageBase64 = data.image;
-        if (generatedImage) generatedImage.src = `data:image/png;base64,${data.image}`;
-        imageResult?.classList.remove('hidden');
 
-        if (data.text && imageCaption) {
-          imageCaption.textContent = data.text;
-          imageCaption.classList.remove('hidden');
-        } else {
-          imageCaption?.classList.add('hidden');
-        }
-
-        loadHistory();
-
-      } else {
+      if (!res.ok || !data.image) {
         alert('Error al generar la imagen: ' + (data.error?.message || 'Error desconocido'));
         // Restore UI
         if (currentModeInput?.value === 'generate') {
@@ -442,13 +430,27 @@
         } else {
           editSourceSection?.classList.remove('hidden');
         }
+        return;
       }
+
+      currentImageBase64 = data.image;
+      if (generatedImage) generatedImage.src = `data:image/png;base64,${data.image}`;
+      imageResult?.classList.remove('hidden');
+
+      if (data.text && imageCaption) {
+        imageCaption.textContent = data.text;
+        imageCaption.classList.remove('hidden');
+      } else {
+        imageCaption?.classList.add('hidden');
+      }
+
+      loadHistory();
 
     } catch (err) {
       imageLoading?.classList.add('hidden');
       if (generateBtn) generateBtn.disabled = false;
       console.error('Error:', err);
-      alert('Error de conexión al generar la imagen: ' + (err.message || ''));
+      alert('Error de conexión al generar la imagen');
       // Restore UI
       if (currentModeInput?.value === 'generate') {
         imagePlaceholder?.classList.remove('hidden');

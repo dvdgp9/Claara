@@ -229,36 +229,40 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
     generateArticleBtn.disabled = true;
     
     try {
-      const res = await api('/api/gestures/generate.php', {
+      const res = await fetch('/api/gestures/generate.php', {
         method: 'POST',
-        body: {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': window.CSRF_TOKEN
+        },
+        body: JSON.stringify({
           gesture_type: GESTURE_TYPE,
           prompt: prompt,
           input_data: inputData,
           content_type: contentType,
           business_line: businessLine
-        }
+        }),
+        credentials: 'include'
       });
       
-      const data = res;
+      const data = await res.json();
+      articleLoading.classList.add('hidden');
+      generateArticleBtn.disabled = false;
       
-      if (data.success && data.execution) {
-        articleLoading.classList.add('hidden');
-        generateArticleBtn.disabled = false;
-        
-        articleContent.innerHTML = mdToHtml(data.execution.output_content);
-        articleResult.classList.remove('hidden');
-        
-        // Scroll al resultado
-        articleResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        
-        // Recargar historial
-        loadHistory();
-      } else {
-        articleLoading.classList.add('hidden');
-        generateArticleBtn.disabled = false;
+      if (!res.ok) {
         alert('Error al generar el contenido: ' + (data.error?.message || 'Error desconocido'));
+        return;
       }
+      
+      // Mostrar resultado
+      articleContent.innerHTML = mdToHtml(data.content);
+      articleResult.classList.remove('hidden');
+      
+      // Scroll al resultado
+      articleResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      // Recargar historial
+      loadHistory();
       
     } catch (err) {
       articleLoading.classList.add('hidden');
