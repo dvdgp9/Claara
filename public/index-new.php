@@ -693,10 +693,14 @@ $userName = htmlspecialchars($user['first_name'] ?? 'Usuario');
   
   document.getElementById('logout-btn')?.addEventListener('click', async () => {
     try {
-      await api('/api/auth/logout.php', { method: 'POST' });
+      await api('/api/auth/logout.php', { 
+        method: 'POST',
+        headers: { 'X-CSRF-Token': window.CSRF_TOKEN }
+      });
       window.location.href = '/login.php';
     } catch (e) {
-      alert('Error al cerrar sesión');
+      console.error('Logout error:', e);
+      window.location.href = '/logout.php';
     }
   });
 

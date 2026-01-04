@@ -476,7 +476,6 @@ $headerShowLogo = true;
     inputEl.addEventListener('keydown', (e) => handleCommandEnter(e, formEl));
     inputEmptyEl.addEventListener('keydown', (e) => handleCommandEnter(e, formEmptyEl));
 
-    const logoutBtn = document.getElementById('logout-btn');
     const sessionUser = document.getElementById('session-user');
     const sessionMeta = document.getElementById('session-meta');
     const userAvatar = document.getElementById('user-avatar');
@@ -818,16 +817,6 @@ $headerShowLogo = true;
       if (e.target === moveModal) {
         moveModal.classList.add('hidden');
         conversationToMove = null;
-      }
-    });
-
-    logoutBtn.addEventListener('click', async (e)=>{
-      e.stopPropagation();
-      try {
-        await api('/api/auth/logout.php', { method: 'POST' });
-        window.location.href = '/login.php';
-      } catch(e){
-        alert('Logout error: ' + e.message);
       }
     });
 

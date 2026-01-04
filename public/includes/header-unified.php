@@ -165,7 +165,7 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
           </a>
         <?php endif; ?>
         
-        <button id="logout-btn" onclick="window.location.href='/logout.php'" class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 border-t border-slate-100">
+        <button id="logout-btn" class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 border-t border-slate-100">
           <i class="iconoir-log-out"></i>
           <span>Cerrar sesión</span>
         </button>
@@ -179,6 +179,7 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
 document.addEventListener('DOMContentLoaded', () => {
   const profileBtn = document.getElementById('profile-btn');
   const profileDropdown = document.getElementById('profile-dropdown');
+  const logoutBtn = document.getElementById('logout-btn');
   
   if(profileBtn && profileDropdown) {
     profileBtn.addEventListener('click', (e) => {
@@ -189,6 +190,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
       if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
         profileDropdown.classList.add('hidden');
+      }
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const response = await fetch('/api/auth/logout.php', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-Token': window.CSRF_TOKEN
+          },
+          credentials: 'include'
+        });
+        window.location.href = '/login.php';
+      } catch (error) {
+        console.error('Logout error:', error);
+        // Fallback en caso de error
+        window.location.href = '/logout.php';
       }
     });
   }
