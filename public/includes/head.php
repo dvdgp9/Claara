@@ -29,6 +29,7 @@ $pageTitle = $pageTitle ?? 'Ebonia — IA Corporativa';
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
+  <script src="/assets/js/api-client.js"></script>
   <script>window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';</script>
   
   <!-- Service Worker Registration -->

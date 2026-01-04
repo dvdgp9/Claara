@@ -737,6 +737,11 @@ $headerShowLogo = true;
     });
 
     async function api(path, opts={}){
+      // Usar window.api centralizado si está disponible, si no, usar implementación local mejorada
+      if (typeof window.api === 'function' && window.api !== api) {
+        return window.api(path, opts);
+      }
+
       const res = await fetch(path, {
         method: opts.method || 'GET',
         headers: {
@@ -746,8 +751,33 @@ $headerShowLogo = true;
         body: opts.body ? JSON.stringify(opts.body) : undefined,
         credentials: 'include'
       });
+      
       const data = await res.json().catch(()=>({}));
-      if(!res.ok) throw new Error(data?.error?.message || res.statusText);
+      
+      // Si el error es por CSRF inválido, intentamos refrescar el token una vez
+      if (res.status === 403 && data?.error?.code === 'csrf_invalid' && !opts._retry) {
+        try {
+          const meRes = await fetch('/api/auth/me.php', { credentials: 'include' });
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            csrf = meData.csrf_token || null;
+            if (csrf) {
+              if (typeof window.CSRF_TOKEN !== 'undefined') window.CSRF_TOKEN = csrf;
+              return api(path, { ...opts, _retry: true });
+            }
+          }
+        } catch (e) {
+          console.error('Error refrescando CSRF:', e);
+        }
+      }
+
+      if(!res.ok) {
+        if (res.status === 401) {
+          window.location.href = '/login.php';
+          return;
+        }
+        throw new Error(data?.error?.message || res.statusText);
+      }
       return data;
     }
 

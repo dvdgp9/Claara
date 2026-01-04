@@ -243,17 +243,43 @@ if (!$isSuperadmin) {
 
     // API helper
     async function api(path, opts = {}) {
+      let currentCsrf = typeof csrf !== 'undefined' ? csrf : null;
       const res = await fetch(path, {
         method: opts.method || 'GET',
         headers: {
           'Content-Type': 'application/json',
-          ...(csrf ? { 'X-CSRF-Token': csrf } : {})
+          ...(currentCsrf ? { 'X-CSRF-Token': currentCsrf } : {})
         },
         body: opts.body ? JSON.stringify(opts.body) : undefined,
         credentials: 'include'
       });
+      
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error?.message || res.statusText);
+
+      // Si el error es por CSRF inválido, intentamos refrescar el token una vez
+      if (res.status === 403 && data?.error?.code === 'csrf_invalid' && !opts._retry) {
+        try {
+          const meRes = await fetch('/api/auth/me.php', { credentials: 'include' });
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            const newCsrf = meData.csrf_token || null;
+            if (newCsrf) {
+              if (typeof csrf !== 'undefined') csrf = newCsrf;
+              return api(path, { ...opts, _retry: true });
+            }
+          }
+        } catch (e) {
+          console.error('Error refrescando CSRF:', e);
+        }
+      }
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.location.href = '/login.php';
+          return;
+        }
+        throw new Error(data?.error?.message || res.statusText);
+      }
       return data;
     }
 

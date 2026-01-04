@@ -311,30 +311,50 @@ IMPORTANTE:
     variantBtns.forEach(btn => btn.disabled = true);
 
     try {
-      const res = await fetch('/api/gestures/generate.php', {
+      const res = await api('/api/gestures/generate.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': window.CSRF_TOKEN
-        },
-        body: JSON.stringify({
+        body: {
           gesture_type: GESTURE_TYPE,
-          prompt: prompt,
-          input_data: inputData,
-          content_type: isVariant ? 'variant' : 'original',
-          business_line: businessLine
-        }),
-        credentials: 'include'
+          business_line: businessLine,
+          prompt,
+          input_data: inputData
+        }
       });
+      
+      const data = res;
+      
+      if (data.success && data.execution) {
+        postLoading.classList.add('hidden');
+        generatePostBtn.disabled = false;
+        variantBtns.forEach(btn => btn.disabled = false);
 
-      const data = await res.json();
-      postLoading.classList.add('hidden');
-      generatePostBtn.disabled = false;
-      variantBtns.forEach(btn => btn.disabled = false);
+        // Parsear respuesta
+        const parsed = parseResponse(data.execution.content);
+        lastGeneratedContent = parsed.post;
 
-      if (!res.ok) {
+        // Mantener hashtags si la variante no devuelve nuevos
+        const hashtags = (parsed.hashtags || '').trim();
+        if (!isVariant) {
+          lastHashtags = hashtags;
+        } else if (hashtags) {
+          lastHashtags = hashtags;
+        }
+
+        // Mostrar resultado
+        postContent.textContent = parsed.post;
+        hashtagsContent.textContent = lastHashtags;
+        
+        // Resumen editorial
+        renderEditorialSummary(isVariant ? lastInputData : inputData);
+        editorialPanel.classList.remove('hidden');
+
+        postResult.classList.remove('hidden');
+
+        // Recargar historial
+        loadHistory();
+
+      } else {
         alert('Error al generar la publicación: ' + (data.error?.message || 'Error desconocido'));
-        return;
       }
 
       // Parsear respuesta

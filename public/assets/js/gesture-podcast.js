@@ -135,29 +135,33 @@
     updateProgress('Creando tarea...', 'Preparando generación del podcast');
 
     try {
-      // Crear job en background
-      const response = await fetch('/api/jobs/create.php', {
+      const data = await api('/api/jobs/create.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          job_type: 'podcast',
-          input_data: inputData
-        })
+        body: {
+          job_type: 'podcast-from-article',
+          payload: inputData
+        }
       });
 
-      const data = await response.json();
+      if (data.success && data.job_id) {
+        currentJobId = data.job_id;
+        try {
+          sessionStorage.setItem('podcast_job_id', String(currentJobId));
+        } catch (_) {}
+        pollStartTime = Date.now();
+        
+        // Mostrar mensaje de que puede navegar
+        updateProgress('Procesando...', 'Estamos creando tu podcast, danos unos minutos.');
+        showNavigationHint();
+        
+        // Disparar procesamiento (trigger) y empezar polling
+        triggerProcessing();
+        startPolling();
 
-      if (!response.ok || !data.success) {
+      } else {
         throw new Error(data.error?.message || data.message || 'Error al crear la tarea');
       }
 
-      currentJobId = data.job_id;
-      try {
-        sessionStorage.setItem('podcast_job_id', String(currentJobId));
-      } catch (_) {}
-      pollStartTime = Date.now();
-      
       // Mostrar mensaje de que puede navegar
       updateProgress('Procesando...', 'Estamos creando tu podcast, danos unos minutos.');
       showNavigationHint();

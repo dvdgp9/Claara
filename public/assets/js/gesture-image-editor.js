@@ -411,18 +411,31 @@
     if (generateBtn) generateBtn.disabled = true;
 
     try {
-      const res = await fetch('/api/gestures/generate-image.php', {
+      const res = await api('/api/gestures/generate-image.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
-        body: JSON.stringify({ gesture_type: GESTURE_TYPE, prompt, input_data: inputData }),
-        credentials: 'include'
+        body: { gesture_type: GESTURE_TYPE, prompt, input_data: inputData }
       });
+      
+      const data = res;
+      
+      if (data.success && data.execution) {
+        imageLoading?.classList.add('hidden');
+        if (generateBtn) generateBtn.disabled = false;
 
-      const data = await res.json();
-      imageLoading?.classList.add('hidden');
-      if (generateBtn) generateBtn.disabled = false;
+        currentImageBase64 = data.execution.image;
+        if (generatedImage) generatedImage.src = `data:image/png;base64,${data.execution.image}`;
+        imageResult?.classList.remove('hidden');
 
-      if (!res.ok || !data.image) {
+        if (data.execution.text && imageCaption) {
+          imageCaption.textContent = data.execution.text;
+          imageCaption.classList.remove('hidden');
+        } else {
+          imageCaption?.classList.add('hidden');
+        }
+
+        loadHistory();
+
+      } else {
         alert('Error al generar la imagen: ' + (data.error?.message || 'Error desconocido'));
         // Restore UI
         if (currentModeInput?.value === 'generate') {

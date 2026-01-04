@@ -449,37 +449,22 @@
     appendMessage('user', text);
     messageHistory.push({ role: 'user', content: text });
     
-    // Show typing
+    chatInput.value = '';
     typingIndicator?.classList.remove('hidden');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
+
     try {
-      const res = await fetch('/api/voices/chat.php', {
+      const data = await api('/api/voices/chat.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': window.CSRF_TOKEN
-        },
-        body: JSON.stringify({
+        body: {
           voice_id: VOICE_ID,
           message: text,
-          history: messageHistory.slice(0, -1), // Sin el mensaje actual
-          execution_id: currentExecutionId
-        }),
-        credentials: 'include'
+          history: messageHistory.slice(0, -1)
+        }
       });
       
       typingIndicator?.classList.add('hidden');
-      
-      if (!res.ok) {
-        const err = await res.json();
-        appendMessage('assistant', 'Error: ' + (err.error?.message || 'No se pudo procesar la consulta'));
-        return;
-      }
-      
-      const data = await res.json();
-      
-      // Update execution ID
+
       if (data.execution_id) {
         currentExecutionId = data.execution_id;
       }
@@ -487,7 +472,7 @@
       // Add response
       const reply = data.reply || data.message?.content || 'Sin respuesta';
       messageHistory.push({ role: 'assistant', content: reply });
-      appendMessage('assistant', reply);
+      appendMessage('assistant', reply, true);
       
       // Refresh history
       loadHistory();
@@ -495,6 +480,7 @@
     } catch (e) {
       typingIndicator?.classList.add('hidden');
       appendMessage('assistant', 'Error de conexión. Por favor, inténtalo de nuevo.');
+      console.error('Error in sendMessage:', e);
     }
   }
 
