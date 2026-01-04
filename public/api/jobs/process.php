@@ -105,6 +105,7 @@ try {
     
     switch ($jobType) {
         case 'podcast':
+        case 'podcast-from-article':
             $outputData = processPodcastJob($jobId, $inputData, $userId, $repo);
             break;
             

@@ -139,7 +139,7 @@
         method: 'POST',
         body: {
           job_type: 'podcast-from-article',
-          payload: inputData
+          input_data: inputData
         }
       });
 

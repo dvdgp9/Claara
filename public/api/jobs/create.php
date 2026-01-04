@@ -34,9 +34,9 @@ if (empty($jobType)) {
 }
 
 // Tipos de job permitidos
-$allowedTypes = ['podcast'];
+$allowedTypes = ['podcast', 'podcast-from-article'];
 if (!in_array($jobType, $allowedTypes)) {
-    Response::error('invalid_job_type', 'Tipo de job no válido', 400);
+    Response::error('invalid_job_type', 'Tipo de job no válido: ' . $jobType, 400);
 }
 
 try {
