@@ -357,31 +357,6 @@ IMPORTANTE:
         alert('Error al generar la publicación: ' + (data.error?.message || 'Error desconocido'));
       }
 
-      // Parsear respuesta
-      const parsed = parseResponse(data.content);
-      lastGeneratedContent = parsed.post;
-
-      // Mantener hashtags si la variante no devuelve nuevos
-      const hashtags = (parsed.hashtags || '').trim();
-      if (!isVariant) {
-        lastHashtags = hashtags;
-      } else if (hashtags) {
-        lastHashtags = hashtags;
-      }
-
-      // Mostrar resultado
-      postContent.textContent = parsed.post;
-      hashtagsContent.textContent = lastHashtags;
-      
-      // Resumen editorial
-      renderEditorialSummary(isVariant ? lastInputData : inputData);
-      editorialPanel.classList.remove('hidden');
-
-      postResult.classList.remove('hidden');
-
-      // Recargar historial
-      loadHistory();
-
     } catch (err) {
       postLoading.classList.add('hidden');
       generatePostBtn.disabled = false;

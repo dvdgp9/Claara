@@ -138,7 +138,7 @@
       const data = await api('/api/jobs/create.php', {
         method: 'POST',
         body: {
-          job_type: 'podcast-from-article',
+          job_type: 'podcast',
           input_data: inputData
         }
       });
@@ -161,14 +161,6 @@
       } else {
         throw new Error(data.error?.message || data.message || 'Error al crear la tarea');
       }
-
-      // Mostrar mensaje de que puede navegar
-      updateProgress('Procesando...', 'Estamos creando tu podcast, danos unos minutos.');
-      showNavigationHint();
-      
-      // Disparar procesamiento (trigger) y empezar polling
-      triggerProcessing();
-      startPolling();
 
     } catch (error) {
       console.error('Error:', error);

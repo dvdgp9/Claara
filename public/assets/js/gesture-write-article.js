@@ -243,6 +243,9 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
       const data = res;
       
       if (data.success && data.execution) {
+        articleLoading.classList.add('hidden');
+        generateArticleBtn.disabled = false;
+        
         articleContent.innerHTML = mdToHtml(data.execution.output_content);
         articleResult.classList.remove('hidden');
         
@@ -252,11 +255,10 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
         // Recargar historial
         loadHistory();
       } else {
+        articleLoading.classList.add('hidden');
+        generateArticleBtn.disabled = false;
         alert('Error al generar el contenido: ' + (data.error?.message || 'Error desconocido'));
       }
-      
-      // Recargar historial
-      loadHistory();
       
     } catch (err) {
       articleLoading.classList.add('hidden');
