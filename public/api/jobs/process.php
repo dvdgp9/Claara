@@ -258,19 +258,21 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     $tempWavPath = $publicTmp . '/' . $tempWavName;
     file_put_contents($tempWavPath, $wavData);
 
-    // Comprimir a M4A
-    $m4aName = str_replace('.wav', '.m4a', $tempWavName);
-    $m4aPath = $publicTmp . '/' . $m4aName;
+    // Intentar comprimir a M4A (opcional, si falla usamos WAV)
+    $finalUrl = '/tmp/' . $tempWavName; // Default: WAV
     
-    $optimization = \Audio\AudioOptimizer::convertToM4a($tempWavPath, $m4aPath);
-    
-    if ($optimization['success']) {
-        // Si la conversión fue exitosa, usamos el M4A y borramos el WAV
-        $finalUrl = '/tmp/' . $m4aName;
-        @unlink($tempWavPath);
-    } else {
-        // Si falló (ej. no hay ffmpeg), usamos el WAV como fallback
-        $finalUrl = '/tmp/' . $tempWavName;
+    try {
+        $m4aName = str_replace('.wav', '.m4a', $tempWavName);
+        $m4aPath = $publicTmp . '/' . $m4aName;
+        
+        $optimization = \Audio\AudioOptimizer::convertToM4a($tempWavPath, $m4aPath);
+        
+        if ($optimization['success']) {
+            $finalUrl = '/tmp/' . $m4aName;
+            @unlink($tempWavPath);
+        }
+    } catch (\Throwable $e) {
+        // Si hay cualquier error con ffmpeg, ignorarlo y usar WAV
     }
     
     // === PASO 4: Guardar en historial de gestos ===
