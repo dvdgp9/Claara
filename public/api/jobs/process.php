@@ -253,27 +253,10 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     if (!is_dir($publicTmp)) {
         @mkdir($publicTmp, 0775, true);
     }
-    
-    $tempWavName = 'podcast_' . uniqid() . '.wav';
-    $tempWavPath = $publicTmp . '/' . $tempWavName;
-    file_put_contents($tempWavPath, $wavData);
-
-    // Intentar comprimir a M4A (opcional, si falla usamos WAV)
-    $finalUrl = '/tmp/' . $tempWavName; // Default: WAV
-    
-    try {
-        $m4aName = str_replace('.wav', '.m4a', $tempWavName);
-        $m4aPath = $publicTmp . '/' . $m4aName;
-        
-        $optimization = \Audio\AudioOptimizer::convertToM4a($tempWavPath, $m4aPath);
-        
-        if ($optimization['success']) {
-            $finalUrl = '/tmp/' . $m4aName;
-            @unlink($tempWavPath);
-        }
-    } catch (\Throwable $e) {
-        // Si hay cualquier error con ffmpeg, ignorarlo y usar WAV
-    }
+    $fileName = 'podcast_' . uniqid() . '.wav';
+    $filePath = $publicTmp . '/' . $fileName;
+    file_put_contents($filePath, $wavData);
+    $wavUrl = '/tmp/' . $fileName;
     
     // === PASO 4: Guardar en historial de gestos ===
     $repo->updateProgress($jobId, 'Guardando resultado...');
@@ -293,7 +276,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
         'output_data' => [
             'summary' => $summary,
             'script' => $script,
-            'audio_url' => $finalUrl,
+            'audio_url' => $wavUrl,
             'duration_estimate' => $estimatedDuration,
             'speaker1' => $speaker1,
             'speaker2' => $speaker2
@@ -315,7 +298,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
         'script' => $script,
         'speaker1' => $speaker1,
         'speaker2' => $speaker2,
-        'audio_url' => $finalUrl,
+        'audio_url' => $wavUrl,
         'duration_estimate' => $estimatedDuration,
         'source' => $source
     ];

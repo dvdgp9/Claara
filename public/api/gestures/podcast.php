@@ -160,7 +160,7 @@ try {
         Response::error('audio_failed', $audioResult['error'], 500);
     }
 
-    // Convertir PCM a WAV y guardar
+    // El audio viene como PCM raw, convertir a WAV y guardar en /public/tmp para no agotar memoria en JSON
     $pcmData = base64_decode($audioResult['audio_data']);
     $wavData = GeminiTtsClient::pcmToWav($pcmData);
 
@@ -168,31 +168,15 @@ try {
     if (!is_dir($publicTmp)) {
         @mkdir($publicTmp, 0775, true);
     }
-    $tempWavName = 'podcast_' . uniqid() . '.wav';
-    $tempWavPath = $publicTmp . '/' . $tempWavName;
-    file_put_contents($tempWavPath, $wavData);
-
-    // Intentar comprimir a M4A (opcional, si falla usamos WAV)
-    $finalUrl = '/tmp/' . $tempWavName; // Default: WAV
-    
-    try {
-        $m4aName = str_replace('.wav', '.m4a', $tempWavName);
-        $m4aPath = $publicTmp . '/' . $m4aName;
-
-        $optimization = \Audio\AudioOptimizer::convertToM4a($tempWavPath, $m4aPath);
-
-        if ($optimization['success']) {
-            $finalUrl = '/tmp/' . $m4aName;
-            @unlink($tempWavPath);
-        }
-    } catch (\Throwable $e) {
-        // Si hay cualquier error con ffmpeg, ignorarlo y usar WAV
-    }
+    $fileName = 'podcast_' . uniqid() . '.wav';
+    $filePath = $publicTmp . '/' . $fileName;
+    file_put_contents($filePath, $wavData);
+    $wavUrl = '/tmp/' . $fileName;
 
     // === PASO 4: Guardar en historial ===
-    $repoRepo = new GestureExecutionsRepo();
+    $repo = new GestureExecutionsRepo();
     
-    $executionId = $repoRepo->create([
+    $executionId = $repo->create([
         'user_id' => $user['id'],
         'gesture_type' => 'podcast-from-article',
         'title' => $title ?: 'Podcast: ' . substr($summary, 0, 50),
@@ -206,7 +190,7 @@ try {
         'output_data' => [
             'summary' => $summary,
             'script' => $script,
-            'audio_url' => $finalUrl,
+            'audio_url' => $wavUrl,
             'duration_estimate' => $estimatedDuration,
             'speaker1' => $speaker1,
             'speaker2' => $speaker2
@@ -227,8 +211,8 @@ try {
         'speaker1' => $speaker1,
         'speaker2' => $speaker2,
         'audio' => [
-            'url' => $finalUrl,
-            'mime_type' => $optimization['success'] ? 'audio/mp4' : 'audio/wav',
+            'url' => $wavUrl,
+            'mime_type' => 'audio/wav',
             'duration_estimate' => $estimatedDuration
         ],
         'source' => $source
