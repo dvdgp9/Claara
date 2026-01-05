@@ -146,7 +146,7 @@ try {
     $ttsClient = new GeminiTtsClient();
     
     // Preparar el texto para TTS con formato de diálogo
-    $ttsPrompt = $script;
+    $ttsPrompt = "TTS the following podcast conversation between {$speaker1} and {$speaker2} in Spanish:\n\n" . $script;
     
     $audioResult = $ttsClient->generateMultiSpeaker(
         $ttsPrompt,

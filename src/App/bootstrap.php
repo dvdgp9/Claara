@@ -23,6 +23,7 @@ require_once dirname(__DIR__) . '/Chat/OpenRouterClient.php';
 require_once dirname(__DIR__) . '/Audio/GeminiTtsClient.php';
 require_once dirname(__DIR__) . '/Audio/ContentExtractor.php';
 require_once dirname(__DIR__) . '/Audio/PodcastScriptGenerator.php';
+require_once dirname(__DIR__) . '/Audio/AudioOptimizer.php';
 
 // Cargar .env desde la raíz del proyecto
 $root = dirname(dirname(__DIR__));
