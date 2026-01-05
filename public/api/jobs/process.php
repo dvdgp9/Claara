@@ -218,8 +218,8 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     
     $script = $scriptResult['script'];
     $summary = $scriptResult['summary'];
-    $speaker1 = $scriptResult['speaker1'];
-    $speaker2 = $scriptResult['speaker2'];
+    $speaker1 = $scriptResult['speaker1'] ?? 'Iris';
+    $speaker2 = $scriptResult['speaker2'] ?? 'Bruno';
     $estimatedDuration = $scriptResult['estimated_duration'];
     
     // === PASO 3: Generar audio ===
@@ -231,7 +231,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     }
     
     $ttsClient = new GeminiTtsClient();
-    $ttsPrompt = "TTS the following podcast conversation between {$speaker1} and {$speaker2} in Spanish:\n\n" . $script;
+    $ttsPrompt = $script; // El cliente ya espera el guion con formato "Speaker: texto"
     
     $audioResult = $ttsClient->generateMultiSpeaker(
         $ttsPrompt,

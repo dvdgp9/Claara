@@ -97,7 +97,7 @@ class GeminiTtsClient
                 'Content-Type: application/json'
             ],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            CURLOPT_TIMEOUT => 300, // 5 minutos para audios largos
+            CURLOPT_TIMEOUT => 600, // Aumentado a 10 minutos para audios muy largos
         ]);
 
         $raw = curl_exec($ch);
@@ -106,6 +106,7 @@ class GeminiTtsClient
         curl_close($ch);
 
         if ($raw === false || $err) {
+            error_log("Gemini TTS cURL Error: " . $err);
             return ['success' => false, 'error' => 'Error de conexión: ' . $err];
         }
 
@@ -113,6 +114,7 @@ class GeminiTtsClient
 
         if ($status < 200 || $status >= 300) {
             $msg = $data['error']['message'] ?? $data['message'] ?? ('HTTP ' . $status);
+            error_log("Gemini TTS API Error ($status): " . $msg);
             return ['success' => false, 'error' => 'Error de Gemini TTS: ' . $msg];
         }
 
