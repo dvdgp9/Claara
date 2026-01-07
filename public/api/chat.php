@@ -40,6 +40,7 @@ $conversationId = isset($input['conversation_id']) ? (int)$input['conversation_i
 $file = $input['file'] ?? null;
 $fileId = isset($input['file_id']) ? (int)$input['file_id'] : null;
 $imageMode = !empty($input['image_mode']); // Modo generación de imágenes (nanobanana)
+$webSearch = !empty($input['web_search']); // Modo búsqueda web
 
 // Verificar permiso de generación de imágenes si está activado el modo imagen
 if ($imageMode) {
@@ -203,13 +204,19 @@ if (count($history) > 20) {
 // Determinar modalities para la generación
 $modalities = $imageMode ? ['image', 'text'] : null;
 
-$assistantMsg = $svc->replyWithHistory($history, $modalities);
+// Web search no es compatible con modo imagen
+$useWebSearch = $webSearch && !$imageMode;
+
+$assistantMsg = $svc->replyWithHistory($history, $modalities, $useWebSearch);
 
 // Determinar el modelo usado
 $usedModel = $provider->getModel();
 
 // Obtener imágenes generadas si las hay
 $generatedImages = $svc->getLastImages();
+
+// Obtener anotaciones/citas web si las hay
+$webAnnotations = $svc->getLastAnnotations();
 
 // Guardar respuesta de asistente (con imágenes persistidas si las hay)
 $imagesToSave = null;
@@ -334,6 +341,11 @@ $response = [
 // Incluir imágenes generadas si las hay (ya deduplicadas)
 if ($imagesToSave) {
     $response['message']['images'] = $imagesToSave;
+}
+
+// Incluir anotaciones/citas web si las hay
+if ($webAnnotations && !empty($webAnnotations)) {
+    $response['message']['annotations'] = $webAnnotations;
 }
 
 Response::json($response);

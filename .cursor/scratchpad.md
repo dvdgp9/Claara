@@ -756,6 +756,80 @@ El sistema construirá prompts estructurados combinando:
 
 ---
 
+## Feature: Búsqueda Web en Chat General
+
+### Motivación
+Añadir un botón en el chat general que active la búsqueda online de OpenRouter. Cuando está activo, las respuestas de Ebonia se enriquecen con información actualizada de internet. También actualizar el contexto de Ebonia para que sepa que tiene esta capacidad y pueda sugerir al usuario activarla cuando sea apropiado.
+
+### Documentación OpenRouter (Web Search Plugin)
+- **Activación simple**: Añadir `plugins: [{ id: 'web' }]` al payload
+- **Alternativa**: Usar sufijo `:online` en el modelo (ej: `google/gemini-3-flash-preview:online`)
+- **Respuesta**: Incluye `annotations` con citas de URLs
+- **Coste**: ~$0.02 por request con Exa (5 resultados por defecto)
+- **Opciones**: `max_results` (default 5), `engine` (native/exa), `search_prompt`
+
+### Diseño UX
+
+**1. Botón toggle en el footer del chat**
+- Ubicación: Junto al botón de adjuntar archivo y nanobanana
+- Icono: `iconoir-globe` o `iconoir-search`
+- Estado inactivo: Color slate (como los demás)
+- Estado activo: Color azul/cyan con glow (similar a nanobanana pero azul)
+- Tooltip: "Buscar en internet"
+
+**2. Indicador visual activo**
+- Botón con borde/glow azul
+- Pequeño badge "🌐" o indicador junto al input (opcional)
+
+**3. Comportamiento**
+- Compatible con archivos adjuntos (a diferencia de nanobanana)
+- Compatible con cualquier modelo
+- NO compatible con modo imagen (nanobanana) - deshabilitar uno si se activa el otro
+
+### Tareas de implementación
+
+1. [x] **Backend: Modificar OpenRouterClient.php**
+   - Añadido parámetro `$webSearch` a `generateWithMessages()`
+   - Si `$webSearch=true`, añade `plugins: [{ id: 'web' }]` al payload
+   - Parsea `annotations` de la respuesta y las almacena
+   - Añadido getter `getLastAnnotations()`
+   - ✅ Completado
+
+2. [x] **Backend: Modificar chat.php**
+   - Acepta parámetro `web_search` del frontend
+   - Pasa a LlmProvider/ChatService
+   - Devuelve `annotations` en la respuesta si existen
+   - ✅ Completado
+
+3. [x] **Frontend: Añadir botón toggle web search**
+   - Variable `webSearchMode` en JS
+   - Botón con estados visual activo/inactivo (cyan cuando activo)
+   - Exclusión mutua con `imageMode` (nanobanana)
+   - Sincronizado entre vista vacía y footer del chat
+   - ✅ Completado
+
+4. [x] **Frontend: Modificar handleSubmit**
+   - Si `webSearchMode`: envía `web_search: true` al backend
+   - ✅ Completado
+
+5. [x] **Frontend: Renderizar citas web**
+   - Si respuesta tiene `annotations`: muestra sección "Fuentes" al final
+   - Links clicables a las URLs citadas con dominio visible
+   - Deduplicación automática de URLs
+   - ✅ Completado
+
+6. [x] **Actualizar contexto de Ebonia**
+   - Modificado `docs/context/system_prompt.md`
+   - Añadida sección sobre búsqueda web con instrucciones de cuándo sugerirla
+   - ✅ Completado
+
+7. [ ] **Testing** (pendiente de usuario)
+   - Probar búsqueda web con preguntas de actualidad
+   - Verificar citas en respuesta
+   - Verificar exclusión mutua con nanobanana
+
+---
+
 ## Feature: Soporte Excel/CSV en Chat
 
 ### Motivación

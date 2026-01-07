@@ -170,6 +170,9 @@ $headerShowLogo = true;
                       <button type="button" id="image-mode-btn-empty" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generar imagen con nanobanana 🍌">
                         <i class="iconoir-media-image text-lg"></i>
                       </button>
+                      <button type="button" id="web-search-btn-empty" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="Buscar en internet">
+                        <i class="iconoir-globe text-lg"></i>
+                      </button>
                       <?php if ($user['is_superadmin']): ?>
                       <select id="model-select-empty" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Seleccionar modelo (Solo Superadmin)">
                         <option value="google/gemini-3-flash-preview">Gemini 3 Flash</option>
@@ -376,6 +379,9 @@ $headerShowLogo = true;
                 <button type="button" id="image-mode-btn" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generar imagen con nanobanana 🍌">
                   <i class="iconoir-media-image text-lg"></i>
                 </button>
+                <button type="button" id="web-search-btn" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="Buscar en internet">
+                  <i class="iconoir-globe text-lg"></i>
+                </button>
                 <?php if ($user['is_superadmin']): ?>
                 <select id="model-select-chat" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Seleccionar modelo (Solo Superadmin)">
                   <option value="google/gemini-3-flash-preview">Gemini 3 Flash</option>
@@ -522,6 +528,7 @@ $headerShowLogo = true;
     let allFolders = []; // cache de carpetas
     let conversationToMove = null; // conversación que se está moviendo
     let imageMode = false; // modo generación de imágenes (nanobanana 🍌)
+    let webSearchMode = false; // modo búsqueda web
 
     function showChatMode(){
       emptyState.classList.add('hidden');
@@ -614,7 +621,7 @@ $headerShowLogo = true;
       return s;
     }
 
-    function append(role, content, file = null, images = null){
+    function append(role, content, file = null, images = null, annotations = null){
       if(messagesEl.children.length === 0) showChatMode();
       
       const wrap = document.createElement('div');
@@ -698,6 +705,51 @@ $headerShowLogo = true;
         });
         
         bubble.appendChild(imagesContainer);
+      }
+      
+      // Añadir citas web si existen (búsqueda web 🌐)
+      if (annotations && annotations.length > 0 && role === 'assistant') {
+        const citationsContainer = document.createElement('div');
+        citationsContainer.className = 'mt-4 pt-3 border-t border-slate-200';
+        
+        const citationsTitle = document.createElement('div');
+        citationsTitle.className = 'text-xs font-medium text-slate-500 mb-2 flex items-center gap-1.5';
+        citationsTitle.innerHTML = '<i class="iconoir-globe text-cyan-500"></i> Fuentes';
+        citationsContainer.appendChild(citationsTitle);
+        
+        const citationsList = document.createElement('div');
+        citationsList.className = 'space-y-1.5';
+        
+        // Deduplicar por URL
+        const seenUrls = new Set();
+        annotations.forEach(ann => {
+          const citation = ann.url_citation;
+          if (!citation || !citation.url || seenUrls.has(citation.url)) return;
+          seenUrls.add(citation.url);
+          
+          const citationEl = document.createElement('a');
+          citationEl.href = citation.url;
+          citationEl.target = '_blank';
+          citationEl.rel = 'noopener noreferrer';
+          citationEl.className = 'flex items-center gap-2 text-xs text-slate-600 hover:text-cyan-600 hover:bg-cyan-50 px-2 py-1.5 rounded-lg transition-colors';
+          
+          // Extraer dominio para mostrar
+          let domain = '';
+          try {
+            domain = new URL(citation.url).hostname.replace('www.', '');
+          } catch (e) {
+            domain = citation.url.substring(0, 30);
+          }
+          
+          const title = citation.title || domain;
+          citationEl.innerHTML = `<i class="iconoir-link text-slate-400"></i> <span class="truncate">${escapeHtml(title)}</span> <span class="text-slate-400 flex-shrink-0">${escapeHtml(domain)}</span>`;
+          citationsList.appendChild(citationEl);
+        });
+        
+        if (citationsList.children.length > 0) {
+          citationsContainer.appendChild(citationsList);
+          bubble.appendChild(citationsContainer);
+        }
       }
       
       msgContainer.appendChild(avatar);
@@ -1238,6 +1290,11 @@ $headerShowLogo = true;
           body.image_mode = true;
         }
 
+        // Si está en modo búsqueda web, añadir flag
+        if (webSearchMode) {
+          body.web_search = true;
+        }
+
         // Si es superadmin, añadir el modelo seleccionado
         const modelSelectEmpty = document.getElementById('model-select-empty');
         const modelSelectChat = document.getElementById('model-select-chat');
@@ -1294,9 +1351,10 @@ $headerShowLogo = true;
         } else {
           warning.classList.add('hidden');
         }
-        // Pasar imágenes generadas si las hay
+        // Pasar imágenes generadas y citas web si las hay
         const images = data.message.images || null;
-        append('assistant', data.message.content, null, images);
+        const annotations = data.message.annotations || null;
+        append('assistant', data.message.content, null, images, annotations);
         
         // Si se generó imagen, desactivar modo imagen después
         if (imageMode && images && images.length > 0) {
@@ -1329,11 +1387,14 @@ $headerShowLogo = true;
 
     // Toggle modo generación de imágenes (nanobanana 🍌)
     const imageModeBtn = document.getElementById('image-mode-btn');
+    const webSearchBtn = document.getElementById('web-search-btn');
+    const webSearchBtnEmpty = document.getElementById('web-search-btn-empty');
     const chatInput = document.getElementById('chat-input');
     const chatInputEmpty = document.getElementById('chat-input-empty');
     const defaultPlaceholder = 'Escribe un mensaje...';
     const defaultPlaceholderEmpty = 'Pregúntame lo que quieras';
     const imagePlaceholder = 'Describe la imagen que quieres crear... 🍌';
+    const webSearchPlaceholder = 'Pregunta algo y buscaré en internet... 🌐';
 
     // Auto-resize para textareas
     function autoResize(textarea) {
@@ -1365,21 +1426,58 @@ $headerShowLogo = true;
           attachBtnEmptyDesktop.disabled = true;
           attachBtnEmptyDesktop.classList.add('opacity-50', 'cursor-not-allowed');
         }
+        // Deshabilitar web search en modo imagen
+        webSearchBtn.disabled = true;
+        webSearchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        webSearchBtnEmpty.disabled = true;
+        webSearchBtnEmpty.classList.add('opacity-50', 'cursor-not-allowed');
       } else {
         // Chat normal
         imageModeBtn.className = btnInactive;
-        chatInput.placeholder = defaultPlaceholder;
+        chatInput.placeholder = webSearchMode ? webSearchPlaceholder : defaultPlaceholder;
         attachBtn.disabled = false;
         attachBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         // Empty state
         imageModeBtnEmpty.className = btnInactive;
-        chatInputEmpty.placeholder = defaultPlaceholderEmpty;
+        chatInputEmpty.placeholder = webSearchMode ? webSearchPlaceholder : defaultPlaceholderEmpty;
         attachBtnEmpty.disabled = false;
         attachBtnEmpty.classList.remove('opacity-50', 'cursor-not-allowed');
         if (attachBtnEmptyDesktop) {
           attachBtnEmptyDesktop.disabled = false;
           attachBtnEmptyDesktop.classList.remove('opacity-50', 'cursor-not-allowed');
         }
+        // Habilitar web search
+        webSearchBtn.disabled = false;
+        webSearchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        webSearchBtnEmpty.disabled = false;
+        webSearchBtnEmpty.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function updateWebSearchModeUI() {
+      const btnActive = 'p-2 text-cyan-600 bg-cyan-50 rounded-lg transition-smooth';
+      const btnInactive = 'p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth';
+
+      if (webSearchMode) {
+        webSearchBtn.className = btnActive;
+        webSearchBtnEmpty.className = btnActive;
+        chatInput.placeholder = webSearchPlaceholder;
+        chatInputEmpty.placeholder = webSearchPlaceholder;
+        // Deshabilitar modo imagen en búsqueda web
+        imageModeBtn.disabled = true;
+        imageModeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        imageModeBtnEmpty.disabled = true;
+        imageModeBtnEmpty.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        webSearchBtn.className = btnInactive;
+        webSearchBtnEmpty.className = btnInactive;
+        chatInput.placeholder = defaultPlaceholder;
+        chatInputEmpty.placeholder = defaultPlaceholderEmpty;
+        // Habilitar modo imagen
+        imageModeBtn.disabled = false;
+        imageModeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        imageModeBtnEmpty.disabled = false;
+        imageModeBtnEmpty.classList.remove('opacity-50', 'cursor-not-allowed');
       }
     }
 
@@ -1506,8 +1604,21 @@ $headerShowLogo = true;
       inputEmptyEl.focus();
     });
 
+    // Event listeners para botón de búsqueda web
+    webSearchBtn.addEventListener('click', () => {
+      webSearchMode = !webSearchMode;
+      updateWebSearchModeUI();
+    });
+
+    webSearchBtnEmpty.addEventListener('click', () => {
+      webSearchMode = !webSearchMode;
+      updateWebSearchModeUI();
+      inputEmptyEl.focus();
+    });
+
     // Asegurar estado visual inicial correcto (texto) para los botones de imagen en empty state
     updateImageModeUI();
+    updateWebSearchModeUI();
 
     fileInputEmpty.addEventListener('change', (e) => {
       const file = e.target.files[0];

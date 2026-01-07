@@ -22,10 +22,11 @@ class OpenRouterProvider implements LlmProvider
     /**
      * @param array<int, array{role:string, content:string, file?:array}> $messages
      * @param array|null $modalities Modalidades de salida (ej: ['image', 'text'])
+     * @param bool $webSearch Activar búsqueda web
      */
-    public function generate(array $messages, ?array $modalities = null): string
+    public function generate(array $messages, ?array $modalities = null, bool $webSearch = false): string
     {
-        return $this->client->generateWithMessages($messages, $modalities);
+        return $this->client->generateWithMessages($messages, $modalities, $webSearch);
     }
 
     /**
@@ -42,5 +43,13 @@ class OpenRouterProvider implements LlmProvider
     public function getLastImages(): ?array
     {
         return $this->client->getLastImages();
+    }
+
+    /**
+     * Obtiene las anotaciones/citas web de la última respuesta
+     */
+    public function getLastAnnotations(): ?array
+    {
+        return $this->client->getLastAnnotations();
     }
 }

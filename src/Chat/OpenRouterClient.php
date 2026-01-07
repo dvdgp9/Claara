@@ -25,6 +25,7 @@ class OpenRouterClient {
     private ?float $temperature;
     private ?int $maxTokens;
     private ?array $lastImages = null; // Imágenes generadas en última respuesta
+    private ?array $lastAnnotations = null; // Anotaciones/citas web de última respuesta
     private string $baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
     public function __construct(
@@ -51,8 +52,9 @@ class OpenRouterClient {
     /**
      * @param array<int, array{role:string, content:string, file?:array}> $messages
      * @param array|null $modalities Modalidades de salida (ej: ['image', 'text'] para generación de imágenes)
+     * @param bool $webSearch Activar búsqueda web para enriquecer respuestas
      */
-    public function generateWithMessages(array $messages, ?array $modalities = null): string
+    public function generateWithMessages(array $messages, ?array $modalities = null, bool $webSearch = false): string
     {
         if (!$this->apiKey) {
             Response::error('openrouter_api_key_missing', 'Falta OPENROUTER_API_KEY en .env', 500);
@@ -128,14 +130,25 @@ class OpenRouterClient {
             'model' => $this->model,
             'messages' => $messagesPayload
         ];
-        // Si hay PDF, añadir plugin file-parser con engine pdf-text por defecto
+        // Construir array de plugins
+        $plugins = [];
+        
+        // Si hay PDF, añadir plugin file-parser con engine pdf-text
         if ($hasPdf) {
-            $payload['plugins'] = [
-                [
-                    'id' => 'file-parser',
-                    'pdf' => [ 'engine' => 'pdf-text' ]
-                ]
+            $plugins[] = [
+                'id' => 'file-parser',
+                'pdf' => [ 'engine' => 'pdf-text' ]
             ];
+        }
+        
+        // Si webSearch está activo, añadir plugin web
+        if ($webSearch) {
+            $plugins[] = [ 'id' => 'web' ];
+        }
+        
+        // Añadir plugins al payload si hay alguno
+        if (!empty($plugins)) {
+            $payload['plugins'] = $plugins;
         }
         // Si hay modalities (ej: generación de imágenes), añadirlas
         if ($modalities !== null && !empty($modalities)) {
@@ -188,6 +201,12 @@ class OpenRouterClient {
             $this->lastImages = $message['images'];
         }
         
+        // Capturar anotaciones/citas web si existen
+        $this->lastAnnotations = null;
+        if (isset($message['annotations']) && is_array($message['annotations'])) {
+            $this->lastAnnotations = $message['annotations'];
+        }
+        
         // Para generación de imágenes, el texto puede estar vacío pero tener imágenes
         if ($text === '' && empty($this->lastImages)) {
             Response::error('openrouter_empty', 'Respuesta vacía de OpenRouter', 502);
@@ -223,6 +242,15 @@ class OpenRouterClient {
     public function getLastImages(): ?array
     {
         return $this->lastImages;
+    }
+
+    /**
+     * Obtiene las anotaciones/citas web de la última respuesta (si las hay)
+     * @return array|null Array de anotaciones con formato [{type: 'url_citation', url_citation: {url, title, content?, start_index, end_index}}]
+     */
+    public function getLastAnnotations(): ?array
+    {
+        return $this->lastAnnotations;
     }
 
     /**
