@@ -287,7 +287,7 @@ $userName = htmlspecialchars($user['first_name'] ?? 'Usuario');
                 <i class="iconoir-send-diagonal text-xl"></i>
               </button>
             </form>
-            <input type="file" id="quick-file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" />
+            <input type="file" id="quick-file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" />
             <div id="quick-file-preview" class="hidden mt-4 p-3 bg-slate-50 rounded-xl flex items-center gap-3">
               <i id="quick-file-icon" class="iconoir-page text-xl text-[#23AAC5]"></i>
               <span id="quick-file-name" class="flex-1 text-small truncate"></span>
@@ -439,7 +439,7 @@ $userName = htmlspecialchars($user['first_name'] ?? 'Usuario');
                 </button>
               </div>
               <div class="flex gap-3">
-                <input type="file" id="file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" />
+                <input type="file" id="file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" />
                 <button type="button" id="attach-btn" class="p-3 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-xl border-2 border-slate-200 hover:border-[#23AAC5] transition-smooth" title="Adjuntar archivo (PDF o imagen)">
                   <i class="iconoir-attachment text-xl"></i>
                 </button>

@@ -1,0 +1,290 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Utils;
+
+/**
+ * Utilidad para leer archivos CSV y Excel y convertirlos a texto tabular.
+ * Para Excel, usa PhpSpreadsheet si está disponible, sino intenta leer como CSV.
+ */
+class SpreadsheetReader
+{
+    private const MAX_ROWS = 500;
+    private const MAX_COLS = 50;
+    private const MAX_CELL_LENGTH = 200;
+
+    /**
+     * Lee un archivo de hoja de cálculo desde datos binarios y devuelve texto tabular.
+     * 
+     * @param string $binaryData Contenido binario del archivo
+     * @param string $mimeType Tipo MIME del archivo
+     * @param string $fileName Nombre original del archivo (para contexto)
+     * @return string Contenido en formato texto tabular (Markdown)
+     */
+    public static function readToText(string $binaryData, string $mimeType, string $fileName = 'archivo'): string
+    {
+        $rows = self::parseToArray($binaryData, $mimeType);
+        
+        if (empty($rows)) {
+            return "[No se pudo leer el contenido del archivo: $fileName]";
+        }
+
+        return self::formatAsMarkdownTable($rows, $fileName);
+    }
+
+    /**
+     * Parsea el archivo a un array de filas.
+     */
+    private static function parseToArray(string $binaryData, string $mimeType): array
+    {
+        switch ($mimeType) {
+            case 'text/csv':
+                return self::parseCsv($binaryData);
+            
+            case 'application/vnd.ms-excel':
+            case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                return self::parseExcel($binaryData, $mimeType);
+            
+            default:
+                return [];
+        }
+    }
+
+    /**
+     * Parsea contenido CSV.
+     */
+    private static function parseCsv(string $data): array
+    {
+        $rows = [];
+        $lines = explode("\n", $data);
+        $rowCount = 0;
+
+        foreach ($lines as $line) {
+            if ($rowCount >= self::MAX_ROWS) break;
+            
+            $line = trim($line);
+            if ($line === '') continue;
+
+            // Detectar delimitador (coma, punto y coma, tabulador)
+            $delimiter = self::detectCsvDelimiter($line);
+            $cells = str_getcsv($line, $delimiter);
+            
+            // Limitar columnas y longitud de celdas
+            $cells = array_slice($cells, 0, self::MAX_COLS);
+            $cells = array_map(fn($c) => mb_substr(trim($c), 0, self::MAX_CELL_LENGTH), $cells);
+            
+            $rows[] = $cells;
+            $rowCount++;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Detecta el delimitador más probable de un CSV.
+     */
+    private static function detectCsvDelimiter(string $line): string
+    {
+        $delimiters = [';' => 0, ',' => 0, "\t" => 0];
+        
+        foreach (array_keys($delimiters) as $d) {
+            $delimiters[$d] = substr_count($line, $d);
+        }
+
+        arsort($delimiters);
+        $best = array_key_first($delimiters);
+        
+        return $delimiters[$best] > 0 ? $best : ',';
+    }
+
+    /**
+     * Parsea contenido Excel usando PhpSpreadsheet si está disponible.
+     */
+    private static function parseExcel(string $data, string $mimeType): array
+    {
+        // Intentar usar PhpSpreadsheet si está disponible
+        if (class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
+            return self::parseExcelWithPhpSpreadsheet($data, $mimeType);
+        }
+
+        // Fallback: para XLSX, intentar extraer como ZIP y leer el XML interno
+        if ($mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            return self::parseXlsxBasic($data);
+        }
+
+        // XLS antiguo sin PhpSpreadsheet: no podemos leerlo
+        return [['[Formato XLS requiere librería PhpSpreadsheet para lectura]']];
+    }
+
+    /**
+     * Parsea Excel con PhpSpreadsheet.
+     */
+    private static function parseExcelWithPhpSpreadsheet(string $data, string $mimeType): array
+    {
+        try {
+            $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
+            file_put_contents($tempFile, $data);
+
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($tempFile);
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            $rows = [];
+            $rowCount = 0;
+
+            foreach ($sheet->getRowIterator() as $row) {
+                if ($rowCount >= self::MAX_ROWS) break;
+
+                $cells = [];
+                $cellIterator = $row->getCellIterator();
+                $cellIterator->setIterateOnlyExistingCells(false);
+                $colCount = 0;
+
+                foreach ($cellIterator as $cell) {
+                    if ($colCount >= self::MAX_COLS) break;
+                    $value = $cell->getValue() ?? '';
+                    $cells[] = mb_substr(trim((string)$value), 0, self::MAX_CELL_LENGTH);
+                    $colCount++;
+                }
+
+                // Solo añadir filas con contenido
+                if (array_filter($cells, fn($c) => $c !== '')) {
+                    $rows[] = $cells;
+                    $rowCount++;
+                }
+            }
+
+            @unlink($tempFile);
+            return $rows;
+
+        } catch (\Exception $e) {
+            return [['[Error al leer Excel: ' . $e->getMessage() . ']']];
+        }
+    }
+
+    /**
+     * Parseo básico de XLSX sin dependencias externas.
+     * XLSX es un ZIP con XMLs internos.
+     */
+    private static function parseXlsxBasic(string $data): array
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+        file_put_contents($tempFile, $data);
+
+        $rows = [];
+
+        try {
+            $zip = new \ZipArchive();
+            if ($zip->open($tempFile) !== true) {
+                throw new \Exception('No se pudo abrir el archivo XLSX');
+            }
+
+            // Leer shared strings (textos compartidos)
+            $sharedStrings = [];
+            $ssXml = $zip->getFromName('xl/sharedStrings.xml');
+            if ($ssXml) {
+                $ssDoc = new \SimpleXMLElement($ssXml);
+                foreach ($ssDoc->si as $si) {
+                    $sharedStrings[] = (string)($si->t ?? $si->r->t ?? '');
+                }
+            }
+
+            // Leer la primera hoja (sheet1.xml)
+            $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+            if (!$sheetXml) {
+                throw new \Exception('No se encontró la hoja de cálculo');
+            }
+
+            $sheetDoc = new \SimpleXMLElement($sheetXml);
+            $rowCount = 0;
+
+            foreach ($sheetDoc->sheetData->row as $row) {
+                if ($rowCount >= self::MAX_ROWS) break;
+
+                $cells = [];
+                $colCount = 0;
+
+                foreach ($row->c as $cell) {
+                    if ($colCount >= self::MAX_COLS) break;
+
+                    $value = '';
+                    $type = (string)$cell['t'];
+
+                    if ($type === 's') {
+                        // String compartido
+                        $idx = (int)$cell->v;
+                        $value = $sharedStrings[$idx] ?? '';
+                    } else {
+                        $value = (string)($cell->v ?? '');
+                    }
+
+                    $cells[] = mb_substr(trim($value), 0, self::MAX_CELL_LENGTH);
+                    $colCount++;
+                }
+
+                if (array_filter($cells, fn($c) => $c !== '')) {
+                    $rows[] = $cells;
+                    $rowCount++;
+                }
+            }
+
+            $zip->close();
+
+        } catch (\Exception $e) {
+            $rows = [['[Error al leer XLSX: ' . $e->getMessage() . ']']];
+        }
+
+        @unlink($tempFile);
+        return $rows;
+    }
+
+    /**
+     * Formatea las filas como tabla Markdown.
+     */
+    private static function formatAsMarkdownTable(array $rows, string $fileName): string
+    {
+        if (empty($rows)) {
+            return '';
+        }
+
+        $output = "**Contenido del archivo: $fileName**\n\n";
+
+        // Primera fila como cabecera
+        $header = array_shift($rows);
+        $colCount = count($header);
+
+        // Escapar pipes en celdas
+        $escapePipe = fn($s) => str_replace('|', '\\|', $s);
+
+        $output .= '| ' . implode(' | ', array_map($escapePipe, $header)) . " |\n";
+        $output .= '|' . str_repeat(' --- |', $colCount) . "\n";
+
+        foreach ($rows as $row) {
+            // Asegurar mismo número de columnas
+            while (count($row) < $colCount) {
+                $row[] = '';
+            }
+            $row = array_slice($row, 0, $colCount);
+            $output .= '| ' . implode(' | ', array_map($escapePipe, $row)) . " |\n";
+        }
+
+        $rowCountInfo = count($rows);
+        if ($rowCountInfo >= self::MAX_ROWS - 1) {
+            $output .= "\n*[Tabla truncada a " . self::MAX_ROWS . " filas]*\n";
+        }
+
+        return $output;
+    }
+
+    /**
+     * Verifica si un MIME type es de hoja de cálculo.
+     */
+    public static function isSpreadsheet(string $mimeType): bool
+    {
+        return in_array($mimeType, [
+            'text/csv',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ]);
+    }
+}

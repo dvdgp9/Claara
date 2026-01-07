@@ -151,7 +151,7 @@ $headerShowLogo = true;
                     </button>
                   </div>
                   
-                  <input type="file" id="file-input-empty" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" />
+                  <input type="file" id="file-input-empty" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" />
                   
                   <!-- Fila superior: textarea + botón enviar -->
                   <div class="flex items-start gap-3 mb-3">
@@ -164,7 +164,7 @@ $headerShowLogo = true;
                   <div class="flex items-center justify-between px-1">
                     <!-- Fila inferior: botones de acción -->
                     <div class="flex items-center gap-1">
-                      <button type="button" id="attach-btn-empty" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Adjuntar archivo (PDF o imagen)">
+                      <button type="button" id="attach-btn-empty" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Adjuntar archivo (PDF, imagen, CSV o Excel)">
                         <i class="iconoir-attachment text-lg"></i>
                       </button>
                       <button type="button" id="image-mode-btn-empty" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generar imagen con nanobanana 🍌">
@@ -357,7 +357,7 @@ $headerShowLogo = true;
               </button>
             </div>
             
-            <input type="file" id="file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" />
+            <input type="file" id="file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" />
             
             <!-- Fila superior: textarea + botón enviar -->
             <div class="flex items-start gap-3 mb-2">
@@ -370,7 +370,7 @@ $headerShowLogo = true;
             <div class="flex items-center justify-between px-1">
               <!-- Fila inferior: botones de acción -->
               <div class="flex items-center gap-1">
-                <button type="button" id="attach-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Adjuntar archivo (PDF o imagen)">
+                <button type="button" id="attach-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Adjuntar archivo (PDF, imagen, CSV o Excel)">
                   <i class="iconoir-attachment text-lg"></i>
                 </button>
                 <button type="button" id="image-mode-btn" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generar imagen con nanobanana 🍌">
@@ -1408,9 +1408,9 @@ $headerShowLogo = true;
       }
 
       // Validar tipo
-      const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+      const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
       if (!validTypes.includes(file.type)) {
-        alert('Tipo de archivo no soportado. Solo PDF e imágenes.');
+        alert('Tipo de archivo no soportado. Solo PDF, imágenes, CSV o Excel.');
         fileInput.value = '';
         return;
       }
@@ -1434,6 +1434,8 @@ $headerShowLogo = true;
         fileIcon.className = 'iconoir-page text-xl text-red-500';
       } else if (file.type.startsWith('image/')) {
         fileIcon.className = 'iconoir-media-image text-xl text-[#23AAC5]';
+      } else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) {
+        fileIcon.className = 'iconoir-table-rows text-xl text-emerald-600';
       }
       
       filePreview.classList.remove('hidden');
@@ -1520,9 +1522,9 @@ $headerShowLogo = true;
       }
 
       // Validar tipo
-      const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+      const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
       if (!validTypes.includes(file.type)) {
-        alert('Tipo de archivo no soportado. Solo PDF e imágenes.');
+        alert('Tipo de archivo no soportado. Solo PDF, imágenes, CSV o Excel.');
         fileInputEmpty.value = '';
         return;
       }
@@ -1546,6 +1548,8 @@ $headerShowLogo = true;
         fileIconEmpty.className = 'iconoir-page text-xl text-red-500';
       } else if (file.type.startsWith('image/')) {
         fileIconEmpty.className = 'iconoir-media-image text-xl text-[#23AAC5]';
+      } else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) {
+        fileIconEmpty.className = 'iconoir-table-rows text-xl text-emerald-600';
       }
       
       filePreviewEmpty.classList.remove('hidden');

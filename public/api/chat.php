@@ -12,6 +12,7 @@ require_once __DIR__ . '/../../src/Repos/MessagesRepo.php';
 require_once __DIR__ . '/../../src/Repos/ChatFilesRepo.php';
 require_once __DIR__ . '/../../src/Repos/UsageLogRepo.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
+require_once __DIR__ . '/../../src/Utils/SpreadsheetReader.php';
 
 use App\Response;
 use App\Session;
@@ -23,6 +24,7 @@ use Repos\MessagesRepo;
 use Repos\ChatFilesRepo;
 use Repos\UsageLogRepo;
 use Repos\UserFeatureAccessRepo;
+use Utils\SpreadsheetReader;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     Response::error('method_not_allowed', 'Sólo POST', 405);
@@ -88,7 +90,7 @@ if ($file) {
     }
     
     // Validar tipo MIME
-    $allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+    $allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
     if (!in_array($file['mime_type'], $allowedTypes)) {
         Response::error('validation_error', 'Tipo de archivo no soportado', 400);
     }
@@ -143,11 +145,29 @@ foreach ($allMessages as $m) {
     $history[] = $historyItem;
 }
 
-// Si hay archivo, agregarlo al último mensaje de usuario
+// Si hay archivo, procesarlo según tipo
 if ($file && count($history) > 0) {
     $lastIdx = count($history) - 1;
     if ($history[$lastIdx]['role'] === 'user') {
-        $history[$lastIdx]['file'] = $file;
+        $fileMime = $file['mime_type'] ?? '';
+        
+        // Para CSV/Excel: convertir a texto y añadir al mensaje
+        if (SpreadsheetReader::isSpreadsheet($fileMime)) {
+            $binaryData = base64_decode($file['data']);
+            $fileName = $file['name'] ?? 'archivo';
+            $spreadsheetText = SpreadsheetReader::readToText($binaryData, $fileMime, $fileName);
+            
+            // Añadir el contenido tabular al mensaje del usuario
+            $originalContent = $history[$lastIdx]['content'];
+            if ($originalContent !== '') {
+                $history[$lastIdx]['content'] = $originalContent . "\n\n" . $spreadsheetText;
+            } else {
+                $history[$lastIdx]['content'] = "Analiza el siguiente archivo:\n\n" . $spreadsheetText;
+            }
+        } else {
+            // Para PDF e imágenes: enviar como archivo adjunto
+            $history[$lastIdx]['file'] = $file;
+        }
     }
 }
 

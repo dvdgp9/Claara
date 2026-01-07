@@ -55,7 +55,10 @@ $allowedTypes = [
     'image/png' => 'png',
     'image/jpeg' => 'jpg',
     'image/gif' => 'gif',
-    'image/webp' => 'webp'
+    'image/webp' => 'webp',
+    'text/csv' => 'csv',
+    'application/vnd.ms-excel' => 'xls',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx'
 ];
 
 if (!isset($allowedTypes[$mimeType])) {

@@ -756,6 +756,52 @@ El sistema construirá prompts estructurados combinando:
 
 ---
 
+## Feature: Soporte Excel/CSV en Chat
+
+### Motivación
+Permitir a los usuarios adjuntar archivos Excel (.xlsx, .xls) y CSV al chat para que Gemini los analice. Requiere cambios en frontend, backend y lógica de procesamiento.
+
+### Decisiones técnicas
+- **CSV**: Se lee directamente como texto y se envía en el prompt
+- **Excel**: Se convierte a CSV/texto usando PhpSpreadsheet antes de enviarlo
+- **Gemini 3 Flash**: Procesa datos tabulares en texto perfectamente
+
+### Tareas de implementación
+
+1. [x] **Frontend: Actualizar validación de tipos**
+   - Añadido `.csv,.xls,.xlsx` al atributo `accept` de inputs
+   - Añadidos MIMEs al array `validTypes` en JS
+   - Actualizados tooltips e iconos
+   - ✅ Completado
+
+2. [x] **Backend: Actualizar upload.php**
+   - Añadidos MIMEs de Excel/CSV a `$allowedTypes`
+   - ✅ Completado
+
+3. [x] **Backend: Actualizar chat.php**
+   - Añadidos MIMEs de Excel/CSV a `$allowedTypes`
+   - ✅ Completado
+
+4. [x] **Backend: Crear helper de conversión**
+   - Creado `src/Utils/SpreadsheetReader.php`
+   - Lee CSV con autodetección de delimitador
+   - Lee XLSX con parser nativo (sin dependencias)
+   - Fallback a PhpSpreadsheet si disponible para XLS
+   - Formatea como tabla Markdown
+   - ✅ Completado
+
+5. [x] **Backend: Integrar conversión en chat.php**
+   - Si archivo es Excel/CSV, convierte a texto Markdown
+   - Añade contenido tabular al mensaje del usuario
+   - ✅ Completado
+
+6. [ ] **Testing** (pendiente de usuario)
+   - Probar con CSV simple
+   - Probar con Excel básico
+   - Verificar respuestas de Gemini
+
+---
+
 ## Feature: Rediseño UX Editor de Imágenes
 
 ### Motivación
