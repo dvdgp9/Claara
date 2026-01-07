@@ -10,9 +10,10 @@ namespace Utils;
  */
 class SpreadsheetReader
 {
-    private const MAX_ROWS = 500;
-    private const MAX_COLS = 50;
-    private const MAX_CELL_LENGTH = 200;
+    private const MAX_ROWS = 1000;
+    private const MAX_COLS = 100;
+    private const MAX_CELL_LENGTH = 500;
+    private const MAX_SHEETS = 5;
 
     /**
      * Lee un archivo de hoja de cálculo desde datos binarios y devuelve texto tabular.
@@ -118,7 +119,7 @@ class SpreadsheetReader
     }
 
     /**
-     * Parsea Excel con PhpSpreadsheet.
+     * Parsea Excel con PhpSpreadsheet (MÉTODO OPTIMIZADO).
      */
     private static function parseExcelWithPhpSpreadsheet(string $data, string $mimeType): array
     {
@@ -127,35 +128,91 @@ class SpreadsheetReader
             file_put_contents($tempFile, $data);
 
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($tempFile);
-            $sheet = $spreadsheet->getActiveSheet();
-            
-            $rows = [];
-            $rowCount = 0;
+            $allRows = [];
+            $sheetCount = 0;
 
-            foreach ($sheet->getRowIterator() as $row) {
-                if ($rowCount >= self::MAX_ROWS) break;
+            // Procesar todas las hojas del documento
+            foreach ($spreadsheet->getAllSheets() as $sheet) {
+                if ($sheetCount >= self::MAX_SHEETS) break;
+                
+                $sheetName = $sheet->getTitle();
+                $sheetRows = [];
+                $rowCount = 0;
 
-                $cells = [];
-                $cellIterator = $row->getCellIterator();
-                $cellIterator->setIterateOnlyExistingCells(false);
-                $colCount = 0;
+                // Obtener el rango real de datos (sin filas vacías al final)
+                $highestRow = $sheet->getHighestDataRow();
+                $highestCol = $sheet->getHighestDataColumn();
+                $highestColIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestCol);
+                $highestColIndex = min($highestColIndex, self::MAX_COLS);
 
-                foreach ($cellIterator as $cell) {
-                    if ($colCount >= self::MAX_COLS) break;
-                    $value = $cell->getValue() ?? '';
-                    $cells[] = mb_substr(trim((string)$value), 0, self::MAX_CELL_LENGTH);
-                    $colCount++;
+                for ($rowIndex = 1; $rowIndex <= min($highestRow, self::MAX_ROWS); $rowIndex++) {
+                    $cells = [];
+                    $hasContent = false;
+
+                    for ($colIndex = 1; $colIndex <= $highestColIndex; $colIndex++) {
+                        $cell = $sheet->getCellByColumnAndRow($colIndex, $rowIndex);
+                        
+                        // Obtener valor calculado (importante para fórmulas)
+                        $value = '';
+                        try {
+                            $value = $cell->getCalculatedValue();
+                        } catch (\Exception $e) {
+                            // Si hay error en la fórmula, usar el valor raw
+                            $value = $cell->getValue();
+                        }
+
+                        // Formatear según tipo de dato
+                        if ($value instanceof \DateTime) {
+                            // Formatear fechas
+                            $value = $value->format('Y-m-d H:i:s');
+                        } elseif (is_numeric($value) && $cell->getDataType() === \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC) {
+                            // Formatear números con el formato de la celda
+                            $formatCode = $cell->getStyle()->getNumberFormat()->getFormatCode();
+                            if ($formatCode !== 'General' && $formatCode !== '@') {
+                                try {
+                                    $value = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::toFormattedString(
+                                        $value,
+                                        $formatCode
+                                    );
+                                } catch (\Exception $e) {
+                                    // Si falla el formateo, usar el valor como está
+                                    $value = (string)$value;
+                                }
+                            } else {
+                                // Números sin formato especial: mantener precisión
+                                $value = is_float($value) ? rtrim(rtrim(sprintf('%.10f', $value), '0'), '.') : (string)$value;
+                            }
+                        } else {
+                            $value = (string)$value;
+                        }
+
+                        $value = trim($value);
+                        if ($value !== '') {
+                            $hasContent = true;
+                        }
+
+                        $cells[] = mb_substr($value, 0, self::MAX_CELL_LENGTH);
+                    }
+
+                    // Solo añadir filas con contenido
+                    if ($hasContent) {
+                        $sheetRows[] = $cells;
+                        $rowCount++;
+                    }
                 }
 
-                // Solo añadir filas con contenido
-                if (array_filter($cells, fn($c) => $c !== '')) {
-                    $rows[] = $cells;
-                    $rowCount++;
+                // Si el Excel tiene múltiples hojas, agregar separador
+                if ($sheetCount > 0 && !empty($sheetRows)) {
+                    $allRows[] = []; // Fila vacía como separador
+                    $allRows[] = ["=== HOJA: $sheetName ==="]; // Indicador de hoja
                 }
+
+                $allRows = array_merge($allRows, $sheetRows);
+                $sheetCount++;
             }
 
             @unlink($tempFile);
-            return $rows;
+            return $allRows;
 
         } catch (\Exception $e) {
             return [['[Error al leer Excel: ' . $e->getMessage() . ']']];
@@ -249,9 +306,25 @@ class SpreadsheetReader
 
         $output = "**Contenido del archivo: $fileName**\n\n";
 
-        // Primera fila como cabecera
-        $header = array_shift($rows);
+        // Detectar si la primera fila parece una cabecera
+        $header = $rows[0];
         $colCount = count($header);
+        
+        // Si parece cabecera (no numérica, texto descriptivo), usarla
+        $isHeader = false;
+        foreach ($header as $cell) {
+            if (!empty($cell) && !is_numeric($cell)) {
+                $isHeader = true;
+                break;
+            }
+        }
+
+        if ($isHeader) {
+            array_shift($rows);
+        } else {
+            // Crear cabecera genérica
+            $header = array_map(fn($i) => "Col" . ($i + 1), array_keys($header));
+        }
 
         // Escapar pipes en celdas
         $escapePipe = fn($s) => str_replace('|', '\\|', $s);
@@ -270,8 +343,13 @@ class SpreadsheetReader
 
         $rowCountInfo = count($rows);
         if ($rowCountInfo >= self::MAX_ROWS - 1) {
-            $output .= "\n*[Tabla truncada a " . self::MAX_ROWS . " filas]*\n";
+            $output .= "\n*[Tabla truncada a " . self::MAX_ROWS . " filas. Si necesitas ver más datos, considera filtrar el archivo original.]*\n";
         }
+
+        // Añadir resumen de estadísticas
+        $totalRows = count($rows) + 1; // +1 por la cabecera
+        $totalCols = $colCount;
+        $output .= "\n---\n*Dimensiones: $totalRows filas × $totalCols columnas*\n";
 
         return $output;
     }

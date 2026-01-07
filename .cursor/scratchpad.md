@@ -795,9 +795,22 @@ Permitir a los usuarios adjuntar archivos Excel (.xlsx, .xls) y CSV al chat para
    - Añade contenido tabular al mensaje del usuario
    - ✅ Completado
 
-6. [ ] **Testing** (pendiente de usuario)
+6. [x] **Optimización con PhpSpreadsheet**
+   - Aumentados límites: 1000 filas, 100 columnas, 5 hojas
+   - Cálculo automático de fórmulas (=SUMA(), etc.)
+   - Formateo de fechas (Y-m-d H:i:s)
+   - Formateo de números con precisión (10 decimales)
+   - Procesamiento de múltiples hojas con separadores
+   - Detección automática de cabeceras
+   - Resumen de dimensiones al final
+   - ✅ Completado
+
+7. [ ] **Testing** (pendiente de usuario)
    - Probar con CSV simple
-   - Probar con Excel básico
+   - Probar con Excel básico (.xlsx)
+   - Probar con Excel antiguo (.xls)
+   - Probar con Excel con múltiples hojas
+   - Probar con fórmulas en celdas
    - Verificar respuestas de Gemini
 
 ---
