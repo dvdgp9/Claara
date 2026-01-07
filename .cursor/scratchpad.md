@@ -805,7 +805,13 @@ Permitir a los usuarios adjuntar archivos Excel (.xlsx, .xls) y CSV al chat para
    - Resumen de dimensiones al final
    - ✅ Completado
 
-7. [ ] **Testing** (pendiente de usuario)
+7. [x] **FIX: Autoloader de Composer**
+   - Añadido require del vendor/autoload.php en bootstrap.php
+   - Esto permite que PhpSpreadsheet se cargue correctamente
+   - ✅ Completado
+
+8. [ ] **Testing** (pendiente de usuario)
+   - Subir carpeta vendor al servidor vía FTP
    - Probar con CSV simple
    - Probar con Excel básico (.xlsx)
    - Probar con Excel antiguo (.xls)
