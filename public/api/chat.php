@@ -157,12 +157,17 @@ if ($file && count($history) > 0) {
             $fileName = $file['name'] ?? 'archivo';
             $spreadsheetText = SpreadsheetReader::readToText($binaryData, $fileMime, $fileName);
             
-            // Añadir el contenido tabular al mensaje del usuario
+            // Añadir el contenido tabular al mensaje del usuario con instrucciones de precisión
             $originalContent = $history[$lastIdx]['content'];
+            $promptPrefix = "IMPORTANTE: Los siguientes datos provienen de un archivo Excel/CSV. \n" .
+                            "1. Úsalos como ÚNICA fuente de verdad para preguntas sobre el archivo.\n" .
+                            "2. Si un dato no está en la tabla, di claramente que no dispones de él.\n" .
+                            "3. Mantén la precisión numérica absoluta.\n\n";
+            
             if ($originalContent !== '') {
-                $history[$lastIdx]['content'] = $originalContent . "\n\n" . $spreadsheetText;
+                $history[$lastIdx]['content'] = $promptPrefix . $originalContent . "\n\n" . $spreadsheetText;
             } else {
-                $history[$lastIdx]['content'] = "Analiza el siguiente archivo:\n\n" . $spreadsheetText;
+                $history[$lastIdx]['content'] = $promptPrefix . "Analiza el contenido de este archivo:\n\n" . $spreadsheetText;
             }
         } else {
             // Para PDF e imágenes: enviar como archivo adjunto

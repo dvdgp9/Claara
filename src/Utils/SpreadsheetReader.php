@@ -283,7 +283,7 @@ class SpreadsheetReader
     }
 
     /**
-     * Formatea las filas como tabla Markdown.
+     * Formatea las filas como tabla Markdown envuelta en etiquetas XML para mayor precisión.
      */
     private static function formatAsMarkdownTable(array $rows, string $fileName): string
     {
@@ -291,13 +291,10 @@ class SpreadsheetReader
             return '';
         }
 
-        $output = "**Contenido del archivo: $fileName**\n\n";
-
         // Detectar si la primera fila parece una cabecera
         $header = $rows[0];
         $colCount = count($header);
         
-        // Si parece cabecera (no numérica, texto descriptivo), usarla
         $isHeader = false;
         foreach ($header as $cell) {
             if (!empty($cell) && !is_numeric($cell)) {
@@ -309,18 +306,20 @@ class SpreadsheetReader
         if ($isHeader) {
             array_shift($rows);
         } else {
-            // Crear cabecera genérica
-            $header = array_map(fn($i) => "Col" . ($i + 1), array_keys($header));
+            $header = array_map(fn($i) => "Columna_" . ($i + 1), array_keys($header));
         }
 
+        $output = "<file_context name=\"$fileName\">\n";
+        $output .= "<instruction>Analiza estos datos con máxima precisión. Los pipes (|) separan columnas. No alucines datos que no existan.</instruction>\n";
+        $output .= "<data_table>\n";
+
         // Escapar pipes en celdas
-        $escapePipe = fn($s) => str_replace('|', '\\|', $s);
+        $escapePipe = fn($s) => str_replace('|', '\\|', (string)$s);
 
         $output .= '| ' . implode(' | ', array_map($escapePipe, $header)) . " |\n";
         $output .= '|' . str_repeat(' --- |', $colCount) . "\n";
 
         foreach ($rows as $row) {
-            // Asegurar mismo número de columnas
             while (count($row) < $colCount) {
                 $row[] = '';
             }
@@ -328,15 +327,17 @@ class SpreadsheetReader
             $output .= '| ' . implode(' | ', array_map($escapePipe, $row)) . " |\n";
         }
 
-        $rowCountInfo = count($rows);
-        if ($rowCountInfo >= self::MAX_ROWS - 1) {
-            $output .= "\n*[Tabla truncada a " . self::MAX_ROWS . " filas. Si necesitas ver más datos, considera filtrar el archivo original.]*\n";
+        $output .= "</data_table>\n";
+        
+        $totalRows = count($rows) + ($isHeader ? 1 : 0);
+        $output .= "<metadata>\n";
+        $output .= "  <rows>$totalRows</rows>\n";
+        $output .= "  <columns>$colCount</columns>\n";
+        if (count($rows) >= self::MAX_ROWS - 1) {
+            $output .= "  <status>TRUNCATED_AT_" . self::MAX_ROWS . "_ROWS</status>\n";
         }
-
-        // Añadir resumen de estadísticas
-        $totalRows = count($rows) + 1; // +1 por la cabecera
-        $totalCols = $colCount;
-        $output .= "\n---\n*Dimensiones: $totalRows filas × $totalCols columnas*\n";
+        $output .= "</metadata>\n";
+        $output .= "</file_context>";
 
         return $output;
     }
