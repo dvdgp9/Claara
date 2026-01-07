@@ -24,24 +24,38 @@ class ContextBuilder
     public function buildSystemPrompt(): string
     {
         if (!is_dir($this->contextDir)) {
-            return $this->getDefaultPrompt();
-        }
+            $content = $this->getDefaultPrompt();
+        } else {
+            $content = '';
+            $files = $this->getMarkdownFiles();
 
-        $content = '';
-        $files = $this->getMarkdownFiles();
-
-        if (empty($files)) {
-            return $this->getDefaultPrompt();
-        }
-
-        foreach ($files as $file) {
-            $fileContent = file_get_contents($file);
-            if ($fileContent !== false) {
-                $content .= $fileContent . "\n\n---\n\n";
+            if (empty($files)) {
+                $content = $this->getDefaultPrompt();
+            } else {
+                foreach ($files as $file) {
+                    $fileContent = file_get_contents($file);
+                    if ($fileContent !== false) {
+                        $content .= $fileContent . "\n\n---\n\n";
+                    }
+                }
             }
         }
 
-        return trim($content);
+        // Añadir contexto temporal dinámico
+        $content = trim($content);
+        $dateStr = date('l, d de F de Y');
+        $timeStr = date('H:i');
+        
+        // Traducción simple de días y meses al español si es necesario
+        $days = ['Monday'=>'Lunes', 'Tuesday'=>'Martes', 'Wednesday'=>'Miércoles', 'Thursday'=>'Jueves', 'Friday'=>'Viernes', 'Saturday'=>'Sábado', 'Sunday'=>'Domingo'];
+        $months = ['January'=>'Enero', 'February'=>'Febrero', 'March'=>'Marzo', 'April'=>'Abril', 'May'=>'Mayo', 'June'=>'Junio', 'July'=>'Julio', 'August'=>'Agosto', 'September'=>'Septiembre', 'October'=>'Octubre', 'November'=>'Noviembre', 'December'=>'Diciembre'];
+        
+        foreach($days as $en => $es) $dateStr = str_replace($en, $es, $dateStr);
+        foreach($months as $en => $es) $dateStr = str_replace($en, $es, $dateStr);
+
+        $temporalContext = "\n\n---\n\n## Contexto Temporal\nFecha actual: " . $dateStr . "\nHora actual: " . $timeStr;
+        
+        return $content . $temporalContext;
     }
 
     /**

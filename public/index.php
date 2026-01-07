@@ -582,6 +582,20 @@ $headerShowLogo = true;
     function mdToHtml(md){
       // escape first
       let s = escapeHtml(md);
+      
+      // Markdown links: [text](url)
+      s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline break-all">$1</a>');
+
+      // Auto-links: URLs not already in an <a> tag
+      // This is a simple regex that avoids matching URLs already inside href="..."
+      s = s.replace(/(?<!href=")(https?:\/\/[^\s<]+)/g, function(url) {
+        // If the URL ends with a closing paren that wasn't matched in the markdown link regex, remove it
+        // This is a common issue with auto-linking at the end of a sentence in parens
+        let cleanUrl = url.replace(/[\)\.,;:\!\?]$/, '');
+        let suffix = url.substring(cleanUrl.length);
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline break-all">${cleanUrl}</a>${suffix}`;
+      });
+
       // headings
       s = s.replace(/^###\s+(.+)$/gm, '<h3 class="font-semibold text-base mb-1">$1<\/h3>');
       s = s.replace(/^##\s+(.+)$/gm, '<h2 class="font-semibold text-lg mb-1">$1<\/h2>');
