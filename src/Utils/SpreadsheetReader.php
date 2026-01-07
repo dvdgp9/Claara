@@ -150,7 +150,8 @@ class SpreadsheetReader
                     $hasContent = false;
 
                     for ($colIndex = 1; $colIndex <= $highestColIndex; $colIndex++) {
-                        $cell = $sheet->getCellByColumnAndRow($colIndex, $rowIndex);
+                        // PhpSpreadsheet 5.x: usar getCell con array [col, row]
+                        $cell = $sheet->getCell([$colIndex, $rowIndex]);
                         
                         // Obtener valor calculado (importante para fórmulas)
                         $value = '';
@@ -162,28 +163,14 @@ class SpreadsheetReader
                         }
 
                         // Formatear según tipo de dato
-                        if ($value instanceof \DateTime) {
+                        if ($value instanceof \DateTimeInterface) {
                             // Formatear fechas
                             $value = $value->format('Y-m-d H:i:s');
-                        } elseif (is_numeric($value) && $cell->getDataType() === \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC) {
-                            // Formatear números con el formato de la celda
-                            $formatCode = $cell->getStyle()->getNumberFormat()->getFormatCode();
-                            if ($formatCode !== 'General' && $formatCode !== '@') {
-                                try {
-                                    $value = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::toFormattedString(
-                                        $value,
-                                        $formatCode
-                                    );
-                                } catch (\Exception $e) {
-                                    // Si falla el formateo, usar el valor como está
-                                    $value = (string)$value;
-                                }
-                            } else {
-                                // Números sin formato especial: mantener precisión
-                                $value = is_float($value) ? rtrim(rtrim(sprintf('%.10f', $value), '0'), '.') : (string)$value;
-                            }
+                        } elseif (is_numeric($value)) {
+                            // Números: mantener precisión sin notación científica
+                            $value = is_float($value) ? rtrim(rtrim(sprintf('%.10f', $value), '0'), '.') : (string)$value;
                         } else {
-                            $value = (string)$value;
+                            $value = (string)($value ?? '');
                         }
 
                         $value = trim($value);
