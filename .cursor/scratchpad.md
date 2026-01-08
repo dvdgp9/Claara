@@ -1153,6 +1153,39 @@ CREATE TABLE background_jobs (
 - **Limpieza de migraciones**: Eliminar duplicado de tabla `voices` en `001_init.sql` (líneas 198-225). Eliminar tabla `schema_migrations` si no se usa.
 - **FOLDERS IMPLEMENTADOS**: Sistema completo de carpetas privadas por usuario funcionando. Falta aplicar `004_fix_rbac.sql` y probar todo end-to-end.
 
+## Feature: Transformador de Contenido (Content Repurposer)
+
+### Motivación
+Gesto que transforma contenido de cualquier fuente (URL, texto, PDF) en múltiples formatos de salida para diferentes canales y propósitos.
+
+### Formatos de salida
+- **Redes sociales**: Instagram, Facebook, LinkedIn, X (Twitter)
+- **Contenido largo**: Blog (SEO), Landing page (HTML/CSS/JS)
+- **Comunicación**: Newsletter (email)
+- **Soporte**: FAQs
+
+### Arquitectura modular
+- **ContentExtractor** (reutilizado de Audio/): Extrae contenido de URL, texto o PDF
+- **ContentRepurposer** (nuevo en Content/): Generador con prompts especializados por formato
+- **API**: `/api/gestures/repurposer.php`
+- **UI**: `/gestos/transformador-contenido.php`
+- **JS**: `/assets/js/gesture-repurposer.js`
+
+### Tareas completadas
+1. [x] Crear `src/Content/ContentRepurposer.php` - Generador modular con prompts por formato
+2. [x] Crear API `/public/api/gestures/repurposer.php`
+3. [x] Crear UI `/public/gestos/transformador-contenido.php`
+4. [x] Crear JS `/public/assets/js/gesture-repurposer.js`
+5. [x] Actualizar `/public/gestos/index.php` con tarjeta
+6. [x] Actualizar `/public/includes/left-tabs.php` con entrada en menú
+7. [x] Crear migración `009_add_content_repurposer_gesture.sql`
+
+### Pendiente para activar
+- Ejecutar migración: `mysql -u usuario -p base_datos < docs/migrations/009_add_content_repurposer_gesture.sql`
+- O dar acceso manualmente desde panel admin
+
+---
+
 # Lessons
 
 - Mantener comandos idempotentes para poder re-ejecutar sin fallos (p.ej. `git remote set-url` si `origin` ya existe).

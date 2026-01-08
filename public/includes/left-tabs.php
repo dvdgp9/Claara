@@ -93,6 +93,13 @@ $gesturesList = [
         'icon' => 'iconoir-media-image',
         'href' => '/gestos/editor-imagenes.php',
         'description' => 'Genera imágenes con IA'
+    ],
+    [
+        'type' => 'content-repurposer',
+        'name' => 'Transformador',
+        'icon' => 'iconoir-refresh-double',
+        'href' => '/gestos/transformador-contenido.php',
+        'description' => 'Adapta contenido a formatos'
     ]
 ];
 

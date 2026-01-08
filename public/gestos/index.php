@@ -156,6 +156,33 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
             </a>
             <?php endif; ?>
 
+            <?php if ($accessRepo->hasGestureAccess($userId, 'content-repurposer')): ?>
+            <!-- Gesto: Transformador de contenido -->
+            <a href="/gestos/transformador-contenido.php" class="glass-strong rounded-3xl p-6 border border-slate-200/50 card-hover block">
+              <div class="flex items-start gap-4 mb-4">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                  <i class="iconoir-refresh-double text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Transformador</h3>
+                  <p class="text-sm text-slate-500">Adapta contenido</p>
+                </div>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Nuevo</span>
+              </div>
+              
+              <p class="text-sm text-slate-600 mb-4">
+                Convierte cualquier contenido en posts para redes, blogs, landing pages, newsletters o FAQs.
+              </p>
+              
+              <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
+                <div class="flex items-center gap-2 text-indigo-600 font-medium">
+                  <span>Usar gesto</span>
+                  <i class="iconoir-arrow-right"></i>
+                </div>
+              </div>
+            </a>
+            <?php endif; ?>
+
             <!-- Gesto: Analizar documento (próximamente) -->
             <div class="glass-strong rounded-3xl p-6 border border-slate-200/50 opacity-60">
               <div class="flex items-start gap-4 mb-4">
