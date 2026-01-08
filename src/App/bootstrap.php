@@ -30,6 +30,9 @@ require_once dirname(__DIR__) . '/Audio/GeminiTtsClient.php';
 require_once dirname(__DIR__) . '/Audio/ContentExtractor.php';
 require_once dirname(__DIR__) . '/Audio/PodcastScriptGenerator.php';
 
+// Content (Repurposer)
+require_once dirname(__DIR__) . '/Content/ContentRepurposer.php';
+
 // Cargar .env desde la raíz del proyecto
 $root = dirname(dirname(__DIR__));
 Env::load($root . '/.env');
