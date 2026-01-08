@@ -37,8 +37,16 @@ $sourceType = $body['source_type'] ?? 'text';
 $sourceUrl = $body['url'] ?? '';
 $sourceText = $body['text'] ?? '';
 $sourcePdf = $body['pdf_base64'] ?? '';
-$outputFormat = $body['output_format'] ?? 'instagram';
 $options = $body['options'] ?? [];
+
+// Soportar tanto formato único como múltiple
+$outputFormats = $body['output_formats'] ?? [];
+if (empty($outputFormats) && isset($body['output_format'])) {
+    $outputFormats = [$body['output_format']];
+}
+if (empty($outputFormats)) {
+    $outputFormats = ['instagram'];
+}
 
 // Validaciones de entrada
 if ($sourceType === 'url' && empty($sourceUrl)) {
@@ -51,10 +59,11 @@ if ($sourceType === 'pdf' && empty($sourcePdf)) {
     Response::error('missing_pdf', 'Se requiere el PDF en base64', 400);
 }
 
-// Validar formato de salida
+// Validar formatos de salida
 $validFormats = array_keys(ContentRepurposer::getOutputFormats());
-if (!in_array($outputFormat, $validFormats)) {
-    Response::error('invalid_format', 'Formato no válido: ' . $outputFormat, 400);
+$invalidFormats = array_diff($outputFormats, $validFormats);
+if (!empty($invalidFormats)) {
+    Response::error('invalid_format', 'Formatos no válidos: ' . implode(', ', $invalidFormats), 400);
 }
 
 try {
@@ -97,17 +106,18 @@ try {
             break;
     }
 
-    // === PASO 2: Generar contenido transformado ===
+    // === PASO 2: Generar contenido transformado (múltiples formatos) ===
     $repurposer = new ContentRepurposer();
-    $generateResult = $repurposer->generate($content, $outputFormat, $title, $options);
+    $generateResult = $repurposer->generateMultiple($content, $outputFormats, $title, $options);
 
     if (!$generateResult['success']) {
-        Response::error('generation_failed', $generateResult['error'], 500);
+        $errorMsg = implode(', ', $generateResult['errors']);
+        Response::error('generation_failed', $errorMsg, 500);
     }
 
-    $output = $generateResult['output'];
-    $formatName = $generateResult['format_name'];
-    $model = $generateResult['model'];
+    $results = $generateResult['results'];
+    $firstFormat = array_key_first($results);
+    $model = $results[$firstFormat]['model'] ?? 'unknown';
 
     // === PASO 3: Guardar en historial ===
     $repo = new GestureExecutionsRepo();
@@ -115,40 +125,47 @@ try {
     $executionId = $repo->create([
         'user_id' => $user['id'],
         'gesture_type' => 'content-repurposer',
-        'title' => $title ?: 'Transformación: ' . $formatName,
+        'title' => $title ?: 'Transformación múltiple',
         'input_data' => [
             'source_type' => $sourceType,
             'source' => $source,
             'url' => $sourceUrl,
-            'output_format' => $outputFormat,
+            'output_formats' => $outputFormats,
             'word_count' => str_word_count($content)
         ],
-        'output_content' => $output,
+        'output_content' => json_encode($results, JSON_UNESCAPED_UNICODE),
         'output_data' => [
-            'format' => $outputFormat,
-            'format_name' => $formatName,
+            'formats' => $outputFormats,
+            'results' => $results,
             'original_title' => $title,
-            'options' => $options
+            'options' => $options,
+            'total_generated' => $generateResult['total_generated'],
+            'total_failed' => $generateResult['total_failed']
         ],
-        'content_type' => 'transformed',
+        'content_type' => 'transformed_multi',
         'business_line' => $options['business_line'] ?? null,
         'model' => $model
     ]);
 
     // Registrar en estadísticas
     $usageLog = new UsageLogRepo();
-    $usageLog->log($user['id'], 'gesture', 1, ['gesture_type' => 'content-repurposer', 'format' => $outputFormat]);
+    $usageLog->log($user['id'], 'gesture', count($outputFormats), [
+        'gesture_type' => 'content-repurposer', 
+        'formats' => $outputFormats
+    ]);
 
     // === Respuesta ===
     Response::json([
         'success' => true,
         'execution_id' => $executionId,
         'title' => $title,
-        'output' => $output,
-        'format' => $outputFormat,
-        'format_name' => $formatName,
+        'results' => $results,
+        'formats' => $outputFormats,
         'source' => $source,
-        'model' => $model
+        'model' => $model,
+        'total_generated' => $generateResult['total_generated'],
+        'total_failed' => $generateResult['total_failed'],
+        'errors' => $generateResult['errors']
     ]);
 
 } catch (\Exception $e) {

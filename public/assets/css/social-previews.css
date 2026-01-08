@@ -1,0 +1,705 @@
+/**
+ * Social Media Preview Components
+ * Mock-ups visuales para cada plataforma social
+ */
+
+/* === Base Preview Container === */
+.preview-container {
+  border-radius: 1rem;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* === Instagram Preview === */
+.instagram-preview {
+  max-width: 400px;
+  margin: 0 auto;
+  background: white;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.instagram-preview .ig-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 10px;
+}
+
+.instagram-preview .ig-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.instagram-preview .ig-username {
+  font-weight: 600;
+  font-size: 14px;
+  color: #262626;
+  flex: 1;
+}
+
+.instagram-preview .ig-more {
+  color: #262626;
+}
+
+.instagram-preview .ig-image {
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
+
+.instagram-preview .ig-actions {
+  display: flex;
+  padding: 8px 16px;
+  gap: 16px;
+}
+
+.instagram-preview .ig-action {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.instagram-preview .ig-likes {
+  padding: 0 16px 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #262626;
+}
+
+.instagram-preview .ig-caption {
+  padding: 0 16px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #262626;
+  white-space: pre-wrap;
+}
+
+.instagram-preview .ig-caption .username {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.instagram-preview .ig-hashtags {
+  padding: 0 16px 16px;
+  font-size: 14px;
+  color: #00376b;
+  line-height: 1.6;
+}
+
+/* === Facebook Preview === */
+.facebook-preview {
+  max-width: 500px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.facebook-preview .fb-header {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  gap: 8px;
+}
+
+.facebook-preview .fb-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1877f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.facebook-preview .fb-info {
+  flex: 1;
+}
+
+.facebook-preview .fb-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #050505;
+}
+
+.facebook-preview .fb-meta {
+  font-size: 13px;
+  color: #65676b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.facebook-preview .fb-content {
+  padding: 0 16px 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #050505;
+  white-space: pre-wrap;
+}
+
+.facebook-preview .fb-reactions {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #ced0d4;
+  color: #65676b;
+  font-size: 15px;
+}
+
+.facebook-preview .fb-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 4px 16px 8px;
+  border-top: 1px solid #ced0d4;
+}
+
+.facebook-preview .fb-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  color: #65676b;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.facebook-preview .fb-action:hover {
+  background: #f0f2f5;
+}
+
+/* === LinkedIn Preview === */
+.linkedin-preview {
+  max-width: 550px;
+  margin: 0 auto;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.linkedin-preview .li-header {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  gap: 8px;
+}
+
+.linkedin-preview .li-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0a66c2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.linkedin-preview .li-info {
+  flex: 1;
+}
+
+.linkedin-preview .li-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.linkedin-preview .li-title {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 2px;
+}
+
+.linkedin-preview .li-meta {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.linkedin-preview .li-content {
+  padding: 0 16px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.9);
+  white-space: pre-wrap;
+}
+
+.linkedin-preview .li-hashtags {
+  padding: 0 16px 12px;
+  font-size: 14px;
+  color: #0a66c2;
+}
+
+.linkedin-preview .li-engagement {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  border-top: 1px solid #e0e0e0;
+}
+
+.linkedin-preview .li-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 4px 8px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.linkedin-preview .li-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.linkedin-preview .li-action:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* === Twitter/X Preview === */
+.twitter-preview {
+  max-width: 500px;
+  margin: 0 auto;
+  background: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.twitter-preview .tweet {
+  border: 1px solid #eff3f4;
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+
+.twitter-preview .tweet-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.twitter-preview .tweet-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1d9bf0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.twitter-preview .tweet-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.twitter-preview .tweet-author {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.twitter-preview .tweet-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f1419;
+}
+
+.twitter-preview .tweet-handle {
+  font-size: 15px;
+  color: #536471;
+}
+
+.twitter-preview .tweet-content {
+  font-size: 15px;
+  line-height: 1.4;
+  color: #0f1419;
+  white-space: pre-wrap;
+  margin: 8px 0 0 52px;
+}
+
+.twitter-preview .tweet-actions {
+  display: flex;
+  justify-content: space-between;
+  margin: 12px 0 0 52px;
+  max-width: 425px;
+}
+
+.twitter-preview .tweet-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #536471;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.twitter-preview .tweet-action:hover {
+  color: #1d9bf0;
+}
+
+.twitter-preview .thread-line {
+  width: 2px;
+  height: 16px;
+  background: #cfd9de;
+  margin-left: 19px;
+}
+
+.twitter-preview .tweet-hashtags {
+  margin: 8px 0 0 52px;
+  font-size: 15px;
+  color: #1d9bf0;
+}
+
+/* === Newsletter Preview === */
+.newsletter-preview {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #f6f6f6;
+  border-radius: 8px;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.newsletter-preview .email-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.newsletter-preview .email-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 24px;
+  text-align: center;
+}
+
+.newsletter-preview .email-logo {
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 8px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.newsletter-preview .email-subject {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.newsletter-preview .email-preheader {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.newsletter-preview .email-body {
+  padding: 32px 24px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.newsletter-preview .email-cta {
+  text-align: center;
+  padding: 0 24px 32px;
+}
+
+.newsletter-preview .email-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.newsletter-preview .email-footer {
+  background: #f9fafb;
+  padding: 24px;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* === Blog Preview === */
+.blog-preview {
+  max-width: 700px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.blog-preview .blog-header {
+  padding: 32px 32px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.blog-preview .blog-meta {
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.blog-preview .blog-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+
+.blog-preview .blog-description {
+  font-family: -apple-system, sans-serif;
+  font-size: 16px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.blog-preview .blog-content {
+  padding: 24px 32px 32px;
+  font-size: 18px;
+  line-height: 1.8;
+  color: #374151;
+}
+
+.blog-preview .blog-content h1,
+.blog-preview .blog-content h2,
+.blog-preview .blog-content h3 {
+  font-family: -apple-system, sans-serif;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.blog-preview .blog-content h2 {
+  font-size: 24px;
+  color: #111827;
+}
+
+.blog-preview .blog-content h3 {
+  font-size: 20px;
+  color: #374151;
+}
+
+.blog-preview .blog-content ul,
+.blog-preview .blog-content ol {
+  margin: 1em 0;
+  padding-left: 1.5em;
+}
+
+.blog-preview .blog-content li {
+  margin: 0.5em 0;
+}
+
+/* === FAQ Preview === */
+.faq-preview {
+  max-width: 700px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.faq-preview .faq-header {
+  text-align: center;
+  padding: 24px;
+}
+
+.faq-preview .faq-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.faq-preview .faq-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.faq-preview .faq-question {
+  padding: 16px 20px;
+  font-weight: 600;
+  font-size: 16px;
+  color: #111827;
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.faq-preview .faq-question::before {
+  content: 'P';
+  width: 24px;
+  height: 24px;
+  background: #6366f1;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.faq-preview .faq-answer {
+  padding: 16px 20px 16px 56px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #4b5563;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* === Landing Preview === */
+.landing-preview {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.landing-preview .landing-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.landing-preview .landing-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.landing-preview .landing-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.landing-preview .landing-dot.red { background: #ef4444; }
+.landing-preview .landing-dot.yellow { background: #f59e0b; }
+.landing-preview .landing-dot.green { background: #22c55e; }
+
+.landing-preview .landing-url {
+  flex: 1;
+  background: white;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.landing-preview .landing-iframe {
+  width: 100%;
+  height: 500px;
+  border: none;
+}
+
+/* === Raw Output Preview === */
+.raw-preview {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.raw-preview pre {
+  margin: 0;
+  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #d4d4d4;
+  white-space: pre-wrap;
+}
+
+/* === Toggle Between Preview and Raw === */
+.preview-toggle {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.preview-toggle button {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preview-toggle button.active {
+  background: white;
+  color: #111827;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.preview-toggle button:hover:not(.active) {
+  color: #374151;
+}

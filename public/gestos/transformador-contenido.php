@@ -40,10 +40,12 @@ $headerDrawerId = 'repurposer-history-drawer';
 ?><!DOCTYPE html>
 <html lang="es">
 <?php include __DIR__ . '/../includes/head.php'; ?>
+<link rel="stylesheet" href="/assets/css/social-previews.css">
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <style>
     .format-card {
       transition: all 0.2s ease;
+      position: relative;
     }
     .format-card:hover {
       transform: translateY(-2px);
@@ -57,19 +59,75 @@ $headerDrawerId = 'repurposer-history-drawer';
       background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
       color: white;
     }
+    .format-card .check-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 20px;
+      height: 20px;
+      background: #6366f1;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .format-card.selected .check-badge {
+      display: flex;
+    }
     .history-item.active {
       background-color: rgba(99, 102, 241, 0.05);
       border-left: 3px solid #6366f1;
     }
-    .output-content {
-      white-space: pre-wrap;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    .result-tabs {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
     }
-    .output-content h1, .output-content h2, .output-content h3 {
-      font-family: inherit;
-      font-weight: 700;
-      margin-top: 1em;
-      margin-bottom: 0.5em;
+    .result-tabs::-webkit-scrollbar {
+      display: none;
+    }
+    .result-tab {
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .result-tab:hover {
+      background: #f8fafc;
+    }
+    .result-tab.active {
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      color: white;
+      border-color: transparent;
+    }
+    .result-panel {
+      display: none;
+    }
+    .result-panel.active {
+      display: block;
+    }
+    @media (max-width: 1023px) {
+      .result-panel {
+        display: block !important;
+        margin-bottom: 16px;
+      }
+      .result-tabs {
+        display: none;
+      }
     }
   </style>
   <div class="min-h-screen flex h-screen">
@@ -172,16 +230,18 @@ $headerDrawerId = 'repurposer-history-drawer';
                 </div>
               </div>
 
-              <!-- Formato de salida -->
+              <!-- Formato de salida (selección múltiple) -->
               <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-3">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">
                   <i class="iconoir-sparks text-indigo-500 mr-1"></i>
-                  ¿Qué quieres generar?
+                  ¿Qué quieres generar? <span class="font-normal text-slate-400">(selecciona varios)</span>
                 </label>
+                <p class="text-xs text-slate-500 mb-3">Haz clic en los formatos que quieras generar. Puedes seleccionar varios a la vez.</p>
                 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <!-- Redes Sociales -->
                   <button type="button" data-format="instagram" class="format-card selected p-3 rounded-xl border-2 border-slate-200 text-left">
+                    <span class="check-badge"><i class="iconoir-check"></i></span>
                     <div class="format-icon w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center text-white mb-2">
                       <i class="iconoir-instagram text-lg"></i>
                     </div>
@@ -190,6 +250,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                   </button>
                   
                   <button type="button" data-format="facebook" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
+                    <span class="check-badge"><i class="iconoir-check"></i></span>
                     <div class="format-icon w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white mb-2">
                       <i class="iconoir-facebook text-lg"></i>
                     </div>
@@ -198,6 +259,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                   </button>
                   
                   <button type="button" data-format="linkedin" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
+                    <span class="check-badge"><i class="iconoir-check"></i></span>
                     <div class="format-icon w-10 h-10 rounded-lg bg-sky-700 flex items-center justify-center text-white mb-2">
                       <i class="iconoir-linkedin text-lg"></i>
                     </div>
@@ -206,6 +268,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                   </button>
                   
                   <button type="button" data-format="twitter" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
+                    <span class="check-badge"><i class="iconoir-check"></i></span>
                     <div class="format-icon w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-white mb-2">
                       <i class="iconoir-x text-lg"></i>
                     </div>
@@ -215,6 +278,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                   
                   <!-- Contenido largo -->
                   <button type="button" data-format="blog" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
+                    <span class="check-badge"><i class="iconoir-check"></i></span>
                     <div class="format-icon w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white mb-2">
                       <i class="iconoir-post text-lg"></i>
                     </div>
@@ -223,6 +287,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                   </button>
                   
                   <button type="button" data-format="landing" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
+                    <span class="check-badge"><i class="iconoir-check"></i></span>
                     <div class="format-icon w-10 h-10 rounded-lg bg-violet-600 flex items-center justify-center text-white mb-2">
                       <i class="iconoir-code text-lg"></i>
                     </div>
@@ -231,6 +296,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                   </button>
                   
                   <button type="button" data-format="newsletter" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
+                    <span class="check-badge"><i class="iconoir-check"></i></span>
                     <div class="format-icon w-10 h-10 rounded-lg bg-amber-600 flex items-center justify-center text-white mb-2">
                       <i class="iconoir-mail text-lg"></i>
                     </div>
@@ -239,6 +305,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                   </button>
                   
                   <button type="button" data-format="faq" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
+                    <span class="check-badge"><i class="iconoir-check"></i></span>
                     <div class="format-icon w-10 h-10 rounded-lg bg-rose-600 flex items-center justify-center text-white mb-2">
                       <i class="iconoir-help-circle text-lg"></i>
                     </div>
@@ -246,12 +313,14 @@ $headerDrawerId = 'repurposer-history-drawer';
                     <div class="text-xs text-slate-500">Preguntas</div>
                   </button>
                 </div>
+                
+                <p id="selected-count" class="text-xs text-indigo-600 font-medium mt-3">1 formato seleccionado</p>
               </div>
               
               <!-- Botón generar -->
               <button type="submit" id="generate-btn" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 <i class="iconoir-sparks"></i>
-                <span>Transformar contenido</span>
+                <span id="generate-btn-text">Transformar contenido</span>
               </button>
               
               <!-- Progress -->
@@ -282,59 +351,32 @@ $headerDrawerId = 'repurposer-history-drawer';
           <section id="result-section" class="hidden space-y-4">
             
             <!-- Result Header -->
-            <div class="flex items-center justify-between mb-2">
-              <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <i class="iconoir-check-circle text-green-500"></i>
-                <span id="result-format-name">Contenido generado</span>
-              </h2>
-              <button type="button" onclick="resetUI()" class="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-lg transition-colors">
-                <i class="iconoir-plus"></i>
-                <span>Nueva transformación</span>
-              </button>
-            </div>
-            
-            <!-- Output Card -->
-            <div class="glass-strong rounded-2xl border border-slate-200/50 overflow-hidden">
-              <div class="p-4 border-b border-slate-200/50 bg-gradient-to-r from-indigo-50 to-purple-50">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <div id="result-icon" class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white">
-                      <i class="iconoir-instagram"></i>
-                    </div>
-                    <div>
-                      <h3 id="result-title" class="font-semibold text-slate-800">Título del contenido</h3>
-                      <p id="result-source" class="text-xs text-slate-500">Fuente: URL</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button id="copy-btn" class="px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
-                      <i class="iconoir-copy"></i>
-                      <span>Copiar</span>
-                    </button>
-                    <button id="download-btn" class="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
-                      <i class="iconoir-download"></i>
-                      <span>Descargar</span>
-                    </button>
-                  </div>
-                </div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <i class="iconoir-check-circle text-green-500"></i>
+                  <span id="result-title">Contenido generado</span>
+                </h2>
+                <p id="result-source" class="text-sm text-slate-500 mt-1">Fuente: URL</p>
               </div>
-              
-              <div class="p-4 max-h-[500px] overflow-y-auto">
-                <pre id="result-output" class="output-content text-sm text-slate-700 whitespace-pre-wrap"></pre>
+              <div class="flex items-center gap-2">
+                <button type="button" id="copy-all-btn" class="text-sm font-medium text-slate-600 hover:text-slate-700 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors">
+                  <i class="iconoir-copy"></i>
+                  <span>Copiar todo</span>
+                </button>
+                <button type="button" onclick="resetUI()" class="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-lg transition-colors">
+                  <i class="iconoir-plus"></i>
+                  <span>Nueva</span>
+                </button>
               </div>
             </div>
             
-            <!-- Preview para Landing (iframe) -->
-            <div id="landing-preview" class="hidden glass-strong rounded-2xl border border-slate-200/50 overflow-hidden">
-              <div class="p-4 border-b border-slate-200/50 flex items-center justify-between">
-                <span class="font-semibold text-slate-700 flex items-center gap-2">
-                  <i class="iconoir-eye text-indigo-500"></i>
-                  Vista previa
-                </span>
-                <button id="toggle-preview" class="text-sm text-indigo-600 hover:text-indigo-700">Ocultar</button>
-              </div>
-              <iframe id="preview-iframe" class="w-full h-[400px] bg-white"></iframe>
-            </div>
+            <!-- Tabs para navegación entre formatos (solo desktop) -->
+            <div id="result-tabs" class="result-tabs hidden lg:flex"></div>
+            
+            <!-- Contenedor de resultados -->
+            <div id="result-panels"></div>
+            
           </section>
 
         </div>

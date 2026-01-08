@@ -115,6 +115,152 @@ class ContentRepurposer
     }
 
     /**
+     * Genera contenido en múltiples formatos
+     * 
+     * @param string $content Contenido fuente
+     * @param array $formats Array de formatos a generar
+     * @param string $title Título del contenido original
+     * @param array $options Opciones adicionales
+     * @return array ['success' => bool, 'results' => array, 'errors' => array]
+     */
+    public function generateMultiple(string $content, array $formats, string $title = '', array $options = []): array
+    {
+        $results = [];
+        $errors = [];
+
+        foreach ($formats as $format) {
+            $result = $this->generate($content, $format, $title, $options);
+            
+            if ($result['success']) {
+                $parsed = $this->parseOutput($result['output'], $format);
+                $results[$format] = [
+                    'format' => $format,
+                    'format_name' => self::OUTPUT_FORMATS[$format]['name'] ?? $format,
+                    'icon' => self::OUTPUT_FORMATS[$format]['icon'] ?? 'document',
+                    'raw' => $result['output'],
+                    'parsed' => $parsed,
+                    'model' => $result['model']
+                ];
+            } else {
+                $errors[$format] = $result['error'];
+            }
+        }
+
+        return [
+            'success' => count($results) > 0,
+            'results' => $results,
+            'errors' => $errors,
+            'total_generated' => count($results),
+            'total_failed' => count($errors)
+        ];
+    }
+
+    /**
+     * Parsea el output estructurado del LLM según el formato
+     */
+    public function parseOutput(string $output, string $format): array
+    {
+        $parsed = ['raw' => $output];
+
+        switch ($format) {
+            case 'instagram':
+                $parsed['caption'] = $this->extractSection($output, 'CAPTION');
+                $parsed['hashtags'] = $this->extractSection($output, 'HASHTAGS');
+                $parsed['visual'] = $this->extractSection($output, 'VISUAL_SUGERIDO');
+                break;
+
+            case 'facebook':
+                $parsed['post'] = $this->extractSection($output, 'POST');
+                $parsed['suggestions'] = $this->extractSection($output, 'SUGERENCIAS');
+                break;
+
+            case 'linkedin':
+                $parsed['post'] = $this->extractSection($output, 'POST');
+                $parsed['hashtags'] = $this->extractSection($output, 'HASHTAGS');
+                break;
+
+            case 'twitter':
+                $parsed['tweets'] = $this->extractTweets($output);
+                $parsed['hashtags'] = $this->extractSection($output, 'HASHTAGS');
+                break;
+
+            case 'blog':
+                $parsed['meta'] = $this->extractSection($output, 'META');
+                $parsed['article'] = $this->extractSection($output, 'ARTICULO');
+                // Parse meta fields
+                if ($parsed['meta']) {
+                    preg_match('/Título SEO:\s*(.+)/i', $parsed['meta'], $m);
+                    $parsed['seo_title'] = trim($m[1] ?? '');
+                    preg_match('/Meta descripción:\s*(.+)/i', $parsed['meta'], $m);
+                    $parsed['meta_description'] = trim($m[1] ?? '');
+                    preg_match('/Keywords:\s*(.+)/i', $parsed['meta'], $m);
+                    $parsed['keywords'] = trim($m[1] ?? '');
+                }
+                break;
+
+            case 'landing':
+                $parsed['html'] = $this->extractSection($output, 'HTML');
+                $parsed['notes'] = $this->extractSection($output, 'NOTAS');
+                break;
+
+            case 'newsletter':
+                $fullEmail = $this->extractSection($output, 'EMAIL');
+                if ($fullEmail) {
+                    preg_match('/ASUNTO:\s*(.+)/i', $fullEmail, $m);
+                    $parsed['subject'] = trim($m[1] ?? '');
+                    preg_match('/PREHEADER:\s*(.+)/i', $fullEmail, $m);
+                    $parsed['preheader'] = trim($m[1] ?? '');
+                }
+                $parsed['body'] = $this->extractSection($output, 'CUERPO');
+                $parsed['plain_text'] = $this->extractSection($output, 'TEXTO_PLANO');
+                break;
+
+            case 'faq':
+                $parsed['faqs'] = $this->extractSection($output, 'FAQS');
+                $parsed['schema'] = $this->extractSection($output, 'SCHEMA_JSON');
+                // Parse individual FAQs
+                if ($parsed['faqs']) {
+                    preg_match_all('/\*\*P:\s*(.+?)\*\*\s*\n\s*R:\s*(.+?)(?=\n\n|\*\*P:|$)/s', $parsed['faqs'], $matches, PREG_SET_ORDER);
+                    $parsed['faq_items'] = array_map(fn($m) => ['question' => trim($m[1]), 'answer' => trim($m[2])], $matches);
+                }
+                break;
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * Extrae una sección delimitada del output
+     */
+    private function extractSection(string $output, string $section): string
+    {
+        $pattern = "/---{$section}---\s*(.*?)\s*---FIN_{$section}---/is";
+        if (preg_match($pattern, $output, $matches)) {
+            return trim($matches[1]);
+        }
+        return '';
+    }
+
+    /**
+     * Extrae tweets individuales de un hilo
+     */
+    private function extractTweets(string $output): array
+    {
+        $tweets = [];
+        $i = 1;
+        while (true) {
+            $pattern = "/---TWEET_{$i}---\s*(.*?)\s*---FIN_TWEET---/is";
+            if (preg_match($pattern, $output, $matches)) {
+                $tweets[] = trim($matches[1]);
+                $i++;
+            } else {
+                break;
+            }
+        }
+        return $tweets;
+    }
+
+    /**
      * Construye el prompt según el formato de salida
      */
     private function buildPrompt(string $content, string $format, string $title, array $options): string
