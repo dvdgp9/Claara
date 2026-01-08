@@ -11,9 +11,7 @@ class ContentExtractor
      */
     public function extractFromUrl(string $url): array
     {
-        error_log("ContentExtractor: Extraer de URL: " . $url);
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            error_log("ContentExtractor: URL no válida: " . $url);
             return ['success' => false, 'error' => 'URL no válida'];
         }
 
@@ -32,12 +30,8 @@ class ContentExtractor
         $html = @file_get_contents($url, false, $ctx);
 
         if ($html === false) {
-            $error = error_get_last();
-            error_log("ContentExtractor: Error file_get_contents: " . ($error['message'] ?? 'Error desconocido'));
             return ['success' => false, 'error' => 'No se pudo acceder a la URL'];
         }
-
-        error_log("ContentExtractor: HTML recibido (" . strlen($html) . " bytes)");
 
         // Extraer título
         $title = '';
@@ -49,11 +43,8 @@ class ContentExtractor
         $content = $this->extractMainContent($html);
 
         if (empty($content)) {
-            error_log("ContentExtractor: Falló extracción de contenido principal (vacío)");
             return ['success' => false, 'error' => 'No se pudo extraer contenido del artículo'];
         }
-
-        error_log("ContentExtractor: Contenido extraído con éxito (" . str_word_count($content) . " palabras)");
 
         return [
             'success' => true,
@@ -122,10 +113,8 @@ class ContentExtractor
     public function extractFromText(string $text): array
     {
         $text = trim($text);
-        error_log("ContentExtractor: Extraer de texto (" . strlen($text) . " caracteres)");
         
         if (empty($text)) {
-            error_log("ContentExtractor: El texto está vacío");
             return ['success' => false, 'error' => 'El texto está vacío'];
         }
 
@@ -184,59 +173,102 @@ class ContentExtractor
      */
     private function extractMainContent(string $html): string
     {
-        // Eliminar scripts, styles, nav, header, footer, aside
-        $html = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $html);
-        $html = preg_replace('/<style[^>]*>.*?<\/style>/is', '', $html);
-        $html = preg_replace('/<nav[^>]*>.*?<\/nav>/is', '', $html);
-        $html = preg_replace('/<header[^>]*>.*?<\/header>/is', '', $html);
-        $html = preg_replace('/<footer[^>]*>.*?<\/footer>/is', '', $html);
-        $html = preg_replace('/<aside[^>]*>.*?<\/aside>/is', '', $html);
-        $html = preg_replace('/<form[^>]*>.*?<\/form>/is', '', $html);
-        $html = preg_replace('/<!--.*?-->/s', '', $html);
-
-        // Buscar contenido en article, main, o div con clases típicas de contenido
-        $contentPatterns = [
-            '/<article[^>]*>(.*?)<\/article>/is',
-            '/<main[^>]*>(.*?)<\/main>/is',
-            '/<div[^>]*class="[^"]*(?:content|article|post|entry|story)[^"]*"[^>]*>(.*?)<\/div>/is',
+        // Usar DOMDocument para parsing más robusto
+        $dom = new \DOMDocument();
+        @$dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING);
+        
+        // Eliminar elementos no deseados
+        $tagsToRemove = ['script', 'style', 'nav', 'header', 'footer', 'aside', 'form', 'iframe', 'noscript'];
+        foreach ($tagsToRemove as $tag) {
+            $elements = $dom->getElementsByTagName($tag);
+            $elementsArray = [];
+            foreach ($elements as $element) {
+                $elementsArray[] = $element;
+            }
+            foreach ($elementsArray as $element) {
+                $element->parentNode->removeChild($element);
+            }
+        }
+        
+        // Buscar contenido en selectores específicos (prioridad)
+        $selectors = [
+            'article',
+            'main',
+            ['tag' => 'div', 'class' => ['content', 'article', 'post', 'entry', 'story', 'single-post', 'blog-post', 'entry-content']]
         ];
-
-        $content = '';
-        foreach ($contentPatterns as $pattern) {
-            if (preg_match($pattern, $html, $matches)) {
-                $content = $matches[1];
+        
+        $contentNode = null;
+        
+        // Intentar encontrar por etiqueta directa
+        foreach (['article', 'main'] as $tag) {
+            $nodes = $dom->getElementsByTagName($tag);
+            if ($nodes->length > 0) {
+                $contentNode = $nodes->item(0);
                 break;
             }
         }
-
-        // Si no encontramos contenido específico, usar el body
-        if (empty($content)) {
-            if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $html, $matches)) {
-                $content = $matches[1];
-            } else {
-                // Fallback final: usar todo el HTML si no hay body
-                $content = $html;
+        
+        // Si no, buscar divs con clases de contenido
+        if (!$contentNode) {
+            $divs = $dom->getElementsByTagName('div');
+            foreach ($divs as $div) {
+                $class = $div->getAttribute('class');
+                if (preg_match('/(content|article|post|entry|story|single|blog)/i', $class)) {
+                    $contentNode = $div;
+                    break;
+                }
             }
         }
-
-        // Convertir párrafos y headers a texto con saltos de línea
-        $content = preg_replace('/<\/p>/i', "\n\n", $content);
-        $content = preg_replace('/<\/h[1-6]>/i', "\n\n", $content);
-        $content = preg_replace('/<br\s*\/?>/i', "\n", $content);
-        $content = preg_replace('/<li[^>]*>/i', "\n• ", $content);
-
-        // Eliminar todas las etiquetas HTML restantes
-        $content = strip_tags($content);
-
-        // Decodificar entidades HTML
-        $content = html_entity_decode($content, ENT_QUOTES, 'UTF-8');
-
+        
+        // Si aún no encontramos, usar body
+        if (!$contentNode) {
+            $body = $dom->getElementsByTagName('body');
+            if ($body->length > 0) {
+                $contentNode = $body->item(0);
+            }
+        }
+        
+        // Si nada funciona, usar todo el documento
+        if (!$contentNode) {
+            $contentNode = $dom->documentElement;
+        }
+        
+        // Extraer texto del nodo
+        $content = $this->extractTextFromNode($contentNode);
+        
         // Limpiar espacios múltiples y líneas vacías
         $content = preg_replace('/[ \t]+/', ' ', $content);
-        $content = preg_replace('/\n\s*\n\s*\n/', "\n\n", $content);
+        $content = preg_replace('/\n\s*\n\s*\n+/', "\n\n", $content);
         $content = trim($content);
-
+        
         return $content;
+    }
+    
+    /**
+     * Extrae texto de un nodo DOM recursivamente
+     */
+    private function extractTextFromNode(\DOMNode $node): string
+    {
+        $text = '';
+        
+        foreach ($node->childNodes as $child) {
+            if ($child->nodeType === XML_TEXT_NODE) {
+                $text .= $child->nodeValue;
+            } elseif ($child->nodeType === XML_ELEMENT_NODE) {
+                $tagName = strtolower($child->nodeName);
+                
+                // Añadir saltos de línea para elementos de bloque
+                if (in_array($tagName, ['p', 'div', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])) {
+                    $text .= "\n" . $this->extractTextFromNode($child) . "\n";
+                } elseif ($tagName === 'li') {
+                    $text .= "\n• " . $this->extractTextFromNode($child);
+                } else {
+                    $text .= $this->extractTextFromNode($child);
+                }
+            }
+        }
+        
+        return $text;
     }
 
     /**
