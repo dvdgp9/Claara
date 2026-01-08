@@ -58,7 +58,7 @@ class ContentRepurposer
     {
         $this->llmClient = $llmClient ?? new OpenRouterClient(
             null,
-            'google/google/gemini-3-flash-preview',
+            'google/gemini-3-flash-preview',
             null,
             0.7,
             16384
