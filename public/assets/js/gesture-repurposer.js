@@ -183,7 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.message || data.error || 'Error desconocido');
+        const errorMsg = data.error?.message || data.message || 'Error desconocido';
+        throw new Error(errorMsg);
       }
 
       currentResult = data;
