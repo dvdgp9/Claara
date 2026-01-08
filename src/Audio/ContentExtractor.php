@@ -11,7 +11,9 @@ class ContentExtractor
      */
     public function extractFromUrl(string $url): array
     {
+        error_log("ContentExtractor: Extraer de URL: " . $url);
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            error_log("ContentExtractor: URL no válida: " . $url);
             return ['success' => false, 'error' => 'URL no válida'];
         }
 
@@ -30,8 +32,12 @@ class ContentExtractor
         $html = @file_get_contents($url, false, $ctx);
 
         if ($html === false) {
+            $error = error_get_last();
+            error_log("ContentExtractor: Error file_get_contents: " . ($error['message'] ?? 'Error desconocido'));
             return ['success' => false, 'error' => 'No se pudo acceder a la URL'];
         }
+
+        error_log("ContentExtractor: HTML recibido (" . strlen($html) . " bytes)");
 
         // Extraer título
         $title = '';
@@ -43,8 +49,11 @@ class ContentExtractor
         $content = $this->extractMainContent($html);
 
         if (empty($content)) {
+            error_log("ContentExtractor: Falló extracción de contenido principal (vacío)");
             return ['success' => false, 'error' => 'No se pudo extraer contenido del artículo'];
         }
+
+        error_log("ContentExtractor: Contenido extraído con éxito (" . str_word_count($content) . " palabras)");
 
         return [
             'success' => true,
@@ -113,8 +122,10 @@ class ContentExtractor
     public function extractFromText(string $text): array
     {
         $text = trim($text);
+        error_log("ContentExtractor: Extraer de texto (" . strlen($text) . " caracteres)");
         
         if (empty($text)) {
+            error_log("ContentExtractor: El texto está vacío");
             return ['success' => false, 'error' => 'El texto está vacío'];
         }
 
@@ -203,6 +214,7 @@ class ContentExtractor
             if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $html, $matches)) {
                 $content = $matches[1];
             } else {
+                // Fallback final: usar todo el HTML si no hay body
                 $content = $html;
             }
         }

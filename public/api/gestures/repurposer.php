@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $body = json_decode(file_get_contents('php://input'), true) ?? [];
+error_log("Repurposer API: Request body: " . json_encode($body));
 
 $sourceType = $body['source_type'] ?? 'text';
 $sourceUrl = $body['url'] ?? '';
@@ -39,6 +40,8 @@ $sourceText = $body['text'] ?? '';
 $sourcePdf = $body['pdf_base64'] ?? '';
 $outputFormat = $body['output_format'] ?? 'instagram';
 $options = $body['options'] ?? [];
+
+error_log("Repurposer API: Source Type: $sourceType, Format: $outputFormat");
 
 // Validaciones de entrada
 if ($sourceType === 'url' && empty($sourceUrl)) {
@@ -97,8 +100,8 @@ try {
             break;
     }
 
-    // === PASO 2: Generar contenido transformado ===
     $repurposer = new ContentRepurposer();
+    error_log("Repurposer API: Generating for format $outputFormat with content length " . strlen($content));
     $generateResult = $repurposer->generate($content, $outputFormat, $title, $options);
 
     if (!$generateResult['success']) {
