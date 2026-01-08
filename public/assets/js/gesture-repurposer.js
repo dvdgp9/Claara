@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await response.json();
       
-      if (data.success && data.items) {
+      if (data.items) {
         renderHistory(data.items);
       }
     } catch (err) {
@@ -408,8 +408,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await response.json();
       
-      if (data.success && data.item) {
-        const item = data.item;
+      if (data.execution) {
+        const item = data.execution;
         const outputData = typeof item.output_data === 'string' 
           ? JSON.parse(item.output_data) 
           : item.output_data;
