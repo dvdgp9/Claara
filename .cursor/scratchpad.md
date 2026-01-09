@@ -150,11 +150,66 @@ Cuando se recibe una respuesta larga del asistente, el scroll automático actual
 
 ### Tareas de implementación
 
-1. [ ] **Modificar la lógica de scroll en `index.php`**
+1. [x] **Modificar la lógica de scroll en `index.php`**
    - Ajustar la función `append()` para que el scroll se posicione al inicio del nuevo mensaje del asistente.
    - Asegurar que los mensajes cortos sigan siendo visibles sin problemas.
    - Mantener el comportamiento de scroll al final para los mensajes del usuario.
-   - Success: Al recibir una respuesta larga, el usuario ve el comienzo del mensaje sin tener que subir manualmente.
+   - ✅ Completado: Scroll condicional implementado con `scrollIntoView({ behavior: 'smooth', block: 'start' })` para mensajes del asistente.
+
+---
+
+## Feature: Sistema de Colaboración y Compartición en Tiempo Real
+
+### Motivación
+Permitir a los usuarios compartir conversaciones y carpetas con otros usuarios de la plataforma. Incluye colaboración en tiempo real donde múltiples usuarios pueden ver quién está online y quién está escribiendo, con bloqueo de input para evitar conflictos.
+
+### Arquitectura técnica
+- **SSE (Server-Sent Events)**: Para notificaciones en tiempo real sin WebSockets.
+- **Modelo de permisos**: Propietario, Editor (puede escribir), Viewer (solo lectura).
+- **Presencia**: Estados efímeros con TTL de 30 segundos.
+
+### Tareas de implementación
+
+1. [x] **Migración SQL `010_sharing_and_presence.sql`**
+   - Tabla `conversation_shares`: Permisos por conversación
+   - Tabla `folder_shares`: Permisos por carpeta (herencia a conversaciones)
+   - Tabla `presence_states`: Estados efímeros de presencia/escritura
+   - ✅ Completado
+
+2. [x] **Repositorios PHP**
+   - `SharingRepo.php`: CRUD de permisos, verificación de acceso, búsqueda de usuarios
+   - `PresenceRepo.php`: Heartbeat, typing, presencia online, cleanup
+   - ✅ Completado
+
+3. [x] **Endpoints API de Compartición**
+   - `/api/sharing/list.php`: Lista usuarios con acceso
+   - `/api/sharing/add.php`: Comparte con un usuario
+   - `/api/sharing/remove.php`: Revoca acceso
+   - `/api/sharing/search-users.php`: Busca usuarios para autocompletado
+   - ✅ Completado
+
+4. [x] **Endpoints API de Tiempo Real**
+   - `/api/realtime/stream.php`: SSE para presencia, typing y nuevos mensajes
+   - `/api/realtime/typing.php`: Reporta estado de escritura
+   - ✅ Completado
+
+5. [x] **UI: Modal de Compartición**
+   - Botón "Compartir" en header de conversación
+   - Modal con buscador de usuarios y lista de personas con acceso
+   - Botón para eliminar acceso de cada persona
+   - ✅ Completado
+
+6. [x] **UI: Indicadores de Presencia**
+   - Avatares de usuarios online en el header
+   - Indicador "X está escribiendo..."
+   - Bloqueo de input cuando otro usuario escribe
+   - ✅ Completado
+
+7. [ ] **Testing y ajustes**
+   - Ejecutar migración: aplicar `010_sharing_and_presence.sql`
+   - Probar flujo de compartición
+   - Verificar tiempo real con 2+ usuarios
+   - Success: Colaboración fluida sin conflictos
 
 ---
 
@@ -174,6 +229,16 @@ Cuando se recibe una respuesta larga del asistente, el scroll automático actual
 - 2025-12-31: **REVISIÓN DE COLISIONES EN BD**: Analizada la estructura de la base de datos para evitar colisiones de nombres entre usuarios. Creada la migración `docs/migrations/007_fix_name_collisions.sql` que añade claves únicas compuestas en `folders`, `voices` y `gestures`.
 - 2025-12-31: **MEJORAS UI ADMIN**: Añadido botón de mostrar/ocultar contraseña en la gestión de usuarios y detección de OS para atajos de teclado (CMD/Ctrl + Enter).
 - 2025-12-31: **SELECTOR DE MODELOS (SUPERADMIN)**: Implementado selector de modelos LLM al lado del botón de Nanobanana exclusivo para superadministradores. Incluye GLM 4.7, Gemini 3 Flash, Deepseek v3.2 y Xiaomi Mimo v2. Sincronización automática entre vistas y envío del modelo seleccionado al backend.
+- 2026-01-09: **MEJORA UX SCROLL**: Modificada función `append()` para que el scroll se posicione al inicio del mensaje del asistente en lugar del final, mejorando la legibilidad de respuestas largas.
+- 2026-01-09: **FIX FOLDER ITEMS**: Corregida altura de los items de carpetas personalizadas en la sidebar. Los botones de editar/eliminar ahora usan flexbox y `line-height: 0` para igualar la altura con los items por defecto.
+- 2026-01-09: **SISTEMA DE COLABORACIÓN (MVP)**: Implementado sistema completo de compartición de conversaciones y tiempo real:
+  - Migración `010_sharing_and_presence.sql` con tablas `conversation_shares`, `folder_shares`, `presence_states`
+  - Repositorios `SharingRepo.php` y `PresenceRepo.php`
+  - Endpoints `/api/sharing/` (list, add, remove, search-users) y `/api/realtime/` (stream.php SSE, typing.php)
+  - UI: Modal de compartición con buscador de usuarios, botón compartir en header, avatares de presencia
+  - SSE para notificaciones en tiempo real (presencia, "X está escribiendo...", nuevos mensajes)
+  - Bloqueo de input cuando otro usuario está escribiendo para evitar conflictos
+  - **Pendiente**: Ejecutar migración y testing con múltiples usuarios
 
 ---
 

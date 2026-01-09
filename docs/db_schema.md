@@ -259,6 +259,67 @@ Notas:
 
 ---
 
+## Sistema de Colaboración y Compartición
+
+### Tabla: `conversation_shares`
+Permisos de compartición para conversaciones individuales. El propietario es siempre `conversations.user_id`, aquí se registran usuarios adicionales con acceso.
+
+- `id` BIGINT UNSIGNED PK AUTO_INCREMENT
+- `conversation_id` BIGINT UNSIGNED NOT NULL
+- `user_id` BIGINT UNSIGNED NOT NULL -- Usuario con quien se comparte
+- `shared_by_user_id` BIGINT UNSIGNED NOT NULL -- Usuario que otorgó el acceso
+- `can_write` TINYINT(1) NOT NULL DEFAULT 1 -- 0=solo lectura, 1=puede escribir
+- `created_at` DATETIME NOT NULL
+
+Índices:
+- `UNIQUE KEY conversation_shares_conv_user_uq (conversation_id, user_id)`
+- `KEY conversation_shares_user_id_idx (user_id)`
+- `KEY conversation_shares_shared_by_idx (shared_by_user_id)`
+
+### Tabla: `folder_shares`
+Permisos de compartición para carpetas completas. Al compartir una carpeta, el usuario invitado ve todas las conversaciones actuales y futuras de esa carpeta.
+
+- `id` BIGINT UNSIGNED PK AUTO_INCREMENT
+- `folder_id` BIGINT UNSIGNED NOT NULL
+- `user_id` BIGINT UNSIGNED NOT NULL
+- `shared_by_user_id` BIGINT UNSIGNED NOT NULL
+- `can_write` TINYINT(1) NOT NULL DEFAULT 1
+- `created_at` DATETIME NOT NULL
+
+Índices:
+- `UNIQUE KEY folder_shares_folder_user_uq (folder_id, user_id)`
+- `KEY folder_shares_user_id_idx (user_id)`
+- `KEY folder_shares_shared_by_idx (shared_by_user_id)`
+
+### Tabla: `presence_states`
+Estados efímeros de presencia y escritura para colaboración en tiempo real. Registros volátiles que se limpian automáticamente (TTL ~60s sin actividad).
+
+- `id` BIGINT UNSIGNED PK AUTO_INCREMENT
+- `user_id` BIGINT UNSIGNED NOT NULL
+- `conversation_id` BIGINT UNSIGNED NOT NULL
+- `is_typing` TINYINT(1) NOT NULL DEFAULT 0
+- `is_online` TINYINT(1) NOT NULL DEFAULT 1
+- `updated_at` DATETIME NOT NULL -- Se actualiza con cada señal de vida
+
+Índices:
+- `UNIQUE KEY presence_states_user_conv_uq (user_id, conversation_id)`
+- `KEY presence_states_conversation_id_idx (conversation_id)`
+- `KEY presence_states_updated_at_idx (updated_at)` -- Para limpieza automática
+
+---
+
+## Relaciones de Compartición (FK)
+- `conversation_shares.conversation_id` → `conversations.id` ON DELETE CASCADE
+- `conversation_shares.user_id` → `users.id` ON DELETE CASCADE
+- `conversation_shares.shared_by_user_id` → `users.id` ON DELETE CASCADE
+- `folder_shares.folder_id` → `folders.id` ON DELETE CASCADE
+- `folder_shares.user_id` → `users.id` ON DELETE CASCADE
+- `folder_shares.shared_by_user_id` → `users.id` ON DELETE CASCADE
+- `presence_states.user_id` → `users.id` ON DELETE CASCADE
+- `presence_states.conversation_id` → `conversations.id` ON DELETE CASCADE
+
+---
+
 ## Futuro (V2 RAG)
 ### `documents`
 - `id` BIGINT UNSIGNED PK AUTO_INCREMENT

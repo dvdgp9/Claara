@@ -63,6 +63,14 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
       <div id="conv-title" class="hidden flex items-center gap-2 min-w-0">
         <i class="iconoir-chat-bubble text-[#23AAC5] hidden lg:block"></i>
         <span class="text-sm font-medium leading-tight text-slate-700 truncate max-w-[60vw] lg:max-w-md"></span>
+        <!-- Botón compartir conversación -->
+        <button id="share-conv-btn" class="hidden lg:flex p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors ml-1" title="Compartir conversación">
+          <i class="iconoir-share-android text-sm"></i>
+        </button>
+        <!-- Indicador de usuarios online -->
+        <div id="presence-avatars" class="hidden items-center gap-0.5 ml-2">
+          <!-- Se llenará dinámicamente con avatares de usuarios online -->
+        </div>
       </div>
     <?php else: ?>
       <?php if ($headerBackUrl): ?>
