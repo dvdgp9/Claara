@@ -496,15 +496,21 @@ FORMATO DE SALIDA: NEWSLETTER (EMAIL)
 
 {$subjectLine}
 
-INSTRUCCIONES ESPECÍFICAS:
-1. Crea un email atractivo y escaneable
-2. Asunto impactante (si no se proporcionó)
-3. Preheader (texto de preview, 40-100 caracteres)
-4. Saludo personalizable con [NOMBRE]
-5. Cuerpo estructurado con secciones claras
-6. Llamadas a la acción claras (botones)
-7. Tono cercano pero profesional
-8. Firma corporativa sugerida
+INSTRUCCIONES ESPECÍFICAS DE TONO Y ESTILO:
+1. ENFOQUE PERSONALIZADO: Escribe como si enviaras este correo a un amigo o colega cercano. No hables "a la masa" o a "nuestros suscriptores". Usa la primera persona del plural y dirígete directamente a la segunda ("Tú").
+2. CONSCIENCIA DEL CONTEXTO: En lugar de solo resumir información, aporta una perspectiva de "por qué esto te importa a TI hoy".
+3. EMPATÍA: Reconoce los posibles retos o intereses del lector relacionados con el contenido.
+4. LENGUAJE CERCANO: Evita tecnicismos innecesarios o un tono excesivamente corporativo. Sé directo, cálido y auténtico.
+5. SALUDO: Usa obligatoriamente [NOMBRE] para que parezca una conversación personal.
+
+INSTRUCCIONES DE ESTRUCTURA:
+1. Asunto: Que sea curioso, personal o que resuelva un problema inmediato.
+2. Preheader: Una extensión natural del asunto que invite a abrir.
+3. Saludo personalizable: "Hola [NOMBRE],"
+4. Intro: Empieza con una frase que conecte con el lector antes de entrar en materia.
+5. Cuerpo: Desarrolla el contenido fuente de forma narrativa (storytelling).
+6. CTA: No uses "Haz clic aquí". Usa frases que inviten a continuar la conversación o explorar el beneficio.
+7. Despedida: Cercana y humana (ej: "Un abrazo", "Hablamos pronto").
 
 ESTRUCTURA:
 ---EMAIL---
@@ -512,7 +518,7 @@ ASUNTO: [Línea de asunto]
 PREHEADER: [Texto de preview]
 
 ---CUERPO---
-[Contenido del email en formato HTML simple]
+[Contenido del email en formato Markdown/HTML simple]
 ---FIN_CUERPO---
 
 ---TEXTO_PLANO---
