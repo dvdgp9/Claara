@@ -497,7 +497,7 @@ FORMATO DE SALIDA: NEWSLETTER (EMAIL)
 {$subjectLine}
 
 INSTRUCCIONES ESPECÍFICAS DE TONO Y ESTILO:
-1. ENFOQUE PERSONALIZADO: Escribe como si enviaras este correo a un amigo o colega cercano. No hables "a la masa" o a "nuestros suscriptores". Usa la primera persona del plural y dirígete directamente a la segunda ("Tú").
+1. ENFOQUE PERSONALIZADO: Escribe como si enviaras este correo a un amigo o colega cercano. No hables "a la masa" o a "nuestros suscriptores". Usa la primera persona del plural ("Nosotros") y dirígete directamente a la segunda ("Tú").
 2. CONSCIENCIA DEL CONTEXTO: En lugar de solo resumir información, aporta una perspectiva de "por qué esto te importa a TI hoy".
 3. EMPATÍA: Reconoce los posibles retos o intereses del lector relacionados con el contenido.
 4. LENGUAJE CERCANO: Evita tecnicismos innecesarios o un tono excesivamente corporativo. Sé directo, cálido y auténtico.
