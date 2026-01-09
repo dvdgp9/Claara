@@ -778,7 +778,14 @@ $headerShowLogo = true;
       wrap.appendChild(msgContainer);
       wrap.appendChild(timestamp);
       messagesEl.appendChild(wrap);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      
+      if (role === 'user') {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      } else {
+        // Para el asistente, nos desplazamos al inicio del nuevo mensaje
+        // Usamos scrollIntoView con un pequeño margen para que se vea bien
+        wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     // Lightbox para ver imágenes en grande (nanobanana 🍌)

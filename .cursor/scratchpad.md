@@ -143,6 +143,21 @@ Los "gestos" son acciones predefinidas que los usuarios pueden ejecutar para tar
    - `index.php` solo contiene navegación (redirige a rutas)
    - ✅ Estructura lista para escalar a más gestos
 
+## Mejora de UX: Scroll en Respuestas del Chat
+
+### Motivación
+Cuando se recibe una respuesta larga del asistente, el scroll automático actual se desplaza hasta el final del mensaje. Esto obliga al usuario a hacer scroll hacia arriba manualmente para empezar a leer desde el principio. Se desea que al recibir una respuesta, el scroll se posicione al inicio de la misma para mejorar la legibilidad.
+
+### Tareas de implementación
+
+1. [ ] **Modificar la lógica de scroll en `index.php`**
+   - Ajustar la función `append()` para que el scroll se posicione al inicio del nuevo mensaje del asistente.
+   - Asegurar que los mensajes cortos sigan siendo visibles sin problemas.
+   - Mantener el comportamiento de scroll al final para los mensajes del usuario.
+   - Success: Al recibir una respuesta larga, el usuario ve el comienzo del mensaje sin tener que subir manualmente.
+
+---
+
 # Current Status / Progress Tracking
 
 - 2025-11-03: `index.php` creado. Repo inicializado en `main` y push a remoto realizado.
