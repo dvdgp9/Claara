@@ -945,7 +945,8 @@ $headerShowLogo = true;
         actions.className = 'flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0';
         
         const renameBtn = document.createElement('button');
-        renameBtn.className = 'p-1 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors';
+        renameBtn.className = 'flex items-center justify-center p-1 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors';
+        renameBtn.style.lineHeight = '0';
         renameBtn.setAttribute('data-action-folder', 'rename');
         renameBtn.innerHTML = '<i class="iconoir-edit-pencil text-xs"></i>';
         renameBtn.title = 'Renombrar';
@@ -962,7 +963,8 @@ $headerShowLogo = true;
         });
         
         const delBtn = document.createElement('button');
-        delBtn.className = 'p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors';
+        delBtn.className = 'flex items-center justify-center p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors';
+        delBtn.style.lineHeight = '0';
         delBtn.setAttribute('data-action-folder', 'delete');
         delBtn.innerHTML = '<i class="iconoir-trash text-xs"></i>';
         delBtn.title = 'Eliminar';
