@@ -351,20 +351,20 @@ $headerDrawerId = 'repurposer-history-drawer';
           <section id="result-section" class="hidden space-y-4">
             
             <!-- Result Header -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div>
-                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <i class="iconoir-check-circle text-green-500"></i>
-                  <span id="result-title">Contenido generado</span>
+            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+              <div class="flex-1 min-w-0">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-1">
+                  <i class="iconoir-check-circle text-green-500 shrink-0"></i>
+                  <span id="result-title" class="truncate">Contenido generado</span>
                 </h2>
-                <p id="result-source" class="text-sm text-slate-500 mt-1">Fuente: URL</p>
+                <p id="result-source" class="text-sm text-slate-500">Fuente: URL</p>
               </div>
-              <div class="flex items-center gap-2">
-                <button type="button" id="copy-all-btn" class="text-sm font-medium text-slate-600 hover:text-slate-700 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-colors">
+              <div class="flex items-center gap-3 shrink-0">
+                <button type="button" id="copy-all-btn" class="text-sm font-semibold text-slate-600 hover:text-slate-800 flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow transition-all">
                   <i class="iconoir-copy"></i>
                   <span>Copiar todo</span>
                 </button>
-                <button type="button" onclick="resetUI()" class="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-lg transition-colors">
+                <button type="button" onclick="resetUI()" class="text-sm font-semibold text-indigo-600 hover:text-white flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-600 rounded-xl transition-all">
                   <i class="iconoir-plus"></i>
                   <span>Nueva</span>
                 </button>
