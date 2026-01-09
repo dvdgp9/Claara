@@ -1841,6 +1841,312 @@ $headerShowLogo = true;
         window.location.href = '/gestos/';
       });
     }
+
+    // =========================================================================
+    // SISTEMA DE COMPARTICIÓN
+    // =========================================================================
+    const shareModal = document.getElementById('share-modal');
+    const shareConvBtn = document.getElementById('share-conv-btn');
+    const closeShareModal = document.getElementById('close-share-modal');
+    const closeShareBtn = document.getElementById('close-share-btn');
+    const shareUserSearch = document.getElementById('share-user-search');
+    const shareSearchResults = document.getElementById('share-search-results');
+    const shareUsersList = document.getElementById('share-users-list');
+    const shareEmptyList = document.getElementById('share-empty-list');
+    const presenceAvatars = document.getElementById('presence-avatars');
+    
+    let shareSearchDebounce = null;
+    
+    // Abrir modal de compartición
+    if (shareConvBtn) {
+      shareConvBtn.addEventListener('click', () => {
+        if (!currentConversationId) return;
+        openShareModal();
+      });
+    }
+    
+    // Cerrar modal
+    if (closeShareModal) {
+      closeShareModal.addEventListener('click', () => shareModal.classList.add('hidden'));
+    }
+    if (closeShareBtn) {
+      closeShareBtn.addEventListener('click', () => shareModal.classList.add('hidden'));
+    }
+    if (shareModal) {
+      shareModal.addEventListener('click', (e) => {
+        if (e.target === shareModal) shareModal.classList.add('hidden');
+      });
+    }
+    
+    async function openShareModal() {
+      shareModal.classList.remove('hidden');
+      document.getElementById('share-conv-title').textContent = `"${currentConvTitle || 'Conversación'}"`;
+      shareUserSearch.value = '';
+      shareSearchResults.classList.add('hidden');
+      await loadShareUsers();
+    }
+    
+    async function loadShareUsers() {
+      try {
+        const data = await api(`/api/sharing/list.php?type=conversation&id=${currentConversationId}`);
+        renderShareUsers(data.shares || [], data.owner);
+      } catch (err) {
+        console.error('Error cargando usuarios compartidos:', err);
+      }
+    }
+    
+    function renderShareUsers(shares, owner) {
+      shareUsersList.innerHTML = '';
+      
+      // Mostrar propietario primero
+      if (owner) {
+        const ownerEl = document.createElement('div');
+        ownerEl.className = 'flex items-center gap-3 p-3 bg-violet-50 rounded-xl';
+        ownerEl.innerHTML = `
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-sm font-semibold">
+            ${(owner.first_name[0] + owner.last_name[0]).toUpperCase()}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-slate-800 text-sm">${escapeHtml(owner.first_name)} ${escapeHtml(owner.last_name)}</div>
+            <div class="text-xs text-slate-500">${escapeHtml(owner.email)}</div>
+          </div>
+          <span class="px-2 py-1 text-xs bg-violet-100 text-violet-700 rounded-full font-medium">Propietario</span>
+        `;
+        shareUsersList.appendChild(ownerEl);
+      }
+      
+      if (shares.length === 0) {
+        shareEmptyList.classList.remove('hidden');
+      } else {
+        shareEmptyList.classList.add('hidden');
+        shares.forEach(share => {
+          const el = document.createElement('div');
+          el.className = 'flex items-center gap-3 p-3 bg-slate-50 rounded-xl group';
+          el.innerHTML = `
+            <div class="w-9 h-9 rounded-full gradient-brand flex items-center justify-center text-white text-sm font-semibold">
+              ${(share.first_name[0] + share.last_name[0]).toUpperCase()}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-slate-800 text-sm">${escapeHtml(share.first_name)} ${escapeHtml(share.last_name)}</div>
+              <div class="text-xs text-slate-500">${escapeHtml(share.email)}</div>
+            </div>
+            <span class="px-2 py-1 text-xs bg-slate-200 text-slate-600 rounded-full">${share.can_write ? 'Editor' : 'Lector'}</span>
+            <button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100" 
+                    data-remove-user="${share.user_id}" title="Eliminar acceso">
+              <i class="iconoir-xmark"></i>
+            </button>
+          `;
+          shareUsersList.appendChild(el);
+        });
+      }
+      
+      // Event listeners para eliminar usuarios
+      shareUsersList.querySelectorAll('[data-remove-user]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const userId = parseInt(btn.dataset.removeUser);
+          await removeShareUser(userId);
+        });
+      });
+    }
+    
+    async function removeShareUser(userId) {
+      try {
+        await api('/api/sharing/remove.php', {
+          method: 'POST',
+          body: { type: 'conversation', id: currentConversationId, user_id: userId }
+        });
+        await loadShareUsers();
+      } catch (err) {
+        alert('Error al eliminar acceso: ' + err.message);
+      }
+    }
+    
+    // Búsqueda de usuarios
+    if (shareUserSearch) {
+      shareUserSearch.addEventListener('input', () => {
+        clearTimeout(shareSearchDebounce);
+        const query = shareUserSearch.value.trim();
+        
+        if (query.length < 2) {
+          shareSearchResults.classList.add('hidden');
+          return;
+        }
+        
+        shareSearchDebounce = setTimeout(async () => {
+          try {
+            const data = await api(`/api/sharing/search-users.php?q=${encodeURIComponent(query)}`);
+            renderSearchResults(data.users || []);
+          } catch (err) {
+            console.error('Error buscando usuarios:', err);
+          }
+        }, 300);
+      });
+    }
+    
+    function renderSearchResults(users) {
+      if (users.length === 0) {
+        shareSearchResults.innerHTML = '<div class="p-3 text-sm text-slate-400 text-center">No se encontraron usuarios</div>';
+      } else {
+        shareSearchResults.innerHTML = users.map(u => `
+          <button class="w-full p-3 hover:bg-slate-50 text-left flex items-center gap-3 transition-colors" data-add-user="${u.id}">
+            <div class="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-semibold">
+              ${u.initials}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-slate-800 text-sm">${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}</div>
+              <div class="text-xs text-slate-500 truncate">${escapeHtml(u.email)}</div>
+            </div>
+            <i class="iconoir-plus text-slate-400"></i>
+          </button>
+        `).join('');
+      }
+      shareSearchResults.classList.remove('hidden');
+      
+      // Event listeners para añadir usuarios
+      shareSearchResults.querySelectorAll('[data-add-user]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const userId = parseInt(btn.dataset.addUser);
+          await addShareUser(userId);
+        });
+      });
+    }
+    
+    async function addShareUser(userId) {
+      try {
+        await api('/api/sharing/add.php', {
+          method: 'POST',
+          body: { type: 'conversation', id: currentConversationId, user_id: userId, can_write: true }
+        });
+        shareUserSearch.value = '';
+        shareSearchResults.classList.add('hidden');
+        await loadShareUsers();
+      } catch (err) {
+        alert('Error al compartir: ' + err.message);
+      }
+    }
+    
+    // =========================================================================
+    // SISTEMA DE PRESENCIA EN TIEMPO REAL (SSE)
+    // =========================================================================
+    function connectSSE(conversationId) {
+      // Cerrar conexión anterior si existe
+      if (sseConnection) {
+        sseConnection.close();
+        sseConnection = null;
+      }
+      
+      sseConnection = new EventSource(`/api/realtime/stream.php?conversation_id=${conversationId}`);
+      
+      sseConnection.addEventListener('presence', (e) => {
+        const data = JSON.parse(e.data);
+        updatePresenceAvatars(data.users || []);
+      });
+      
+      sseConnection.addEventListener('typing', (e) => {
+        const data = JSON.parse(e.data);
+        updateTypingIndicator(data);
+      });
+      
+      sseConnection.addEventListener('message', (e) => {
+        const data = JSON.parse(e.data);
+        // Si el mensaje no es del usuario actual, añadirlo al chat
+        if (data.user_id && data.user_id !== currentUser?.id) {
+          append(data.role, data.content);
+        }
+      });
+      
+      sseConnection.addEventListener('error', () => {
+        console.warn('SSE connection error, reconnecting in 5s...');
+        setTimeout(() => {
+          if (currentConversationId) connectSSE(currentConversationId);
+        }, 5000);
+      });
+    }
+    
+    function disconnectSSE() {
+      if (sseConnection) {
+        sseConnection.close();
+        sseConnection = null;
+      }
+    }
+    
+    function updatePresenceAvatars(users) {
+      if (!presenceAvatars) return;
+      
+      if (users.length === 0) {
+        presenceAvatars.classList.add('hidden');
+        return;
+      }
+      
+      presenceAvatars.classList.remove('hidden');
+      presenceAvatars.classList.add('flex');
+      presenceAvatars.innerHTML = users.slice(0, 3).map((u, i) => `
+        <div class="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-semibold border-2 border-white shadow-sm ${i > 0 ? '-ml-2' : ''}" title="${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}">
+          ${(u.first_name[0] + u.last_name[0]).toUpperCase()}
+        </div>
+      `).join('') + (users.length > 3 ? `<span class="text-xs text-slate-500 ml-1">+${users.length - 3}</span>` : '');
+    }
+    
+    function updateTypingIndicator(data) {
+      const typingEl = document.getElementById('typing-indicator');
+      const submitBtn = formEl?.querySelector('button[type="submit"]');
+      
+      if (data.is_typing && data.user) {
+        // Mostrar indicador de escritura
+        typingEl.classList.remove('hidden');
+        typingEl.querySelector('.bg-white')?.insertAdjacentHTML('afterbegin', 
+          `<span class="text-sm text-slate-600 mr-2">${escapeHtml(data.user.first_name)} está escribiendo</span>`
+        );
+        
+        // Deshabilitar input
+        if (inputEl) {
+          inputEl.disabled = true;
+          inputEl.placeholder = `Espera a que ${data.user.first_name} termine...`;
+        }
+        if (submitBtn) submitBtn.disabled = true;
+      } else {
+        // Ocultar indicador y habilitar input
+        typingEl.classList.add('hidden');
+        if (inputEl) {
+          inputEl.disabled = false;
+          inputEl.placeholder = 'Escribe un mensaje...';
+        }
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
+    
+    // Reportar estado de escritura
+    function reportTyping(isTyping) {
+      if (!currentConversationId || isCurrentlyTyping === isTyping) return;
+      isCurrentlyTyping = isTyping;
+      
+      fetch('/api/realtime/typing.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrf
+        },
+        body: JSON.stringify({
+          conversation_id: currentConversationId,
+          is_typing: isTyping
+        }),
+        credentials: 'include'
+      }).catch(console.warn);
+    }
+    
+    // Detectar cuando el usuario está escribiendo
+    if (inputEl) {
+      inputEl.addEventListener('input', () => {
+        reportTyping(true);
+        clearTimeout(typingDebounceTimer);
+        typingDebounceTimer = setTimeout(() => reportTyping(false), 3000);
+      });
+      
+      inputEl.addEventListener('blur', () => {
+        clearTimeout(typingDebounceTimer);
+        reportTyping(false);
+      });
+    }
   </script>
   
   <!-- Modal FAQ / Dudas Rápidas -->
@@ -2239,314 +2545,6 @@ $headerShowLogo = true;
         mobileNewBtn.addEventListener('click', () => {
           closeMobileDrawer('conversations-drawer');
           desktopNewBtn.click();
-        });
-      }
-      
-      // =========================================================================
-      // SISTEMA DE COMPARTICIÓN
-      // =========================================================================
-      const shareModal = document.getElementById('share-modal');
-      const shareConvBtn = document.getElementById('share-conv-btn');
-      const closeShareModal = document.getElementById('close-share-modal');
-      const closeShareBtn = document.getElementById('close-share-btn');
-      const shareUserSearch = document.getElementById('share-user-search');
-      const shareSearchResults = document.getElementById('share-search-results');
-      const shareUsersList = document.getElementById('share-users-list');
-      const shareEmptyList = document.getElementById('share-empty-list');
-      const presenceAvatars = document.getElementById('presence-avatars');
-      
-      let shareSearchDebounce = null;
-      
-      // Abrir modal de compartición
-      if (shareConvBtn) {
-        shareConvBtn.addEventListener('click', () => {
-          if (!currentConversationId) return;
-          openShareModal();
-        });
-      }
-      
-      // Cerrar modal
-      if (closeShareModal) {
-        closeShareModal.addEventListener('click', () => shareModal.classList.add('hidden'));
-      }
-      if (closeShareBtn) {
-        closeShareBtn.addEventListener('click', () => shareModal.classList.add('hidden'));
-      }
-      if (shareModal) {
-        shareModal.addEventListener('click', (e) => {
-          if (e.target === shareModal) shareModal.classList.add('hidden');
-        });
-      }
-      
-      async function openShareModal() {
-        shareModal.classList.remove('hidden');
-        document.getElementById('share-conv-title').textContent = `"${currentConvTitle || 'Conversación'}"`;
-        shareUserSearch.value = '';
-        shareSearchResults.classList.add('hidden');
-        await loadShareUsers();
-      }
-      
-      async function loadShareUsers() {
-        try {
-          const data = await api(`/api/sharing/list.php?type=conversation&id=${currentConversationId}`);
-          renderShareUsers(data.shares || [], data.owner);
-        } catch (err) {
-          console.error('Error cargando usuarios compartidos:', err);
-        }
-      }
-      
-      function renderShareUsers(shares, owner) {
-        shareUsersList.innerHTML = '';
-        
-        // Mostrar propietario primero
-        if (owner) {
-          const ownerEl = document.createElement('div');
-          ownerEl.className = 'flex items-center gap-3 p-3 bg-violet-50 rounded-xl';
-          ownerEl.innerHTML = `
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-sm font-semibold">
-              ${(owner.first_name[0] + owner.last_name[0]).toUpperCase()}
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="font-medium text-slate-800 text-sm">${escapeHtml(owner.first_name)} ${escapeHtml(owner.last_name)}</div>
-              <div class="text-xs text-slate-500">${escapeHtml(owner.email)}</div>
-            </div>
-            <span class="px-2 py-1 text-xs bg-violet-100 text-violet-700 rounded-full font-medium">Propietario</span>
-          `;
-          shareUsersList.appendChild(ownerEl);
-        }
-        
-        if (shares.length === 0) {
-          shareEmptyList.classList.remove('hidden');
-        } else {
-          shareEmptyList.classList.add('hidden');
-          shares.forEach(share => {
-            const el = document.createElement('div');
-            el.className = 'flex items-center gap-3 p-3 bg-slate-50 rounded-xl group';
-            el.innerHTML = `
-              <div class="w-9 h-9 rounded-full gradient-brand flex items-center justify-center text-white text-sm font-semibold">
-                ${(share.first_name[0] + share.last_name[0]).toUpperCase()}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="font-medium text-slate-800 text-sm">${escapeHtml(share.first_name)} ${escapeHtml(share.last_name)}</div>
-                <div class="text-xs text-slate-500">${escapeHtml(share.email)}</div>
-              </div>
-              <span class="px-2 py-1 text-xs bg-slate-200 text-slate-600 rounded-full">${share.can_write ? 'Editor' : 'Lector'}</span>
-              <button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100" 
-                      data-remove-user="${share.user_id}" title="Eliminar acceso">
-                <i class="iconoir-xmark"></i>
-              </button>
-            `;
-            shareUsersList.appendChild(el);
-          });
-        }
-        
-        // Event listeners para eliminar usuarios
-        shareUsersList.querySelectorAll('[data-remove-user]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const userId = parseInt(btn.dataset.removeUser);
-            await removeShareUser(userId);
-          });
-        });
-      }
-      
-      async function removeShareUser(userId) {
-        try {
-          await api('/api/sharing/remove.php', {
-            method: 'POST',
-            body: { type: 'conversation', id: currentConversationId, user_id: userId }
-          });
-          await loadShareUsers();
-        } catch (err) {
-          alert('Error al eliminar acceso: ' + err.message);
-        }
-      }
-      
-      // Búsqueda de usuarios
-      if (shareUserSearch) {
-        shareUserSearch.addEventListener('input', () => {
-          clearTimeout(shareSearchDebounce);
-          const query = shareUserSearch.value.trim();
-          
-          if (query.length < 2) {
-            shareSearchResults.classList.add('hidden');
-            return;
-          }
-          
-          shareSearchDebounce = setTimeout(async () => {
-            try {
-              const data = await api(`/api/sharing/search-users.php?q=${encodeURIComponent(query)}`);
-              renderSearchResults(data.users || []);
-            } catch (err) {
-              console.error('Error buscando usuarios:', err);
-            }
-          }, 300);
-        });
-      }
-      
-      function renderSearchResults(users) {
-        if (users.length === 0) {
-          shareSearchResults.innerHTML = '<div class="p-3 text-sm text-slate-400 text-center">No se encontraron usuarios</div>';
-        } else {
-          shareSearchResults.innerHTML = users.map(u => `
-            <button class="w-full p-3 hover:bg-slate-50 text-left flex items-center gap-3 transition-colors" data-add-user="${u.id}">
-              <div class="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-semibold">
-                ${u.initials}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="font-medium text-slate-800 text-sm">${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}</div>
-                <div class="text-xs text-slate-500 truncate">${escapeHtml(u.email)}</div>
-              </div>
-              <i class="iconoir-plus text-slate-400"></i>
-            </button>
-          `).join('');
-        }
-        shareSearchResults.classList.remove('hidden');
-        
-        // Event listeners para añadir usuarios
-        shareSearchResults.querySelectorAll('[data-add-user]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const userId = parseInt(btn.dataset.addUser);
-            await addShareUser(userId);
-          });
-        });
-      }
-      
-      async function addShareUser(userId) {
-        try {
-          await api('/api/sharing/add.php', {
-            method: 'POST',
-            body: { type: 'conversation', id: currentConversationId, user_id: userId, can_write: true }
-          });
-          shareUserSearch.value = '';
-          shareSearchResults.classList.add('hidden');
-          await loadShareUsers();
-        } catch (err) {
-          alert('Error al compartir: ' + err.message);
-        }
-      }
-      
-      // =========================================================================
-      // SISTEMA DE PRESENCIA EN TIEMPO REAL (SSE)
-      // =========================================================================
-      function connectSSE(conversationId) {
-        // Cerrar conexión anterior si existe
-        if (sseConnection) {
-          sseConnection.close();
-          sseConnection = null;
-        }
-        
-        sseConnection = new EventSource(`/api/realtime/stream.php?conversation_id=${conversationId}`);
-        
-        sseConnection.addEventListener('presence', (e) => {
-          const data = JSON.parse(e.data);
-          updatePresenceAvatars(data.users || []);
-        });
-        
-        sseConnection.addEventListener('typing', (e) => {
-          const data = JSON.parse(e.data);
-          updateTypingIndicator(data);
-        });
-        
-        sseConnection.addEventListener('message', (e) => {
-          const data = JSON.parse(e.data);
-          // Si el mensaje no es del usuario actual, añadirlo al chat
-          if (data.user_id && data.user_id !== currentUser?.id) {
-            append(data.role, data.content);
-          }
-        });
-        
-        sseConnection.addEventListener('error', () => {
-          console.warn('SSE connection error, reconnecting in 5s...');
-          setTimeout(() => {
-            if (currentConversationId) connectSSE(currentConversationId);
-          }, 5000);
-        });
-      }
-      
-      function disconnectSSE() {
-        if (sseConnection) {
-          sseConnection.close();
-          sseConnection = null;
-        }
-      }
-      
-      function updatePresenceAvatars(users) {
-        if (!presenceAvatars) return;
-        
-        if (users.length === 0) {
-          presenceAvatars.classList.add('hidden');
-          return;
-        }
-        
-        presenceAvatars.classList.remove('hidden');
-        presenceAvatars.classList.add('flex');
-        presenceAvatars.innerHTML = users.slice(0, 3).map((u, i) => `
-          <div class="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-semibold border-2 border-white shadow-sm ${i > 0 ? '-ml-2' : ''}" title="${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}">
-            ${(u.first_name[0] + u.last_name[0]).toUpperCase()}
-          </div>
-        `).join('') + (users.length > 3 ? `<span class="text-xs text-slate-500 ml-1">+${users.length - 3}</span>` : '');
-      }
-      
-      function updateTypingIndicator(data) {
-        const typingEl = document.getElementById('typing-indicator');
-        const inputEl = document.getElementById('chat-input');
-        const submitBtn = formEl?.querySelector('button[type="submit"]');
-        
-        if (data.is_typing && data.user) {
-          // Mostrar indicador de escritura
-          typingEl.classList.remove('hidden');
-          typingEl.querySelector('.bg-white')?.insertAdjacentHTML('afterbegin', 
-            `<span class="text-sm text-slate-600 mr-2">${escapeHtml(data.user.first_name)} está escribiendo</span>`
-          );
-          
-          // Deshabilitar input
-          if (inputEl) {
-            inputEl.disabled = true;
-            inputEl.placeholder = `Espera a que ${data.user.first_name} termine...`;
-          }
-          if (submitBtn) submitBtn.disabled = true;
-        } else {
-          // Ocultar indicador y habilitar input
-          typingEl.classList.add('hidden');
-          if (inputEl) {
-            inputEl.disabled = false;
-            inputEl.placeholder = 'Escribe un mensaje...';
-          }
-          if (submitBtn) submitBtn.disabled = false;
-        }
-      }
-      
-      // Reportar estado de escritura
-      function reportTyping(isTyping) {
-        if (!currentConversationId || isCurrentlyTyping === isTyping) return;
-        isCurrentlyTyping = isTyping;
-        
-        fetch('/api/realtime/typing.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': csrf
-          },
-          body: JSON.stringify({
-            conversation_id: currentConversationId,
-            is_typing: isTyping
-          }),
-          credentials: 'include'
-        }).catch(console.warn);
-      }
-      
-      // Detectar cuando el usuario está escribiendo
-      const chatInputEl = document.getElementById('chat-input');
-      if (chatInputEl) {
-        chatInputEl.addEventListener('input', () => {
-          reportTyping(true);
-          clearTimeout(typingDebounceTimer);
-          typingDebounceTimer = setTimeout(() => reportTyping(false), 3000);
-        });
-        
-        chatInputEl.addEventListener('blur', () => {
-          clearTimeout(typingDebounceTimer);
-          reportTyping(false);
         });
       }
     });
