@@ -512,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <h2 class="email-subject">${escapeHtml(subject)}</h2>
             ${preheader ? `<p class="email-preheader">${escapeHtml(preheader)}</p>` : ''}
           </div>
-          <div class="email-body">${escapeHtml(body).replace(/\n/g, '<br>')}</div>
+          <div class="email-body">${renderMarkdown(body)}</div>
           <div class="email-cta">
             <a href="#" class="email-btn">Leer más</a>
           </div>
