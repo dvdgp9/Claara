@@ -37,4 +37,13 @@ class MessagesRepo {
         $stmt = $this->pdo->prepare('UPDATE messages SET images = NULL WHERE images IS NOT NULL AND created_at < (NOW() - INTERVAL ? DAY)');
         $stmt->execute([$days]);
     }
+
+    /**
+     * Actualiza el contenido de un mensaje (para regeneración parcial)
+     */
+    public function updateContent(int $messageId, string $content): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE messages SET content = ? WHERE id = ?');
+        $stmt->execute([$content, $messageId]);
+    }
 }

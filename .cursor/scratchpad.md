@@ -771,6 +771,99 @@ El sistema construirá prompts estructurados combinando:
 
 ---
 
+## Feature: Chat Streaming con Stop/Regeneración Parcial
+
+### Motivación
+Integrar nuevas funcionalidades de chat desde el `implementation_kit/` de otra app similar:
+- **Streaming SSE**: Respuestas en tiempo real (en lugar de request→response)
+- **Stop Generation**: Botón para cancelar respuestas largas/incorrectas
+- **Partial Regeneration**: Seleccionar texto en respuestas del asistente para editar/regenerar solo esa parte
+- **Dynamic Highlighting**: Feedback visual con pulsos verdes para ediciones
+
+### Archivos del implementation_kit (en inglés → adaptar a español)
+
+**JavaScript modules** (`implementation_kit/js/`):
+- `chat-state.js` - Estado centralizado (streaming, selection)
+- `chat-streaming.js` - SSE con AbortController
+- `chat-selection.js` - Selección de texto + toolbar flotante + modal edición
+- `chat-ui.js` - Renderizado de mensajes (mdToHtml, createMessageElement)
+- `chat-api.js` - API calls con CSRF
+- `index.js` - Entry point exportando todo
+
+**Backend** (`implementation_kit/api/`):
+- `chat-stream.php` - Endpoint SSE para streaming
+- `chat-regenerate.php` - Endpoint para regeneración parcial (4 estrategias fuzzy matching)
+
+### Análisis de integración
+
+**Ebonia actualmente**:
+- Todo el JS está inline en `index.php` (~1500 líneas)
+- Usa `chat.php` con request→response tradicional
+- Ya existe `chat-stream.php` vacío (0 bytes)
+- Textos en español
+
+**Estrategia de integración**:
+1. **Opción A**: Modularizar JS en archivos separados (como implementation_kit)
+2. **Opción B**: Integrar lógica inline adaptando al código existente ← **Recomendada** (menos disruptivo)
+
+### Tareas de implementación
+
+1. [x] **Backend: Implementar `chat-stream.php`**
+   - ✅ Copiado y adaptado de `implementation_kit/api/chat-stream.php`
+   - ✅ Mensajes de error en español
+   - ✅ Compatible con ChatFilesRepo, UsageLogRepo, etc.
+   - Success: Endpoint SSE funcional
+
+2. [x] **Backend: Implementar `chat-regenerate.php`**
+   - ✅ Creado `/public/api/chat-regenerate.php`
+   - ✅ Adaptado a español
+   - ✅ Añadido método `updateContent()` a MessagesRepo
+   - Success: Regeneración parcial funciona
+
+3. [x] **Frontend: Añadir estado de streaming**
+   - ✅ Variables: `isGenerating`, `abortController`, `currentStreamingBubble`, `currentStreamingMessageId`
+   - ✅ Variables de selección: `selectedText`, `selectedMessageId`
+   - Success: Estado gestionado correctamente
+
+4. [x] **Frontend: Implementar streaming SSE**
+   - ✅ Función `streamChat()` con AbortController
+   - ✅ Parseo de eventos SSE (chunk, meta, images, annotations, error, conversation)
+   - ✅ Funciones `updateStreamingMessage()` y `finalizeStreamingMessage()`
+   - Success: Respuestas se muestran en tiempo real
+
+5. [x] **Frontend: Botón "Detener generación"**
+   - ✅ Botón flotante rojo con `showStopButton()` / `hideStopButton()`
+   - ✅ Texto: "Detener generación" (español)
+   - ✅ Funcionalidad de cancelación con `stopGeneration()`
+   - Success: Usuario puede cancelar respuestas
+
+6. [x] **Frontend: Selección de texto en respuestas**
+   - ✅ Toolbar flotante (`#selection-toolbar`) con botones "Editar" / "Regenerar"
+   - ✅ Listener `selectionchange` para detectar selección en mensajes del asistente
+   - ✅ Posicionamiento dinámico de toolbar
+   - Success: Selección detectada, toolbar aparece
+
+7. [x] **Frontend: Modal de edición**
+   - ✅ Modal `#selection-edit-modal` con preview del texto seleccionado
+   - ✅ Campo para instrucciones con placeholder en español
+   - ✅ Botones "Cancelar" / "Aplicar cambios"
+   - ✅ Soporte Cmd/Ctrl+Enter para enviar
+   - Success: Modal funcional
+
+8. [x] **Frontend: Llamada a regeneración**
+   - ✅ Función `submitRegeneration()` conecta con `/api/chat-regenerate.php`
+   - ✅ Actualiza mensaje en DOM tras edición
+   - ✅ Efecto highlight verde temporal tras edición exitosa
+   - Success: Edición parcial funciona end-to-end
+
+9. [ ] **Testing completo** (pendiente de usuario)
+   - Probar streaming de respuestas
+   - Probar botón de detener
+   - Probar selección + regeneración en mensajes del asistente
+   - Verificar que no rompe funcionalidad existente (nanobanana, web search, archivos)
+
+---
+
 ## Feature: Búsqueda Web en Chat General
 
 ### Motivación

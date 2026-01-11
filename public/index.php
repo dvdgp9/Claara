@@ -399,6 +399,69 @@ $headerShowLogo = true;
     </main>
   </div>
   
+  <!-- Toolbar de selección flotante para edición parcial -->
+  <div id="selection-toolbar" class="fixed z-50 hidden">
+    <div class="bg-slate-900 text-white rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1">
+      <button id="selection-edit-btn" class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Editar
+      </button>
+      <div class="w-px h-5 bg-white/20"></div>
+      <button id="selection-regenerate-btn" class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Regenerar
+      </button>
+    </div>
+    <div class="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3 h-3 bg-slate-900 rotate-45"></div>
+  </div>
+  
+  <!-- Modal de edición de selección -->
+  <div id="selection-edit-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div class="p-5 border-b border-slate-200">
+        <h3 id="edit-modal-title" class="text-lg font-semibold text-slate-900">Editar selección</h3>
+        <p class="text-sm text-slate-500 mt-1">Indica a la IA cómo quieres que cambie esta parte</p>
+      </div>
+      
+      <div class="p-5 space-y-4">
+        <!-- Preview del texto seleccionado -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+          <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Texto seleccionado</div>
+          <div id="edit-modal-selection" class="text-sm text-slate-700 max-h-24 overflow-y-auto"></div>
+        </div>
+        
+        <!-- Input de instrucciones -->
+        <div>
+          <label for="edit-modal-instructions" class="block text-sm font-medium text-slate-700 mb-2">
+            Tus instrucciones
+          </label>
+          <textarea 
+            id="edit-modal-instructions" 
+            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-all text-sm resize-none"
+            rows="3"
+            placeholder="Ej: Hazlo más formal, Añade más detalle sobre..., Simplifica esta explicación..."
+          ></textarea>
+        </div>
+      </div>
+      
+      <div class="p-5 border-t border-slate-200 flex items-center justify-end gap-3 bg-slate-50">
+        <button id="edit-modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
+          Cancelar
+        </button>
+        <button id="edit-modal-submit" class="px-5 py-2 text-sm font-medium text-white gradient-brand-btn rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Aplicar cambios
+        </button>
+      </div>
+    </div>
+  </div>
+  
   <!-- Lightbox para imágenes generadas (nanobanana 🍌) -->
   <div id="image-lightbox" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onclick="closeLightbox()">
     <button onclick="closeLightbox()" class="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors">
@@ -529,6 +592,16 @@ $headerShowLogo = true;
     let conversationToMove = null; // conversación que se está moviendo
     let imageMode = false; // modo generación de imágenes (nanobanana 🍌)
     let webSearchMode = false; // modo búsqueda web
+    
+    // Estado de streaming
+    let isGenerating = false;
+    let abortController = null;
+    let currentStreamingBubble = null;
+    let currentStreamingMessageId = null;
+    
+    // Estado de selección para regeneración parcial
+    let selectedText = null;
+    let selectedMessageId = null;
 
     function showChatMode(){
       emptyState.classList.add('hidden');
@@ -635,11 +708,14 @@ $headerShowLogo = true;
       return s;
     }
 
-    function append(role, content, file = null, images = null, annotations = null){
+    function append(role, content, file = null, images = null, annotations = null, options = {}){
       if(messagesEl.children.length === 0) showChatMode();
+      
+      const { messageId, isStreaming } = options;
       
       const wrap = document.createElement('div');
       wrap.className = 'mb-6 flex flex-col ' + (role === 'user' ? 'items-end' : 'items-start');
+      if (messageId) wrap.dataset.messageWrap = messageId;
       
       // Avatar + burbuja container
       const msgContainer = document.createElement('div');
@@ -658,11 +734,24 @@ $headerShowLogo = true;
       const bubble = document.createElement('div');
       bubble.className = role === 'user' 
         ? 'gradient-brand text-white px-5 py-3.5 rounded-2xl rounded-tr-sm shadow-md text-conversation' 
-        : 'bg-white border border-slate-200 text-slate-800 px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-sm text-conversation';
+        : 'bg-white border border-slate-200 text-slate-800 px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-sm text-conversation select-text';
       bubble.style.wordBreak = 'break-word';
+      
+      // Para mensajes del asistente, añadir data attributes para selección
+      if (role === 'assistant' && messageId) {
+        bubble.dataset.messageId = messageId;
+        bubble.dataset.role = role;
+      }
       
       if (role === 'assistant') {
         bubble.innerHTML = mdToHtml(content);
+        // Si está en streaming, añadir indicador
+        if (isStreaming) {
+          const indicator = document.createElement('span');
+          indicator.className = 'streaming-indicator ml-1';
+          indicator.innerHTML = '<span class="inline-block w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse"></span>';
+          bubble.appendChild(indicator);
+        }
       } else {
         bubble.textContent = content;
       }
@@ -783,9 +872,249 @@ $headerShowLogo = true;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       } else {
         // Para el asistente, nos desplazamos al inicio del nuevo mensaje
-        // Usamos scrollIntoView con un pequeño margen para que se vea bien
         wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+      
+      // Devolver la burbuja para actualización en streaming
+      return { wrap, bubble };
+    }
+    
+    // Actualizar contenido de mensaje en streaming
+    function updateStreamingMessage(bubble, content) {
+      const indicator = bubble.querySelector('.streaming-indicator');
+      bubble.innerHTML = mdToHtml(content);
+      if (indicator) {
+        bubble.appendChild(indicator);
+      }
+    }
+    
+    // Finalizar mensaje en streaming (quitar indicador, añadir imágenes/citas)
+    function finalizeStreamingMessage(bubble, content, images, annotations, messageId) {
+      bubble.innerHTML = mdToHtml(content);
+      
+      // Añadir data attributes para selección
+      if (messageId) {
+        bubble.dataset.messageId = messageId;
+        bubble.dataset.role = 'assistant';
+      }
+      
+      // Añadir imágenes si existen
+      if (images && images.length > 0) {
+        const imagesContainer = document.createElement('div');
+        imagesContainer.className = 'mt-3 space-y-3';
+        
+        images.forEach((img, idx) => {
+          const imgUrl = img.image_url?.url || img.imageUrl?.url || '';
+          if (!imgUrl) return;
+          
+          const imgWrap = document.createElement('div');
+          imgWrap.className = 'relative group';
+          
+          const imgEl = document.createElement('img');
+          imgEl.src = imgUrl;
+          imgEl.alt = 'Imagen generada ' + (idx + 1);
+          imgEl.className = 'max-w-full rounded-xl shadow-md cursor-pointer hover:shadow-lg transition-shadow';
+          imgEl.style.maxHeight = '400px';
+          imgEl.addEventListener('click', () => openLightbox(imgUrl));
+          
+          const actionsEl = document.createElement('div');
+          actionsEl.className = 'mt-2 flex gap-2';
+          
+          const downloadBtn = document.createElement('a');
+          downloadBtn.href = imgUrl;
+          downloadBtn.download = `nanobanana-${Date.now()}-${idx + 1}.png`;
+          downloadBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors';
+          downloadBtn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+          
+          actionsEl.appendChild(downloadBtn);
+          imgWrap.appendChild(imgEl);
+          imgWrap.appendChild(actionsEl);
+          imagesContainer.appendChild(imgWrap);
+        });
+        
+        bubble.appendChild(imagesContainer);
+      }
+      
+      // Añadir citas web si existen
+      if (annotations && annotations.length > 0) {
+        const citationsContainer = document.createElement('div');
+        citationsContainer.className = 'mt-4 pt-3 border-t border-slate-200';
+        
+        const citationsTitle = document.createElement('div');
+        citationsTitle.className = 'text-xs font-medium text-slate-500 mb-2 flex items-center gap-1.5';
+        citationsTitle.innerHTML = '<i class="iconoir-globe text-cyan-500"></i> Fuentes';
+        citationsContainer.appendChild(citationsTitle);
+        
+        const citationsList = document.createElement('div');
+        citationsList.className = 'space-y-1.5';
+        
+        const seenUrls = new Set();
+        annotations.forEach(ann => {
+          const citation = ann.url_citation;
+          if (!citation || !citation.url || seenUrls.has(citation.url)) return;
+          seenUrls.add(citation.url);
+          
+          const citationEl = document.createElement('a');
+          citationEl.href = citation.url;
+          citationEl.target = '_blank';
+          citationEl.rel = 'noopener noreferrer';
+          citationEl.className = 'flex items-center gap-2 text-xs text-slate-600 hover:text-cyan-600 hover:bg-cyan-50 px-2 py-1.5 rounded-lg transition-colors';
+          
+          let domain = '';
+          try {
+            domain = new URL(citation.url).hostname.replace('www.', '');
+          } catch (e) {
+            domain = citation.url.substring(0, 30);
+          }
+          
+          const title = citation.title || domain;
+          citationEl.innerHTML = `<i class="iconoir-link text-slate-400"></i> <span class="truncate">${escapeHtml(title)}</span> <span class="text-slate-400 flex-shrink-0">${escapeHtml(domain)}</span>`;
+          citationsList.appendChild(citationEl);
+        });
+        
+        if (citationsList.children.length > 0) {
+          citationsContainer.appendChild(citationsList);
+          bubble.appendChild(citationsContainer);
+        }
+      }
+    }
+    
+    // Función de streaming SSE
+    async function streamChat(params, onChunk, onComplete, onError) {
+      abortController = new AbortController();
+      isGenerating = true;
+      showStopButton();
+      
+      try {
+        const response = await fetch('/api/chat-stream.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrf || ''
+          },
+          body: JSON.stringify(params),
+          credentials: 'include',
+          signal: abortController.signal
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData?.error?.message || `HTTP ${response.status}`);
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullText = '';
+        let messageId = null;
+        let model = null;
+        let images = null;
+        let annotations = null;
+        let newConversationId = null;
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            isGenerating = false;
+            abortController = null;
+            hideStopButton();
+            onComplete({
+              content: fullText,
+              messageId,
+              model,
+              images,
+              annotations,
+              newConversationId
+            });
+            break;
+          }
+          
+          buffer += decoder.decode(value, { stream: true });
+          
+          // Procesar líneas completas
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              
+              if (data === '[DONE]') {
+                continue;
+              }
+              
+              try {
+                const json = JSON.parse(data);
+                
+                if (json.type === 'chunk' && json.content) {
+                  fullText += json.content;
+                  onChunk(json.content, fullText);
+                } else if (json.type === 'meta') {
+                  messageId = json.message_id;
+                  model = json.model;
+                } else if (json.type === 'images') {
+                  images = json.images;
+                } else if (json.type === 'annotations') {
+                  annotations = json.annotations;
+                } else if (json.type === 'error') {
+                  throw new Error(json.message || 'Error de streaming');
+                } else if (json.type === 'conversation') {
+                  newConversationId = json.id;
+                }
+              } catch (e) {
+                if (e.name !== 'SyntaxError') {
+                  console.error('Error de parseo de stream:', e);
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        isGenerating = false;
+        abortController = null;
+        hideStopButton();
+        
+        if (error.name === 'AbortError') {
+          onComplete({ content: fullText || '', cancelled: true });
+        } else {
+          onError(error);
+        }
+      }
+    }
+    
+    // Detener generación
+    function stopGeneration() {
+      if (abortController) {
+        abortController.abort();
+        abortController = null;
+      }
+      isGenerating = false;
+      hideStopButton();
+    }
+    
+    // Mostrar/ocultar botón de detener
+    function showStopButton() {
+      let btn = document.getElementById('stop-generation-btn');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'stop-generation-btn';
+        btn.className = 'fixed bottom-32 left-1/2 -translate-x-1/2 z-40 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg flex items-center gap-2 transition-all hover:scale-105';
+        btn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="6" y="6" width="12" height="12" rx="2" stroke-width="2"/>
+          </svg>
+          Detener generación
+        `;
+        btn.addEventListener('click', stopGeneration);
+        document.body.appendChild(btn);
+      }
+      btn.classList.remove('hidden');
+    }
+    
+    function hideStopButton() {
+      const btn = document.getElementById('stop-generation-btn');
+      if (btn) btn.classList.add('hidden');
     }
 
     // Lightbox para ver imágenes en grande (nanobanana 🍌)
@@ -807,6 +1136,191 @@ $headerShowLogo = true;
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeLightbox();
     });
+
+    // ===== SELECCIÓN DE TEXTO Y REGENERACIÓN PARCIAL =====
+    const selectionToolbar = document.getElementById('selection-toolbar');
+    const selectionEditBtn = document.getElementById('selection-edit-btn');
+    const selectionRegenerateBtn = document.getElementById('selection-regenerate-btn');
+    const editModal = document.getElementById('selection-edit-modal');
+    const editModalTitle = document.getElementById('edit-modal-title');
+    const editModalSelection = document.getElementById('edit-modal-selection');
+    const editModalInstructions = document.getElementById('edit-modal-instructions');
+    const editModalCancel = document.getElementById('edit-modal-cancel');
+    const editModalSubmit = document.getElementById('edit-modal-submit');
+    
+    // Detectar selección de texto en mensajes del asistente
+    document.addEventListener('selectionchange', () => {
+      const selection = window.getSelection();
+      
+      if (!selection || selection.isCollapsed || selection.toString().trim() === '') {
+        return;
+      }
+      
+      // Verificar si la selección está en un mensaje del asistente
+      const range = selection.getRangeAt(0);
+      const container = range.commonAncestorContainer;
+      const messageEl = container.nodeType === Node.TEXT_NODE 
+        ? container.parentElement?.closest('[data-message-id][data-role="assistant"]')
+        : container.closest?.('[data-message-id][data-role="assistant"]');
+      
+      if (!messageEl) {
+        hideSelectionToolbar();
+        return;
+      }
+      
+      // Guardar estado de selección
+      selectedText = selection.toString().trim();
+      selectedMessageId = messageEl.dataset.messageId;
+      
+      // Posicionar y mostrar toolbar
+      const rect = range.getBoundingClientRect();
+      positionSelectionToolbar(rect);
+    });
+    
+    function positionSelectionToolbar(rect) {
+      if (!selectionToolbar) return;
+      
+      selectionToolbar.style.visibility = 'hidden';
+      selectionToolbar.classList.remove('hidden');
+      
+      const toolbarRect = selectionToolbar.getBoundingClientRect();
+      const padding = 12;
+      const toolbarHeight = toolbarRect.height || 44;
+      const toolbarWidth = toolbarRect.width || 200;
+      
+      let top = rect.top - toolbarHeight - padding;
+      let left = rect.left + (rect.width / 2) - (toolbarWidth / 2);
+      
+      // Si está muy arriba, mostrar debajo
+      if (top < padding) {
+        top = rect.bottom + padding;
+      }
+      
+      // Mantener dentro del viewport horizontal
+      if (left < padding) left = padding;
+      if (left + toolbarWidth > window.innerWidth - padding) {
+        left = window.innerWidth - toolbarWidth - padding;
+      }
+      
+      selectionToolbar.style.top = `${top + window.scrollY}px`;
+      selectionToolbar.style.left = `${left}px`;
+      selectionToolbar.style.visibility = 'visible';
+    }
+    
+    function hideSelectionToolbar() {
+      if (selectionToolbar) {
+        selectionToolbar.classList.add('hidden');
+      }
+    }
+    
+    // Ocultar toolbar al hacer clic fuera
+    document.addEventListener('mousedown', (e) => {
+      if (selectionToolbar && !selectionToolbar.contains(e.target) && !editModal?.contains(e.target)) {
+        hideSelectionToolbar();
+      }
+    });
+    
+    // Ocultar toolbar al hacer scroll
+    messagesContainer.addEventListener('scroll', hideSelectionToolbar);
+    
+    // Botones de la toolbar
+    selectionEditBtn?.addEventListener('click', () => {
+      showEditModal('edit');
+    });
+    
+    selectionRegenerateBtn?.addEventListener('click', () => {
+      showEditModal('regenerate');
+    });
+    
+    function showEditModal(mode) {
+      if (!editModal || !selectedText) return;
+      
+      hideSelectionToolbar();
+      
+      editModalTitle.textContent = mode === 'edit' ? 'Editar selección' : 'Regenerar selección';
+      editModalSelection.textContent = selectedText;
+      editModalInstructions.value = '';
+      
+      editModal.classList.remove('hidden');
+      editModalInstructions.focus();
+    }
+    
+    function hideEditModal() {
+      if (editModal) {
+        editModal.classList.add('hidden');
+      }
+    }
+    
+    // Eventos del modal
+    editModalCancel?.addEventListener('click', hideEditModal);
+    
+    editModal?.addEventListener('click', (e) => {
+      if (e.target === editModal) hideEditModal();
+    });
+    
+    // Cerrar con Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && editModal && !editModal.classList.contains('hidden')) {
+        hideEditModal();
+      }
+    });
+    
+    // Enviar con Cmd/Ctrl+Enter
+    editModalInstructions?.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        submitRegeneration();
+      }
+    });
+    
+    editModalSubmit?.addEventListener('click', submitRegeneration);
+    
+    async function submitRegeneration() {
+      const instructions = editModalInstructions.value.trim();
+      
+      if (!instructions) {
+        editModalInstructions.focus();
+        return;
+      }
+      
+      const originalBtnText = editModalSubmit.innerHTML;
+      editModalSubmit.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Procesando...';
+      editModalSubmit.disabled = true;
+      
+      try {
+        const result = await api('/api/chat-regenerate.php', {
+          method: 'POST',
+          body: {
+            message_id: parseInt(selectedMessageId),
+            conversation_id: currentConversationId,
+            selected_text: selectedText,
+            instructions: instructions
+          }
+        });
+        
+        if (result.success && result.message) {
+          // Actualizar el mensaje en el DOM
+          const bubble = document.querySelector(`[data-message-id="${selectedMessageId}"]`);
+          if (bubble) {
+            bubble.innerHTML = mdToHtml(result.message.content);
+            // Efecto de highlight verde
+            bubble.classList.add('ring-2', 'ring-emerald-400', 'ring-opacity-75');
+            setTimeout(() => {
+              bubble.classList.remove('ring-2', 'ring-emerald-400', 'ring-opacity-75');
+            }, 2000);
+          }
+        }
+        
+        hideEditModal();
+        
+      } catch (error) {
+        alert('Error al regenerar: ' + error.message);
+      } finally {
+        editModalSubmit.innerHTML = originalBtnText;
+        editModalSubmit.disabled = false;
+      }
+    }
+    // ===== FIN SELECCIÓN DE TEXTO =====
 
     async function api(path, opts={}){
       const res = await fetch(path, {
@@ -1246,7 +1760,8 @@ $headerShowLogo = true;
       if(items.length > 0){
         showChatMode();
         for(const m of items){
-          append(m.role, m.content, m.file || null, m.images || null);
+          // Pasar messageId para que los mensajes del historial soporten selección
+          append(m.role, m.content, m.file || null, m.images || null, null, { messageId: m.id });
         }
         emptyConversationId = null;
       } else {
@@ -1291,6 +1806,9 @@ $headerShowLogo = true;
     async function handleSubmit(text, file = null){
       if(!text && !file) return;
       
+      // Evitar envíos duplicados mientras se genera
+      if (isGenerating) return;
+      
       // Mostrar mensaje del usuario con archivo si existe
       let userMessage = text || '';
       if (file) {
@@ -1298,9 +1816,9 @@ $headerShowLogo = true;
       }
       append('user', userMessage);
       
-      // Mostrar indicador de escritura
-      typingIndicator.classList.remove('hidden');
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      // Crear burbuja de respuesta vacía con indicador de streaming
+      const { bubble } = append('assistant', '', null, null, null, { isStreaming: true });
+      currentStreamingBubble = bubble;
       
       try {
         const body = {
@@ -1350,43 +1868,73 @@ $headerShowLogo = true;
           }
         }
 
-        const data = await api('/api/chat.php', { method: 'POST', body });
+        // Usar streaming
+        await streamChat(
+          body,
+          // onChunk: actualizar burbuja con contenido parcial
+          (chunk, fullText) => {
+            if (currentStreamingBubble) {
+              updateStreamingMessage(currentStreamingBubble, fullText);
+            }
+          },
+          // onComplete: finalizar mensaje
+          async (result) => {
+            // Si hubo nueva conversación, actualizar
+            if (result.newConversationId && !currentConversationId) {
+              currentConversationId = result.newConversationId;
+              await loadConversations();
+            }
+            
+            // Actualizar título tras auto-title
+            if (currentConversationId) {
+              const convData = await api(`/api/conversations/list.php`);
+              const conv = convData.items?.find(c => c.id === currentConversationId);
+              if (conv) updateConvTitle(conv.title);
+            }
+            
+            // Al enviar el primer mensaje, ya no es conversación vacía
+            if (emptyConversationId === currentConversationId) emptyConversationId = null;
+            
+            // Finalizar burbuja con contenido completo, imágenes y citas
+            if (currentStreamingBubble) {
+              finalizeStreamingMessage(
+                currentStreamingBubble, 
+                result.content, 
+                result.images, 
+                result.annotations,
+                result.messageId
+              );
+              currentStreamingBubble = null;
+            }
+            
+            // Mostrar/ocultar aviso de truncamiento
+            const warning = document.getElementById('context-warning');
+            if (result.context_truncated) {
+              warning.classList.remove('hidden');
+            } else {
+              warning.classList.add('hidden');
+            }
+            
+            // Si se generó imagen, desactivar modo imagen después
+            if (imageMode && result.images && result.images.length > 0) {
+              imageMode = false;
+              updateImageModeUI();
+            }
+          },
+          // onError: mostrar error
+          (error) => {
+            if (currentStreamingBubble) {
+              currentStreamingBubble.innerHTML = '<span class="text-red-500">Error: ' + escapeHtml(error.message) + '</span>';
+              currentStreamingBubble = null;
+            }
+          }
+        );
         
-        // Ocultar indicador de escritura
-        typingIndicator.classList.add('hidden');
-        
-        if (!currentConversationId && data.conversation && data.conversation.id) {
-          currentConversationId = data.conversation.id;
-          await loadConversations();
-        }
-        // Actualizar título tras auto-title
-        if (data.conversation && data.conversation.id === currentConversationId) {
-          const convData = await api(`/api/conversations/list.php`);
-          const conv = convData.items?.find(c => c.id === currentConversationId);
-          if (conv) updateConvTitle(conv.title);
-        }
-        // Al enviar el primer mensaje, ya no es conversación vacía
-        if (emptyConversationId === currentConversationId) emptyConversationId = null;
-        // Mostrar/ocultar aviso de truncamiento
-        const warning = document.getElementById('context-warning');
-        if (data.context_truncated) {
-          warning.classList.remove('hidden');
-        } else {
-          warning.classList.add('hidden');
-        }
-        // Pasar imágenes generadas y citas web si las hay
-        const images = data.message.images || null;
-        const annotations = data.message.annotations || null;
-        append('assistant', data.message.content, null, images, annotations);
-        
-        // Si se generó imagen, desactivar modo imagen después
-        if (imageMode && images && images.length > 0) {
-          imageMode = false;
-          updateImageModeUI();
-        }
       } catch(e){
-        typingIndicator.classList.add('hidden');
-        append('assistant', 'Error: ' + e.message);
+        if (currentStreamingBubble) {
+          currentStreamingBubble.innerHTML = '<span class="text-red-500">Error: ' + escapeHtml(e.message) + '</span>';
+          currentStreamingBubble = null;
+        }
       }
     }
 
