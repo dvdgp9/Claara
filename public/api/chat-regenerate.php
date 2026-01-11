@@ -89,137 +89,13 @@ try {
     $editedPart = $client->generateText($editPrompt);
     
     $originalContent = $targetMessage['content'];
-    $newContent = null;
-    $replacementMethod = 'none';
-    
-    // Estrategia 1: Reemplazo directo (coincidencia exacta)
-    if (strpos($originalContent, $selectedText) !== false) {
-        $newContent = str_replace($selectedText, $editedPart, $originalContent);
-        $replacementMethod = 'direct';
-    }
-    
-    // Estrategia 2: Normalizar espacios y quitar formato markdown para BUSCAR, pero reemplazar en ORIGINAL
-    if ($newContent === null || $newContent === $originalContent) {
-        $normalizedSelected = preg_replace('/\s+/', ' ', trim($selectedText));
-        
-        // Quitar markdown más robusto para búsqueda
-        $strippedOriginal = preg_replace('/(\*\*|\*|#|`)/', '', $originalContent);
-        $strippedOriginal = preg_replace('/\s+/', ' ', $strippedOriginal);
-        
-        $pos = strpos($strippedOriginal, $normalizedSelected);
-        if ($pos !== false) {
-            // Encontramos dónde está en la versión sin formato
-            // Usar enfoque "fuzzy" con anclas de palabras
-            $words = explode(' ', $normalizedSelected);
-            if (count($words) > 4) {
-                $startAnchor = implode(' ', array_slice($words, 0, 3));
-                $endAnchor = implode(' ', array_slice($words, -3));
-                
-                $strippedOriginalForAnchors = preg_replace('/(\*\*|\*|#|`)/', '', $originalContent);
-                $startPos = strpos($strippedOriginalForAnchors, $startAnchor);
-                $endPos = strpos($strippedOriginalForAnchors, $endAnchor, $startPos);
-                
-                if ($startPos !== false && $endPos !== false) {
-                    // Mapear de vuelta al original buscando coincidencias cercanas
-                }
-            }
-        }
-    }
-    
-    // Estrategia 3: Coincidencia basada en anclas (preserva saltos de línea mejor)
-    if ($newContent === null || $newContent === $originalContent) {
-        // Encontrar ancla de inicio (primeros 40 chars, ignorando markdown)
-        $startText = preg_replace('/(\*\*|\*|#|`)/', '', substr($selectedText, 0, 40));
-        $startText = preg_replace('/\s+/', ' ', trim($startText));
-        
-        // Encontrar ancla de fin (últimos 40 chars, ignorando markdown)
-        $endText = preg_replace('/(\*\*|\*|#|`)/', '', substr($selectedText, -40));
-        $endText = preg_replace('/\s+/', ' ', trim($endText));
-
-        $strippedOriginal = preg_replace('/(\*\*|\*|#|`)/', '', $originalContent);
-        
-        $startMatch = strpos($strippedOriginal, $startText);
-        $endMatch = strpos($strippedOriginal, $endText, $startMatch ?: 0);
-
-        if ($startMatch !== false && $endMatch !== false) {
-            // Regex para encontrar texto de inicio con caracteres markdown opcionales entre palabras
-            $startWords = explode(' ', $startText);
-            $endWords = explode(' ', $endText);
-            
-            if (count($startWords) > 0 && count($endWords) > 0) {
-                $startRegex = '/' . preg_quote($startWords[0], '/') . '.*?' . preg_quote(end($startWords), '/') . '/s';
-                $endRegex = '/' . preg_quote($endWords[0], '/') . '.*?' . preg_quote(end($endWords), '/') . '/s';
-                
-                if (preg_match($startRegex, $originalContent, $m1, PREG_OFFSET_CAPTURE) && 
-                    preg_match($endRegex, $originalContent, $m2, PREG_OFFSET_CAPTURE, $m1[0][1])) {
-                    
-                    $actualStart = $m1[0][1];
-                    $actualEnd = $m2[0][1] + strlen($m2[0][0]);
-                    
-                    $newContent = substr($originalContent, 0, $actualStart) . 
-                                 $editedPart . 
-                                 substr($originalContent, $actualEnd);
-                    $replacementMethod = 'fuzzy_anchor';
-                }
-            }
-        }
-    }
-    
-    // Estrategia 4: Si las anteriores fallan, NO REEMPLAZAR TODO por defecto.
-    // Solo si el usuario seleccionó una porción muy significativa (ej. > 85%) o si falla todo lo demás
-    // pero manteniendo el mensaje original si el reemplazo es sospechosamente pequeño.
-    if ($newContent === null || $newContent === $originalContent) {
-        $strippedSelected = preg_replace('/\s+/', '', $selectedText);
-        $strippedOriginal = preg_replace('/\s+/', '', $originalContent);
-        
-        $selectedRatio = strlen($strippedSelected) / max(strlen($strippedOriginal), 1);
-        
-        // Si el usuario seleccionó casi todo el mensaje (> 85%), reemplazamos todo
-        if ($selectedRatio > 0.85) {
-            $newContent = $editedPart;
-            $replacementMethod = 'full_replace_major';
-        } else {
-            // Si no pudimos encontrar el texto exacto ni por fuzzy, 
-            // intentamos un reemplazo por proximidad de texto plano muy agresivo
-            $normalizedOriginal = preg_replace('/\s+/', ' ', $originalContent);
-            $normalizedSelected = preg_replace('/\s+/', ' ', $selectedText);
-            
-            if (strpos($normalizedOriginal, $normalizedSelected) !== false) {
-                // Existe en versión normalizada de espacios
-                // Intentamos encontrar los límites en el original basándonos en las palabras
-                $words = explode(' ', $normalizedSelected);
-                $firstWord = $words[0];
-                $lastWord = end($words);
-                
-                $regex = '/' . preg_quote($firstWord, '/') . '.*?' . preg_quote($lastWord, '/') . '/s';
-                if (preg_match($regex, $originalContent, $matches, PREG_OFFSET_CAPTURE)) {
-                    $matchText = $matches[0][0];
-                    $matchOffset = $matches[0][1];
-                    
-                    // Solo reemplazamos si la longitud es similar para evitar falsos positivos gigantes
-                    if (strlen($matchText) < strlen($selectedText) * 2) {
-                        $newContent = substr_replace($originalContent, $editedPart, $matchOffset, strlen($matchText));
-                        $replacementMethod = 'normalized_regex_fallback';
-                    }
-                }
-            }
-            
-            if ($newContent === null) {
-                // Último recurso: si el usuario seleccionó algo y no lo encontramos, 
-                // devolvemos error en lugar de borrar todo el mensaje.
-                Response::error('replacement_error', 'No se pudo localizar el texto seleccionado dentro del mensaje original para reemplazarlo.', 422);
-            }
-        }
-    }
+    $newContent = replaceSelectedText($originalContent, $selectedText, $editedPart);
     
     // Actualizar el mensaje en la base de datos
     $msgs->updateContent($messageId, $newContent);
     
     // Actualizar timestamp de conversación
     $convos->touch($conversationId);
-    
-    // Log para debug
-    error_log("Regeneración - Método: $replacementMethod, Seleccionado: " . strlen($selectedText) . " chars, Original: " . strlen($originalContent) . " chars");
     
     Response::json([
         'success' => true,
@@ -232,4 +108,144 @@ try {
     
 } catch (\Exception $e) {
     Response::error('generation_error', 'Error al regenerar: ' . $e->getMessage(), 500);
+}
+
+/**
+ * Reemplaza el texto seleccionado dentro del contenido original.
+ * Prueba múltiples estrategias hasta encontrar una que funcione.
+ * NUNCA devuelve solo el reemplazo - siempre incluye el contexto original.
+ */
+function replaceSelectedText(string $original, string $selected, string $replacement): string {
+    // Estrategia 1: Coincidencia exacta
+    if (strpos($original, $selected) !== false) {
+        return str_replace($selected, $replacement, $original);
+    }
+    
+    // Estrategia 2: Normalizar saltos de línea (el navegador puede cambiar \r\n a \n)
+    $selectedNormalized = str_replace(["\r\n", "\r"], "\n", $selected);
+    $originalNormalized = str_replace(["\r\n", "\r"], "\n", $original);
+    
+    if (strpos($originalNormalized, $selectedNormalized) !== false) {
+        return str_replace($selectedNormalized, $replacement, $originalNormalized);
+    }
+    
+    // Estrategia 3: Colapsar espacios múltiples a uno solo
+    $selectedCollapsed = preg_replace('/[ \t]+/', ' ', $selectedNormalized);
+    $originalCollapsed = preg_replace('/[ \t]+/', ' ', $originalNormalized);
+    
+    $pos = strpos($originalCollapsed, $selectedCollapsed);
+    if ($pos !== false) {
+        // Encontrar las posiciones en el original sin colapsar
+        return replaceByPosition($originalNormalized, $originalCollapsed, $selectedCollapsed, $replacement);
+    }
+    
+    // Estrategia 4: Buscar por primeras y últimas palabras (anclas)
+    $words = preg_split('/\s+/', trim($selected));
+    if (count($words) >= 4) {
+        $firstWords = implode(' ', array_slice($words, 0, min(5, count($words))));
+        $lastWords = implode(' ', array_slice($words, -min(5, count($words))));
+        
+        // Buscar patrón: primeras palabras ... últimas palabras
+        $pattern = '/' . preg_quote($firstWords, '/') . '.*?' . preg_quote($lastWords, '/') . '/s';
+        
+        if (preg_match($pattern, $original, $matches, PREG_OFFSET_CAPTURE)) {
+            $matchStart = $matches[0][1];
+            $matchLength = strlen($matches[0][0]);
+            
+            return substr($original, 0, $matchStart) . $replacement . substr($original, $matchStart + $matchLength);
+        }
+    }
+    
+    // Estrategia 5: Búsqueda difusa con similar_text
+    $bestMatch = findBestMatch($original, $selected);
+    if ($bestMatch !== null) {
+        return substr($original, 0, $bestMatch['start']) . $replacement . substr($original, $bestMatch['end']);
+    }
+    
+    // Fallback: NO reemplazar todo. Devolver original con nota de error al final.
+    // Esto es mejor que perder todo el contenido.
+    error_log("Regeneración fallida - no se encontró coincidencia para: " . substr($selected, 0, 100));
+    return $original . "\n\n[Nota: No se pudo localizar el texto exacto para reemplazar. Texto regenerado: " . $replacement . "]";
+}
+
+/**
+ * Reemplaza por posición mapeando desde string colapsado al original
+ */
+function replaceByPosition(string $original, string $collapsed, string $selectedCollapsed, string $replacement): string {
+    $pos = strpos($collapsed, $selectedCollapsed);
+    if ($pos === false) return $original;
+    
+    // Mapear posición del string colapsado al original
+    $origPos = 0;
+    $collPos = 0;
+    $startInOrig = 0;
+    $endInOrig = 0;
+    
+    $origLen = strlen($original);
+    $targetStart = $pos;
+    $targetEnd = $pos + strlen($selectedCollapsed);
+    
+    while ($origPos < $origLen && $collPos < $targetEnd) {
+        if ($collPos === $targetStart) {
+            $startInOrig = $origPos;
+        }
+        
+        $origChar = $original[$origPos];
+        $collChar = $collapsed[$collPos] ?? '';
+        
+        if ($origChar === $collChar) {
+            $origPos++;
+            $collPos++;
+        } elseif ($origChar === ' ' || $origChar === "\t") {
+            // Espacio extra en original que fue colapsado
+            $origPos++;
+        } else {
+            // Avanzar ambos
+            $origPos++;
+            $collPos++;
+        }
+    }
+    $endInOrig = $origPos;
+    
+    return substr($original, 0, $startInOrig) . $replacement . substr($original, $endInOrig);
+}
+
+/**
+ * Busca la mejor coincidencia aproximada usando ventana deslizante
+ */
+function findBestMatch(string $haystack, string $needle): ?array {
+    $needleLen = strlen($needle);
+    $haystackLen = strlen($haystack);
+    
+    if ($needleLen > $haystackLen) return null;
+    
+    $bestSimilarity = 0;
+    $bestStart = 0;
+    $bestEnd = 0;
+    $threshold = 0.85; // 85% de similitud mínima
+    
+    // Buscar con ventanas de tamaño similar al needle (+/- 20%)
+    $minWindow = (int)($needleLen * 0.8);
+    $maxWindow = (int)($needleLen * 1.2);
+    
+    for ($windowSize = $minWindow; $windowSize <= $maxWindow; $windowSize += max(1, (int)($needleLen * 0.1))) {
+        for ($i = 0; $i <= $haystackLen - $windowSize; $i += max(1, (int)($windowSize * 0.1))) {
+            $chunk = substr($haystack, $i, $windowSize);
+            
+            similar_text($needle, $chunk, $percent);
+            $similarity = $percent / 100;
+            
+            if ($similarity > $bestSimilarity && $similarity >= $threshold) {
+                $bestSimilarity = $similarity;
+                $bestStart = $i;
+                $bestEnd = $i + $windowSize;
+            }
+        }
+    }
+    
+    if ($bestSimilarity >= $threshold) {
+        return ['start' => $bestStart, 'end' => $bestEnd, 'similarity' => $bestSimilarity];
+    }
+    
+    return null;
 }
