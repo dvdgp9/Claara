@@ -165,23 +165,50 @@ try {
         }
     }
     
-    // Estrategia 4: Si la selección es una porción significativa, reemplazar todo
+    // Estrategia 4: Si las anteriores fallan, NO REEMPLAZAR TODO por defecto.
+    // Solo si el usuario seleccionó una porción muy significativa (ej. > 85%) o si falla todo lo demás
+    // pero manteniendo el mensaje original si el reemplazo es sospechosamente pequeño.
     if ($newContent === null || $newContent === $originalContent) {
-        // Quitar markdown de ambos para comparación justa de longitud
         $strippedSelected = preg_replace('/\s+/', '', $selectedText);
-        $strippedOriginal = preg_replace('/\*+/', '', $originalContent);
-        $strippedOriginal = preg_replace('/\s+/', '', $strippedOriginal);
+        $strippedOriginal = preg_replace('/\s+/', '', $originalContent);
         
         $selectedRatio = strlen($strippedSelected) / max(strlen($strippedOriginal), 1);
         
-        // Si el usuario seleccionó más del 20% del contenido, simplemente reemplazar con versión editada
-        if ($selectedRatio > 0.2 || strlen($selectedText) > 100) {
+        // Si el usuario seleccionó casi todo el mensaje (> 85%), reemplazamos todo
+        if ($selectedRatio > 0.85) {
             $newContent = $editedPart;
-            $replacementMethod = 'full_replace';
+            $replacementMethod = 'full_replace_major';
         } else {
-            // Fallback verdadero - esto no debería pasar a menudo
-            $newContent = $editedPart;
-            $replacementMethod = 'fallback_replace';
+            // Si no pudimos encontrar el texto exacto ni por fuzzy, 
+            // intentamos un reemplazo por proximidad de texto plano muy agresivo
+            $normalizedOriginal = preg_replace('/\s+/', ' ', $originalContent);
+            $normalizedSelected = preg_replace('/\s+/', ' ', $selectedText);
+            
+            if (strpos($normalizedOriginal, $normalizedSelected) !== false) {
+                // Existe en versión normalizada de espacios
+                // Intentamos encontrar los límites en el original basándonos en las palabras
+                $words = explode(' ', $normalizedSelected);
+                $firstWord = $words[0];
+                $lastWord = end($words);
+                
+                $regex = '/' . preg_quote($firstWord, '/') . '.*?' . preg_quote($lastWord, '/') . '/s';
+                if (preg_match($regex, $originalContent, $matches, PREG_OFFSET_CAPTURE)) {
+                    $matchText = $matches[0][0];
+                    $matchOffset = $matches[0][1];
+                    
+                    // Solo reemplazamos si la longitud es similar para evitar falsos positivos gigantes
+                    if (strlen($matchText) < strlen($selectedText) * 2) {
+                        $newContent = substr_replace($originalContent, $editedPart, $matchOffset, strlen($matchText));
+                        $replacementMethod = 'normalized_regex_fallback';
+                    }
+                }
+            }
+            
+            if ($newContent === null) {
+                // Último recurso: si el usuario seleccionó algo y no lo encontramos, 
+                // devolvemos error en lugar de borrar todo el mensaje.
+                Response::error('replacement_error', 'No se pudo localizar el texto seleccionado dentro del mensaje original para reemplazarlo.', 422);
+            }
         }
     }
     
