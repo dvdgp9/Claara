@@ -65,31 +65,37 @@ if (!$targetMessage) {
     Response::error('not_found', 'Mensaje no encontrado o no editable', 404);
 }
 
-// Construir el prompt de regeneración
+// Construir el prompt de regeneración - enfoque directo: pedir mensaje completo editado
 $contextBuilder = new ContextBuilder();
 $systemPrompt = $contextBuilder->buildSystemPrompt();
 
 $editPrompt = <<<PROMPT
-Estás ayudando a editar una parte específica de una respuesta anterior de IA.
+Tienes que editar una respuesta anterior. El usuario ha seleccionado una parte específica que quiere cambiar.
 
 RESPUESTA ORIGINAL COMPLETA:
+---
 {$targetMessage['content']}
+---
 
-TEXTO SELECCIONADO PARA EDITAR:
+PARTE QUE EL USUARIO QUIERE CAMBIAR:
+---
 {$selectedText}
+---
 
-INSTRUCCIONES DEL USUARIO:
+INSTRUCCIONES DEL USUARIO PARA ESA PARTE:
 {$instructions}
 
-Por favor proporciona SOLO el texto de reemplazo para la parte seleccionada. No incluyas el resto de la respuesta, solo la parte editada que debe reemplazar el texto seleccionado. Mantén el mismo estilo y tono que el original.
+INSTRUCCIONES IMPORTANTES:
+1. Devuelve la respuesta COMPLETA con la parte seleccionada ya modificada según las instrucciones
+2. NO cambies nada fuera de la parte seleccionada
+3. Mantén exactamente el mismo formato, estructura y estilo del original
+4. Solo modifica la sección que el usuario seleccionó
+5. Devuelve ÚNICAMENTE el texto final, sin explicaciones ni comentarios
 PROMPT;
 
 try {
     $client = new OpenRouterClient(null, 'google/gemini-3-flash-preview', $systemPrompt);
-    $editedPart = $client->generateText($editPrompt);
-    
-    $originalContent = $targetMessage['content'];
-    $newContent = replaceSelectedText($originalContent, $selectedText, $editedPart);
+    $newContent = trim($client->generateText($editPrompt));
     
     // Actualizar el mensaje en la base de datos
     $msgs->updateContent($messageId, $newContent);
@@ -101,151 +107,10 @@ try {
         'success' => true,
         'message' => [
             'id' => $messageId,
-            'content' => $newContent,
-            'edited_part' => $editedPart
+            'content' => $newContent
         ]
     ]);
     
 } catch (\Exception $e) {
     Response::error('generation_error', 'Error al regenerar: ' . $e->getMessage(), 500);
-}
-
-/**
- * Reemplaza el texto seleccionado dentro del contenido original.
- * Prueba múltiples estrategias hasta encontrar una que funcione.
- * NUNCA devuelve solo el reemplazo - siempre incluye el contexto original.
- */
-function replaceSelectedText(string $original, string $selected, string $replacement): string {
-    // Estrategia 1: Coincidencia exacta
-    if (strpos($original, $selected) !== false) {
-        return str_replace($selected, $replacement, $original);
-    }
-    
-    // Estrategia 2: Normalizar saltos de línea (el navegador puede cambiar \r\n a \n)
-    $selectedNormalized = str_replace(["\r\n", "\r"], "\n", $selected);
-    $originalNormalized = str_replace(["\r\n", "\r"], "\n", $original);
-    
-    if (strpos($originalNormalized, $selectedNormalized) !== false) {
-        return str_replace($selectedNormalized, $replacement, $originalNormalized);
-    }
-    
-    // Estrategia 3: Colapsar espacios múltiples a uno solo
-    $selectedCollapsed = preg_replace('/[ \t]+/', ' ', $selectedNormalized);
-    $originalCollapsed = preg_replace('/[ \t]+/', ' ', $originalNormalized);
-    
-    $pos = strpos($originalCollapsed, $selectedCollapsed);
-    if ($pos !== false) {
-        // Encontrar las posiciones en el original sin colapsar
-        return replaceByPosition($originalNormalized, $originalCollapsed, $selectedCollapsed, $replacement);
-    }
-    
-    // Estrategia 4: Buscar por primeras y últimas palabras (anclas)
-    $words = preg_split('/\s+/', trim($selected));
-    if (count($words) >= 4) {
-        $firstWords = implode(' ', array_slice($words, 0, min(5, count($words))));
-        $lastWords = implode(' ', array_slice($words, -min(5, count($words))));
-        
-        // Buscar patrón: primeras palabras ... últimas palabras
-        $pattern = '/' . preg_quote($firstWords, '/') . '.*?' . preg_quote($lastWords, '/') . '/s';
-        
-        if (preg_match($pattern, $original, $matches, PREG_OFFSET_CAPTURE)) {
-            $matchStart = $matches[0][1];
-            $matchLength = strlen($matches[0][0]);
-            
-            return substr($original, 0, $matchStart) . $replacement . substr($original, $matchStart + $matchLength);
-        }
-    }
-    
-    // Estrategia 5: Búsqueda difusa con similar_text
-    $bestMatch = findBestMatch($original, $selected);
-    if ($bestMatch !== null) {
-        return substr($original, 0, $bestMatch['start']) . $replacement . substr($original, $bestMatch['end']);
-    }
-    
-    // Fallback: NO reemplazar todo. Devolver original con nota de error al final.
-    // Esto es mejor que perder todo el contenido.
-    error_log("Regeneración fallida - no se encontró coincidencia para: " . substr($selected, 0, 100));
-    return $original . "\n\n[Nota: No se pudo localizar el texto exacto para reemplazar. Texto regenerado: " . $replacement . "]";
-}
-
-/**
- * Reemplaza por posición mapeando desde string colapsado al original
- */
-function replaceByPosition(string $original, string $collapsed, string $selectedCollapsed, string $replacement): string {
-    $pos = strpos($collapsed, $selectedCollapsed);
-    if ($pos === false) return $original;
-    
-    // Mapear posición del string colapsado al original
-    $origPos = 0;
-    $collPos = 0;
-    $startInOrig = 0;
-    $endInOrig = 0;
-    
-    $origLen = strlen($original);
-    $targetStart = $pos;
-    $targetEnd = $pos + strlen($selectedCollapsed);
-    
-    while ($origPos < $origLen && $collPos < $targetEnd) {
-        if ($collPos === $targetStart) {
-            $startInOrig = $origPos;
-        }
-        
-        $origChar = $original[$origPos];
-        $collChar = $collapsed[$collPos] ?? '';
-        
-        if ($origChar === $collChar) {
-            $origPos++;
-            $collPos++;
-        } elseif ($origChar === ' ' || $origChar === "\t") {
-            // Espacio extra en original que fue colapsado
-            $origPos++;
-        } else {
-            // Avanzar ambos
-            $origPos++;
-            $collPos++;
-        }
-    }
-    $endInOrig = $origPos;
-    
-    return substr($original, 0, $startInOrig) . $replacement . substr($original, $endInOrig);
-}
-
-/**
- * Busca la mejor coincidencia aproximada usando ventana deslizante
- */
-function findBestMatch(string $haystack, string $needle): ?array {
-    $needleLen = strlen($needle);
-    $haystackLen = strlen($haystack);
-    
-    if ($needleLen > $haystackLen) return null;
-    
-    $bestSimilarity = 0;
-    $bestStart = 0;
-    $bestEnd = 0;
-    $threshold = 0.85; // 85% de similitud mínima
-    
-    // Buscar con ventanas de tamaño similar al needle (+/- 20%)
-    $minWindow = (int)($needleLen * 0.8);
-    $maxWindow = (int)($needleLen * 1.2);
-    
-    for ($windowSize = $minWindow; $windowSize <= $maxWindow; $windowSize += max(1, (int)($needleLen * 0.1))) {
-        for ($i = 0; $i <= $haystackLen - $windowSize; $i += max(1, (int)($windowSize * 0.1))) {
-            $chunk = substr($haystack, $i, $windowSize);
-            
-            similar_text($needle, $chunk, $percent);
-            $similarity = $percent / 100;
-            
-            if ($similarity > $bestSimilarity && $similarity >= $threshold) {
-                $bestSimilarity = $similarity;
-                $bestStart = $i;
-                $bestEnd = $i + $windowSize;
-            }
-        }
-    }
-    
-    if ($bestSimilarity >= $threshold) {
-        return ['start' => $bestStart, 'end' => $bestEnd, 'similarity' => $bestSimilarity];
-    }
-    
-    return null;
 }
