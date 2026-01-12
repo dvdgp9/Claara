@@ -399,8 +399,8 @@ $headerShowLogo = true;
     </main>
   </div>
   
-  <!-- Toolbar de selección flotante para edición parcial -->
-  <div id="selection-toolbar" class="fixed z-50 hidden">
+  <!-- Toolbar de selección flotante para edición parcial (DESKTOP) -->
+  <div id="selection-toolbar" class="fixed z-50 hidden md:block">
     <div class="bg-slate-900 text-white rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1">
       <button id="selection-edit-btn" class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,6 +417,39 @@ $headerShowLogo = true;
       </button>
     </div>
     <div class="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3 h-3 bg-slate-900 rotate-45"></div>
+  </div>
+  
+  <!-- Barra de selección anclada para MÓVIL -->
+  <div id="selection-bar-mobile" class="fixed bottom-0 left-0 right-0 z-40 hidden md:hidden transform translate-y-full transition-transform duration-200 ease-out">
+    <div class="bg-slate-900 text-white px-4 py-3 shadow-2xl border-t border-slate-700">
+      <div class="flex items-center gap-3">
+        <!-- Texto seleccionado (truncado) -->
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-slate-400 mb-0.5">Texto seleccionado:</div>
+          <div id="mobile-selection-preview" class="text-sm truncate"></div>
+        </div>
+        <!-- Botones -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button id="mobile-edit-btn" class="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            Editar
+          </button>
+          <button id="mobile-regenerate-btn" class="flex items-center gap-1.5 px-3 py-2 bg-[#23AAC5] hover:bg-[#1d8fa6] rounded-lg transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Regenerar
+          </button>
+          <button id="mobile-close-selection" class="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
   
   <!-- Modal de edición de selección -->
@@ -1148,6 +1181,18 @@ $headerShowLogo = true;
     const editModalCancel = document.getElementById('edit-modal-cancel');
     const editModalSubmit = document.getElementById('edit-modal-submit');
     
+    // Elementos móvil
+    const selectionBarMobile = document.getElementById('selection-bar-mobile');
+    const mobileSelectionPreview = document.getElementById('mobile-selection-preview');
+    const mobileEditBtn = document.getElementById('mobile-edit-btn');
+    const mobileRegenerateBtn = document.getElementById('mobile-regenerate-btn');
+    const mobileCloseSelection = document.getElementById('mobile-close-selection');
+    
+    // Detectar si es móvil
+    function isMobile() {
+      return window.innerWidth < 768;
+    }
+    
     // Detectar selección de texto en mensajes del asistente
     document.addEventListener('selectionchange', () => {
       const selection = window.getSelection();
@@ -1164,7 +1209,7 @@ $headerShowLogo = true;
         : container.closest?.('[data-message-id][data-role="assistant"]');
       
       if (!messageEl) {
-        hideSelectionToolbar();
+        hideSelectionUI();
         return;
       }
       
@@ -1172,11 +1217,16 @@ $headerShowLogo = true;
       selectedText = selection.toString().trim();
       selectedMessageId = messageEl.dataset.messageId;
       
-      // Posicionar y mostrar toolbar
-      const rect = range.getBoundingClientRect();
-      positionSelectionToolbar(rect);
+      // Mostrar UI según dispositivo
+      if (isMobile()) {
+        showMobileSelectionBar();
+      } else {
+        const rect = range.getBoundingClientRect();
+        positionSelectionToolbar(rect);
+      }
     });
     
+    // === DESKTOP: Toolbar flotante ===
     function positionSelectionToolbar(rect) {
       if (!selectionToolbar) return;
       
@@ -1213,18 +1263,76 @@ $headerShowLogo = true;
       }
     }
     
-    // Ocultar toolbar al hacer clic fuera
+    // === MÓVIL: Barra anclada ===
+    function showMobileSelectionBar() {
+      if (!selectionBarMobile || !selectedText) return;
+      
+      // Mostrar preview del texto (truncado a 50 chars)
+      const preview = selectedText.length > 50 
+        ? selectedText.substring(0, 50) + '...' 
+        : selectedText;
+      mobileSelectionPreview.textContent = preview;
+      
+      // Mostrar barra con animación
+      selectionBarMobile.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        selectionBarMobile.classList.remove('translate-y-full');
+      });
+    }
+    
+    function hideMobileSelectionBar() {
+      if (!selectionBarMobile) return;
+      
+      selectionBarMobile.classList.add('translate-y-full');
+      setTimeout(() => {
+        selectionBarMobile.classList.add('hidden');
+      }, 200);
+    }
+    
+    // Ocultar todo
+    function hideSelectionUI() {
+      hideSelectionToolbar();
+      hideMobileSelectionBar();
+    }
+    
+    // Limpiar selección y ocultar UI
+    function clearSelection() {
+      window.getSelection()?.removeAllRanges();
+      selectedText = null;
+      selectedMessageId = null;
+      hideSelectionUI();
+    }
+    
+    // Eventos móvil
+    mobileEditBtn?.addEventListener('click', () => {
+      hideMobileSelectionBar();
+      showEditModal('edit');
+    });
+    
+    mobileRegenerateBtn?.addEventListener('click', () => {
+      hideMobileSelectionBar();
+      submitRegeneration("Reescribe esta parte para que sea más clara y natural, manteniendo el mismo significado.");
+    });
+    
+    mobileCloseSelection?.addEventListener('click', clearSelection);
+    
+    // Ocultar toolbar al hacer clic fuera (solo desktop)
     document.addEventListener('mousedown', (e) => {
-      if (selectionToolbar && !selectionToolbar.contains(e.target) && !editModal?.contains(e.target)) {
+      if (!isMobile() && selectionToolbar && !selectionToolbar.contains(e.target) && !editModal?.contains(e.target)) {
         hideSelectionToolbar();
       }
     });
     
     // Ocultar toolbar al hacer scroll
-    messagesContainer.addEventListener('scroll', hideSelectionToolbar);
+    messagesContainer.addEventListener('scroll', () => {
+      if (!isMobile()) {
+        hideSelectionToolbar();
+      }
+    });
     
-    // Botones de la toolbar
+    // Botones de la toolbar (desktop)
     selectionEditBtn?.addEventListener('click', () => {
+      hideSelectionToolbar();
       showEditModal('edit');
     });
     
