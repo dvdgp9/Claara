@@ -1325,21 +1325,20 @@ $headerShowLogo = true;
         selectionToolbar?.contains(e.target) || 
         selectionBarMobile?.contains(e.target) || 
         editModal?.contains(e.target);
+      
+      const isClickInMessages = e.target.closest('#messages') !== null;
 
-      if (!isClickInsideUI) {
-        setTimeout(() => {
-          const selection = window.getSelection();
-          if (!selection || selection.isCollapsed || selection.toString().trim() === '') {
-            hideSelectionUI();
-          }
-        }, 100);
+      if (!isClickInsideUI && !isClickInMessages) {
+        // Solo limpiar si el clic está fuera de los mensajes Y fuera de la UI
+        clearSelection();
       }
     });
     
     // Ocultar toolbar al hacer scroll
     messagesContainer.addEventListener('scroll', () => {
       if (!isMobile()) {
-        hideSelectionToolbar();
+        // Ocultar toolbar y limpiar selección en desktop
+        clearSelection();
       }
     });
     
