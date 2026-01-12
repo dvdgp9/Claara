@@ -420,32 +420,26 @@ $headerShowLogo = true;
   </div>
   
   <!-- Barra de selección anclada para MÓVIL -->
-  <div id="selection-bar-mobile" class="fixed bottom-0 left-0 right-0 z-40 hidden md:hidden transform translate-y-full transition-transform duration-200 ease-out">
-    <div class="bg-slate-900 text-white px-4 py-3 shadow-2xl border-t border-slate-700">
+  <div id="selection-bar-mobile" class="bg-slate-900 text-white shadow-[0_-8px_30px_rgba(0,0,0,0.5)] border-t border-slate-700 transition-all duration-300" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 2147483647; display: none; transform: translateY(100%);">
+    <div class="px-4 py-4 pb-10"> <!-- Padding extra abajo para notch de iOS -->
       <div class="flex items-center gap-3">
         <!-- Texto seleccionado (truncado) -->
         <div class="flex-1 min-w-0">
-          <div class="text-xs text-slate-400 mb-0.5">Texto seleccionado:</div>
-          <div id="mobile-selection-preview" class="text-sm truncate"></div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1 font-bold">Selección activa</div>
+          <div id="mobile-selection-preview" class="text-sm truncate opacity-90 italic"></div>
         </div>
         <!-- Botones -->
         <div class="flex items-center gap-2 flex-shrink-0">
-          <button id="mobile-edit-btn" class="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm font-medium">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
+          <button id="mobile-edit-btn" class="flex items-center gap-1.5 px-3 py-2 bg-white/10 active:bg-white/20 rounded-xl transition-colors text-sm font-semibold">
+            <i class="iconoir-edit-pencil text-base"></i>
             Editar
           </button>
-          <button id="mobile-regenerate-btn" class="flex items-center gap-1.5 px-3 py-2 bg-[#23AAC5] hover:bg-[#1d8fa6] rounded-lg transition-colors text-sm font-medium">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-            </svg>
-            Regenerar
+          <button id="mobile-regenerate-btn" class="flex items-center gap-1.5 px-3 py-2 bg-[#23AAC5] active:bg-[#1d8fa6] rounded-xl transition-colors text-sm font-semibold shadow-lg shadow-cyan-500/20">
+            <i class="iconoir-refresh text-base"></i>
+            Regen
           </button>
-          <button id="mobile-close-selection" class="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+          <button id="mobile-close-selection" class="p-2 text-slate-400 active:text-white active:bg-white/10 rounded-full transition-colors">
+            <i class="iconoir-xmark text-xl"></i>
           </button>
         </div>
       </div>
@@ -1196,8 +1190,13 @@ $headerShowLogo = true;
     // Detectar selección de texto en mensajes del asistente
     document.addEventListener('selectionchange', () => {
       const selection = window.getSelection();
+      const text = selection ? selection.toString().trim() : '';
       
-      if (!selection || selection.isCollapsed || selection.toString().trim() === '') {
+      if (!selection || selection.isCollapsed || text === '') {
+        // Solo ocultar si no estamos interactuando con la propia barra/toolbar
+        if (!editModal || editModal.classList.contains('hidden')) {
+           hideSelectionUI();
+        }
         return;
       }
       
@@ -1214,16 +1213,14 @@ $headerShowLogo = true;
       }
       
       // Guardar estado de selección
-      selectedText = selection.toString().trim();
+      selectedText = text;
       selectedMessageId = messageEl.dataset.messageId;
       
-      // Mostrar UI según dispositivo
-      if (isMobile()) {
-        showMobileSelectionBar();
-      } else {
-        const rect = range.getBoundingClientRect();
-        positionSelectionToolbar(rect);
-      }
+      // Mostrar AMBAS UIs (el CSS controla cuál se ve por media query)
+      // Esto asegura que si el dispositivo es detectado como móvil por CSS, se vea la barra.
+      const rect = range.getBoundingClientRect();
+      positionSelectionToolbar(rect);
+      showMobileSelectionBar();
     });
     
     // === DESKTOP: Toolbar flotante ===
@@ -1267,26 +1264,30 @@ $headerShowLogo = true;
     function showMobileSelectionBar() {
       if (!selectionBarMobile || !selectedText) return;
       
-      // Mostrar preview del texto (truncado a 50 chars)
       const preview = selectedText.length > 50 
         ? selectedText.substring(0, 50) + '...' 
         : selectedText;
       mobileSelectionPreview.textContent = preview;
       
-      // Mostrar barra con animación
-      selectionBarMobile.classList.remove('hidden');
-      requestAnimationFrame(() => {
-        selectionBarMobile.classList.remove('translate-y-full');
-      });
+      // Forzar visualización inmediata
+      selectionBarMobile.style.display = 'block';
+      
+      // Pequeño delay para que la transición de transform funcione tras el display:block
+      setTimeout(() => {
+        selectionBarMobile.style.transform = 'translateY(0)';
+      }, 10);
     }
     
     function hideMobileSelectionBar() {
       if (!selectionBarMobile) return;
       
-      selectionBarMobile.classList.add('translate-y-full');
+      selectionBarMobile.style.transform = 'translateY(100%)';
       setTimeout(() => {
-        selectionBarMobile.classList.add('hidden');
-      }, 200);
+        // Solo ocultar si sigue estando fuera de la vista (evitar parpadeos si se vuelve a seleccionar rápido)
+        if (selectionBarMobile.style.transform === 'translateY(100%)') {
+          selectionBarMobile.style.display = 'none';
+        }
+      }, 300);
     }
     
     // Ocultar todo
