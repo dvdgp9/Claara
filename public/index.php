@@ -1259,6 +1259,9 @@ $headerShowLogo = true;
     function hideSelectionToolbar() {
       if (selectionToolbar) {
         selectionToolbar.classList.add('hidden');
+        selectionToolbar.style.visibility = '';
+        selectionToolbar.style.top = '';
+        selectionToolbar.style.left = '';
       }
     }
     
