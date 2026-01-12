@@ -1193,10 +1193,8 @@ $headerShowLogo = true;
       const text = selection ? selection.toString().trim() : '';
       
       if (!selection || selection.isCollapsed || text === '') {
-        // Solo ocultar si no estamos interactuando con la propia barra/toolbar
-        if (!editModal || editModal.classList.contains('hidden')) {
-           hideSelectionUI();
-        }
+        // Si no hay selección activa, ocultar UIs
+        hideSelectionUI();
         return;
       }
       
@@ -1216,13 +1214,17 @@ $headerShowLogo = true;
       selectedText = text;
       selectedMessageId = messageEl.dataset.messageId;
       
-      // Mostrar AMBAS UIs (el CSS controla cuál se ve por media query)
-      // Esto asegura que si el dispositivo es detectado como móvil por CSS, se vea la barra.
-      const rect = range.getBoundingClientRect();
-      positionSelectionToolbar(rect);
-      showMobileSelectionBar();
+      // Mostrar solo la UI correspondiente al dispositivo
+      if (isMobile()) {
+        showMobileSelectionBar();
+        hideSelectionToolbar();
+      } else {
+        const rect = range.getBoundingClientRect();
+        positionSelectionToolbar(rect);
+        hideMobileSelectionBar();
+      }
     });
-    
+
     // === DESKTOP: Toolbar flotante ===
     function positionSelectionToolbar(rect) {
       if (!selectionToolbar) return;
@@ -1253,7 +1255,7 @@ $headerShowLogo = true;
       selectionToolbar.style.left = `${left}px`;
       selectionToolbar.style.visibility = 'visible';
     }
-    
+
     function hideSelectionToolbar() {
       if (selectionToolbar) {
         selectionToolbar.classList.add('hidden');
@@ -1317,10 +1319,20 @@ $headerShowLogo = true;
     
     mobileCloseSelection?.addEventListener('click', clearSelection);
     
-    // Ocultar toolbar al hacer clic fuera (solo desktop)
+    // Ocultar toolbar al hacer clic fuera
     document.addEventListener('mousedown', (e) => {
-      if (!isMobile() && selectionToolbar && !selectionToolbar.contains(e.target) && !editModal?.contains(e.target)) {
-        hideSelectionToolbar();
+      const isClickInsideUI = 
+        selectionToolbar?.contains(e.target) || 
+        selectionBarMobile?.contains(e.target) || 
+        editModal?.contains(e.target);
+
+      if (!isClickInsideUI) {
+        setTimeout(() => {
+          const selection = window.getSelection();
+          if (!selection || selection.isCollapsed || selection.toString().trim() === '') {
+            hideSelectionUI();
+          }
+        }, 100);
       }
     });
     
