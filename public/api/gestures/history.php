@@ -16,10 +16,22 @@ if (!$user) {
     Response::error('unauthorized', 'Sesión no válida', 401);
 }
 
+$id = $_GET['id'] ?? null;
 $gestureType = $_GET['type'] ?? null;
 $limit = min((int)($_GET['limit'] ?? 20), 50);
 
 $repo = new GestureExecutionsRepo();
+
+if ($id) {
+    $item = $repo->findById((int)$id);
+    if (!$item || $item['user_id'] != $user['id']) {
+        Response::error('not_found', 'Elemento no encontrado', 404);
+    }
+    Response::json([
+        'success' => true,
+        'item' => $item
+    ]);
+}
 
 if ($gestureType) {
     $items = $repo->listByUserAndType($user['id'], $gestureType, $limit);
@@ -28,5 +40,6 @@ if ($gestureType) {
 }
 
 Response::json([
-    'items' => $items
+    'success' => true,
+    'history' => $items
 ]);
