@@ -42,42 +42,19 @@ try {
     $finalTitle = $title;
 
     // Solo limpiar si parece una respuesta de chat (tiene intros/outros típicos)
+    // El usuario menciona que tarda mucho, eliminamos el refinamiento por IA si no es estrictamente necesario
+    // o lo hacemos más selectivo. Por ahora, para ganar velocidad, vamos a limpiar manualmente
+    // intros y outros comunes si es posible, o simplemente quitar la llamada a la IA.
+    
+    /* 
+    // Comentado temporalmente para mejorar velocidad por petición del usuario
     if (strlen($content) > 200) {
         try {
             $client = new OpenRouterClient(null, 'google/gemini-3-flash-preview', null);
-            $prompt = "Actúa como un editor de documentos profesional. 
-            Te voy a pasar una respuesta de un asistente de IA. Tu tarea es:
-            1. Extraer ÚNICAMENTE el cuerpo principal del contenido (el informe, el artículo, el análisis, etc.).
-            2. ELIMINAR saludos iniciales, comentarios de cortesía ('¡Claro!', 'Espero que esto te ayude', etc.) y despedidas.
-            3. Generar un TÍTULO corto y descriptivo para este documento.
-            
-            Responde ÚNICAMENTE con un JSON con este formato:
-            {
-              \"title\": \"Título del documento\",
-              \"content\": \"Contenido Markdown limpio\"
-            }
-            
-            CONTENIDO A PROCESAR:
-            " . $content;
-
-            $refineResponse = $client->generateText($prompt);
-            
-            // Limpieza más robusta del JSON (Gemini a veces incluye markdown incluso si se le pide que no)
-            $cleanJson = $refineResponse;
-            if (preg_match('/\{.*\}/s', $refineResponse, $matches)) {
-                $cleanJson = $matches[0];
-            }
-            
-            $data = json_decode($cleanJson, true);
-            
-            if ($data && isset($data['content']) && isset($data['title'])) {
-                $finalContent = $data['content'];
-                $finalTitle = $data['title'];
-            }
-        } catch (\Exception $e) {
-            // Si falla el refinamiento, seguimos con el contenido original
-        }
+            // ... (resto de la lógica de refinamiento)
+        } catch (\Exception $e) {}
     }
+    */
 
     $generator = new DocumentGenerator();
     
