@@ -44,7 +44,7 @@ try {
     // Solo limpiar si parece una respuesta de chat (tiene intros/outros típicos)
     if (strlen($content) > 200) {
         try {
-            $client = new OpenRouterClient();
+            $client = new OpenRouterClient(null, 'google/gemini-3-flash-preview', null);
             $prompt = "Actúa como un editor de documentos profesional. 
             Te voy a pasar una respuesta de un asistente de IA. Tu tarea es:
             1. Extraer ÚNICAMENTE el cuerpo principal del contenido (el informe, el artículo, el análisis, etc.).
@@ -60,7 +60,7 @@ try {
             CONTENIDO A PROCESAR:
             " . $content;
 
-            $refineResponse = $client->generate($prompt, 'google/gemini-3-flash-preview');
+            $refineResponse = $client->generateText($prompt);
             
             // Limpieza más robusta del JSON (Gemini a veces incluye markdown incluso si se le pide que no)
             $cleanJson = $refineResponse;
