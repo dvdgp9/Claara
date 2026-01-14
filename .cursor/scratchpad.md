@@ -1294,6 +1294,196 @@ Gesto que transforma contenido de cualquier fuente (URL, texto, PDF) en múltipl
 
 ---
 
+## Feature: SOP Generator (Generador de Procesos)
+
+### Background y Motivación
+
+Nuevo gesto para generar **SOPs (Standard Operating Procedures)** - procedimientos operativos estándar - a partir de contenido desestructurado. El objetivo es transformar información caótica (grabaciones de reuniones, notas sueltas, capturas de pantalla de procesos) en documentación estructurada y profesional de procesos.
+
+### Entradas soportadas
+
+| Tipo | Estado actual | Implementación |
+|------|---------------|----------------|
+| **Texto sin estructurar** | ✅ Existe | Reutilizar `ContentExtractor::extractFromText()` |
+| **URL** | ✅ Existe | Reutilizar `ContentExtractor::extractFromUrl()` |
+| **PDF** | ✅ Existe | Reutilizar `ContentExtractor::extractFromPdf()` |
+| **Audio** | ❌ No existe | **NUEVO**: Transcripción con Whisper/Gemini |
+| **Imágenes** | ❌ Parcial | **NUEVO**: Descripción con visión multimodal |
+
+### Formatos de salida propuestos
+
+| Formato | Descripción | Dificultad | Valor |
+|---------|-------------|------------|-------|
+| **Markdown estructurado** | Secciones, pasos numerados, checklists | Baja | Alto |
+| **JSON estructurado** | Para integraciones/APIs, importar a otros sistemas | Baja | Medio |
+| **Checklist interactivo** | HTML con checkboxes para seguir el proceso | Media | Alto |
+| **Diagrama de flujo (Mermaid)** | Visualización del proceso como flowchart | Media | Alto |
+| **PDF descargable** | Documento formal para imprimir/compartir | Alta | Alto |
+| **DOCX** | Para edición en Word | Alta | Medio |
+| **Notion/Confluence** | Export directo a herramientas de documentación | Alta | Medio |
+
+### Recomendación de formatos MVP
+
+1. **Markdown estructurado** - Salida por defecto, fácil de copiar/editar
+2. **Checklist interactivo** - Valor inmediato para seguimiento de procesos
+3. **Diagrama Mermaid** - Visualización clara del flujo
+
+Los demás formatos (PDF, DOCX, integraciones) pueden añadirse en iteraciones posteriores.
+
+### Arquitectura propuesta (modular)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      SOP Generator                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────────┐                                           │
+│  │ ContentExtractor │ ← Reutilizado de Audio/ (texto, URL, PDF) │
+│  └────────┬─────────┘                                           │
+│           │                                                      │
+│  ┌────────▼─────────┐                                           │
+│  │ AudioTranscriber │ ← NUEVO: Whisper API o Gemini multimodal  │
+│  └────────┬─────────┘                                           │
+│           │                                                      │
+│  ┌────────▼─────────┐                                           │
+│  │ ImageDescriber   │ ← NUEVO: Gemini Vision para screenshots   │
+│  └────────┬─────────┘                                           │
+│           │                                                      │
+│           ▼                                                      │
+│  ┌──────────────────┐                                           │
+│  │  SopGenerator    │ ← NUEVO: Orquestador + prompts por formato│
+│  │                  │   - generateMarkdown()                    │
+│  │                  │   - generateChecklist()                   │
+│  │                  │   - generateMermaid()                     │
+│  │                  │   - generateJson()                        │
+│  └────────┬─────────┘                                           │
+│           │                                                      │
+│           ▼                                                      │
+│  ┌──────────────────┐                                           │
+│  │ OpenRouterClient │ ← Reutilizado                             │
+│  └──────────────────┘                                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Nuevos archivos a crear
+
+**Backend** (`src/`):
+- `Sop/SopGenerator.php` - Orquestador principal con prompts especializados
+- `Sop/AudioTranscriber.php` - Transcripción de audio (Whisper/Gemini)
+- `Sop/ImageDescriber.php` - Descripción de imágenes para contexto
+
+**API**:
+- `public/api/gestures/sop.php` - Endpoint principal
+
+**Frontend**:
+- `public/gestos/sop-generator.php` - Página del gesto
+- `public/assets/js/gesture-sop.js` - Lógica JS
+
+### Código reutilizable
+
+| Componente | Ubicación | Reutilización |
+|------------|-----------|---------------|
+| `ContentExtractor` | `src/Audio/` | Mover a `src/Content/` o usar directamente |
+| `OpenRouterClient` | `src/Chat/` | Multimodal ya soportado (imágenes, PDF) |
+| `GestureExecutionsRepo` | `src/Gestures/` | Historial de ejecuciones |
+| `BackgroundJobsRepo` | `src/Jobs/` | Si procesamiento es largo |
+| Layout gestos | `public/gestos/*.php` | Copiar estructura de transformador-contenido |
+
+### Opciones para transcripción de audio
+
+| Opción | Pros | Contras |
+|--------|------|---------|
+| **OpenAI Whisper API** | Muy preciso, multiidioma | Requiere API key adicional |
+| **Gemini multimodal** | Ya tenemos OpenRouter | Menos preciso que Whisper |
+| **Whisper local** | Sin coste API | Requiere instalación, RAM |
+| **OpenRouter + audio** | Unificado | Depende del modelo |
+
+**Recomendación**: Empezar con **Gemini multimodal via OpenRouter** (ya configurado), con opción futura de Whisper para mayor precisión.
+
+### Decisiones pendientes (para usuario)
+
+1. **¿Qué formatos de salida priorizar?** (Markdown, Checklist, Mermaid, JSON, PDF...)
+2. **¿Whisper API o Gemini para audio?** (precisión vs simplicidad)
+3. **¿Procesamiento en background?** (para archivos grandes de audio)
+4. **¿Plantillas de SOP predefinidas?** (IT, RRHH, Operaciones...)
+
+### High-level Task Breakdown
+
+1. [x] **Crear DocumentGenerator en src/Utils/** (reutilizable para chat)
+   - Generador de PDF con Dompdf
+   - Generador de DOCX con PhpWord
+   - Success: ✅ `src/Utils/DocumentGenerator.php` creado
+
+2. [x] **Crear AudioTranscriber**
+   - Soporte para mp3, wav, m4a, webm, ogg
+   - Usa Gemini multimodal (`google/gemini-3-flash-preview`) via OpenRouter
+   - Success: ✅ `src/Sop/AudioTranscriber.php` creado
+
+3. [x] **Crear ImageDescriber**
+   - Analiza capturas de pantalla/diagramas
+   - Extrae texto, estructura y contexto para SOPs
+   - Success: ✅ `src/Sop/ImageDescriber.php` creado
+
+4. [x] **Crear SopGenerator**
+   - Orquestador principal
+   - Prompts especializados para Markdown y Mermaid
+   - Integra ContentExtractor + AudioTranscriber + ImageDescriber
+   - Success: ✅ `src/Sop/SopGenerator.php` creado
+
+5. [x] **Crear API /api/gestures/sop.php**
+   - Manejo de múltiples tipos de entrada
+   - Genera todos los formatos (Markdown, Mermaid, PDF, DOCX)
+   - Success: ✅ Endpoint funcional
+
+6. [x] **Crear UI sop-generator.php**
+   - Tarjetas de fuentes (texto, URL, audio, imágenes)
+   - Preview de Markdown renderizado y diagrama Mermaid
+   - Botones de descarga PDF/DOCX
+   - Success: ✅ Interfaz completa
+
+7. [x] **Crear gesture-sop.js**
+   - Gestión de uploads multimodal
+   - Renderizado con marked.js y mermaid.js
+   - Historial funcional
+   - Success: ✅ JS completo
+
+8. [x] **Añadir a registros de gestos**
+   - Migración SQL: `docs/migrations/010_add_sop_generator_gesture.sql`
+   - Entrada en `left-tabs.php`
+   - Tarjeta en `/gestos/index.php`
+   - Success: ✅ Todo registrado
+
+9. [ ] **Testing manual** (pendiente de usuario)
+   - Ejecutar migración SQL
+   - Probar con texto, audio e imágenes
+   - Verificar generación de PDF/DOCX
+   - Success: SOPs de calidad profesional
+
+### Archivos creados
+
+**Backend:**
+- `src/Utils/DocumentGenerator.php` - Generador PDF/DOCX reutilizable
+- `src/Sop/AudioTranscriber.php` - Transcripción con Gemini
+- `src/Sop/ImageDescriber.php` - Descripción de imágenes
+- `src/Sop/SopGenerator.php` - Orquestador principal
+- `public/api/gestures/sop.php` - Endpoint API
+- `public/api/files/document.php` - Servidor de documentos
+
+**Frontend:**
+- `public/gestos/sop-generator.php` - Página del gesto
+- `public/assets/js/gesture-sop.js` - Lógica JS
+
+**Config:**
+- `docs/migrations/010_add_sop_generator_gesture.sql` - Migración
+- `storage/documents/` - Directorio para documentos generados
+- `composer.json` - Añadido phpoffice/phpword y dompdf/dompdf
+
+### Dependencias instaladas
+- `phpoffice/phpword: ^1.3` - Generación DOCX
+- `dompdf/dompdf: ^3.0` - Generación PDF
+
+---
+
 # Lessons
 
 - Mantener comandos idempotentes para poder re-ejecutar sin fallos (p.ej. `git remote set-url` si `origin` ya existe).

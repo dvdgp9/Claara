@@ -100,6 +100,13 @@ $gesturesList = [
         'icon' => 'iconoir-refresh-double',
         'href' => '/gestos/transformador-contenido.php',
         'description' => 'Adapta contenido a formatos'
+    ],
+    [
+        'type' => 'sop-generator',
+        'name' => 'Generador SOPs',
+        'icon' => 'iconoir-clipboard-check',
+        'href' => '/gestos/sop-generator.php',
+        'description' => 'Crea procedimientos'
     ]
 ];
 
