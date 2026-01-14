@@ -84,6 +84,10 @@ $headerDrawerId = 'sop-history-drawer';
       background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
       color: white;
     }
+    .history-item.active {
+      background-color: rgba(16, 185, 129, 0.05);
+      border-left: 3px solid #10b981;
+    }
     .result-tabs {
       display: flex;
       gap: 4px;
@@ -440,6 +444,14 @@ $headerDrawerId = 'sop-history-drawer';
               </div>
             </form>
           </section>
+
+          <!-- Botón nuevo proceso (visible cuando hay resultado del historial) -->
+          <div id="new-process-btn-container" class="hidden">
+            <button id="new-process-btn" class="w-full py-3 px-4 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-400 transition-all flex items-center justify-center gap-2 font-medium">
+              <i class="iconoir-plus"></i>
+              Generar nuevo proceso
+            </button>
+          </div>
 
           <!-- Results Section (inicialmente oculto) -->
           <section id="results-section" class="hidden glass-strong rounded-2xl border border-slate-200/50 overflow-hidden">

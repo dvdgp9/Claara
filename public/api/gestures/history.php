@@ -41,5 +41,6 @@ if ($gestureType) {
 
 Response::json([
     'success' => true,
-    'history' => $items
+    'items' => $items,    // Compatibilidad con gestos existentes
+    'history' => $items   // Para el nuevo SOP generator
 ]);

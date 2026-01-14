@@ -26,6 +26,8 @@
     generateBtn: document.getElementById('generate-btn'),
     resultsSection: document.getElementById('results-section'),
     inputSection: document.getElementById('input-section'),
+    newProcessBtnContainer: document.getElementById('new-process-btn-container'),
+    newProcessBtn: document.getElementById('new-process-btn'),
     processingOverlay: document.getElementById('processing-overlay'),
     processingStatus: document.getElementById('processing-status'),
     processingBar: document.getElementById('processing-bar'),
@@ -91,7 +93,47 @@
     setupFormSubmit();
     setupResultTabs();
     setupCopyButtons();
+    setupNewProcessBtn();
     loadHistory();
+  }
+
+  // Configurar botón nuevo proceso
+  function setupNewProcessBtn() {
+    elements.newProcessBtn?.addEventListener('click', () => {
+      resetForm();
+      elements.inputSection.classList.remove('hidden');
+      elements.newProcessBtnContainer.classList.add('hidden');
+      elements.resultsSection.classList.add('hidden');
+      elements.historyList.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
+    });
+  }
+
+  // Resetear formulario
+  function resetForm() {
+    state.text = '';
+    state.url = '';
+    state.audioFile = null;
+    state.audioBase64 = '';
+    state.pdfFile = null;
+    state.pdfBase64 = '';
+    state.images = [];
+    state.activeSources.clear();
+    state.currentResult = null;
+    
+    elements.titleInput.value = '';
+    elements.inputText.value = '';
+    elements.inputUrl.value = '';
+    
+    // Ocultar todos los paneles y resetear tarjetas
+    document.querySelectorAll('.source-panel').forEach(p => p.classList.add('hidden'));
+    elements.sourceCards.forEach(c => {
+      c.classList.remove('active', 'has-content');
+    });
+    
+    // Resetear previews
+    removeAudio({ stopPropagation: () => {} });
+    removePdf({ stopPropagation: () => {} });
+    renderImagesGrid();
   }
 
   // Configurar tarjetas de fuente
@@ -653,8 +695,9 @@
         elements.historyList.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
         elements.historyList.querySelector(`[data-id="${id}"]`)?.classList.add('active');
         
-        // Mostrar resultado
+        // Mostrar resultado y botón de nuevo proceso
         elements.inputSection.classList.add('hidden');
+        elements.newProcessBtnContainer.classList.remove('hidden');
         
         const result = {
           title: data.item.title,
