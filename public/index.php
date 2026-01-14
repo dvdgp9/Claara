@@ -833,13 +833,13 @@ $headerShowLogo = true;
         pdfBtn.type = 'button';
         pdfBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 text-red-700 hover:bg-red-100 rounded-lg transition-colors';
         pdfBtn.innerHTML = '<i class="iconoir-page"></i> Descargar PDF';
-        pdfBtn.addEventListener('click', () => downloadDocument(content, 'pdf'));
+        pdfBtn.addEventListener('click', (e) => downloadDocument(content, 'pdf', e.currentTarget));
         
         const docxBtn = document.createElement('button');
         docxBtn.type = 'button';
         docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
         docxBtn.innerHTML = '<i class="iconoir-doc-text"></i> Descargar DOCX';
-        docxBtn.addEventListener('click', () => downloadDocument(content, 'docx'));
+        docxBtn.addEventListener('click', (e) => downloadDocument(content, 'docx', e.currentTarget));
         
         downloadActionsEl.appendChild(pdfBtn);
         downloadActionsEl.appendChild(docxBtn);
@@ -980,13 +980,13 @@ $headerShowLogo = true;
         pdfBtn.type = 'button';
         pdfBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 text-red-700 hover:bg-red-100 rounded-lg transition-colors';
         pdfBtn.innerHTML = '<i class="iconoir-page"></i> Descargar PDF';
-        pdfBtn.addEventListener('click', () => downloadDocument(content, 'pdf'));
+        pdfBtn.addEventListener('click', (e) => downloadDocument(content, 'pdf', e.currentTarget));
         
         const docxBtn = document.createElement('button');
         docxBtn.type = 'button';
         docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
         docxBtn.innerHTML = '<i class="iconoir-doc-text"></i> Descargar DOCX';
-        docxBtn.addEventListener('click', () => downloadDocument(content, 'docx'));
+        docxBtn.addEventListener('click', (e) => downloadDocument(content, 'docx', e.currentTarget));
         
         downloadActionsEl.appendChild(pdfBtn);
         downloadActionsEl.appendChild(docxBtn);
@@ -1506,8 +1506,18 @@ $headerShowLogo = true;
     }
     
     // Generar y descargar documento (PDF/DOCX)
-    async function downloadDocument(content, format) {
+    async function downloadDocument(content, format, buttonElement) {
+      const originalHTML = buttonElement.innerHTML;
+      const originalDisabled = buttonElement.disabled;
+      
       try {
+        // Mostrar indicador de carga
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = format === 'pdf' 
+          ? '<i class="iconoir-page"></i> Generando PDF...'
+          : '<i class="iconoir-doc-text"></i> Generando DOCX...';
+        buttonElement.style.opacity = '0.6';
+        
         const response = await api('/api/chat/generate-document.php', {
           method: 'POST',
           body: {
@@ -1538,6 +1548,11 @@ $headerShowLogo = true;
         }
       } catch (error) {
         alert('Error generando documento: ' + error.message);
+      } finally {
+        // Restaurar estado del botón
+        buttonElement.innerHTML = originalHTML;
+        buttonElement.disabled = originalDisabled;
+        buttonElement.style.opacity = '1';
       }
     }
 

@@ -94,11 +94,7 @@ class DocumentGenerator
                 'marginRight' => 1440,
             ]);
             
-            // Título principal
-            $section->addTitle($title, 1);
-            $section->addTextBreak();
-            
-            // Parsear markdown y añadir contenido
+            // Parsear markdown y añadir contenido (el título ya viene en el markdown)
             $this->parseMarkdownToWord($section, $markdown);
             
             $filename = $this->generateFilename($title, 'docx');
@@ -526,19 +522,7 @@ HTML;
     }
     
     /**
-     * Genera un nombre de archivo único
-     */
-    private function generateFilename(string $title, string $extension): string
-    {
-        $slug = $this->slugify($title);
-        $timestamp = date('Ymd_His');
-        $random = substr(uniqid(), -4);
-        
-        return "{$slug}_{$timestamp}_{$random}.{$extension}";
-    }
-    
-    /**
-     * Convierte un título a slug para nombre de archivo
+     * Genera un nombre de archivo simplificado (slug) a partir del título
      */
     private function slugify(string $text): string
     {
@@ -553,6 +537,16 @@ HTML;
         $text = trim($text, '_');
         
         return substr($text, 0, 50) ?: 'document';
+    }
+    
+    /**
+     * Genera un nombre de archivo simple sin timestamps ni hashes
+     */
+    private function generateFilename(string $title, string $extension): string
+    {
+        $slug = $this->slugify($title);
+        
+        return "{$slug}.{$extension}";
     }
     
     /**
