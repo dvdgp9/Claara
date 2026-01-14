@@ -151,7 +151,7 @@ $headerShowLogo = true;
                     </button>
                   </div>
                   
-                  <input type="file" id="file-input-empty" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" />
+                  <input type="file" id="file-input-empty" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" multiple />
                   
                   <!-- Fila superior: textarea + botón enviar -->
                   <div class="flex items-start gap-3 mb-3">
@@ -360,7 +360,7 @@ $headerShowLogo = true;
               </button>
             </div>
             
-            <input type="file" id="file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" />
+            <input type="file" id="file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" multiple />
             
             <!-- Fila superior: textarea + botón enviar -->
             <div class="flex items-start gap-3 mb-2">
@@ -612,8 +612,8 @@ $headerShowLogo = true;
     let emptyConversationId = null; // id de conversación sin mensajes aún
     let currentUser = null;
     let currentConvTitle = null;
-    let currentFile = null; // archivo adjunto actual
-    let currentFileEmpty = null; // archivo adjunto en estado vacío
+    let currentFiles = []; // archivos adjuntos actuales (array)
+    let currentFilesEmpty = []; // archivos adjuntos en estado vacío (array)
     let currentFolderId = -1; // -1 = todas, 0 = sin carpeta, >0 = carpeta específica
     let allFolders = []; // cache de carpetas
     let conversationToMove = null; // conversación que se está moviendo
@@ -837,6 +837,28 @@ $headerShowLogo = true;
         bubble.appendChild(imagesContainer);
       }
       
+      // Añadir botones de descarga PDF/DOCX para respuestas del asistente
+      if (role === 'assistant' && content && content.length > 100) {
+        const downloadActionsEl = document.createElement('div');
+        downloadActionsEl.className = 'mt-3 pt-3 border-t border-slate-100 flex gap-2';
+        
+        const pdfBtn = document.createElement('button');
+        pdfBtn.type = 'button';
+        pdfBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 text-red-700 hover:bg-red-100 rounded-lg transition-colors';
+        pdfBtn.innerHTML = '<i class="iconoir-page"></i> Descargar PDF';
+        pdfBtn.addEventListener('click', () => downloadDocument(content, 'pdf'));
+        
+        const docxBtn = document.createElement('button');
+        docxBtn.type = 'button';
+        docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
+        docxBtn.innerHTML = '<i class="iconoir-doc-text"></i> Descargar DOCX';
+        docxBtn.addEventListener('click', () => downloadDocument(content, 'docx'));
+        
+        downloadActionsEl.appendChild(pdfBtn);
+        downloadActionsEl.appendChild(docxBtn);
+        bubble.appendChild(downloadActionsEl);
+      }
+      
       // Añadir citas web si existen (búsqueda web 🌐)
       if (annotations && annotations.length > 0 && role === 'assistant') {
         const citationsContainer = document.createElement('div');
@@ -960,6 +982,28 @@ $headerShowLogo = true;
         });
         
         bubble.appendChild(imagesContainer);
+      }
+      
+      // Añadir botones de descarga PDF/DOCX
+      if (content && content.length > 100) {
+        const downloadActionsEl = document.createElement('div');
+        downloadActionsEl.className = 'mt-3 pt-3 border-t border-slate-100 flex gap-2';
+        
+        const pdfBtn = document.createElement('button');
+        pdfBtn.type = 'button';
+        pdfBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 text-red-700 hover:bg-red-100 rounded-lg transition-colors';
+        pdfBtn.innerHTML = '<i class="iconoir-page"></i> Descargar PDF';
+        pdfBtn.addEventListener('click', () => downloadDocument(content, 'pdf'));
+        
+        const docxBtn = document.createElement('button');
+        docxBtn.type = 'button';
+        docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
+        docxBtn.innerHTML = '<i class="iconoir-doc-text"></i> Descargar DOCX';
+        docxBtn.addEventListener('click', () => downloadDocument(content, 'docx'));
+        
+        downloadActionsEl.appendChild(pdfBtn);
+        downloadActionsEl.appendChild(docxBtn);
+        bubble.appendChild(downloadActionsEl);
       }
       
       // Añadir citas web si existen
@@ -1472,6 +1516,42 @@ $headerShowLogo = true;
       const data = await res.json().catch(()=>({}));
       if(!res.ok) throw new Error(data?.error?.message || res.statusText);
       return data;
+    }
+    
+    // Generar y descargar documento (PDF/DOCX)
+    async function downloadDocument(content, format) {
+      try {
+        const response = await api('/api/chat/generate-document.php', {
+          method: 'POST',
+          body: {
+            content: content,
+            format: format,
+            title: currentConvTitle || 'Documento de Ebonia'
+          }
+        });
+        
+        if (response.success && response.content) {
+          // Decodificar base64 y crear blob
+          const binaryString = atob(response.content);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: response.mime_type });
+          
+          // Crear link de descarga
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = response.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      } catch (error) {
+        alert('Error generando documento: ' + error.message);
+      }
     }
 
     // Restaurar sesión al cargar (si existe cookie de sesión)
