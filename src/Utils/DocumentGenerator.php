@@ -270,7 +270,7 @@ class DocumentGenerator
     </div>
     {$content}
     <div class="footer">
-        Generado por Ebonia · <?php echo date('d/m/Y H:i'); ?>
+        Generado por Ebonia
     </div>
 </body>
 </html>

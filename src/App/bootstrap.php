@@ -21,6 +21,7 @@ require_once dirname(__DIR__) . '/Jobs/BackgroundJobsRepo.php';
 
 // Repos
 require_once dirname(__DIR__) . '/Repos/UsageLogRepo.php';
+require_once dirname(__DIR__) . '/Repos/UserFeatureAccessRepo.php';
 
 // Chat (LLM)
 require_once dirname(__DIR__) . '/Chat/OpenRouterClient.php';
@@ -32,6 +33,14 @@ require_once dirname(__DIR__) . '/Audio/PodcastScriptGenerator.php';
 
 // Content (Repurposer)
 require_once dirname(__DIR__) . '/Content/ContentRepurposer.php';
+
+// SOP Generator
+require_once dirname(__DIR__) . '/Sop/AudioTranscriber.php';
+require_once dirname(__DIR__) . '/Sop/ImageDescriber.php';
+require_once dirname(__DIR__) . '/Sop/SopGenerator.php';
+
+// Utils
+require_once dirname(__DIR__) . '/Utils/DocumentGenerator.php';
 
 // Cargar .env desde la raíz del proyecto
 $root = dirname(dirname(__DIR__));
