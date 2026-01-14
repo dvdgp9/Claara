@@ -240,6 +240,16 @@ class DocumentGenerator
             border-top: 1px solid #e2e8f0;
             margin: 20px 0;
         }
+        .header {
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
         .footer {
             margin-top: 32px;
             padding-top: 16px;

@@ -9,7 +9,116 @@ require_once __DIR__ . '/../../../src/App/bootstrap.php';
 use App\Session;
 use App\Response;
 use Utils\DocumentGenerator;
-use Chat\OpenRouterClient;
+
+/**
+ * Limpia el contenido de chat eliminando intros/outros típicas de la IA
+ */
+function cleanChatContent(string $content): string {
+    $lines = explode("\n", $content);
+    $cleanLines = [];
+    $foundContent = false;
+    
+    // Patrones de intros típicas de IA (al inicio)
+    $introPatterns = [
+        '/^¡?[Cc]laro( que sí)?!?/u',
+        '/^¡?[Pp]or supuesto!?/u',
+        '/^¡?[Ee]xcelente!?/u',
+        '/^¡?[Pp]erfecto!?/u',
+        '/^[Aa]quí (te |está |tienes)/u',
+        '/^[Cc]on (mucho )?gusto/u',
+        '/^[Ee]staré encantad[oa]/u',
+        '/^[Aa] continuación/u',
+        '/^[Tt]e (presento|muestro|comparto)/u',
+    ];
+    
+    // Patrones de outros típicas de IA (al final)
+    $outroPatterns = [
+        '/^¿[Nn]ecesitas (algo|alguna cosa) más/u',
+        '/^¿[Tt]e puedo ayudar (con|en) algo más/u',
+        '/^[Ee]spero que (esto |te )/u',
+        '/^[Ss]i (tienes|necesitas) (alguna )?/u',
+        '/^¿[Qq]uieres que /u',
+        '/^[Nn]o dudes en /u',
+        '/^[Qq]uedo a tu disposición/u',
+    ];
+    
+    foreach ($lines as $line) {
+        $trimmed = trim($line);
+        
+        // Saltar líneas vacías al inicio
+        if (!$foundContent && $trimmed === '') {
+            continue;
+        }
+        
+        // Detectar inicio de contenido real (markdown headers o contenido sustancial)
+        if (!$foundContent) {
+            // Si es un header markdown, empezamos aquí
+            if (preg_match('/^#{1,3}\s+/', $trimmed)) {
+                $foundContent = true;
+                $cleanLines[] = $line;
+                continue;
+            }
+            
+            // Si es una línea de intro, la saltamos
+            $isIntro = false;
+            foreach ($introPatterns as $pattern) {
+                if (preg_match($pattern, $trimmed)) {
+                    $isIntro = true;
+                    break;
+                }
+            }
+            
+            if ($isIntro) {
+                continue;
+            }
+            
+            // Si llegamos aquí con contenido sustancial, lo incluimos
+            if (strlen($trimmed) > 0) {
+                $foundContent = true;
+                $cleanLines[] = $line;
+            }
+        } else {
+            $cleanLines[] = $line;
+        }
+    }
+    
+    // Eliminar outros del final
+    while (count($cleanLines) > 0) {
+        $lastLine = trim(end($cleanLines));
+        
+        if ($lastLine === '' || $lastLine === '---') {
+            array_pop($cleanLines);
+            continue;
+        }
+        
+        $isOutro = false;
+        foreach ($outroPatterns as $pattern) {
+            if (preg_match($pattern, $lastLine)) {
+                $isOutro = true;
+                break;
+            }
+        }
+        
+        if ($isOutro) {
+            array_pop($cleanLines);
+        } else {
+            break;
+        }
+    }
+    
+    return implode("\n", $cleanLines);
+}
+
+/**
+ * Extrae el título del primer h1 o h2 del markdown
+ */
+function extractTitleFromMarkdown(string $markdown): ?string {
+    // Buscar primer h1 o h2
+    if (preg_match('/^#{1,2}\s+(.+)$/m', $markdown, $matches)) {
+        return trim($matches[1]);
+    }
+    return null;
+}
 
 $user = Session::user();
 if (!$user) {
@@ -37,24 +146,11 @@ if (!in_array($format, ['pdf', 'docx'])) {
 }
 
 try {
-    // Si el contenido es una respuesta de chat, intentar extraer el núcleo y un título mejor
-    $finalContent = $content;
-    $finalTitle = $title;
-
-    // Solo limpiar si parece una respuesta de chat (tiene intros/outros típicos)
-    // El usuario menciona que tarda mucho, eliminamos el refinamiento por IA si no es estrictamente necesario
-    // o lo hacemos más selectivo. Por ahora, para ganar velocidad, vamos a limpiar manualmente
-    // intros y outros comunes si es posible, o simplemente quitar la llamada a la IA.
+    // Limpiar contenido con regex (sin llamar a la IA - mucho más rápido)
+    $finalContent = cleanChatContent($content);
     
-    /* 
-    // Comentado temporalmente para mejorar velocidad por petición del usuario
-    if (strlen($content) > 200) {
-        try {
-            $client = new OpenRouterClient(null, 'google/gemini-3-flash-preview', null);
-            // ... (resto de la lógica de refinamiento)
-        } catch (\Exception $e) {}
-    }
-    */
+    // Extraer título del primer h1/h2 del contenido, o usar el pasado
+    $finalTitle = extractTitleFromMarkdown($finalContent) ?: $title;
 
     $generator = new DocumentGenerator();
     
