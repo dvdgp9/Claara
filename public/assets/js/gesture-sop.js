@@ -80,7 +80,8 @@
     downloadDocx: document.getElementById('download-docx'),
     
     // History
-    historyList: document.getElementById('history-list')
+    historyList: document.getElementById('history-list'),
+    historyItems: () => document.querySelectorAll('.history-item')
   };
 
   // Inicialización
@@ -643,15 +644,22 @@
   }
 
   async function loadHistoryItem(id) {
+    if (state.isProcessing) return;
+    
     try {
+      // Marcar como activo inmediatamente en la UI
+      elements.historyItems().forEach(i => i.classList.remove('active'));
+      const activeItem = document.querySelector(`.history-item[data-id="${id}"]`);
+      if (activeItem) activeItem.classList.add('active');
+
+      state.isProcessing = true;
+      showProcessing();
+      updateProcessingStatus('Cargando procedimiento...', 50);
+
       const response = await fetch(`/api/gestures/history.php?id=${id}`);
       const data = await response.json();
       
       if (data.success && data.item) {
-        // Marcar como activo
-        elements.historyList.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
-        elements.historyList.querySelector(`[data-id="${id}"]`)?.classList.add('active');
-        
         // Mostrar resultado
         const result = {
           title: data.item.title,
@@ -663,6 +671,10 @@
       }
     } catch (error) {
       console.error('Error cargando item:', error);
+      alert('Error al cargar el historial');
+    } finally {
+      state.isProcessing = false;
+      hideProcessing();
     }
   }
 
