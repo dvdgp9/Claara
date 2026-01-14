@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../../src/App/bootstrap.php';
 use App\Session;
 use App\Response;
 use Utils\DocumentGenerator;
+use Chat\OpenRouterClient;
 
 $user = Session::user();
 if (!$user) {
@@ -36,12 +37,47 @@ if (!in_array($format, ['pdf', 'docx'])) {
 }
 
 try {
+    // Si el contenido es una respuesta de chat, intentar extraer el núcleo y un título mejor
+    $finalContent = $content;
+    $finalTitle = $title;
+
+    // Solo limpiar si parece una respuesta de chat (tiene intros/outros típicos)
+    if (strlen($content) > 200) {
+        try {
+            $client = new OpenRouterClient();
+            $prompt = "Actúa como un editor de documentos profesional. 
+            Te voy a pasar una respuesta de un asistente de IA. Tu tarea es:
+            1. Extraer ÚNICAMENTE el cuerpo principal del contenido (el informe, el artículo, el análisis, etc.).
+            2. ELIMINAR saludos iniciales, comentarios de cortesía ('¡Claro!', 'Espero que esto te ayude', etc.) y despedidas.
+            3. Generar un TÍTULO corto y descriptivo para este documento.
+            
+            Responde ÚNICAMENTE con un JSON con este formato:
+            {
+              \"title\": \"Título del documento\",
+              \"content\": \"Contenido Markdown limpio\"
+            }
+            
+            CONTENIDO A PROCESAR:
+            " . $content;
+
+            $refineResponse = $client->generate($prompt, 'google/gemini-3-flash-preview');
+            $data = json_decode(trim(str_replace(['```json', '```'], '', $refineResponse)), true);
+            
+            if ($data && isset($data['content']) && isset($data['title'])) {
+                $finalContent = $data['content'];
+                $finalTitle = $data['title'];
+            }
+        } catch (\Exception $e) {
+            // Si falla el refinamiento, seguimos con el contenido original
+        }
+    }
+
     $generator = new DocumentGenerator();
     
     if ($format === 'pdf') {
-        $result = $generator->generatePdf($content, $title);
+        $result = $generator->generatePdf($finalContent, $finalTitle);
     } else {
-        $result = $generator->generateDocx($content, $title);
+        $result = $generator->generateDocx($finalContent, $finalTitle);
     }
     
     if (!$result['success']) {
