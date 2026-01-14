@@ -2023,7 +2023,9 @@ $headerShowLogo = true;
     });
 
     async function handleSubmit(text, files = []){
-      if(!text && files.length === 0) return;
+      if(!text && (!files || files.length === 0)) return;
+      
+      const filesArray = Array.isArray(files) ? files : (files ? [files] : []);
       
       // Evitar envíos duplicados mientras se genera
       if (isGenerating) return;
@@ -2031,7 +2033,7 @@ $headerShowLogo = true;
       // Mostrar modo chat si estábamos en vacío
       showChatMode();
       
-      const fileToUpload = files.length > 0 ? files[0] : null;
+      const fileToUpload = filesArray.length > 0 ? filesArray[0] : null;
       
       // 1. Mostrar mensaje de usuario inmediatamente
       const userFile = fileToUpload ? {
@@ -2048,7 +2050,6 @@ $headerShowLogo = true;
       isGenerating = true;
       typingIndicator.classList.remove('hidden');
       
-      let conversationIdForStream = currentConversationId;
       let uploadedFileId = null;
 
       try {
@@ -2132,6 +2133,14 @@ $headerShowLogo = true;
       } finally {
         isGenerating = false;
         typingIndicator.classList.add('hidden');
+        
+        // Limpiar archivos después de enviar (unificado)
+        currentFiles = [];
+        currentFilesEmpty = [];
+        if (fileInput) fileInput.value = '';
+        if (fileInputEmpty) fileInputEmpty.value = '';
+        renderFilesPreview();
+        renderFilesPreviewEmpty();
       }
     }
 
