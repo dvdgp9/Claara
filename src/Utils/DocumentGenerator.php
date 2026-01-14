@@ -262,9 +262,6 @@ class DocumentGenerator
 </head>
 <body>
     {$content}
-    <div class="footer">
-        Generado por Ebonia
-    </div>
 </body>
 </html>
 HTML;

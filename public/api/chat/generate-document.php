@@ -12,8 +12,15 @@ use Utils\DocumentGenerator;
 
 /**
  * Limpia el contenido de chat eliminando intros/outros típicas de la IA
+ * Prioriza el uso de delimitadores [DOC_START] y [DOC_END]
  */
 function cleanChatContent(string $content): string {
+    // 1. Intentar extraer por delimitadores explícitos (más preciso)
+    if (preg_match('/\[DOC_START\](.*?)\[DOC_END\]/s', $content, $matches)) {
+        return trim($matches[1]);
+    }
+
+    // 2. Si no hay delimitadores, usar lógica de regex (fallback)
     $lines = explode("\n", $content);
     $cleanLines = [];
     $foundContent = false;
