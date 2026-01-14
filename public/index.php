@@ -135,19 +135,11 @@ $headerShowLogo = true;
               <!-- Input principal con diseño moderno -->
               <div class="bg-white rounded-3xl p-4 lg:p-5 border border-slate-200 shadow-lg max-w-2xl mx-auto">
                 <form id="chat-form-empty" class="w-full">
-                  <!-- Preview de archivo adjunto en estado vacío -->
-                  <div id="file-preview-empty" class="hidden mb-3 p-3 bg-slate-50 rounded-xl flex items-center gap-3 overflow-hidden min-w-0">
-                    <div class="flex-1 flex items-center gap-3 min-w-0">
-                      <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#23AAC5]/10 to-[#115c6c]/10 flex items-center justify-center flex-shrink-0">
-                        <i id="file-icon-empty" class="iconoir-page text-xl text-[#23AAC5]"></i>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div id="file-name-empty" class="text-sm font-medium text-slate-800 truncate block w-full"></div>
-                        <div id="file-size-empty" class="text-xs text-slate-500"></div>
-                      </div>
-                    </div>
-                    <button type="button" id="remove-file-empty" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-smooth flex-shrink-0">
-                      <i class="iconoir-xmark"></i>
+                  <!-- Preview de archivos adjuntos en estado vacío (múltiples) -->
+                  <div id="files-preview-empty" class="hidden mb-3 space-y-2">
+                    <div id="files-list-empty" class="space-y-1"></div>
+                    <button type="button" id="clear-all-files-empty" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1">
+                      <i class="iconoir-xmark"></i> Quitar todos
                     </button>
                   </div>
                   
@@ -344,19 +336,11 @@ $headerShowLogo = true;
       <footer id="chat-footer" class="hidden fixed lg:relative bottom-16 lg:bottom-0 left-0 right-0 p-3 lg:p-4 bg-gradient-to-t from-white via-white to-white/80 z-40">
         <form id="chat-form" class="max-w-3xl mx-auto">
           <div class="bg-white rounded-2xl lg:rounded-3xl p-3 lg:p-4 border border-slate-200 shadow-lg">
-            <!-- Preview de archivo adjunto -->
-            <div id="file-preview" class="hidden mb-3 p-3 bg-slate-50 rounded-xl flex items-center gap-3 overflow-hidden min-w-0">
-              <div class="flex-1 flex items-center gap-3 min-w-0">
-                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#23AAC5]/10 to-[#115c6c]/10 flex items-center justify-center flex-shrink-0">
-                  <i id="file-icon" class="iconoir-page text-xl text-[#23AAC5]"></i>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div id="file-name" class="text-sm font-medium text-slate-800 truncate block w-full"></div>
-                  <div id="file-size" class="text-xs text-slate-500"></div>
-                </div>
-              </div>
-              <button type="button" id="remove-file" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
-                <i class="iconoir-xmark"></i>
+            <!-- Preview de archivos adjuntos (múltiples) -->
+            <div id="files-preview" class="hidden mb-3 space-y-2">
+              <div id="files-list" class="space-y-1"></div>
+              <button type="button" id="clear-all-files" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1">
+                <i class="iconoir-xmark"></i> Quitar todos
               </button>
             </div>
             
@@ -601,11 +585,14 @@ $headerShowLogo = true;
     const attachBtnEmpty = document.getElementById('attach-btn-empty');
     const imageModeBtnEmpty = document.getElementById('image-mode-btn-empty');
     const attachBtnEmptyDesktop = document.getElementById('attach-btn-empty-desktop');
-    const filePreviewEmpty = document.getElementById('file-preview-empty');
-    const fileNameEmpty = document.getElementById('file-name-empty');
-    const fileSizeEmpty = document.getElementById('file-size-empty');
-    const fileIconEmpty = document.getElementById('file-icon-empty');
-    const removeFileBtnEmpty = document.getElementById('remove-file-empty');
+    
+    // Elementos para múltiples archivos
+    const filesPreview = document.getElementById('files-preview');
+    const filesList = document.getElementById('files-list');
+    const clearAllFilesBtn = document.getElementById('clear-all-files');
+    const filesPreviewEmpty = document.getElementById('files-preview-empty');
+    const filesListEmpty = document.getElementById('files-list-empty');
+    const clearAllFilesEmptyBtn = document.getElementById('clear-all-files-empty');
 
     let csrf = null;
     let currentConversationId = null;
@@ -2273,58 +2260,71 @@ $headerShowLogo = true;
     imageModeBtn.addEventListener('click', () => {
       imageMode = !imageMode;
       updateImageModeUI();
-      // Si se activa modo imagen, limpiar archivo adjunto
-      if (imageMode && currentFile) {
-        currentFile = null;
+      // Si se activa modo imagen, limpiar archivos adjuntos
+      if (imageMode && currentFiles.length > 0) {
+        currentFiles = [];
         fileInput.value = '';
-        filePreview.classList.add('hidden');
+        renderFilesPreview();
       }
     });
 
     fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
 
-      // Validar tamaño (10MB máximo)
       const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        alert('El archivo es demasiado grande. Máximo 10MB.');
-        fileInput.value = '';
-        return;
-      }
-
-      // Validar tipo
       const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-      if (!validTypes.includes(file.type)) {
-        alert('Tipo de archivo no soportado. Solo PDF, imágenes, CSV o Excel.');
-        fileInput.value = '';
+      
+      for (const file of files) {
+        if (file.size > maxSize) {
+          alert(`El archivo "${file.name}" es demasiado grande. Máximo 10MB.`);
+          continue;
+        }
+        if (!validTypes.includes(file.type)) {
+          alert(`El archivo "${file.name}" no es un tipo soportado.`);
+          continue;
+        }
+        currentFiles.push(file);
+      }
+      
+      fileInput.value = '';
+      renderFilesPreview();
+    });
+
+    clearAllFilesBtn?.addEventListener('click', () => {
+      currentFiles = [];
+      fileInput.value = '';
+      renderFilesPreview();
+    });
+
+    function removeFile(index) {
+      currentFiles.splice(index, 1);
+      renderFilesPreview();
+    }
+    window.removeFile = removeFile;
+
+    function renderFilesPreview() {
+      if (currentFiles.length === 0) {
+        filesPreview.classList.add('hidden');
         return;
       }
-
-      currentFile = file;
-      showFilePreview(file);
-    });
-
-    removeFileBtn.addEventListener('click', () => {
-      currentFile = null;
-      fileInput.value = '';
-      filePreview.classList.add('hidden');
-    });
-
-    function showFilePreview(file) {
-      fileName.textContent = file.name;
-      fileSize.textContent = formatFileSize(file.size);
       
-      // Cambiar icono según tipo
-      if (file.type === 'application/pdf') {
-        fileIcon.className = 'iconoir-page text-xl text-red-500';
-      } else if (file.type.startsWith('image/')) {
-        fileIcon.className = 'iconoir-media-image text-xl text-[#23AAC5]';
-      } else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) {
-        fileIcon.className = 'iconoir-table-rows text-xl text-emerald-600';
-      }
-      
-      filePreview.classList.remove('hidden');
+      filesPreview.classList.remove('hidden');
+      filesList.innerHTML = currentFiles.map((file, idx) => {
+        let iconClass = 'iconoir-page text-[#23AAC5]';
+        if (file.type === 'application/pdf') iconClass = 'iconoir-page text-red-500';
+        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#23AAC5]';
+        else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
+        
+        return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
+          <i class="${iconClass} text-lg"></i>
+          <span class="flex-1 text-sm text-slate-700 truncate">${escapeHtml(file.name)}</span>
+          <span class="text-xs text-slate-400">${formatFileSize(file.size)}</span>
+          <button type="button" onclick="removeFile(${idx})" class="text-slate-400 hover:text-red-500">
+            <i class="iconoir-xmark"></i>
+          </button>
+        </div>`;
+      }).join('');
     }
 
     function formatFileSize(bytes) {
@@ -2337,16 +2337,17 @@ $headerShowLogo = true;
       e.preventDefault();
       const text = inputEl.value.trim();
       
-      if (!text && !currentFile) return;
+      if (!text && currentFiles.length === 0) return;
       
       inputEl.value = '';
-      await handleSubmit(text, currentFile);
+      // Enviar solo el primer archivo por ahora (el backend procesa de a uno)
+      await handleSubmit(text, currentFiles.length > 0 ? currentFiles[0] : null);
       
-      // Limpiar archivo después de enviar
-      if (currentFile) {
-        currentFile = null;
+      // Limpiar archivos después de enviar
+      if (currentFiles.length > 0) {
+        currentFiles = [];
         fileInput.value = '';
-        filePreview.classList.add('hidden');
+        renderFilesPreview();
       }
     });
 
@@ -2354,16 +2355,17 @@ $headerShowLogo = true;
       e.preventDefault();
       const text = inputEmptyEl.value.trim();
       
-      if (!text && !currentFileEmpty) return;
+      if (!text && currentFilesEmpty.length === 0) return;
       
       inputEmptyEl.value = '';
-      await handleSubmit(text, currentFileEmpty);
+      // Enviar solo el primer archivo por ahora
+      await handleSubmit(text, currentFilesEmpty.length > 0 ? currentFilesEmpty[0] : null);
       
-      // Limpiar archivo después de enviar
-      if (currentFileEmpty) {
-        currentFileEmpty = null;
+      // Limpiar archivos después de enviar
+      if (currentFilesEmpty.length > 0) {
+        currentFilesEmpty = [];
         fileInputEmpty.value = '';
-        filePreviewEmpty.classList.add('hidden');
+        renderFilesPreviewEmpty();
       }
     });
 
@@ -2381,11 +2383,11 @@ $headerShowLogo = true;
     imageModeBtnEmpty.addEventListener('click', () => {
       imageMode = !imageMode;
       updateImageModeUI();
-      // Si se activa modo imagen, limpiar archivo adjunto
-      if (imageMode && currentFileEmpty) {
-        currentFileEmpty = null;
+      // Si se activa modo imagen, limpiar archivos adjuntos
+      if (imageMode && currentFilesEmpty.length > 0) {
+        currentFilesEmpty = [];
         fileInputEmpty.value = '';
-        filePreviewEmpty.classList.add('hidden');
+        renderFilesPreviewEmpty();
       }
       
       // Si el usuario clica y ya hay texto, o para forzar el foco
@@ -2409,49 +2411,62 @@ $headerShowLogo = true;
     updateWebSearchModeUI();
 
     fileInputEmpty.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
 
-      // Validar tamaño (10MB máximo)
       const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        alert('El archivo es demasiado grande. Máximo 10MB.');
-        fileInputEmpty.value = '';
-        return;
-      }
-
-      // Validar tipo
       const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-      if (!validTypes.includes(file.type)) {
-        alert('Tipo de archivo no soportado. Solo PDF, imágenes, CSV o Excel.');
-        fileInputEmpty.value = '';
+      
+      for (const file of files) {
+        if (file.size > maxSize) {
+          alert(`El archivo "${file.name}" es demasiado grande. Máximo 10MB.`);
+          continue;
+        }
+        if (!validTypes.includes(file.type)) {
+          alert(`El archivo "${file.name}" no es un tipo soportado.`);
+          continue;
+        }
+        currentFilesEmpty.push(file);
+      }
+      
+      fileInputEmpty.value = '';
+      renderFilesPreviewEmpty();
+    });
+
+    clearAllFilesEmptyBtn?.addEventListener('click', () => {
+      currentFilesEmpty = [];
+      fileInputEmpty.value = '';
+      renderFilesPreviewEmpty();
+    });
+
+    function removeFileEmpty(index) {
+      currentFilesEmpty.splice(index, 1);
+      renderFilesPreviewEmpty();
+    }
+    window.removeFileEmpty = removeFileEmpty;
+
+    function renderFilesPreviewEmpty() {
+      if (currentFilesEmpty.length === 0) {
+        filesPreviewEmpty.classList.add('hidden');
         return;
       }
-
-      currentFileEmpty = file;
-      showFilePreviewEmpty(file);
-    });
-
-    removeFileBtnEmpty.addEventListener('click', () => {
-      currentFileEmpty = null;
-      fileInputEmpty.value = '';
-      filePreviewEmpty.classList.add('hidden');
-    });
-
-    function showFilePreviewEmpty(file) {
-      fileNameEmpty.textContent = file.name;
-      fileSizeEmpty.textContent = formatFileSize(file.size);
       
-      // Cambiar icono según tipo
-      if (file.type === 'application/pdf') {
-        fileIconEmpty.className = 'iconoir-page text-xl text-red-500';
-      } else if (file.type.startsWith('image/')) {
-        fileIconEmpty.className = 'iconoir-media-image text-xl text-[#23AAC5]';
-      } else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) {
-        fileIconEmpty.className = 'iconoir-table-rows text-xl text-emerald-600';
-      }
-      
-      filePreviewEmpty.classList.remove('hidden');
+      filesPreviewEmpty.classList.remove('hidden');
+      filesListEmpty.innerHTML = currentFilesEmpty.map((file, idx) => {
+        let iconClass = 'iconoir-page text-[#23AAC5]';
+        if (file.type === 'application/pdf') iconClass = 'iconoir-page text-red-500';
+        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#23AAC5]';
+        else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
+        
+        return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
+          <i class="${iconClass} text-lg"></i>
+          <span class="flex-1 text-sm text-slate-700 truncate">${escapeHtml(file.name)}</span>
+          <span class="text-xs text-slate-400">${formatFileSize(file.size)}</span>
+          <button type="button" onclick="removeFileEmpty(${idx})" class="text-slate-400 hover:text-red-500">
+            <i class="iconoir-xmark"></i>
+          </button>
+        </div>`;
+      }).join('');
     }
 
     // Manejar clics en voces - rutas a páginas específicas
