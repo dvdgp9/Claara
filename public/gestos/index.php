@@ -191,7 +191,7 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-clipboard-check text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Generador SOPs</h3>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Generador de procesos</h3>
                   <p class="text-sm text-slate-500">Procedimientos operativos</p>
                 </div>
                 <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Nuevo</span>

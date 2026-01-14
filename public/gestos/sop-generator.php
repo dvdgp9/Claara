@@ -31,7 +31,7 @@ $activeTab = 'gestures';
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
 $headerBackText = 'Todos los gestos';
-$headerTitle = 'Generador de SOPs';
+$headerTitle = 'Generador de procesos';
 $headerIcon = 'iconoir-clipboard-check';
 $headerIconColor = 'from-emerald-500 to-teal-600';
 $headerDrawerId = 'sop-history-drawer';
@@ -75,9 +75,14 @@ $headerDrawerId = 'sop-history-drawer';
     .source-card.has-content .check-badge {
       display: flex;
     }
-    .history-item.active {
-      background-color: rgba(16, 185, 129, 0.05);
-      border-left: 3px solid #10b981;
+    .source-card.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.05);
+      ring: 2px solid #10b981;
+    }
+    .source-card.active .source-icon {
+      background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+      color: white;
     }
     .result-tabs {
       display: flex;
@@ -261,7 +266,7 @@ $headerDrawerId = 'sop-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 mb-2">
-              Generador de SOPs
+              Generador de procesos
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
               Transforma información desestructurada en procedimientos operativos profesionales. Sube texto, audio, imágenes o PDFs.

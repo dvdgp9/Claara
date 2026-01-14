@@ -117,11 +117,12 @@
       // Ocultar
       state.activeSources.delete(source);
       panel.classList.add('hidden');
-      card?.classList.remove('has-content');
+      card?.classList.remove('active');
     } else {
       // Mostrar
       state.activeSources.add(source);
       panel.classList.remove('hidden');
+      card?.classList.add('active');
       
       // Focus en el input correspondiente
       setTimeout(() => {
@@ -653,6 +654,8 @@
         elements.historyList.querySelector(`[data-id="${id}"]`)?.classList.add('active');
         
         // Mostrar resultado
+        elements.inputSection.classList.add('hidden');
+        
         const result = {
           title: data.item.title,
           formats: data.item.output_data
