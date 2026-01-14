@@ -1,11 +1,9 @@
 <?php
 require_once __DIR__ . '/../../src/App/bootstrap.php';
-require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
 use Repos\UserFeatureAccessRepo;
 
-Session::start();
 $user = Session::user();
 if (!$user) {
     header('Location: /login.php');
