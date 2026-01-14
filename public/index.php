@@ -2007,138 +2007,116 @@ $headerShowLogo = true;
       }
     });
 
-    async function handleSubmit(text, file = null){
-      if(!text && !file) return;
+    async function handleSubmit(text, files = []){
+      if(!text && files.length === 0) return;
       
       // Evitar envíos duplicados mientras se genera
       if (isGenerating) return;
       
-      // Mostrar mensaje del usuario con archivo si existe
-      let userMessage = text || '';
-      if (file) {
-        userMessage += file ? ` 📎 ${file.name}` : '';
-      }
-      append('user', userMessage);
+      // Mostrar modo chat si estábamos en vacío
+      showChatMode();
       
-      // Crear burbuja de respuesta vacía con indicador de streaming
-      const { bubble } = append('assistant', '', null, null, null, { isStreaming: true });
-      currentStreamingBubble = bubble;
+      const fileToUpload = files.length > 0 ? files[0] : null;
       
+      // 1. Mostrar mensaje de usuario inmediatamente
+      const userFile = fileToUpload ? {
+        name: fileToUpload.name,
+        mime_type: fileToUpload.mime_type,
+        url: URL.createObjectURL(fileToUpload)
+      } : null;
+      
+      append('user', text, userFile);
+      
+      // 2. Preparar respuesta del asistente (streaming bubble)
+      const { bubble: assistantBubble } = append('assistant', '', null, [], null, { isStreaming: true });
+      
+      isGenerating = true;
+      typingIndicator.classList.remove('hidden');
+      
+      let conversationIdForStream = currentConversationId;
+      let uploadedFileId = null;
+
       try {
-        const body = {
-          conversation_id: currentConversationId,
-          message: text || (file ? '¿Qué puedes decirme sobre este archivo?' : '')
-        };
+        // 3. Subir primer archivo si existe
+        if (fileToUpload) {
+          const formData = new FormData();
+          formData.append('file', fileToUpload);
+          formData.append('csrf_token', csrf);
+          if (currentConversationId) formData.append('conversation_id', currentConversationId);
 
-        // Si está en modo imagen, añadir flag
-        if (imageMode) {
-          body.image_mode = true;
-        }
-
-        // Si está en modo búsqueda web, añadir flag
-        if (webSearchMode) {
-          body.web_search = true;
-        }
-
-        // Si es superadmin, añadir el modelo seleccionado
-        const modelSelectEmpty = document.getElementById('model-select-empty');
-        const modelSelectChat = document.getElementById('model-select-chat');
-        if (modelSelectEmpty) {
-          body.model = modelSelectEmpty.value;
-        } else if (modelSelectChat) {
-          body.model = modelSelectChat.value;
-        }
-
-        // Si hay archivo, subirlo primero para obtener file_id persistente
-        if (file) {
-          const base64 = await fileToBase64(file);
-          const uploadRes = await api('/api/files/upload.php', {
+          const uploadRes = await fetch('/api/files/upload.php', {
             method: 'POST',
-            body: {
-              data: base64,
-              mime_type: file.type,
-              name: file.name,
-              conversation_id: currentConversationId || null
-            }
+            body: formData
           });
-          if (uploadRes.file_id) {
-            body.file_id = uploadRes.file_id;
-          } else {
-            body.file = {
-              mime_type: file.type,
-              data: base64,
-              name: file.name
-            };
+          const uploadData = await uploadRes.json();
+          if (uploadData.success) {
+            uploadedFileId = uploadData.file_id;
           }
         }
 
-        // Usar streaming
-        await streamChat(
-          body,
-          // onChunk: actualizar burbuja con contenido parcial
-          (chunk, fullText) => {
-            if (currentStreamingBubble) {
-              updateStreamingMessage(currentStreamingBubble, fullText);
-            }
+        // 4. Iniciar stream
+        const response = await fetch('/api/chat-stream.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrf
           },
-          // onComplete: finalizar mensaje
-          async (result) => {
-            // Si hubo nueva conversación, actualizar
-            if (result.newConversationId && !currentConversationId) {
-              currentConversationId = result.newConversationId;
-              await loadConversations();
-            }
-            
-            // Actualizar título tras auto-title
-            if (currentConversationId) {
-              const convData = await api(`/api/conversations/list.php`);
-              const conv = convData.items?.find(c => c.id === currentConversationId);
-              if (conv) updateConvTitle(conv.title);
-            }
-            
-            // Al enviar el primer mensaje, ya no es conversación vacía
-            if (emptyConversationId === currentConversationId) emptyConversationId = null;
-            
-            // Finalizar burbuja con contenido completo, imágenes y citas
-            if (currentStreamingBubble) {
-              finalizeStreamingMessage(
-                currentStreamingBubble, 
-                result.content, 
-                result.images, 
-                result.annotations,
-                result.messageId
-              );
-              currentStreamingBubble = null;
-            }
-            
-            // Mostrar/ocultar aviso de truncamiento
-            const warning = document.getElementById('context-warning');
-            if (result.context_truncated) {
-              warning.classList.remove('hidden');
-            } else {
-              warning.classList.add('hidden');
-            }
-            
-            // Si se generó imagen, desactivar modo imagen después
-            if (imageMode && result.images && result.images.length > 0) {
-              imageMode = false;
-              updateImageModeUI();
-            }
-          },
-          // onError: mostrar error
-          (error) => {
-            if (currentStreamingBubble) {
-              currentStreamingBubble.innerHTML = '<span class="text-red-500">Error: ' + escapeHtml(error.message) + '</span>';
-              currentStreamingBubble = null;
+          body: JSON.stringify({
+            message: text,
+            conversation_id: currentConversationId,
+            file_id: uploadedFileId,
+            image_mode: imageMode,
+            web_search: webSearchMode,
+            model: document.getElementById('model-select-empty')?.value || 'google/gemini-3-flash-preview'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Error en el servidor');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const dataStr = line.substring(6).trim();
+              if (dataStr === '[DONE]') continue;
+
+              try {
+                const data = JSON.parse(dataStr);
+                if (data.type === 'chunk') {
+                  fullContent += data.content;
+                  updateStreamingMessage(assistantBubble, fullContent);
+                } else if (data.type === 'conversation') {
+                  currentConversationId = data.id;
+                  if (emptyConversationId === currentConversationId) emptyConversationId = null;
+                  await loadConversations();
+                } else if (data.type === 'meta') {
+                  finalizeStreamingMessage(assistantBubble, fullContent, data.images, data.annotations, data.message_id);
+                } else if (data.type === 'error') {
+                  throw new Error(data.message);
+                }
+              } catch (e) {
+                console.error('Error parseando chunk:', e);
+              }
             }
           }
-        );
-        
-      } catch(e){
-        if (currentStreamingBubble) {
-          currentStreamingBubble.innerHTML = '<span class="text-red-500">Error: ' + escapeHtml(e.message) + '</span>';
-          currentStreamingBubble = null;
         }
+      } catch (e) {
+        console.error('Error en stream:', e);
+        assistantBubble.innerHTML = `<span class="text-red-500">Error: ${escapeHtml(e.message)}</span>`;
+      } finally {
+        isGenerating = false;
+        typingIndicator.classList.add('hidden');
       }
     }
 

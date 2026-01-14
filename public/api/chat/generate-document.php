@@ -39,14 +39,20 @@ try {
     $generator = new DocumentGenerator();
     
     if ($format === 'pdf') {
-        $filePath = $generator->generatePdf($content, $title);
+        $result = $generator->generatePdf($content, $title);
     } else {
-        $filePath = $generator->generateDocx($content, $title);
+        $result = $generator->generateDocx($content, $title);
     }
+    
+    if (!$result['success']) {
+        throw new \Exception($result['error'] ?? 'Error desconocido en el generador');
+    }
+    
+    $filePath = $result['path'];
     
     // Leer archivo y enviarlo
     if (!file_exists($filePath)) {
-        throw new \Exception('Error generando documento');
+        throw new \Exception('El archivo generado no existe en la ruta esperada');
     }
     
     $fileContent = file_get_contents($filePath);
