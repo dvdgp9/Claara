@@ -846,7 +846,7 @@ $headerShowLogo = true;
         const docxBtn = document.createElement('button');
         docxBtn.type = 'button';
         docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
-        docxBtn.innerHTML = '<i class="iconoir-doc-text"></i> Descargar DOCX';
+        docxBtn.innerHTML = '<i class="iconoir-page-star"></i> Descargar DOCX';
         docxBtn.addEventListener('click', (e) => downloadDocument(content, 'docx', e.currentTarget));
         
         downloadActionsEl.appendChild(pdfBtn);
@@ -1004,7 +1004,7 @@ $headerShowLogo = true;
         const docxBtn = document.createElement('button');
         docxBtn.type = 'button';
         docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
-        docxBtn.innerHTML = '<i class="iconoir-doc-text"></i> Descargar DOCX';
+        docxBtn.innerHTML = '<i class="iconoir-page-star"></i> Descargar DOCX';
         docxBtn.addEventListener('click', (e) => downloadDocument(content, 'docx', e.currentTarget));
         
         downloadActionsEl.appendChild(pdfBtn);
@@ -1534,7 +1534,7 @@ $headerShowLogo = true;
         buttonElement.disabled = true;
         buttonElement.innerHTML = format === 'pdf' 
           ? '<i class="iconoir-page"></i> Generando PDF...'
-          : '<i class="iconoir-doc-text"></i> Generando DOCX...';
+          : '<i class="iconoir-page-star"></i> Generando DOCX...';
         buttonElement.style.opacity = '0.6';
         
         const response = await api('/api/chat/generate-document.php', {
