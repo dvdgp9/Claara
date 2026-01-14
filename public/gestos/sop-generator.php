@@ -529,7 +529,7 @@ $headerDrawerId = 'sop-history-drawer';
                 <!-- DOCX -->
                 <a id="download-docx" href="#" class="flex items-center gap-4 p-4 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 transition-all">
                   <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl">
-                    <i class="iconoir-doc-text"></i>
+                    <i class="iconoir-page-star"></i>
                   </div>
                   <div>
                     <div class="font-semibold text-slate-700">Word (DOCX)</div>
