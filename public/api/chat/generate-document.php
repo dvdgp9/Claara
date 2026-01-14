@@ -61,7 +61,14 @@ try {
             " . $content;
 
             $refineResponse = $client->generate($prompt, 'google/gemini-3-flash-preview');
-            $data = json_decode(trim(str_replace(['```json', '```'], '', $refineResponse)), true);
+            
+            // Limpieza más robusta del JSON (Gemini a veces incluye markdown incluso si se le pide que no)
+            $cleanJson = $refineResponse;
+            if (preg_match('/\{.*\}/s', $refineResponse, $matches)) {
+                $cleanJson = $matches[0];
+            }
+            
+            $data = json_decode($cleanJson, true);
             
             if ($data && isset($data['content']) && isset($data['title'])) {
                 $finalContent = $data['content'];
