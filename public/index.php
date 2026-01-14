@@ -327,7 +327,11 @@ $headerShowLogo = true;
           <div class="flex gap-3 items-start max-w-3xl">
             <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-sm font-semibold flex-shrink-0">E</div>
             <div class="bg-white border border-slate-200 px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-sm">
-              <span class="streaming-indicator"><span></span><span></span><span></span></span>
+              <span class="streaming-indicator flex gap-1">
+                <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
+              </span>
             </div>
           </div>
         </div>
@@ -762,8 +766,12 @@ $headerShowLogo = true;
         // Si está en streaming, añadir indicador
         if (isStreaming) {
           const indicator = document.createElement('span');
-          indicator.className = 'streaming-indicator ml-1';
-          indicator.innerHTML = '<span class="inline-block w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse"></span>';
+          indicator.className = 'streaming-indicator ml-1 inline-flex gap-1';
+          indicator.innerHTML = `
+            <span class="w-1 h-1 bg-slate-400 rounded-full animate-pulse"></span>
+            <span class="w-1 h-1 bg-slate-400 rounded-full animate-pulse" style="animation-delay: 0.2s"></span>
+            <span class="w-1 h-1 bg-slate-400 rounded-full animate-pulse" style="animation-delay: 0.4s"></span>
+          `;
           bubble.appendChild(indicator);
         }
       } else {
@@ -917,16 +925,27 @@ $headerShowLogo = true;
     
     // Actualizar contenido de mensaje en streaming
     function updateStreamingMessage(bubble, content) {
-      const indicator = bubble.querySelector('.streaming-indicator');
-      bubble.innerHTML = mdToHtml(content);
-      if (indicator) {
-        bubble.appendChild(indicator);
+      // Ocultar delimitadores de documento de la vista del usuario
+      const displayContent = content.replace(/\[DOC_START\]|\[DOC_END\]/g, '');
+      bubble.innerHTML = mdToHtml(displayContent);
+      if (bubble.querySelector('.streaming-indicator')) {
+        bubble.appendChild(bubble.querySelector('.streaming-indicator'));
       }
     }
     
     // Finalizar mensaje en streaming (quitar indicador, añadir imágenes/citas)
     function finalizeStreamingMessage(bubble, content, images, annotations, messageId) {
-      bubble.innerHTML = mdToHtml(content);
+      // Limpiar indicador
+      bubble.innerHTML = '';
+      
+      // Ocultar delimitadores de documento de la vista del usuario
+      const displayContent = content.replace(/\[DOC_START\]|\[DOC_END\]/g, '');
+      
+      // Renderizar contenido
+      const contentEl = document.createElement('div');
+      contentEl.className = 'markdown-content prose prose-slate prose-sm max-w-none';
+      contentEl.innerHTML = mdToHtml(displayContent);
+      bubble.appendChild(contentEl);
       
       // Añadir data attributes para selección
       if (messageId) {
