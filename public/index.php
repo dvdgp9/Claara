@@ -762,7 +762,9 @@ $headerShowLogo = true;
       }
       
       if (role === 'assistant') {
-        bubble.innerHTML = mdToHtml(content);
+        // Ocultar marcadores de documento e intención de descarga
+        const cleanContent = content.replace(/\[DOC_START\]|\[DOC_END\]|\[DOWNLOAD_INTENT\]/g, '');
+        bubble.innerHTML = mdToHtml(cleanContent);
         // Si está en streaming, añadir indicador
         if (isStreaming) {
           const indicator = document.createElement('span');
@@ -832,8 +834,9 @@ $headerShowLogo = true;
         bubble.appendChild(imagesContainer);
       }
       
-      // Añadir botones de descarga PDF/DOCX para respuestas del asistente
-      if (role === 'assistant' && content && content.length > 100) {
+      // Añadir botones de descarga PDF/DOCX para respuestas del asistente (solo si hay intención de documento)
+      const hasDownloadIntent = content && content.includes('[DOWNLOAD_INTENT]');
+      if (role === 'assistant' && content && content.length > 100 && hasDownloadIntent) {
         const downloadActionsEl = document.createElement('div');
         downloadActionsEl.className = 'mt-3 pt-3 border-t border-slate-100 flex gap-2';
         
@@ -925,8 +928,8 @@ $headerShowLogo = true;
     
     // Actualizar contenido de mensaje en streaming
     function updateStreamingMessage(bubble, content) {
-      // Ocultar delimitadores de documento de la vista del usuario
-      const displayContent = content.replace(/\[DOC_START\]|\[DOC_END\]/g, '');
+      // Ocultar delimitadores de documento e intención de descarga de la vista del usuario
+      const displayContent = content.replace(/\[DOC_START\]|\[DOC_END\]|\[DOWNLOAD_INTENT\]/g, '');
       bubble.innerHTML = mdToHtml(displayContent);
       if (bubble.querySelector('.streaming-indicator')) {
         bubble.appendChild(bubble.querySelector('.streaming-indicator'));
@@ -938,8 +941,8 @@ $headerShowLogo = true;
       // Limpiar indicador
       bubble.innerHTML = '';
       
-      // Ocultar delimitadores de documento de la vista del usuario
-      const displayContent = content.replace(/\[DOC_START\]|\[DOC_END\]/g, '');
+      // Ocultar delimitadores de documento e intención de descarga de la vista del usuario
+      const displayContent = content.replace(/\[DOC_START\]|\[DOC_END\]|\[DOWNLOAD_INTENT\]/g, '');
       
       // Renderizar contenido
       const contentEl = document.createElement('div');
@@ -990,8 +993,9 @@ $headerShowLogo = true;
         bubble.appendChild(imagesContainer);
       }
       
-      // Añadir botones de descarga PDF/DOCX
-      if (content && content.length > 100) {
+      // Añadir botones de descarga PDF/DOCX (solo si hay intención de documento)
+      const hasDownloadIntent = content && content.includes('[DOWNLOAD_INTENT]');
+      if (content && content.length > 100 && hasDownloadIntent) {
         const downloadActionsEl = document.createElement('div');
         downloadActionsEl.className = 'mt-3 pt-3 border-t border-slate-100 flex gap-2';
         
