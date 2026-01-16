@@ -278,6 +278,7 @@ try {
     $fullText = '';
     $usedModel = $modelName;
     
+    // Pasar parámetro webSearch a la función de streaming
     $client->generateWithMessagesStreaming(
         $history,
         function($chunk) use (&$fullText) {
@@ -286,7 +287,8 @@ try {
         },
         function($text, $model) use (&$usedModel) {
             $usedModel = $model;
-        }
+        },
+        $webSearch
     );
     
     // Obtener anotaciones si las hay (búsqueda web)

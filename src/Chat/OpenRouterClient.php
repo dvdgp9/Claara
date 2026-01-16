@@ -260,9 +260,10 @@ class OpenRouterClient {
      * @param array $messages Array de mensajes [{role, content, file?}]
      * @param callable $onChunk Callback que recibe cada chunk de texto: fn(string $chunk): void
      * @param callable|null $onComplete Callback al completar: fn(string $fullText, string $model): void
+     * @param bool $webSearch Activar búsqueda web
      * @return string El texto completo generado
      */
-    public function generateWithMessagesStreaming(array $messages, callable $onChunk, ?callable $onComplete = null): string
+    public function generateWithMessagesStreaming(array $messages, callable $onChunk, ?callable $onComplete = null, bool $webSearch = false): string
     {
         if (!$this->apiKey) {
             throw new \Exception('Falta OPENROUTER_API_KEY en .env');
@@ -327,13 +328,21 @@ class OpenRouterClient {
             'stream' => true
         ];
         
+        // Construir array de plugins
+        $plugins = [];
         if ($hasPdf) {
-            $payload['plugins'] = [
-                [
-                    'id' => 'file-parser',
-                    'pdf' => [ 'engine' => 'pdf-text' ]
-                ]
+            $plugins[] = [
+                'id' => 'file-parser',
+                'pdf' => [ 'engine' => 'pdf-text' ]
             ];
+        }
+        
+        if ($webSearch) {
+            $plugins[] = [ 'id' => 'web' ];
+        }
+        
+        if (!empty($plugins)) {
+            $payload['plugins'] = $plugins;
         }
         
         if ($this->temperature !== null) {
