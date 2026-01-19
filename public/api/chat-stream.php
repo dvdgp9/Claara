@@ -198,13 +198,31 @@ $systemPrompt = $contextBuilder ? $contextBuilder->buildSystemPrompt() : null;
 $allMessages = $msgs->listByConversation($conversationId);
 $history = [];
 foreach ($allMessages as $m) {
-    $history[] = ['role' => $m['role'], 'content' => $m['content']];
+    $historyItem = ['role' => $m['role'], 'content' => $m['content']];
+    
+    // Si el mensaje tiene un archivo asociado, cargarlo
+    if (!empty($m['file_id'])) {
+        $storedFile = $filesRepo->findByIdAndUser((int)$m['file_id'], (int)$user['id']);
+        if ($storedFile) {
+            $storagePath = ChatFilesRepo::getStoragePath();
+            $filePath = $storagePath . '/' . $storedFile['stored_name'];
+            if (file_exists($filePath)) {
+                $historyItem['file'] = [
+                    'mime_type' => $storedFile['mime_type'],
+                    'data' => base64_encode(file_get_contents($filePath)),
+                    'name' => $storedFile['original_name']
+                ];
+            }
+        }
+    }
+    
+    $history[] = $historyItem;
 }
 
-// Añadir archivo al último mensaje de usuario
+// Añadir el archivo actual si existe y no está ya en el historial (para mensajes nuevos)
 if ($file && count($history) > 0) {
     $lastIdx = count($history) - 1;
-    if ($history[$lastIdx]['role'] === 'user') {
+    if ($history[$lastIdx]['role'] === 'user' && !isset($history[$lastIdx]['file'])) {
         $history[$lastIdx]['file'] = $file;
     }
 }
