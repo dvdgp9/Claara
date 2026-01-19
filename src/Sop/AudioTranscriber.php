@@ -67,8 +67,19 @@ class AudioTranscriber
             return ['success' => false, 'error' => "El audio es demasiado grande (" . round($audioSizeMB, 1) . "MB). Máximo 50MB."];
         }
 
-        // Usar formato 'file' con data URI (más compatible que input_audio)
-        $dataUri = 'data:' . $mimeType . ';base64,' . $base64Data;
+        // Determinar formato de audio (wav, mp3, m4a, etc.)
+        $format = match($mimeType) {
+            'audio/mpeg', 'audio/mp3' => 'mp3',
+            'audio/wav', 'audio/wave', 'audio/x-wav' => 'wav',
+            'audio/mp4', 'audio/m4a', 'audio/x-m4a' => 'm4a',
+            'audio/webm' => 'webm',
+            'audio/ogg' => 'ogg',
+            'audio/flac' => 'flac',
+            'audio/aac' => 'aac',
+            default => 'mp3'
+        };
+        
+        $this->debugLog("Formato de audio detectado: {$format}");
 
         $payload = [
             'model' => $this->model,
@@ -77,9 +88,10 @@ class AudioTranscriber
                     'role' => 'user',
                     'content' => [
                         [
-                            'type' => 'file',
-                            'file' => [
-                                'url' => $dataUri
+                            'type' => 'input_audio',
+                            'inputAudio' => [  // camelCase según documentación OpenRouter
+                                'data' => $base64Data,
+                                'format' => $format
                             ]
                         ],
                         [
