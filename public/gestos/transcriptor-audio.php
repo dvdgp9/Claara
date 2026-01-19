@@ -472,13 +472,16 @@ $headerDrawerId = 'transcriber-history-drawer';
     
     async function loadHistory() {
       try {
-        const response = await fetch(`/api/gestures/history.php?gesture_type=${gestureType}`, {
+        console.log('Solicitando historial para:', gestureType);
+        const response = await fetch(`/api/gestures/history.php?type=${gestureType}`, {
           headers: { 'X-CSRF-Token': csrf }
         });
         const data = await response.json();
+        console.log('Datos de historial recibidos:', data);
         
-        if (data.success && data.items) {
-          renderHistory(data.items);
+        if (data.success) {
+          const items = data.items || data.history || [];
+          renderHistory(items);
         }
       } catch (err) {
         console.error('Error loading history:', err);
@@ -528,14 +531,23 @@ $headerDrawerId = 'transcriber-history-drawer';
     
     function addHistoryListeners(container) {
       container.querySelectorAll('.history-item-main').forEach(el => {
-        const id = el.parentElement.dataset.id;
-        el.addEventListener('click', () => loadFromHistory(id));
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const item = e.currentTarget.closest('.history-item');
+          const id = item.dataset.id;
+          console.log('Click en historial (main), ID:', id);
+          loadFromHistory(id);
+        });
       });
       
       container.querySelectorAll('.history-item-delete').forEach(btn => {
-        const id = btn.parentElement.dataset.id;
         btn.addEventListener('click', (e) => {
+          e.preventDefault();
           e.stopPropagation();
+          const item = e.currentTarget.closest('.history-item');
+          const id = item.dataset.id;
+          console.log('Click en historial (delete), ID:', id);
           deleteFromHistory(id);
         });
       });
@@ -574,11 +586,13 @@ $headerDrawerId = 'transcriber-history-drawer';
     }
     
     async function loadFromHistory(id) {
+      console.log('Cargando ID:', id);
       try {
         const response = await fetch(`/api/gestures/get.php?id=${id}`, {
           headers: { 'X-CSRF-Token': csrf }
         });
         const data = await response.json();
+        console.log('Data recibida:', data);
         
         if (data.success && data.execution) {
           currentTranscription = data.execution.output_content;
@@ -590,6 +604,7 @@ $headerDrawerId = 'transcriber-history-drawer';
             try {
               outputData = JSON.parse(outputData);
             } catch (e) {
+              console.error('Error parseando output_data:', e);
               outputData = {};
             }
           }
@@ -598,11 +613,18 @@ $headerDrawerId = 'transcriber-history-drawer';
           resultWords.textContent = (outputData.word_count || 0) + ' palabras';
           resultChars.textContent = (outputData.char_count || 0) + ' caracteres';
           
+          // Renderizar transcripción con saltos de línea
           transcriptionContent.innerHTML = escapeHtml(currentTranscription).replace(/\n/g, '<br>');
           
+          // Cambiar vistas
           uploadSection.classList.add('hidden');
           loadingSection.classList.add('hidden');
           resultSection.classList.remove('hidden');
+
+          // IMPORTANTE: Asegurar que el scroll del contenido sea visible
+          setTimeout(() => {
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
           
           // Actualizar estado activo en historial
           document.querySelectorAll('.history-item').forEach(item => {
@@ -611,9 +633,11 @@ $headerDrawerId = 'transcriber-history-drawer';
           
           // Cerrar drawer en móvil si existe
           const drawer = document.getElementById('transcriber-history-drawer');
-          if (drawer) {
-            drawer.classList.add('hidden');
-          }
+          const offcanvasInstance = document.querySelector('[data-bs-dismiss="offcanvas"]');
+          if (offcanvasInstance) offcanvasInstance.click(); 
+        } else {
+          console.error('Error en data:', data);
+          alert('No se pudo cargar la transcripción');
         }
       } catch (err) {
         console.error('Error loading from history:', err);
