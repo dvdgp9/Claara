@@ -1484,6 +1484,43 @@ Los demás formatos (PDF, DOCX, integraciones) pueden añadirse en iteraciones p
 
 ---
 
+## Feature: Gesto Transcriptor de Audio
+
+### Motivación
+Gesto dedicado para convertir archivos de audio en texto. Reutiliza `AudioTranscriber` existente (usado en SOP Generator) pero con UI especializada y más simple.
+
+### Archivos creados
+
+**Backend:**
+- `public/api/gestures/transcribe.php` - Endpoint API que usa `AudioTranscriber`
+
+**Frontend:**
+- `public/gestos/transcriptor-audio.php` - Página del gesto con drag & drop, reproductor de audio, historial
+
+**Config:**
+- `docs/migrations/011_add_audio_transcriber_gesture.sql` - Migración para registrar el gesto
+
+**Modificados:**
+- `public/gestos/index.php` - Añadida tarjeta del gesto + fix de variables $userId/$accessRepo
+
+### Características
+- Soporta: MP3, WAV, M4A, WebM, OGG (hasta 25MB)
+- Usa Gemini 3 Flash via OpenRouter para transcripción
+- UI con drag & drop y reproductor de audio
+- Historial de transcripciones guardado
+- Botones copiar / descargar TXT
+- Iconografía: `iconoir-microphone` con gradiente morado/índigo
+
+### Tareas
+- [x] Crear endpoint `/api/gestures/transcribe.php`
+- [x] Crear página `/gestos/transcriptor-audio.php`
+- [x] Crear migración SQL
+- [x] Añadir tarjeta en `/gestos/index.php`
+- [ ] Ejecutar migración en producción
+- [ ] Testing manual
+
+---
+
 # Lessons
 
 - Mantener comandos idempotentes para poder re-ejecutar sin fallos (p.ej. `git remote set-url` si `origin` ya existe).
