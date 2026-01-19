@@ -290,14 +290,14 @@ Devuelve SOLO la transcripción textual, sin introducción ni explicaciones adic
         $seconds = ($bytes * 8) / ($bitrate * 1000);
         
         if ($seconds < 60) {
-            return round($seconds) . ' segundos';
+            return (int)round($seconds) . ' segundos';
         } elseif ($seconds < 3600) {
-            $mins = floor($seconds / 60);
-            $secs = round($seconds % 60);
+            $mins = (int)floor($seconds / 60);
+            $secs = (int)round(fmod($seconds, 60));
             return "{$mins}:{$secs} minutos";
         } else {
-            $hours = floor($seconds / 3600);
-            $mins = floor(($seconds % 3600) / 60);
+            $hours = (int)floor($seconds / 3600);
+            $mins = (int)floor(fmod($seconds, 3600) / 60);
             return "{$hours}h {$mins}min";
         }
     }
