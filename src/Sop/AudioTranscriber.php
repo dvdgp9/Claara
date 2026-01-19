@@ -67,9 +67,8 @@ class AudioTranscriber
             return ['success' => false, 'error' => "El audio es demasiado grande (" . round($audioSizeMB, 1) . "MB). Máximo 50MB."];
         }
 
-        // Determinar formato para el payload nativo (ej: 'mp3', 'wav')
-        $format = str_replace(['audio/', 'x-'], '', $mimeType);
-        if ($format === 'mpeg') $format = 'mp3';
+        // Usar formato 'file' con data URI (más compatible que input_audio)
+        $dataUri = 'data:' . $mimeType . ';base64,' . $base64Data;
 
         $payload = [
             'model' => $this->model,
@@ -78,10 +77,9 @@ class AudioTranscriber
                     'role' => 'user',
                     'content' => [
                         [
-                            'type' => 'input_audio',
-                            'input_audio' => [
-                                'data' => $base64Data,
-                                'format' => $format
+                            'type' => 'file',
+                            'file' => [
+                                'url' => $dataUri
                             ]
                         ],
                         [
