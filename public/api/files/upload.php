@@ -22,7 +22,11 @@ if (!$user) {
     Response::error('unauthorized', 'Sesión no válida', 401);
 }
 
-Session::requireCsrf();
+// Validar CSRF - puede venir en header o en POST (FormData)
+$csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
+if (!$csrfToken || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfToken)) {
+    Response::error('csrf_invalid', 'CSRF token inválido o ausente', 403);
+}
 
 $repo = new ChatFilesRepo();
 
@@ -37,16 +41,36 @@ foreach ($expiredFiles as $expired) {
 }
 $repo->deleteExpired();
 
-// Procesar request
-$body = json_decode(file_get_contents('php://input'), true) ?? [];
+// Procesar request - soportar FormData (multipart/form-data) y JSON
+$isFormData = isset($_FILES['file']);
 
-$base64Data = $body['data'] ?? '';
-$mimeType = $body['mime_type'] ?? '';
-$originalName = $body['name'] ?? 'archivo';
-$conversationId = isset($body['conversation_id']) ? (int)$body['conversation_id'] : null;
-
-if (empty($base64Data) || empty($mimeType)) {
-    Response::error('validation_error', 'Datos de archivo requeridos', 400);
+if ($isFormData) {
+    // FormData: archivo binario directo
+    if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        Response::error('validation_error', 'Error al subir archivo', 400);
+    }
+    
+    $uploadedFile = $_FILES['file'];
+    $binaryData = file_get_contents($uploadedFile['tmp_name']);
+    $mimeType = $uploadedFile['type'];
+    $originalName = $uploadedFile['name'];
+    $conversationId = isset($_POST['conversation_id']) ? (int)$_POST['conversation_id'] : null;
+} else {
+    // JSON: archivo en base64
+    $body = json_decode(file_get_contents('php://input'), true) ?? [];
+    $base64Data = $body['data'] ?? '';
+    $mimeType = $body['mime_type'] ?? '';
+    $originalName = $body['name'] ?? 'archivo';
+    $conversationId = isset($body['conversation_id']) ? (int)$body['conversation_id'] : null;
+    
+    if (empty($base64Data) || empty($mimeType)) {
+        Response::error('validation_error', 'Datos de archivo requeridos', 400);
+    }
+    
+    $binaryData = base64_decode($base64Data);
+    if ($binaryData === false) {
+        Response::error('validation_error', 'Datos base64 inválidos', 400);
+    }
 }
 
 // Validar tipo MIME
@@ -63,12 +87,6 @@ $allowedTypes = [
 
 if (!isset($allowedTypes[$mimeType])) {
     Response::error('validation_error', 'Tipo de archivo no soportado', 400);
-}
-
-// Decodificar base64
-$binaryData = base64_decode($base64Data);
-if ($binaryData === false) {
-    Response::error('validation_error', 'Datos base64 inválidos', 400);
 }
 
 // Validar tamaño (máx 10MB)
