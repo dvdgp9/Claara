@@ -12,7 +12,7 @@ use App\Env;
 class AudioTranscriber
 {
     private string $apiKey;
-    private string $model = 'gemini-2.5-flash';
+    private string $model = 'gemini-3-flash-preview';
     private string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
     private string $uploadUrl = 'https://generativelanguage.googleapis.com/upload/v1beta/files';
     
