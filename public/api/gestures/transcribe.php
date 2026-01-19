@@ -46,12 +46,27 @@ use Gestures\GestureExecutionsRepo;
 use Repos\ChatFilesRepo;
 use Repos\UsageLogRepo;
 
+// Función de debug para escribir a un log
+function debugLog($message) {
+    $logFile = __DIR__ . '/../../../storage/logs/transcribe_debug.log';
+    $dir = dirname($logFile);
+    if (!is_dir($dir)) mkdir($dir, 0755, true);
+    file_put_contents($logFile, date('[Y-m-d H:i:s] ') . $message . "\n", FILE_APPEND);
+}
+
+debugLog("=== INICIO REQUEST ===");
+debugLog("Memory limit: " . ini_get('memory_limit'));
+debugLog("Content-Length header: " . ($_SERVER['CONTENT_LENGTH'] ?? 'N/A'));
+
 Session::start();
 $user = Session::user();
 
 if (!$user) {
+    debugLog("ERROR: No autenticado");
     Response::error('unauthorized', 'No autenticado', 401);
 }
+
+debugLog("Usuario: " . $user['id']);
 
 // Verificar método
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -62,11 +77,31 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 $csrfSession = $_SESSION['csrf_token'] ?? '';
 if (!$csrfHeader || $csrfHeader !== $csrfSession) {
+    debugLog("ERROR: CSRF inválido");
     Response::error('csrf_invalid', 'Token CSRF inválido', 403);
 }
 
-// Parsear body
-$body = json_decode(file_get_contents('php://input'), true) ?? [];
+debugLog("CSRF OK, leyendo body...");
+
+// Parsear body - AQUÍ PUEDE ESTAR EL PROBLEMA
+$rawInput = file_get_contents('php://input');
+$inputLength = strlen($rawInput);
+debugLog("Body recibido: " . round($inputLength / 1024 / 1024, 2) . " MB");
+
+if (empty($rawInput)) {
+    debugLog("ERROR: Body vacío - posible límite de Nginx/Apache");
+    Response::error('empty_body', 'No se recibió el cuerpo de la petición. Posible límite del servidor.', 400);
+}
+
+$body = json_decode($rawInput, true);
+unset($rawInput); // Liberar memoria
+
+if ($body === null && json_last_error() !== JSON_ERROR_NONE) {
+    debugLog("ERROR: JSON inválido - " . json_last_error_msg());
+    Response::error('invalid_json', 'JSON inválido: ' . json_last_error_msg(), 400);
+}
+
+debugLog("JSON parseado OK");
 
 $audioBase64 = $body['audio_base64'] ?? '';
 $audioMime = $body['audio_mime'] ?? '';
@@ -126,11 +161,17 @@ if ($audioSizeMB > 50) {
 }
 
 try {
+    debugLog("Iniciando transcripción - Audio: " . round(strlen($audioBase64) / 1024 / 1024, 2) . " MB base64");
+    debugLog("Memoria usada antes de transcribir: " . round(memory_get_usage(true) / 1024 / 1024, 2) . " MB");
+    
     // Transcribir audio
     $transcriber = new AudioTranscriber();
     $result = $transcriber->transcribe($audioBase64, $audioMime, $audioFilename);
     
+    debugLog("Transcripción completada: " . ($result['success'] ? 'OK' : 'ERROR - ' . ($result['error'] ?? 'desconocido')));
+    
     if (!$result['success']) {
+        debugLog("ERROR transcripción: " . $result['error']);
         Response::error('transcription_failed', $result['error'], 500);
     }
     

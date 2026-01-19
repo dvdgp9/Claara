@@ -19,6 +19,14 @@ class AudioTranscriber
         $this->apiKey = $apiKey ?? (Env::get('OPENROUTER_API_KEY') ?? '');
     }
     
+    private function debugLog(string $message): void
+    {
+        $logFile = __DIR__ . '/../../storage/logs/transcribe_debug.log';
+        $dir = dirname($logFile);
+        if (!is_dir($dir)) @mkdir($dir, 0755, true);
+        @file_put_contents($logFile, date('[Y-m-d H:i:s] [AudioTranscriber] ') . $message . "\n", FILE_APPEND);
+    }
+    
     /**
      * Transcribe audio desde base64
      * 
@@ -96,7 +104,11 @@ class AudioTranscriber
         ];
         
         $jsonPayload = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $payloadSizeMB = round(strlen($jsonPayload) / 1024 / 1024, 2);
         unset($payload); // Liberar memoria
+        
+        $this->debugLog("Payload JSON preparado: {$payloadSizeMB} MB");
+        $this->debugLog("Memoria después de JSON: " . round(memory_get_usage(true) / 1024 / 1024, 2) . " MB");
         
         $ch = curl_init($this->baseUrl);
         curl_setopt_array($ch, [
@@ -113,17 +125,22 @@ class AudioTranscriber
             CURLOPT_CONNECTTIMEOUT => 30,
         ]);
         
+        $this->debugLog("Enviando a OpenRouter...");
         $response = curl_exec($ch);
         unset($jsonPayload); // Liberar memoria
         $curlError = curl_error($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         
+        $this->debugLog("Respuesta OpenRouter: HTTP {$httpCode}");
+        
         if ($curlError) {
+            $this->debugLog("ERROR cURL: " . $curlError);
             return ['success' => false, 'error' => 'Error de conexión: ' . $curlError];
         }
         
         if (!$response) {
+            $this->debugLog("ERROR: Respuesta vacía");
             return ['success' => false, 'error' => 'No se recibió respuesta de OpenRouter'];
         }
         
@@ -131,10 +148,12 @@ class AudioTranscriber
         
         if (isset($data['error'])) {
             $errorMsg = $data['error']['message'] ?? 'Error desconocido';
+            $this->debugLog("ERROR API: " . $errorMsg);
             return ['success' => false, 'error' => 'Error de API: ' . $errorMsg];
         }
         
         if ($httpCode !== 200) {
+            $this->debugLog("ERROR HTTP: " . $httpCode . " - " . substr($response, 0, 500));
             return ['success' => false, 'error' => "Error HTTP {$httpCode}"];
         }
         
