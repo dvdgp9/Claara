@@ -51,12 +51,12 @@ class AudioTranscriber
             return ['success' => false, 'error' => 'Tipo de audio no soportado: ' . $mimeType];
         }
         
-        // Verificar tamaño (límite ~25MB para Gemini)
+        // Verificar tamaño (límite ~50MB)
         $audioSizeBytes = strlen(base64_decode($base64Data));
         $audioSizeMB = $audioSizeBytes / (1024 * 1024);
         
-        if ($audioSizeMB > 25) {
-            return ['success' => false, 'error' => "El audio es demasiado grande (" . round($audioSizeMB, 1) . "MB). Máximo 25MB."];
+        if ($audioSizeMB > 50) {
+            return ['success' => false, 'error' => "El audio es demasiado grande (" . round($audioSizeMB, 1) . "MB). Máximo 50MB."];
         }
         
         $payload = [
@@ -102,7 +102,7 @@ class AudioTranscriber
                 'X-Title: Ebonia SOP Generator'
             ],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            CURLOPT_TIMEOUT => 300, // 5 minutos para audio largo
+            CURLOPT_TIMEOUT => 600, // 10 minutos para audio largo
             CURLOPT_CONNECTTIMEOUT => 30,
         ]);
         

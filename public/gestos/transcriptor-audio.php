@@ -137,7 +137,7 @@ $headerDrawerId = 'transcriber-history-drawer';
                       <p class="text-sm text-slate-500">o haz clic para seleccionar</p>
                     </div>
                     <p class="text-xs text-slate-400">
-                      Formatos: MP3, WAV, M4A, WebM, OGG • Máx. 25MB
+                      Formatos: MP3, WAV, M4A, WebM, OGG • Máx. 50MB
                     </p>
                   </div>
                   
@@ -328,8 +328,8 @@ $headerDrawerId = 'transcriber-history-drawer';
       }
       
       // Validar tamaño
-      if (file.size > 25 * 1024 * 1024) {
-        alert('El archivo es demasiado grande. Máximo 25MB.');
+      if (file.size > 50 * 1024 * 1024) {
+        alert('El archivo es demasiado grande. Máximo 50MB.');
         return;
       }
       

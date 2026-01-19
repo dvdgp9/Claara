@@ -91,12 +91,12 @@ if (!in_array($audioMime, $validAudioTypes)) {
     Response::error('invalid_audio_type', 'Tipo de audio no soportado. Usa: mp3, wav, m4a, webm, ogg', 400);
 }
 
-// Validar tamaño (max 25MB)
+// Validar tamaño (max 50MB)
 $audioSizeBytes = strlen(base64_decode($audioBase64));
 $audioSizeMB = $audioSizeBytes / (1024 * 1024);
 
-if ($audioSizeMB > 25) {
-    Response::error('file_too_large', "El audio es demasiado grande (" . round($audioSizeMB, 1) . "MB). Máximo 25MB.", 400);
+if ($audioSizeMB > 50) {
+    Response::error('file_too_large', "El audio es demasiado grande (" . round($audioSizeMB, 1) . "MB). Máximo 50MB.", 400);
 }
 
 try {
