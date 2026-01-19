@@ -487,8 +487,9 @@ $headerDrawerId = 'transcriber-history-drawer';
         console.error('Error loading history:', err);
       }
     }
-    
+
     function renderHistory(items) {
+      console.log('Renderizando historial, items:', items.length);
       if (items.length === 0) {
         const emptyHtml = `
           <div class="p-4 text-center text-slate-400 text-sm">
@@ -505,7 +506,7 @@ $headerDrawerId = 'transcriber-history-drawer';
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2 ${item.id == currentExecutionId ? 'active' : ''}" data-id="${item.id}">
           <i class="iconoir-microphone text-purple-500 mt-0.5"></i>
           <div class="flex-1 min-w-0 cursor-pointer history-item-main">
-            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-purple-600">${escapeHtml(item.title)}</p>
+            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-purple-600">${escapeHtml(item.title || 'Sin título')}</p>
             <span class="text-[10px] text-slate-400">${new Date(item.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
           <button class="history-item-delete opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Eliminar">
@@ -530,13 +531,14 @@ $headerDrawerId = 'transcriber-history-drawer';
     }
     
     function addHistoryListeners(container) {
+      console.log('Añadiendo listeners al contenedor');
       container.querySelectorAll('.history-item-main').forEach(el => {
         el.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           const item = e.currentTarget.closest('.history-item');
           const id = item.dataset.id;
-          console.log('Click en historial (main), ID:', id);
+          console.log('Click detectado en item:', id);
           loadFromHistory(id);
         });
       });
@@ -547,7 +549,7 @@ $headerDrawerId = 'transcriber-history-drawer';
           e.stopPropagation();
           const item = e.currentTarget.closest('.history-item');
           const id = item.dataset.id;
-          console.log('Click en historial (delete), ID:', id);
+          console.log('Click eliminar detectado en item:', id);
           deleteFromHistory(id);
         });
       });
@@ -594,12 +596,15 @@ $headerDrawerId = 'transcriber-history-drawer';
         const data = await response.json();
         console.log('Data recibida:', data);
         
-        if (data.success && data.execution) {
-          currentTranscription = data.execution.output_content;
-          currentExecutionId = data.execution.id;
+        // El servidor devuelve { execution: { ... } }
+        const item = data.execution || data.item;
+        
+        if (item) {
+          currentTranscription = item.output_content;
+          currentExecutionId = item.id;
           
           // Cargar metadatos si vienen como string JSON
-          let outputData = data.execution.output_data || {};
+          let outputData = item.output_data || {};
           if (typeof outputData === 'string') {
             try {
               outputData = JSON.parse(outputData);
@@ -621,22 +626,23 @@ $headerDrawerId = 'transcriber-history-drawer';
           loadingSection.classList.add('hidden');
           resultSection.classList.remove('hidden');
 
-          // IMPORTANTE: Asegurar que el scroll del contenido sea visible
+          // Asegurar que el scroll del contenido sea visible
           setTimeout(() => {
             resultSection.scrollIntoView({ behavior: 'smooth' });
           }, 100);
           
           // Actualizar estado activo en historial
-          document.querySelectorAll('.history-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.id == id);
+          document.querySelectorAll('.history-item').forEach(el => {
+            el.classList.toggle('active', el.dataset.id == id);
           });
           
           // Cerrar drawer en móvil si existe
-          const drawer = document.getElementById('transcriber-history-drawer');
-          const offcanvasInstance = document.querySelector('[data-bs-dismiss="offcanvas"]');
-          if (offcanvasInstance) offcanvasInstance.click(); 
+          const closeBtn = document.querySelector('[data-bs-dismiss="offcanvas"]');
+          if (closeBtn && window.getComputedStyle(closeBtn).display !== 'none') {
+            closeBtn.click();
+          }
         } else {
-          console.error('Error en data:', data);
+          console.error('No se encontró el objeto execution o item en la respuesta:', data);
           alert('No se pudo cargar la transcripción');
         }
       } catch (err) {
