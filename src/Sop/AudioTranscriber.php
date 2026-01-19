@@ -58,7 +58,11 @@ class AudioTranscriber
         if ($audioSizeMB > 50) {
             return ['success' => false, 'error' => "El audio es demasiado grande (" . round($audioSizeMB, 1) . "MB). Máximo 50MB."];
         }
-        
+
+        // Determinar formato para el payload nativo (ej: 'mp3', 'wav')
+        $format = str_replace(['audio/', 'x-'], '', $mimeType);
+        if ($format === 'mpeg') $format = 'mp3';
+
         $payload = [
             'model' => $this->model,
             'messages' => [
@@ -66,10 +70,10 @@ class AudioTranscriber
                     'role' => 'user',
                     'content' => [
                         [
-                            'type' => 'file',
-                            'file' => [
-                                'filename' => $filename,
-                                'file_data' => 'data:' . $mimeType . ';base64,' . $base64Data
+                            'type' => 'input_audio',
+                            'input_audio' => [
+                                'data' => $base64Data,
+                                'format' => $format
                             ]
                         ],
                         [
@@ -91,6 +95,9 @@ class AudioTranscriber
             'max_tokens' => 16384
         ];
         
+        $jsonPayload = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        unset($payload); // Liberar memoria
+        
         $ch = curl_init($this->baseUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -101,12 +108,13 @@ class AudioTranscriber
                 'HTTP-Referer: ' . (Env::get('APP_URL') ?? 'https://ebonia.es'),
                 'X-Title: Ebonia SOP Generator'
             ],
-            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            CURLOPT_POSTFIELDS => $jsonPayload,
             CURLOPT_TIMEOUT => 600, // 10 minutos para audio largo
             CURLOPT_CONNECTTIMEOUT => 30,
         ]);
         
         $response = curl_exec($ch);
+        unset($jsonPayload); // Liberar memoria
         $curlError = curl_error($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
