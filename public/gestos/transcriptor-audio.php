@@ -499,22 +499,78 @@ $headerDrawerId = 'transcriber-history-drawer';
       }
       
       const html = items.map(item => `
-        <div class="history-item p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-all ${item.id == currentExecutionId ? 'active' : ''}"
-             data-id="${item.id}">
-          <p class="text-sm text-slate-700 truncate font-medium">${escapeHtml(item.title)}</p>
-          <p class="text-xs text-slate-400 mt-1">
-            ${new Date(item.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-          </p>
+        <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2 ${item.id == currentExecutionId ? 'active' : ''}" data-id="${item.id}">
+          <i class="iconoir-microphone text-purple-500 mt-0.5"></i>
+          <div class="flex-1 min-w-0 cursor-pointer history-item-main">
+            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-purple-600">${escapeHtml(item.title)}</p>
+            <span class="text-[10px] text-slate-400">${new Date(item.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Eliminar">
+            <i class="iconoir-trash"></i>
+          </button>
         </div>
       `).join('');
       
       historyList.innerHTML = html;
-      if (drawerContent) drawerContent.innerHTML = html;
+      if (drawerContent) {
+        drawerContent.innerHTML = html;
+        // Forzar visibilidad de acciones en móvil (no hay hover)
+        drawerContent.querySelectorAll('.opacity-0, .lg\\:opacity-0').forEach(el => {
+          el.classList.remove('opacity-0', 'lg:opacity-0');
+          el.classList.add('opacity-100');
+        });
+      }
       
       // Event listeners para cargar transcripciones del historial
-      document.querySelectorAll('.history-item').forEach(item => {
-        item.addEventListener('click', () => loadFromHistory(item.dataset.id));
+      addHistoryListeners(historyList);
+      if (drawerContent) addHistoryListeners(drawerContent);
+    }
+    
+    function addHistoryListeners(container) {
+      container.querySelectorAll('.history-item-main').forEach(el => {
+        const id = el.parentElement.dataset.id;
+        el.addEventListener('click', () => loadFromHistory(id));
       });
+      
+      container.querySelectorAll('.history-item-delete').forEach(btn => {
+        const id = btn.parentElement.dataset.id;
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteFromHistory(id);
+        });
+      });
+    }
+    
+    async function deleteFromHistory(id) {
+      if (!confirm('¿Eliminar esta transcripción del historial?')) return;
+      
+      try {
+        const response = await fetch('/api/gestures/delete.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrf
+          },
+          body: JSON.stringify({ id: parseInt(id) })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          // Si era el actual, limpiar vista
+          if (currentExecutionId == id) {
+            currentTranscription = '';
+            currentExecutionId = null;
+            resultSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+          }
+          loadHistory();
+        } else {
+          alert(data.error?.message || 'Error al eliminar');
+        }
+      } catch (err) {
+        console.error('Error deleting:', err);
+        alert('Error de conexión');
+      }
     }
     
     async function loadFromHistory(id) {

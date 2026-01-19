@@ -11,6 +11,32 @@
  * 5. Devuelve transcripción
  */
 
+// Aumentar límites de PHP para audios grandes
+ini_set('memory_limit', '512M');
+ini_set('max_execution_time', '600');
+
+// Capturar errores fatales
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => [
+                'code' => 'fatal_error',
+                'message' => 'Error del servidor: ' . $error['message'],
+                'debug' => $error
+            ]
+        ]);
+    }
+});
+
+// Manejador de errores
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
 require_once __DIR__ . '/../../../src/App/bootstrap.php';
 
 use App\Session;
