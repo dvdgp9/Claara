@@ -584,7 +584,16 @@ $headerDrawerId = 'transcriber-history-drawer';
           currentTranscription = data.item.output_content;
           currentExecutionId = data.item.id;
           
-          const outputData = data.item.output_data || {};
+          // Cargar metadatos si vienen como string JSON
+          let outputData = data.item.output_data || {};
+          if (typeof outputData === 'string') {
+            try {
+              outputData = JSON.parse(outputData);
+            } catch (e) {
+              outputData = {};
+            }
+          }
+          
           resultDuration.textContent = outputData.duration_estimate || 'N/A';
           resultWords.textContent = (outputData.word_count || 0) + ' palabras';
           resultChars.textContent = (outputData.char_count || 0) + ' caracteres';
@@ -595,10 +604,12 @@ $headerDrawerId = 'transcriber-history-drawer';
           loadingSection.classList.add('hidden');
           resultSection.classList.remove('hidden');
           
-          // Actualizar estado activo en historial
-          document.querySelectorAll('.history-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.id == id);
-          });
+          // Cerrar drawer en móvil si existe
+          const drawer = document.getElementById('transcriber-history-drawer');
+          if (drawer && typeof bootstrap !== 'undefined' && bootstrap.Offcanvas) {
+            const bsOffcanvas = bootstrap.Offcanvas.getInstance(drawer);
+            if (bsOffcanvas) bsOffcanvas.hide();
+          }
         }
       } catch (err) {
         console.error('Error loading from history:', err);
