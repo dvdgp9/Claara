@@ -580,12 +580,12 @@ $headerDrawerId = 'transcriber-history-drawer';
         });
         const data = await response.json();
         
-        if (data.success && data.item) {
-          currentTranscription = data.item.output_content;
-          currentExecutionId = data.item.id;
+        if (data.success && data.execution) {
+          currentTranscription = data.execution.output_content;
+          currentExecutionId = data.execution.id;
           
           // Cargar metadatos si vienen como string JSON
-          let outputData = data.item.output_data || {};
+          let outputData = data.execution.output_data || {};
           if (typeof outputData === 'string') {
             try {
               outputData = JSON.parse(outputData);
@@ -604,15 +604,20 @@ $headerDrawerId = 'transcriber-history-drawer';
           loadingSection.classList.add('hidden');
           resultSection.classList.remove('hidden');
           
+          // Actualizar estado activo en historial
+          document.querySelectorAll('.history-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.id == id);
+          });
+          
           // Cerrar drawer en móvil si existe
           const drawer = document.getElementById('transcriber-history-drawer');
-          if (drawer && typeof bootstrap !== 'undefined' && bootstrap.Offcanvas) {
-            const bsOffcanvas = bootstrap.Offcanvas.getInstance(drawer);
-            if (bsOffcanvas) bsOffcanvas.hide();
+          if (drawer) {
+            drawer.classList.add('hidden');
           }
         }
       } catch (err) {
         console.error('Error loading from history:', err);
+        alert('Error al cargar la transcripción');
       }
     }
     
