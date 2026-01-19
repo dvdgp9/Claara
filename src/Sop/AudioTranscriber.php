@@ -74,7 +74,15 @@ class AudioTranscriber
                         ],
                         [
                             'type' => 'text',
-                            'text' => 'Transcribe este audio a texto en español. Devuelve SOLO la transcripción textual, sin introducción ni explicación. Mantén los párrafos y pausas naturales. Si hay múltiples hablantes, indica los cambios de hablante con guiones o formato de diálogo.'
+                            'text' => 'Analiza este audio y realiza una transcripción fiel en español. 
+                                       ES MUY IMPORTANTE que identifiques a los diferentes hablantes si hay más de uno.
+                                       Usa el formato:
+                                       Hablante 1: [Texto]
+                                       Hablante 2: [Texto]
+                                       
+                                       Si puedes deducir el rol de cada uno por el contexto (ej. "Entrevistador", "Cliente", "Soporte"), usa ese nombre descriptivo en lugar de "Hablante X".
+                                       Si solo hay un hablante claro, puedes omitir la etiqueta del nombre.
+                                       Devuelve SOLO la transcripción textual, sin introducción ni explicaciones adicionales. Mantén los párrafos y pausas naturales.'
                         ]
                     ]
                 ]
