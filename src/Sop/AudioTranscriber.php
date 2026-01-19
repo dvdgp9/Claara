@@ -5,18 +5,21 @@ namespace Sop;
 use App\Env;
 
 /**
- * Transcriptor de audio usando Gemini multimodal via OpenRouter
+ * Transcriptor de audio usando Google Gemini API directamente
+ * Usa File API para archivos grandes (hasta 2GB)
  * Soporta mp3, wav, m4a, webm, ogg
  */
 class AudioTranscriber
 {
     private string $apiKey;
-    private string $model = 'google/gemini-3-flash-preview';
-    private string $baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
+    private string $model = 'gemini-2.0-flash';
+    private string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+    private string $uploadUrl = 'https://generativelanguage.googleapis.com/upload/v1beta/files';
     
     public function __construct(?string $apiKey = null)
     {
-        $this->apiKey = $apiKey ?? (Env::get('OPENROUTER_API_KEY') ?? '');
+        // Usar GEMINI_API_KEY directamente (no OpenRouter)
+        $this->apiKey = $apiKey ?? (Env::get('GEMINI_API_KEY') ?? '');
     }
     
     private function debugLog(string $message): void
@@ -28,7 +31,7 @@ class AudioTranscriber
     }
     
     /**
-     * Transcribe audio desde base64
+     * Transcribe audio desde base64 usando Gemini API directamente
      * 
      * @param string $base64Data Audio en base64
      * @param string $mimeType Tipo MIME del audio
@@ -38,7 +41,7 @@ class AudioTranscriber
     public function transcribe(string $base64Data, string $mimeType, string $filename = 'audio'): array
     {
         if (empty($this->apiKey)) {
-            return ['success' => false, 'error' => 'Falta OPENROUTER_API_KEY'];
+            return ['success' => false, 'error' => 'Falta GEMINI_API_KEY'];
         }
         
         // Validar tipo de audio
@@ -59,90 +62,80 @@ class AudioTranscriber
             return ['success' => false, 'error' => 'Tipo de audio no soportado: ' . $mimeType];
         }
         
-        // Verificar tamaño (límite ~50MB)
-        $audioSizeBytes = strlen(base64_decode($base64Data));
+        // Decodificar audio
+        $audioBytes = base64_decode($base64Data);
+        $audioSizeBytes = strlen($audioBytes);
         $audioSizeMB = $audioSizeBytes / (1024 * 1024);
         
         if ($audioSizeMB > 50) {
             return ['success' => false, 'error' => "El audio es demasiado grande (" . round($audioSizeMB, 1) . "MB). Máximo 50MB."];
         }
-
-        // Determinar formato de audio (wav, mp3, m4a, etc.)
-        $format = match($mimeType) {
-            'audio/mpeg', 'audio/mp3' => 'mp3',
-            'audio/wav', 'audio/wave', 'audio/x-wav' => 'wav',
-            'audio/mp4', 'audio/m4a', 'audio/x-m4a' => 'm4a',
-            'audio/webm' => 'webm',
-            'audio/ogg' => 'ogg',
-            'audio/flac' => 'flac',
-            'audio/aac' => 'aac',
-            default => 'mp3'
-        };
         
-        $this->debugLog("Formato de audio detectado: {$format}");
+        $this->debugLog("Tamaño audio: {$audioSizeMB} MB, MIME: {$mimeType}");
+        
+        // Paso 1: Subir archivo a Gemini File API
+        $uploadResult = $this->uploadFile($audioBytes, $mimeType, $filename);
+        unset($audioBytes); // Liberar memoria
+        
+        if (!$uploadResult['success']) {
+            return $uploadResult;
+        }
+        
+        $fileUri = $uploadResult['uri'];
+        $this->debugLog("Archivo subido: {$fileUri}");
+        
+        // Paso 2: Generar transcripción con el archivo
+        $prompt = 'Analiza este audio y realiza una transcripción fiel en español. 
+ES MUY IMPORTANTE que identifiques a los diferentes hablantes si hay más de uno.
+Usa el formato:
+Hablante 1: [Texto]
+Hablante 2: [Texto]
+
+Si puedes deducir el rol de cada uno por el contexto (ej. "Entrevistador", "Cliente", "Soporte"), usa ese nombre descriptivo en lugar de "Hablante X".
+Si solo hay un hablante claro, puedes omitir la etiqueta del nombre.
+Devuelve SOLO la transcripción textual, sin introducción ni explicaciones adicionales. Mantén los párrafos y pausas naturales.';
 
         $payload = [
-            'model' => $this->model,
-            'messages' => [
+            'contents' => [
                 [
-                    'role' => 'user',
-                    'content' => [
+                    'parts' => [
                         [
-                            'type' => 'input_audio',
-                            'inputAudio' => [  // camelCase según documentación OpenRouter
-                                'data' => $base64Data,
-                                'format' => $format
+                            'fileData' => [
+                                'mimeType' => $mimeType,
+                                'fileUri' => $fileUri
                             ]
                         ],
                         [
-                            'type' => 'text',
-                            'text' => 'Analiza este audio y realiza una transcripción fiel en español. 
-                                       ES MUY IMPORTANTE que identifiques a los diferentes hablantes si hay más de uno.
-                                       Usa el formato:
-                                       Hablante 1: [Texto]
-                                       Hablante 2: [Texto]
-                                       
-                                       Si puedes deducir el rol de cada uno por el contexto (ej. "Entrevistador", "Cliente", "Soporte"), usa ese nombre descriptivo en lugar de "Hablante X".
-                                       Si solo hay un hablante claro, puedes omitir la etiqueta del nombre.
-                                       Devuelve SOLO la transcripción textual, sin introducción ni explicaciones adicionales. Mantén los párrafos y pausas naturales.'
+                            'text' => $prompt
                         ]
                     ]
                 ]
             ],
-            'temperature' => 0.1,
-            'max_tokens' => 16384
+            'generationConfig' => [
+                'temperature' => 0.1,
+                'maxOutputTokens' => 16384
+            ]
         ];
         
-        $jsonPayload = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        $payloadSizeMB = round(strlen($jsonPayload) / 1024 / 1024, 2);
-        unset($payload); // Liberar memoria
+        $url = "{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}";
         
-        $this->debugLog("Payload JSON preparado: {$payloadSizeMB} MB");
-        $this->debugLog("Memoria después de JSON: " . round(memory_get_usage(true) / 1024 / 1024, 2) . " MB");
-        
-        $ch = curl_init($this->baseUrl);
+        $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->apiKey,
-                'HTTP-Referer: ' . (Env::get('APP_URL') ?? 'https://ebonia.es'),
-                'X-Title: Ebonia SOP Generator'
-            ],
-            CURLOPT_POSTFIELDS => $jsonPayload,
-            CURLOPT_TIMEOUT => 600, // 10 minutos para audio largo
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_TIMEOUT => 600,
             CURLOPT_CONNECTTIMEOUT => 30,
         ]);
         
-        $this->debugLog("Enviando a OpenRouter...");
+        $this->debugLog("Enviando a Gemini API...");
         $response = curl_exec($ch);
-        unset($jsonPayload); // Liberar memoria
         $curlError = curl_error($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         
-        $this->debugLog("Respuesta OpenRouter: HTTP {$httpCode}");
+        $this->debugLog("Respuesta Gemini: HTTP {$httpCode}");
         
         if ($curlError) {
             $this->debugLog("ERROR cURL: " . $curlError);
@@ -151,7 +144,7 @@ class AudioTranscriber
         
         if (!$response) {
             $this->debugLog("ERROR: Respuesta vacía");
-            return ['success' => false, 'error' => 'No se recibió respuesta de OpenRouter'];
+            return ['success' => false, 'error' => 'No se recibió respuesta de Gemini'];
         }
         
         $data = json_decode($response, true);
@@ -167,17 +160,111 @@ class AudioTranscriber
             return ['success' => false, 'error' => "Error HTTP {$httpCode}"];
         }
         
-        $text = $data['choices'][0]['message']['content'] ?? '';
+        $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
         
         if (empty($text)) {
+            $this->debugLog("ERROR: Transcripción vacía");
             return ['success' => false, 'error' => 'Transcripción vacía'];
         }
+        
+        $this->debugLog("Transcripción exitosa: " . strlen($text) . " caracteres");
         
         return [
             'success' => true,
             'text' => trim($text),
             'duration_estimate' => $this->estimateDuration($audioSizeBytes, $mimeType)
         ];
+    }
+    
+    /**
+     * Sube archivo a Gemini File API
+     */
+    private function uploadFile(string $fileBytes, string $mimeType, string $filename): array
+    {
+        $this->debugLog("Subiendo archivo a Gemini File API...");
+        
+        // Usar resumable upload para archivos grandes
+        $metadata = json_encode(['file' => ['displayName' => $filename]]);
+        
+        // Paso 1: Iniciar upload resumable
+        $ch = curl_init("{$this->uploadUrl}?key={$this->apiKey}");
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'X-Goog-Upload-Protocol: resumable',
+                'X-Goog-Upload-Command: start',
+                'X-Goog-Upload-Header-Content-Length: ' . strlen($fileBytes),
+                'X-Goog-Upload-Header-Content-Type: ' . $mimeType,
+                'Content-Type: application/json'
+            ],
+            CURLOPT_POSTFIELDS => $metadata,
+            CURLOPT_HEADER => true,
+            CURLOPT_TIMEOUT => 60,
+        ]);
+        
+        $response = curl_exec($ch);
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $headers = substr($response, 0, $headerSize);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode !== 200) {
+            $this->debugLog("ERROR inicio upload: HTTP {$httpCode}");
+            return ['success' => false, 'error' => "Error al iniciar upload: HTTP {$httpCode}"];
+        }
+        
+        // Extraer URL de upload
+        preg_match('/x-goog-upload-url:\s*(.+)/i', $headers, $matches);
+        $uploadUrl = trim($matches[1] ?? '');
+        
+        if (empty($uploadUrl)) {
+            $this->debugLog("ERROR: No se obtuvo URL de upload");
+            return ['success' => false, 'error' => 'No se obtuvo URL de upload'];
+        }
+        
+        $this->debugLog("URL de upload obtenida");
+        
+        // Paso 2: Subir bytes
+        $ch = curl_init($uploadUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Length: ' . strlen($fileBytes),
+                'X-Goog-Upload-Offset: 0',
+                'X-Goog-Upload-Command: upload, finalize'
+            ],
+            CURLOPT_POSTFIELDS => $fileBytes,
+            CURLOPT_TIMEOUT => 300, // 5 min para upload
+        ]);
+        
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($curlError) {
+            $this->debugLog("ERROR cURL upload: " . $curlError);
+            return ['success' => false, 'error' => 'Error de conexión en upload: ' . $curlError];
+        }
+        
+        if ($httpCode !== 200) {
+            $this->debugLog("ERROR upload: HTTP {$httpCode} - " . substr($response, 0, 500));
+            return ['success' => false, 'error' => "Error en upload: HTTP {$httpCode}"];
+        }
+        
+        $data = json_decode($response, true);
+        $fileUri = $data['file']['uri'] ?? null;
+        
+        if (empty($fileUri)) {
+            $this->debugLog("ERROR: No se obtuvo URI del archivo");
+            return ['success' => false, 'error' => 'No se obtuvo URI del archivo subido'];
+        }
+        
+        $this->debugLog("Archivo subido exitosamente: {$fileUri}");
+        
+        return ['success' => true, 'uri' => $fileUri];
     }
     
     /**
