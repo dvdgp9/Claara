@@ -107,6 +107,13 @@ $gesturesList = [
         'icon' => 'iconoir-clipboard-check',
         'href' => '/gestos/sop-generator.php',
         'description' => 'Crea procedimientos'
+    ],
+    [
+        'type' => 'audio-transcriber',
+        'name' => 'Transcriptor de audio',
+        'icon' => 'iconoir-microphone',
+        'href' => '/gestos/transcriptor-audio.php',
+        'description' => 'Convierte audio en texto'
     ]
 ];
 

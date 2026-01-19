@@ -64,6 +64,14 @@ $gesturesList = [
         'href' => '/gestos/editor-imagenes.php',
         'description' => 'Genera imágenes con IA',
         'gradient' => 'from-amber-500 to-orange-600'
+    ],
+    [
+        'type' => 'audio-transcriber',
+        'name' => 'Transcriptor de audio',
+        'icon' => 'iconoir-microphone',
+        'href' => '/gestos/transcriptor-audio.php',
+        'description' => 'Convierte audio en texto',
+        'gradient' => 'from-purple-500 to-indigo-600'
     ]
 ];
 

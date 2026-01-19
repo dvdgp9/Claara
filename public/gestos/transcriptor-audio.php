@@ -472,12 +472,10 @@ $headerDrawerId = 'transcriber-history-drawer';
     
     async function loadHistory() {
       try {
-        console.log('Solicitando historial para:', gestureType);
         const response = await fetch(`/api/gestures/history.php?type=${gestureType}`, {
           headers: { 'X-CSRF-Token': csrf }
         });
         const data = await response.json();
-        console.log('Datos de historial recibidos:', data);
         
         if (data.success) {
           const items = data.items || data.history || [];
@@ -489,7 +487,6 @@ $headerDrawerId = 'transcriber-history-drawer';
     }
 
     function renderHistory(items) {
-      console.log('Renderizando historial, items:', items.length);
       if (items.length === 0) {
         const emptyHtml = `
           <div class="p-4 text-center text-slate-400 text-sm">
@@ -531,14 +528,12 @@ $headerDrawerId = 'transcriber-history-drawer';
     }
     
     function addHistoryListeners(container) {
-      console.log('Añadiendo listeners al contenedor');
       container.querySelectorAll('.history-item-main').forEach(el => {
         el.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           const item = e.currentTarget.closest('.history-item');
           const id = item.dataset.id;
-          console.log('Click detectado en item:', id);
           loadFromHistory(id);
         });
       });
@@ -549,7 +544,6 @@ $headerDrawerId = 'transcriber-history-drawer';
           e.stopPropagation();
           const item = e.currentTarget.closest('.history-item');
           const id = item.dataset.id;
-          console.log('Click eliminar detectado en item:', id);
           deleteFromHistory(id);
         });
       });
@@ -588,13 +582,11 @@ $headerDrawerId = 'transcriber-history-drawer';
     }
     
     async function loadFromHistory(id) {
-      console.log('Cargando ID:', id);
       try {
         const response = await fetch(`/api/gestures/get.php?id=${id}`, {
           headers: { 'X-CSRF-Token': csrf }
         });
         const data = await response.json();
-        console.log('Data recibida:', data);
         
         // El servidor devuelve { execution: { ... } }
         const item = data.execution || data.item;
@@ -609,7 +601,6 @@ $headerDrawerId = 'transcriber-history-drawer';
             try {
               outputData = JSON.parse(outputData);
             } catch (e) {
-              console.error('Error parseando output_data:', e);
               outputData = {};
             }
           }
@@ -636,17 +627,15 @@ $headerDrawerId = 'transcriber-history-drawer';
             el.classList.toggle('active', el.dataset.id == id);
           });
           
-          // Cerrar drawer en móvil si existe
+          // Cerrar drawer en móvil si existe (compatible con SOP y otros gestos)
           const closeBtn = document.querySelector('[data-bs-dismiss="offcanvas"]');
           if (closeBtn && window.getComputedStyle(closeBtn).display !== 'none') {
             closeBtn.click();
           }
         } else {
-          console.error('No se encontró el objeto execution o item en la respuesta:', data);
           alert('No se pudo cargar la transcripción');
         }
       } catch (err) {
-        console.error('Error loading from history:', err);
         alert('Error al cargar la transcripción');
       }
     }

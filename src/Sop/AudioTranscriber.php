@@ -24,10 +24,7 @@ class AudioTranscriber
     
     private function debugLog(string $message): void
     {
-        $logFile = __DIR__ . '/../../storage/logs/transcribe_debug.log';
-        $dir = dirname($logFile);
-        if (!is_dir($dir)) @mkdir($dir, 0755, true);
-        @file_put_contents($logFile, date('[Y-m-d H:i:s] [AudioTranscriber] ') . $message . "\n", FILE_APPEND);
+        // Debug eliminado
     }
     
     /**
