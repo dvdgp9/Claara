@@ -423,6 +423,7 @@ INSTRUCCIONES DE DESARROLLO:
 3. **Estilo:**
    - Tono profesional, didáctico y directo.
    - Usa español de España (normativo/peninsular).
+   - Usa analogías para explicar conceptos difíciles.
    - Máxima claridad pedagógica.
 4. **Formato Markdown:**
    - ## para el título del módulo.
@@ -805,60 +806,60 @@ PROMPT;
         return $context . <<<PROMPT
 
 
-FORMATO DE SALIDA: PREGUNTAS DE AUTOEVALUACIÓN
+FORMATO DE SALIDA: TESTS POR MÓDULO
 
 INSTRUCCIONES ESPECÍFICAS:
-1. Crea 3-5 preguntas por cada módulo/tema principal
-2. Tipos de preguntas:
-   - Tipo test (4 opciones, solo 1 correcta)
-   - Verdadero/Falso con justificación
-   - Preguntas cortas (1-2 frases de respuesta)
-3. Las preguntas deben verificar comprensión, no solo memorización
-4. Incluye feedback para respuestas incorrectas
-5. Varía la dificultad (algunas fáciles, otras de reflexión)
+1. Crea entre 5 y 10 preguntas TIPO TEST por cada módulo/tema principal
+2. TODAS las preguntas deben ser tipo test con exactamente 4 opciones (a, b, c, d)
+3. Solo UNA opción es correcta por pregunta
+4. Marca la opción correcta con ✓ en las respuestas
+5. Las preguntas deben verificar comprensión, no solo memorización
+6. Varía la dificultad (algunas fáciles, otras de reflexión)
+7. Cubre los conceptos más importantes de cada módulo
 
 ESTRUCTURA:
 ---PREGUNTAS---
-## Módulo 1: [Nombre]
+## Módulo 1: [Nombre del módulo]
 
-### Pregunta 1 (Tipo test)
-¿[Pregunta]?
+**1.** ¿[Pregunta]?
+   a) [Opción A]
+   b) [Opción B]
+   c) [Opción C]
+   d) [Opción D]
 
-a) [Opción A]
-b) [Opción B]
-c) [Opción C]
-d) [Opción D]
+**2.** ¿[Pregunta]?
+   a) [Opción A]
+   b) [Opción B]
+   c) [Opción C]
+   d) [Opción D]
 
-### Pregunta 2 (Verdadero/Falso)
-"[Afirmación]"
-- [ ] Verdadero
-- [ ] Falso
-
-### Pregunta 3 (Respuesta corta)
-[Pregunta abierta]
+[Continuar hasta 5-10 preguntas por módulo...]
 
 ---
 
-## Módulo 2: [Nombre]
-[Continuar...]
+## Módulo 2: [Nombre del módulo]
+
+**1.** ¿[Pregunta]?
+   a) [Opción A]
+   b) [Opción B]
+   c) [Opción C]
+   d) [Opción D]
+
+[Continuar con todos los módulos...]
 ---FIN_PREGUNTAS---
 
 ---RESPUESTAS---
 ## Soluciones Módulo 1
 
-### Pregunta 1
-**Respuesta correcta:** [letra]
-**Explicación:** [Por qué es correcta y por qué las otras no]
-
-### Pregunta 2
-**Respuesta correcta:** [V/F]
-**Explicación:** [Justificación]
-
-### Pregunta 3
-**Respuesta modelo:** [Respuesta esperada]
-**Puntos clave:** [Qué debe incluir una buena respuesta]
-
+| Pregunta | Respuesta | Explicación breve |
+|----------|-----------|-------------------|
+| 1 | c) ✓ | [Por qué es correcta] |
+| 2 | a) ✓ | [Por qué es correcta] |
+| 3 | d) ✓ | [Por qué es correcta] |
 [Continuar...]
+
+## Soluciones Módulo 2
+[Continuar con todos los módulos...]
 ---FIN_RESPUESTAS---
 PROMPT;
     }
@@ -976,105 +977,84 @@ PROMPT;
 
     private function buildFinalExamPrompt(string $context, array $durationInfo): string
     {
-        $numQuestions = max(15, $durationInfo['hours'] * 2);
-        
         return $context . <<<PROMPT
 
 
 FORMATO DE SALIDA: EXAMEN FINAL DEL CURSO
 
 INSTRUCCIONES ESPECÍFICAS:
-1. Crea un examen completo de aproximadamente {$numQuestions} preguntas
-2. El examen debe cubrir TODOS los módulos/temas del curso
-3. Distribución de tipos de preguntas:
-   - 50% Tipo test (4 opciones)
-   - 20% Verdadero/Falso
-   - 20% Respuesta corta
-   - 10% Desarrollo/Caso práctico
-4. Incluye puntuación por pregunta
-5. Añade rúbrica de evaluación para preguntas de desarrollo
-6. Tiempo estimado de realización
+1. Crea un examen de EXACTAMENTE 20 preguntas
+2. TODAS las preguntas deben ser TIPO TEST con 4 opciones (a, b, c, d)
+3. Solo UNA opción es correcta por pregunta
+4. El examen debe cubrir TODOS los módulos/temas del curso de forma equilibrada
+5. Varía la dificultad: algunas fáciles, otras intermedias, otras de reflexión
+6. Las preguntas deben evaluar comprensión real, no solo memorización
+7. Cada pregunta vale 5 puntos (total: 100 puntos)
 
 ESTRUCTURA:
 ---EXAMEN---
 # EXAMEN FINAL: [Nombre del Curso]
 
-**Instrucciones:**
-- Tiempo estimado: [X minutos]
-- Puntuación total: 100 puntos
-- Para aprobar: mínimo 60 puntos
-- Lee todas las preguntas antes de empezar
+**Instrucciones para el alumno:**
+- Tiempo estimado: 30-40 minutos
+- Puntuación total: 100 puntos (5 puntos por pregunta)
+- Para aprobar: mínimo 60 puntos (12 respuestas correctas)
+- Marca con una X la opción correcta
 
 ---
 
-## SECCIÓN A: Preguntas Tipo Test (50 puntos)
-*Cada pregunta vale 5 puntos. Marca la opción correcta.*
+**1.** ¿[Pregunta sobre módulo 1]?
+   a) [Opción A]
+   b) [Opción B]
+   c) [Opción C]
+   d) [Opción D]
 
-**1.** [Pregunta]
-   a) [Opción]
-   b) [Opción]
-   c) [Opción]
-   d) [Opción]
+**2.** ¿[Pregunta]?
+   a) [Opción A]
+   b) [Opción B]
+   c) [Opción C]
+   d) [Opción D]
 
-[Continuar con más preguntas tipo test...]
+**3.** ¿[Pregunta]?
+   a) [Opción A]
+   b) [Opción B]
+   c) [Opción C]
+   d) [Opción D]
 
----
+[Continuar hasta la pregunta 20, distribuyendo equitativamente entre todos los módulos...]
 
-## SECCIÓN B: Verdadero o Falso (20 puntos)
-*Cada pregunta vale 4 puntos. Indica V o F.*
-
-**11.** "[Afirmación]" ___
-
-[Continuar...]
-
----
-
-## SECCIÓN C: Respuesta Corta (20 puntos)
-*Responde en 2-3 frases. Cada pregunta vale 5 puntos.*
-
-**16.** [Pregunta]
-
-[Continuar...]
-
----
-
-## SECCIÓN D: Desarrollo (10 puntos)
-*Responde de forma completa y argumentada.*
-
-**20.** [Pregunta de desarrollo o caso práctico]
+**20.** ¿[Pregunta]?
+   a) [Opción A]
+   b) [Opción B]
+   c) [Opción C]
+   d) [Opción D]
 ---FIN_EXAMEN---
-
----RUBRICA---
-## Rúbrica de Evaluación - Sección D
-
-| Criterio | Excelente (10) | Bien (7-8) | Suficiente (5-6) | Insuficiente (<5) |
-|----------|----------------|------------|------------------|-------------------|
-| Comprensión | [Descripción] | [Descripción] | [Descripción] | [Descripción] |
-| Argumentación | [Descripción] | [Descripción] | [Descripción] | [Descripción] |
-| Aplicación | [Descripción] | [Descripción] | [Descripción] | [Descripción] |
----FIN_RUBRICA---
 
 ---SOLUCIONES---
 ## Clave de Respuestas
 
-### Sección A
-1. [Respuesta] - [Breve explicación]
-2. [Respuesta] - [Breve explicación]
-[Continuar...]
-
-### Sección B
-11. [V/F] - [Explicación]
-[Continuar...]
-
-### Sección C
-16. **Respuesta modelo:** [Respuesta completa]
-[Continuar...]
-
-### Sección D
-20. **Puntos clave que debe incluir:**
-- [Punto 1]
-- [Punto 2]
-- [Punto 3]
+| Pregunta | Respuesta | Explicación breve |
+|----------|-----------|-------------------|
+| 1 | c) ✓ | [Por qué es correcta] |
+| 2 | a) ✓ | [Por qué es correcta] |
+| 3 | b) ✓ | [Por qué es correcta] |
+| 4 | d) ✓ | [Por qué es correcta] |
+| 5 | a) ✓ | [Por qué es correcta] |
+| 6 | c) ✓ | [Por qué es correcta] |
+| 7 | b) ✓ | [Por qué es correcta] |
+| 8 | d) ✓ | [Por qué es correcta] |
+| 9 | a) ✓ | [Por qué es correcta] |
+| 10 | c) ✓ | [Por qué es correcta] |
+| 11 | b) ✓ | [Por qué es correcta] |
+| 12 | a) ✓ | [Por qué es correcta] |
+| 13 | d) ✓ | [Por qué es correcta] |
+| 14 | c) ✓ | [Por qué es correcta] |
+| 15 | b) ✓ | [Por qué es correcta] |
+| 16 | a) ✓ | [Por qué es correcta] |
+| 17 | d) ✓ | [Por qué es correcta] |
+| 18 | c) ✓ | [Por qué es correcta] |
+| 19 | b) ✓ | [Por qué es correcta] |
+| 20 | a) ✓ | [Por qué es correcta] |
 ---FIN_SOLUCIONES---
 PROMPT;
     }

@@ -516,12 +516,16 @@
   // =========================================================================
   // PASO 3: MATERIALES COMPLEMENTARIOS
   // =========================================================================
+  let selectedMaterialType = null;
+  
   function renderMaterialsPanel(modules) {
     // Crear el panel si no existe
     let materialsPanel = document.getElementById('materials-panel');
     if (materialsPanel) {
       materialsPanel.remove();
     }
+    
+    selectedMaterialType = null;
     
     const panelHtml = `
       <div id="materials-panel" class="mt-8 glass-strong rounded-2xl border border-slate-200/50 overflow-hidden">
@@ -532,36 +536,51 @@
             </div>
             <div>
               <h3 class="font-bold text-slate-800">Materiales complementarios</h3>
-              <p class="text-xs text-slate-500">Paso 3 (opcional): Genera recursos adicionales a partir del contenido</p>
+              <p class="text-xs text-slate-500">Paso 3 (opcional): Selecciona un tipo y genera recursos adicionales</p>
             </div>
           </div>
         </div>
         
         <div class="p-4">
+          <p class="text-sm text-slate-600 mb-3">Selecciona qué quieres generar:</p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <button id="gen-flashcards-btn" class="material-btn group p-4 rounded-xl border-2 border-slate-200 hover:border-violet-400 hover:bg-violet-50 transition-all text-left">
+            <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-violet-400 transition-all text-left" data-type="flashcards">
               <i class="iconoir-multiple-pages text-2xl text-violet-500 mb-2 block"></i>
               <p class="font-semibold text-slate-700 text-sm">Flashcards</p>
               <p class="text-xs text-slate-500">Tarjetas de estudio</p>
-            </button>
+            </div>
             
-            <button id="gen-quiz-btn" class="material-btn group p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all text-left">
+            <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-400 transition-all text-left" data-type="quiz">
               <i class="iconoir-check-circle text-2xl text-emerald-500 mb-2 block"></i>
               <p class="font-semibold text-slate-700 text-sm">Tests</p>
-              <p class="text-xs text-slate-500">Preguntas por módulo</p>
-            </button>
+              <p class="text-xs text-slate-500">5-10 preguntas/módulo</p>
+            </div>
             
-            <button id="gen-exam-btn" class="material-btn group p-4 rounded-xl border-2 border-slate-200 hover:border-orange-400 hover:bg-orange-50 transition-all text-left">
+            <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-orange-400 transition-all text-left" data-type="final_exam">
               <i class="iconoir-graduation-cap text-2xl text-orange-500 mb-2 block"></i>
               <p class="font-semibold text-slate-700 text-sm">Examen final</p>
-              <p class="text-xs text-slate-500">Evaluación completa</p>
-            </button>
+              <p class="text-xs text-slate-500">20 preguntas tipo test</p>
+            </div>
             
-            <button id="gen-podcast-btn" class="material-btn group p-4 rounded-xl border-2 border-slate-200 hover:border-pink-400 hover:bg-pink-50 transition-all text-left">
+            <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-pink-400 transition-all text-left" data-type="podcast">
               <i class="iconoir-microphone text-2xl text-pink-500 mb-2 block"></i>
               <p class="font-semibold text-slate-700 text-sm">Podcast</p>
               <p class="text-xs text-slate-500">Guion de audio</p>
-            </button>
+            </div>
+          </div>
+          
+          <!-- Botón de generar (aparece al seleccionar) -->
+          <div id="generate-material-action" class="hidden mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="font-semibold text-slate-700">Seleccionado: <span id="selected-material-name" class="text-violet-600"></span></p>
+                <p class="text-xs text-slate-500">Haz clic en Generar para crear el material</p>
+              </div>
+              <button id="confirm-generate-btn" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2">
+                <i class="iconoir-spark"></i>
+                <span>Generar</span>
+              </button>
+            </div>
           </div>
           
           <!-- Área de resultado del material generado -->
@@ -603,11 +622,39 @@
     
     modulesContainer.insertAdjacentHTML('afterend', panelHtml);
     
-    // Event listeners para botones de materiales
-    document.getElementById('gen-flashcards-btn')?.addEventListener('click', () => generateMaterial('flashcards'));
-    document.getElementById('gen-quiz-btn')?.addEventListener('click', () => generateMaterial('quiz'));
-    document.getElementById('gen-exam-btn')?.addEventListener('click', () => generateMaterial('final_exam'));
-    document.getElementById('gen-podcast-btn')?.addEventListener('click', () => generateMaterial('podcast'));
+    const typeNames = {
+      'flashcards': 'Flashcards',
+      'quiz': 'Tests por módulo',
+      'final_exam': 'Examen final',
+      'podcast': 'Guion de Podcast'
+    };
+    
+    // Event listeners para tarjetas de selección
+    document.querySelectorAll('.material-card').forEach(card => {
+      card.addEventListener('click', () => {
+        // Quitar selección anterior
+        document.querySelectorAll('.material-card').forEach(c => {
+          c.classList.remove('ring-2', 'ring-violet-500', 'bg-violet-50');
+        });
+        
+        // Seleccionar esta tarjeta
+        card.classList.add('ring-2', 'ring-violet-500', 'bg-violet-50');
+        selectedMaterialType = card.dataset.type;
+        
+        // Mostrar botón de generar
+        const action = document.getElementById('generate-material-action');
+        const nameLbl = document.getElementById('selected-material-name');
+        if (action) action.classList.remove('hidden');
+        if (nameLbl) nameLbl.textContent = typeNames[selectedMaterialType] || selectedMaterialType;
+      });
+    });
+    
+    // Botón confirmar generación
+    document.getElementById('confirm-generate-btn')?.addEventListener('click', () => {
+      if (selectedMaterialType) {
+        generateMaterial(selectedMaterialType);
+      }
+    });
     
     // Toggle vista previa/raw del material
     const materialsPanel2 = document.getElementById('materials-panel');
@@ -776,7 +823,7 @@
     const materialsPanel = document.getElementById('materials-panel');
     if (!materialsPanel) return;
     
-    // Mapeo con clases CSS completas (no dinámicas para Tailwind)
+    // Mapeo con clases CSS completas
     const materialTypeMap = {
       'course_material_flashcards': { 
         icon: 'iconoir-multiple-pages', 
@@ -806,6 +853,9 @@
       existingSection.remove();
     }
     
+    // Ordenar por fecha (más reciente primero)
+    materials.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
     const materialsHtml = `
       <div class="existing-materials mb-4 p-4 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-xl">
         <p class="text-sm font-semibold text-violet-800 mb-3 flex items-center gap-2">
@@ -818,10 +868,15 @@
               label: 'Material', 
               btnClass: 'border-gray-300 hover:bg-gray-50 text-gray-700'
             };
+            // Formatear fecha corta
+            const date = mat.created_at ? new Date(mat.created_at).toLocaleDateString('es-ES', { 
+              day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
+            }) : '';
             return `
               <button class="existing-material-badge px-3 py-2 bg-white border-2 ${info.btnClass} rounded-lg transition-all flex items-center gap-2 text-sm font-medium shadow-sm hover:shadow" data-material-id="${mat.id}" data-content-type="${mat.content_type}">
                 <i class="${info.icon}"></i>
                 <span>${info.label}</span>
+                <span class="text-xs opacity-60">${date}</span>
                 <i class="iconoir-arrow-right text-xs opacity-50"></i>
               </button>
             `;
