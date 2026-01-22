@@ -619,13 +619,12 @@
     const phaseLabels = { 1: 'Índice', 2: 'Desarrollado' };
 
     historyList.innerHTML = items.map(item => {
-      const inputData = typeof item.input_data === 'string' ? JSON.parse(item.input_data) : item.input_data;
-      const outputData = typeof item.output_data === 'string' ? JSON.parse(item.output_data) : item.output_data;
+      const inputData = typeof item.input_data === 'string' ? JSON.parse(item.input_data) : (item.input_data || {});
       const config = inputData?.config || {};
       
-      // Detectar fase: si tiene módulos desarrollados, es fase 2
-      const hasModules = outputData?.modules && outputData.modules.length > 0;
-      const phase = hasModules ? 2 : (inputData?.phase || outputData?.phase || 1);
+      // Detectar fase usando content_type (disponible en listado)
+      // course_developed = fase 2, course_outline = fase 1
+      const phase = item.content_type === 'course_developed' ? 2 : 1;
       
       const date = new Date(item.created_at).toLocaleDateString('es-ES', {
         day: 'numeric',
