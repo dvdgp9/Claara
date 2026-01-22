@@ -740,6 +740,10 @@
 
   // Buscar materiales complementarios ya generados para un curso
   async function loadRelatedMaterials(courseExecutionId) {
+    if (!courseExecutionId) return;
+    
+    const targetId = parseInt(courseExecutionId, 10);
+    
     try {
       const response = await fetch(`/api/gestures/history.php?type=${GESTURE_TYPE}&limit=100`, {
         credentials: 'include'
@@ -753,9 +757,11 @@
         const contentType = item.content_type || '';
         if (!contentType.startsWith('course_material_')) return false;
         
-        // Parsear input_data para obtener source_execution_id
-        const inputData = typeof item.input_data === 'string' ? JSON.parse(item.input_data) : (item.input_data || {});
-        return inputData.source_execution_id == courseExecutionId;
+        // input_data ya viene parseado desde el backend
+        const inputData = item.input_data || {};
+        const sourceId = parseInt(inputData.source_execution_id, 10);
+        
+        return sourceId === targetId;
       });
       
       if (relatedMaterials.length > 0) {
@@ -770,32 +776,53 @@
     const materialsPanel = document.getElementById('materials-panel');
     if (!materialsPanel) return;
     
+    // Mapeo con clases CSS completas (no dinámicas para Tailwind)
     const materialTypeMap = {
-      'course_material_flashcards': { icon: 'iconoir-multiple-pages', label: 'Flashcards', color: 'violet' },
-      'course_material_quiz': { icon: 'iconoir-check-circle', label: 'Tests', color: 'emerald' },
-      'course_material_final_exam': { icon: 'iconoir-graduation-cap', label: 'Examen', color: 'orange' },
-      'course_material_podcast': { icon: 'iconoir-microphone', label: 'Podcast', color: 'pink' }
+      'course_material_flashcards': { 
+        icon: 'iconoir-multiple-pages', 
+        label: 'Flashcards', 
+        btnClass: 'border-violet-300 hover:bg-violet-50 text-violet-700'
+      },
+      'course_material_quiz': { 
+        icon: 'iconoir-check-circle', 
+        label: 'Tests', 
+        btnClass: 'border-emerald-300 hover:bg-emerald-50 text-emerald-700'
+      },
+      'course_material_final_exam': { 
+        icon: 'iconoir-graduation-cap', 
+        label: 'Examen', 
+        btnClass: 'border-orange-300 hover:bg-orange-50 text-orange-700'
+      },
+      'course_material_podcast': { 
+        icon: 'iconoir-microphone', 
+        label: 'Podcast', 
+        btnClass: 'border-pink-300 hover:bg-pink-50 text-pink-700'
+      }
     };
     
-    // Crear sección de materiales ya generados
+    // Eliminar sección existente si hay
     const existingSection = materialsPanel.querySelector('.existing-materials');
     if (existingSection) {
       existingSection.remove();
     }
     
     const materialsHtml = `
-      <div class="existing-materials mb-4 p-4 bg-violet-50 border border-violet-200 rounded-xl">
-        <p class="text-sm font-semibold text-violet-800 mb-3">
-          <i class="iconoir-check-circle mr-1"></i> Materiales ya generados
+      <div class="existing-materials mb-4 p-4 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-xl">
+        <p class="text-sm font-semibold text-violet-800 mb-3 flex items-center gap-2">
+          <i class="iconoir-check-circle"></i> Materiales ya generados (clic para ver)
         </p>
         <div class="flex flex-wrap gap-2">
           ${materials.map(mat => {
-            const info = materialTypeMap[mat.content_type] || { icon: 'iconoir-spark', label: 'Material', color: 'gray' };
+            const info = materialTypeMap[mat.content_type] || { 
+              icon: 'iconoir-spark', 
+              label: 'Material', 
+              btnClass: 'border-gray-300 hover:bg-gray-50 text-gray-700'
+            };
             return `
-              <button class="existing-material-badge px-3 py-2 bg-white border-2 border-${info.color}-300 hover:bg-${info.color}-50 rounded-lg transition-all flex items-center gap-2 text-sm font-medium text-${info.color}-700" data-material-id="${mat.id}" data-content-type="${mat.content_type}">
+              <button class="existing-material-badge px-3 py-2 bg-white border-2 ${info.btnClass} rounded-lg transition-all flex items-center gap-2 text-sm font-medium shadow-sm hover:shadow" data-material-id="${mat.id}" data-content-type="${mat.content_type}">
                 <i class="${info.icon}"></i>
                 <span>${info.label}</span>
-                <i class="iconoir-eye text-xs"></i>
+                <i class="iconoir-arrow-right text-xs opacity-50"></i>
               </button>
             `;
           }).join('')}
@@ -1039,21 +1066,33 @@
             'course_material_podcast': 'Guion de Podcast'
           };
           
-          // Mostrar en un modal o sección especial
           const materialOutput = outputData?.raw || item.output_content || '';
           const materialTitle = materialTypeNames[contentType] || 'Material';
+          
+          // Obtener input_data para el botón "volver al curso"
+          const inputData = typeof item.input_data === 'string' 
+            ? JSON.parse(item.input_data) 
+            : (item.input_data || {});
+          const sourceExecutionId = inputData.source_execution_id;
           
           // Ocultar otras secciones y mostrar resultado
           if (inputSection) inputSection.classList.add('hidden');
           if (outlineSection) outlineSection.classList.add('hidden');
           if (resultSection) resultSection.classList.remove('hidden');
           
-          // Mostrar un módulo "virtual" con el material
           if (resultTitle) resultTitle.textContent = outputData?.course_title || 'Curso';
           if (resultSource) resultSource.textContent = materialTitle;
           
           if (modulesContainer) {
             modulesContainer.innerHTML = `
+              ${sourceExecutionId ? `
+              <div class="mb-4">
+                <button id="back-to-course-btn" class="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium" data-course-id="${sourceExecutionId}">
+                  <i class="iconoir-arrow-left"></i>
+                  <span>Volver al curso</span>
+                </button>
+              </div>
+              ` : ''}
               <div class="glass-strong rounded-2xl border border-slate-200/50 overflow-hidden mb-4">
                 <div class="p-4 border-b border-slate-200/50 bg-gradient-to-r from-violet-50 to-purple-50">
                   <div class="flex items-center justify-between">
@@ -1131,6 +1170,17 @@
                 }
               });
             });
+            
+            // Botón volver al curso
+            const backBtn = document.getElementById('back-to-course-btn');
+            if (backBtn) {
+              backBtn.addEventListener('click', () => {
+                const courseId = backBtn.dataset.courseId;
+                if (courseId) {
+                  loadHistoryItem(courseId, 2, 'course_developed');
+                }
+              });
+            }
           }
           
           // Quitar panel de materiales si existe

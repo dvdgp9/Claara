@@ -66,7 +66,7 @@ class GestureExecutionsRepo
      */
     public function listByUserAndType(int $userId, string $gestureType, int $limit = 20): array
     {
-        $sql = "SELECT id, title, model, content_type, business_line, is_favorite, created_at
+        $sql = "SELECT id, title, model, content_type, business_line, is_favorite, input_data, created_at
                 FROM gesture_executions 
                 WHERE user_id = :user_id AND gesture_type = :gesture_type
                 ORDER BY created_at DESC
@@ -78,7 +78,16 @@ class GestureExecutionsRepo
         $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Decodificar input_data para cada fila
+        foreach ($rows as &$row) {
+            if (isset($row['input_data'])) {
+                $row['input_data'] = json_decode($row['input_data'], true) ?? [];
+            }
+        }
+        
+        return $rows;
     }
 
     /**
