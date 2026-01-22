@@ -78,7 +78,7 @@ class CourseGenerator
     {
         $this->llmClient = $llmClient ?? new OpenRouterClient(
             null,
-            'google/gemini-2.5-flash',
+            'google/gemini-3-flash-preview',
             null,
             0.7,
             16384
@@ -87,7 +87,7 @@ class CourseGenerator
         // Cliente con más tokens para desarrollo de módulos largos
         $this->llmClientLong = new OpenRouterClient(
             null,
-            'google/gemini-2.5-flash',
+            'google/gemini-3-flash-preview',
             null,
             0.7,
             32768

@@ -276,15 +276,50 @@
   // =========================================================================
   async function developModules() {
     if (!currentOutline || !currentExecutionId) {
-      showError('No hay índice para desarrollar');
+      alert('No hay índice para desarrollar');
       return;
     }
 
     // Recoger cambios del editor
     const updatedOutline = collectOutlineChanges();
+    const totalModules = updatedOutline.modules?.length || 0;
     
-    showProgress('Desarrollando módulos...', `Generando contenido del módulo 1 de ${updatedOutline.modules?.length || 0}`);
-    hideError();
+    // Mostrar progreso VISIBLE en la sección de outline
+    const developBtn = document.getElementById('develop-modules-btn');
+    const outlineEditor = document.getElementById('outline-editor');
+    
+    if (developBtn) {
+      developBtn.disabled = true;
+      developBtn.innerHTML = `
+        <i class="iconoir-refresh animate-spin"></i>
+        <span>Generando módulo 1 de ${totalModules}...</span>
+      `;
+      developBtn.classList.add('opacity-75', 'cursor-wait');
+    }
+    
+    // Añadir panel de progreso visible
+    const progressHtml = `
+      <div id="develop-progress" class="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+            <i class="iconoir-refresh animate-spin text-emerald-600 text-xl"></i>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-emerald-800">Desarrollando contenido del curso...</p>
+            <p class="text-sm text-emerald-600">Generando módulo 1 de ${totalModules}. Esto puede tardar varios minutos.</p>
+          </div>
+        </div>
+        <div class="mt-3 bg-emerald-200 rounded-full h-2 overflow-hidden">
+          <div id="develop-progress-bar" class="bg-emerald-600 h-2 transition-all duration-500" style="width: 5%"></div>
+        </div>
+      </div>
+    `;
+    
+    // Insertar antes de los botones
+    const buttonsContainer = outlineEditor?.querySelector('.flex.items-center.justify-between');
+    if (buttonsContainer) {
+      buttonsContainer.insertAdjacentHTML('beforebegin', progressHtml);
+    }
 
     try {
       const response = await fetch('/api/gestures/course-develop.php', {
@@ -298,18 +333,41 @@
       });
 
       const data = await response.json();
+      
+      console.log('Respuesta de develop:', data); // Debug
+      
+      // Quitar panel de progreso
+      document.getElementById('develop-progress')?.remove();
 
       if (!data.success) {
         throw new Error(data.error?.message || data.message || 'Error desarrollando módulos');
       }
 
+      if (!data.modules || data.modules.length === 0) {
+        throw new Error('No se generaron módulos. Revisa el contenido fuente.');
+      }
+
+      console.log('Módulos generados:', data.modules.length); // Debug
+      
+      // Mostrar módulos desarrollados
       showDevelopedModules(data);
       loadHistory();
 
     } catch (err) {
-      showError(err.message);
-    } finally {
-      hideProgress();
+      // Quitar panel de progreso
+      document.getElementById('develop-progress')?.remove();
+      
+      // Restaurar botón
+      if (developBtn) {
+        developBtn.disabled = false;
+        developBtn.innerHTML = `
+          <i class="iconoir-play"></i>
+          <span>Desarrollar ${totalModules} módulos</span>
+        `;
+        developBtn.classList.remove('opacity-75', 'cursor-wait');
+      }
+      
+      alert('Error: ' + err.message);
     }
   }
 
