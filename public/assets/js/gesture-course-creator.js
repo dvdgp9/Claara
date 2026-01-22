@@ -1158,7 +1158,7 @@
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Sin título')}</p>
               <p class="text-xs text-slate-500 mt-0.5">
-                ${levelIcon} ${typeInfo.label} · ${date}
+                ${typeInfo.label} · ${date}
               </p>
             </div>
             <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Eliminar">
