@@ -1521,45 +1521,53 @@ Gesto dedicado para convertir archivos de audio en texto. Reutiliza `AudioTransc
 
 ---
 
-## Feature: Gesto "Creador de Cursos" ✅
+## Feature: Gesto "Creador de Cursos" 🚧 En desarrollo
 
 ### Motivación
-Gesto para generar material formativo completo a partir de PDFs o texto (manuales, teoría, documentación). Permite crear cursos estructurados con múltiples tipos de outputs.
+Gesto para generar material formativo completo a partir de PDFs o texto. Pipeline de 2 fases:
+1. **Fase 1**: Generar índice pedagógico editable
+2. **Fase 2**: Desarrollar módulos completos desde el índice
 
-### Outputs disponibles (selección múltiple)
-1. **Temario estructurado** (`syllabus`) - Módulos, lecciones, objetivos de aprendizaje
-2. **Fichas de contenido** (`content_cards`) - Resúmenes por tema con conceptos clave
-3. **Autoevaluación** (`quiz`) - Preguntas tipo test por módulo
-4. **Microlearning** (`flashcards`) - Flashcards y píldoras de conocimiento
-5. **Podcast educativo** (`podcast`) - Guion para audio con Iris y Bruno
-6. **Examen final** (`final_exam`) - Evaluación completa del temario
-
-### Configuración
-- **Duración**: 4h, 8h, 16h, 40h
-- **Nivel**: Básico, Intermedio, Avanzado
-- **Modalidad**: Presencial, Online, Híbrido
-
-### Archivos creados
-- `src/Content/CourseGenerator.php` - Servicio con prompts especializados
-- `public/api/gestures/course-creator.php` - API endpoint
-- `public/gestos/creador-cursos.php` - Página del gesto
-- `public/assets/js/gesture-course-creator.js` - JavaScript modular
-- `docs/migrations/012_add_course_creator_gesture.sql` - Permisos
-
-### Tareas completadas
-- [x] Backend: Servicio CourseGenerator con prompts por formato
-- [x] Backend: API endpoint con extracción PDF y generación múltiple
-- [x] Frontend: Página PHP con UI similar a transformador
-- [x] Frontend: JS con selección múltiple, tabs de resultados, historial
-- [x] Navegación: Añadido a left-tabs.php y gestos/index.php
-- [x] Permisos: Migración SQL creada
-- [ ] Testing: Pendiente ejecución de migración y pruebas manuales
-
-### Para activar
-```bash
-# Ejecutar migración
-mysql -u root -p ebonia < docs/migrations/012_add_course_creator_gesture.sql
+### Flujo de usuario (Opción B)
 ```
+[Sube PDF] → [Genera índice] → [Usuario edita índice] → [Desarrollar módulos] → [Descargar Word/PDF por módulo]
+```
+
+### Arquitectura técnica
+
+#### Fase 1: Generación de índice
+- Analiza documento fuente completo
+- Propone índice pedagógico adaptado (diferente al original)
+- Output: JSON editable con módulos, lecciones, objetivos
+- Usuario puede editar/reordenar antes de continuar
+
+#### Fase 2: Desarrollo de módulos
+- Recibe índice (editado o no) + contenido original
+- Genera contenido DESARROLLADO por módulo (secuencial)
+- Cada módulo: introducción, desarrollo, ejemplos, resumen
+- Progreso visible: "Desarrollando módulo 2 de 5..."
+- Output: Markdown por módulo → Word/PDF descargable
+
+### Endpoints API
+- `POST /api/gestures/course-creator.php` - Fase 1: genera índice
+- `POST /api/gestures/course-develop.php` - Fase 2: desarrolla módulos
+
+### Archivos
+- `src/Content/CourseGenerator.php` - Servicio con generateOutline() y developModules()
+- `public/api/gestures/course-creator.php` - Endpoint fase 1
+- `public/api/gestures/course-develop.php` - Endpoint fase 2 (nuevo)
+- `public/gestos/creador-cursos.php` - Página del gesto
+- `public/assets/js/gesture-course-creator.js` - JS con flujo 2 pasos
+
+### Tareas
+- [x] Backend: Servicio CourseGenerator base
+- [x] Navegación y permisos
+- [ ] Refactorizar Fase 1: generateOutline() con JSON editable
+- [ ] Implementar Fase 2: developModules() secuencial
+- [ ] API: endpoint course-develop.php
+- [ ] Frontend: editor de índice + progreso por módulo
+- [ ] Integrar DocumentGenerator para exports
+- [ ] Testing
 
 ---
 

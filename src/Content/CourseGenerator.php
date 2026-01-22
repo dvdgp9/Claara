@@ -5,17 +5,28 @@ use Chat\OpenRouterClient;
 
 /**
  * Generador de material de cursos a partir de contenido fuente (PDF, texto)
- * Outputs: temario, fichas, quizzes, flashcards, podcasts educativos, examen final
+ * 
+ * Flujo de 2 fases:
+ * - Fase 1: generateOutline() - Genera índice pedagógico editable (JSON)
+ * - Fase 2: developModules() - Desarrolla contenido completo por módulo
+ * 
+ * Otros outputs: fichas, quizzes, flashcards, podcasts, examen final
  */
 class CourseGenerator
 {
     private OpenRouterClient $llmClient;
+    private OpenRouterClient $llmClientLong; // Cliente con más tokens para módulos largos
 
     private const OUTPUT_FORMATS = [
-        'syllabus' => [
-            'name' => 'Temario estructurado',
+        'outline' => [
+            'name' => 'Índice del curso',
+            'icon' => 'iconoir-list',
+            'description' => 'Estructura editable del curso'
+        ],
+        'full_course' => [
+            'name' => 'Curso completo',
             'icon' => 'iconoir-book-stack',
-            'description' => 'Módulos, lecciones y objetivos de aprendizaje'
+            'description' => 'Módulos desarrollados con contenido completo'
         ],
         'content_cards' => [
             'name' => 'Fichas de contenido',
@@ -67,11 +78,412 @@ class CourseGenerator
     {
         $this->llmClient = $llmClient ?? new OpenRouterClient(
             null,
-            'google/gemini-3-flash-preview',
+            'google/gemini-2.5-flash',
             null,
             0.7,
             16384
         );
+        
+        // Cliente con más tokens para desarrollo de módulos largos
+        $this->llmClientLong = new OpenRouterClient(
+            null,
+            'google/gemini-2.5-flash',
+            null,
+            0.7,
+            32768
+        );
+    }
+
+    // =========================================================================
+    // FASE 1: GENERACIÓN DE ÍNDICE EDITABLE
+    // =========================================================================
+
+    /**
+     * Fase 1: Genera un índice pedagógico editable del curso
+     * El usuario puede modificar este índice antes de desarrollar los módulos
+     * 
+     * @return array{success: bool, outline?: array, raw?: string, error?: string}
+     */
+    public function generateOutline(string $content, string $title = '', array $config = []): array
+    {
+        $wordCount = str_word_count($content);
+        if ($wordCount < 100) {
+            return ['success' => false, 'error' => 'El contenido es demasiado corto (mínimo 100 palabras)'];
+        }
+
+        $prompt = $this->buildOutlinePrompt($content, $title, $config);
+
+        try {
+            $response = $this->llmClient->generateText($prompt);
+            
+            if (empty($response)) {
+                return ['success' => false, 'error' => 'No se pudo generar el índice'];
+            }
+
+            // Parsear el JSON del índice
+            $outline = $this->parseOutlineResponse($response);
+            
+            if (!$outline) {
+                return [
+                    'success' => true,
+                    'outline' => null,
+                    'raw' => $response,
+                    'parse_error' => 'No se pudo parsear el JSON, revisa el formato',
+                    'model' => $this->llmClient->getModel()
+                ];
+            }
+
+            return [
+                'success' => true,
+                'outline' => $outline,
+                'raw' => $response,
+                'model' => $this->llmClient->getModel()
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => 'Error generando índice: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Parsea la respuesta del LLM para extraer el JSON del índice
+     */
+    private function parseOutlineResponse(string $response): ?array
+    {
+        // Buscar JSON en la respuesta (puede venir con texto adicional)
+        if (preg_match('/```json\s*(.+?)\s*```/s', $response, $matches)) {
+            $json = $matches[1];
+        } elseif (preg_match('/\{[\s\S]*"modules"[\s\S]*\}/s', $response, $matches)) {
+            $json = $matches[0];
+        } else {
+            return null;
+        }
+
+        $decoded = json_decode($json, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return null;
+        }
+
+        // Validar estructura mínima
+        if (!isset($decoded['modules']) || !is_array($decoded['modules'])) {
+            return null;
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Construye el prompt para generar el índice
+     */
+    private function buildOutlinePrompt(string $content, string $title, array $config): string
+    {
+        $duration = $config['duration'] ?? '8h';
+        $level = $config['level'] ?? 'intermedio';
+        $courseFormat = $config['course_format'] ?? 'online';
+        
+        $durationInfo = self::DURATION_MAP[$duration] ?? self::DURATION_MAP['8h'];
+        $levelDesc = self::LEVEL_MAP[$level] ?? self::LEVEL_MAP['intermedio'];
+        $formatDesc = self::FORMAT_MAP[$courseFormat] ?? self::FORMAT_MAP['online'];
+
+        $titleSection = $title ? "TÍTULO DEL MATERIAL FUENTE: {$title}\n\n" : '';
+
+        return <<<PROMPT
+Eres un diseñador instruccional experto. Tu tarea es analizar el contenido proporcionado y crear un ÍNDICE PEDAGÓGICO estructurado para un curso formativo.
+
+{$titleSection}CONTENIDO FUENTE:
+---
+{$content}
+---
+
+CONFIGURACIÓN DEL CURSO:
+- Duración total: {$durationInfo['hours']} horas
+- Número de módulos recomendado: {$durationInfo['modules']}
+- Lecciones por módulo: {$durationInfo['lessons_per_module']}
+- Nivel: {$levelDesc}
+- Modalidad: {$formatDesc}
+
+INSTRUCCIONES:
+1. Analiza TODO el contenido fuente y extrae los conceptos principales
+2. Reorganiza el contenido de forma PEDAGÓGICA (no copies la estructura original)
+3. Crea un índice progresivo: de lo básico a lo avanzado
+4. Define objetivos de aprendizaje claros y medibles para cada módulo
+5. Especifica qué contenido del documento fuente corresponde a cada lección
+6. El índice debe ser completo pero editable
+
+DEVUELVE ÚNICAMENTE un JSON válido con esta estructura exacta:
+
+```json
+{
+  "course_title": "Título propuesto para el curso",
+  "course_description": "Descripción general del curso en 2-3 frases",
+  "total_hours": {$durationInfo['hours']},
+  "level": "{$level}",
+  "objectives": [
+    "Objetivo general 1",
+    "Objetivo general 2",
+    "Objetivo general 3"
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "title": "Título del Módulo 1",
+      "description": "Breve descripción del módulo",
+      "duration_hours": 2,
+      "objectives": [
+        "Objetivo específico 1 del módulo",
+        "Objetivo específico 2 del módulo"
+      ],
+      "lessons": [
+        {
+          "id": "1.1",
+          "title": "Título de la lección",
+          "duration_minutes": 30,
+          "topics": ["Tema 1", "Tema 2"],
+          "source_reference": "Breve indicación de qué parte del documento cubre"
+        }
+      ]
+    }
+  ]
+}
+```
+
+IMPORTANTE:
+- Devuelve SOLO el JSON, sin texto adicional antes o después
+- Asegúrate de que el JSON sea válido y parseable
+- Incluye entre {$durationInfo['modules']} módulos
+- Cada módulo debe tener {$durationInfo['lessons_per_module']} lecciones
+- Los IDs deben ser consistentes (1, 2, 3... para módulos; 1.1, 1.2, 2.1... para lecciones)
+PROMPT;
+    }
+
+    // =========================================================================
+    // FASE 2: DESARROLLO DE MÓDULOS
+    // =========================================================================
+
+    /**
+     * Fase 2: Desarrolla todos los módulos del curso basándose en el índice
+     * Genera contenido completo para cada módulo de forma secuencial
+     * 
+     * @param string $content Contenido fuente original
+     * @param array $outline Índice del curso (de generateOutline o editado por usuario)
+     * @param callable|null $progressCallback Función para reportar progreso
+     * @return array{success: bool, modules: array, errors: array}
+     */
+    public function developModules(string $content, array $outline, ?callable $progressCallback = null): array
+    {
+        $modules = $outline['modules'] ?? [];
+        $courseTitle = $outline['course_title'] ?? 'Curso';
+        
+        if (empty($modules)) {
+            return ['success' => false, 'modules' => [], 'errors' => ['No hay módulos en el índice']];
+        }
+
+        $developedModules = [];
+        $errors = [];
+        $totalModules = count($modules);
+
+        foreach ($modules as $index => $module) {
+            $moduleNumber = $index + 1;
+            
+            // Reportar progreso
+            if ($progressCallback) {
+                $progressCallback([
+                    'status' => 'developing',
+                    'current' => $moduleNumber,
+                    'total' => $totalModules,
+                    'module_title' => $module['title'] ?? "Módulo {$moduleNumber}"
+                ]);
+            }
+
+            $result = $this->developSingleModule($content, $module, $outline, $courseTitle);
+            
+            if ($result['success']) {
+                $developedModules[] = [
+                    'module_id' => $module['id'] ?? $moduleNumber,
+                    'title' => $module['title'] ?? "Módulo {$moduleNumber}",
+                    'content' => $result['content'],
+                    'html' => $this->markdownToHtml($result['content']),
+                    'word_count' => str_word_count($result['content'])
+                ];
+            } else {
+                $errors[] = "Módulo {$moduleNumber}: " . ($result['error'] ?? 'Error desconocido');
+            }
+        }
+
+        // Reportar completado
+        if ($progressCallback) {
+            $progressCallback([
+                'status' => 'completed',
+                'current' => $totalModules,
+                'total' => $totalModules
+            ]);
+        }
+
+        return [
+            'success' => count($developedModules) > 0,
+            'modules' => $developedModules,
+            'course_title' => $courseTitle,
+            'total_developed' => count($developedModules),
+            'total_failed' => count($errors),
+            'errors' => $errors,
+            'model' => $this->llmClientLong->getModel()
+        ];
+    }
+
+    /**
+     * Desarrolla el contenido completo de un solo módulo
+     */
+    public function developSingleModule(string $content, array $module, array $outline, string $courseTitle): array
+    {
+        $prompt = $this->buildModuleDevelopmentPrompt($content, $module, $outline, $courseTitle);
+
+        try {
+            $response = $this->llmClientLong->generateText($prompt);
+            
+            if (empty($response)) {
+                return ['success' => false, 'error' => 'No se pudo generar el contenido del módulo'];
+            }
+
+            // Limpiar el contenido (quitar delimitadores si los hay)
+            $cleanContent = $this->cleanModuleContent($response);
+
+            return [
+                'success' => true,
+                'content' => $cleanContent
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Construye el prompt para desarrollar un módulo específico
+     */
+    private function buildModuleDevelopmentPrompt(string $content, array $module, array $outline, string $courseTitle): string
+    {
+        $moduleTitle = $module['title'] ?? 'Módulo';
+        $moduleDescription = $module['description'] ?? '';
+        $moduleObjectives = implode("\n- ", $module['objectives'] ?? []);
+        $lessons = $module['lessons'] ?? [];
+        
+        // Construir lista de lecciones
+        $lessonsText = '';
+        foreach ($lessons as $lesson) {
+            $lessonTitle = $lesson['title'] ?? '';
+            $topics = implode(', ', $lesson['topics'] ?? []);
+            $sourceRef = $lesson['source_reference'] ?? '';
+            $lessonsText .= "\n### {$lesson['id']}. {$lessonTitle}\n";
+            $lessonsText .= "- Temas a cubrir: {$topics}\n";
+            if ($sourceRef) {
+                $lessonsText .= "- Referencia del material fuente: {$sourceRef}\n";
+            }
+        }
+
+        // Contexto del curso completo (índice resumido)
+        $outlineContext = "Curso: {$courseTitle}\nMódulos del curso:\n";
+        foreach ($outline['modules'] ?? [] as $m) {
+            $outlineContext .= "- {$m['id']}. {$m['title']}\n";
+        }
+
+        return <<<PROMPT
+Eres un experto en diseño instruccional y redacción de contenidos formativos. Tu tarea es DESARROLLAR el contenido completo de un módulo de curso basándote en el material fuente proporcionado.
+
+CONTEXTO DEL CURSO:
+{$outlineContext}
+
+MÓDULO A DESARROLLAR: {$module['id']}. {$moduleTitle}
+{$moduleDescription}
+
+OBJETIVOS DEL MÓDULO:
+- {$moduleObjectives}
+
+LECCIONES A DESARROLLAR:
+{$lessonsText}
+
+MATERIAL FUENTE (usa esta información para desarrollar el contenido):
+---
+{$content}
+---
+
+INSTRUCCIONES DE DESARROLLO:
+
+1. **Estructura de cada lección:**
+   - Título de la lección
+   - Introducción (por qué es importante este tema)
+   - Desarrollo del contenido (explicación detallada de cada concepto)
+   - Ejemplos prácticos cuando sea posible
+   - Puntos clave a recordar
+   - Transición a la siguiente lección
+
+2. **Estilo de redacción:**
+   - Tono didáctico, claro y profesional
+   - Español de España (vosotros, expresiones peninsulares)
+   - Explicaciones progresivas (de lo simple a lo complejo)
+   - Usa analogías para conceptos difíciles
+   - Incluye ejemplos reales cuando sea posible
+
+3. **Contenido:**
+   - NO inventes información que no esté en el material fuente
+   - SÍ reorganiza y explica mejor la información
+   - SÍ añade estructura pedagógica (introducciones, resúmenes, conexiones)
+   - Desarrolla TODAS las lecciones indicadas
+   - Extensión: aproximadamente 800-1500 palabras por lección
+
+4. **Formato Markdown:**
+   - Usa ## para el título del módulo
+   - Usa ### para cada lección
+   - Usa #### para subsecciones dentro de lecciones
+   - Usa listas, negritas y cursivas para resaltar
+   - Incluye separadores --- entre lecciones
+
+DESARROLLA EL MÓDULO COMPLETO:
+PROMPT;
+    }
+
+    /**
+     * Limpia el contenido del módulo generado
+     */
+    private function cleanModuleContent(string $content): string
+    {
+        // Quitar posibles delimitadores markdown de código
+        $content = preg_replace('/^```(?:markdown)?\s*/i', '', $content);
+        $content = preg_replace('/\s*```$/i', '', $content);
+        
+        return trim($content);
+    }
+
+    /**
+     * Convierte Markdown a HTML básico
+     */
+    private function markdownToHtml(string $markdown): string
+    {
+        // Conversión básica de Markdown a HTML
+        $html = $markdown;
+        
+        // Headers
+        $html = preg_replace('/^#### (.+)$/m', '<h4>$1</h4>', $html);
+        $html = preg_replace('/^### (.+)$/m', '<h3>$1</h3>', $html);
+        $html = preg_replace('/^## (.+)$/m', '<h2>$1</h2>', $html);
+        $html = preg_replace('/^# (.+)$/m', '<h1>$1</h1>', $html);
+        
+        // Bold and italic
+        $html = preg_replace('/\*\*(.+?)\*\*/s', '<strong>$1</strong>', $html);
+        $html = preg_replace('/\*(.+?)\*/s', '<em>$1</em>', $html);
+        
+        // Lists
+        $html = preg_replace('/^- (.+)$/m', '<li>$1</li>', $html);
+        $html = preg_replace('/(<li>.*<\/li>\n?)+/s', '<ul>$0</ul>', $html);
+        
+        // Horizontal rules
+        $html = preg_replace('/^---$/m', '<hr>', $html);
+        
+        // Paragraphs
+        $html = preg_replace('/\n\n/', '</p><p>', $html);
+        $html = '<p>' . $html . '</p>';
+        $html = preg_replace('/<p><(h[1-4]|ul|hr)/', '<$1', $html);
+        $html = preg_replace('/<\/(h[1-4]|ul|hr)><\/p>/', '</$1>', $html);
+        
+        return $html;
     }
 
     /**

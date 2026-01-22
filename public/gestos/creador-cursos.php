@@ -222,7 +222,7 @@ $headerDrawerId = 'course-history-drawer';
               Creador de Cursos
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Sube un PDF o pega texto de un manual y genera material formativo completo: temario, fichas, quizzes, flashcards, podcasts y exámenes.
+              Sube un PDF o pega texto de un manual. Genera un índice pedagógico editable y desarrolla el contenido completo de cada módulo.
             </p>
           </div>
 
@@ -363,78 +363,16 @@ $headerDrawerId = 'course-history-drawer';
                 </div>
               </div>
 
-              <!-- Formatos de salida -->
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">
-                  <i class="iconoir-sparks text-emerald-500 mr-1"></i>
-                  ¿Qué material generar? <span class="font-normal text-slate-400">(selecciona varios)</span>
-                </label>
-                <p class="text-xs text-slate-500 mb-3">Haz clic en los formatos que necesites. El temario se genera primero como base.</p>
-                
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <button type="button" data-format="syllabus" class="format-card selected p-3 rounded-xl border-2 border-slate-200 text-left">
-                    <span class="check-badge"><i class="iconoir-check"></i></span>
-                    <div class="format-icon w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white mb-2 transition-transform">
-                      <i class="iconoir-book-stack text-lg"></i>
-                    </div>
-                    <div class="text-sm font-semibold text-slate-800">Temario</div>
-                    <div class="text-xs text-slate-500">Módulos y objetivos</div>
-                  </button>
-                  
-                  <button type="button" data-format="content_cards" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
-                    <span class="check-badge"><i class="iconoir-check"></i></span>
-                    <div class="format-icon w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white mb-2 transition-transform">
-                      <i class="iconoir-journal-page text-lg"></i>
-                    </div>
-                    <div class="text-sm font-semibold text-slate-800">Fichas</div>
-                    <div class="text-xs text-slate-500">Resúmenes por tema</div>
-                  </button>
-                  
-                  <button type="button" data-format="quiz" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
-                    <span class="check-badge"><i class="iconoir-check"></i></span>
-                    <div class="format-icon w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white mb-2 transition-transform">
-                      <i class="iconoir-check-circle text-lg"></i>
-                    </div>
-                    <div class="text-sm font-semibold text-slate-800">Autoevaluación</div>
-                    <div class="text-xs text-slate-500">Tests por módulo</div>
-                  </button>
-                  
-                  <button type="button" data-format="flashcards" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
-                    <span class="check-badge"><i class="iconoir-check"></i></span>
-                    <div class="format-icon w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white mb-2 transition-transform">
-                      <i class="iconoir-brain text-lg"></i>
-                    </div>
-                    <div class="text-sm font-semibold text-slate-800">Microlearning</div>
-                    <div class="text-xs text-slate-500">Flashcards y tips</div>
-                  </button>
-                  
-                  <button type="button" data-format="podcast" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
-                    <span class="check-badge"><i class="iconoir-check"></i></span>
-                    <div class="format-icon w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-white mb-2 transition-transform">
-                      <i class="iconoir-podcast text-lg"></i>
-                    </div>
-                    <div class="text-sm font-semibold text-slate-800">Podcast</div>
-                    <div class="text-xs text-slate-500">Guion para audio</div>
-                  </button>
-                  
-                  <button type="button" data-format="final_exam" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
-                    <span class="check-badge"><i class="iconoir-check"></i></span>
-                    <div class="format-icon w-10 h-10 rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white mb-2 transition-transform">
-                      <i class="iconoir-clipboard-check text-lg"></i>
-                    </div>
-                    <div class="text-sm font-semibold text-slate-800">Examen final</div>
-                    <div class="text-xs text-slate-500">Evaluación completa</div>
-                  </button>
-                </div>
-                
-                <p id="selected-count" class="text-xs text-emerald-600 mt-3 font-medium">1 formato seleccionado</p>
-              </div>
-
-              <!-- Botón generar -->
+              <!-- Botón generar índice -->
               <button type="submit" id="generate-btn" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
-                <i class="iconoir-sparks"></i>
-                <span id="generate-btn-text">Generar material del curso</span>
+                <i class="iconoir-list"></i>
+                <span id="generate-btn-text">Generar índice del curso</span>
               </button>
+              
+              <p class="text-xs text-slate-500 text-center">
+                <i class="iconoir-info-circle mr-1"></i>
+                Paso 1 de 2: Generamos un índice que podrás editar antes de desarrollar el contenido
+              </p>
               
               <!-- Progress -->
               <div id="progress-panel" class="hidden bg-emerald-50 rounded-xl p-4 border border-emerald-200">
@@ -462,34 +400,43 @@ $headerDrawerId = 'course-history-drawer';
             </form>
           </section>
 
-          <!-- Result Section -->
+          <!-- Outline Section (Fase 1 resultado) -->
+          <section id="outline-section" class="hidden">
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <i class="iconoir-list text-emerald-600 text-xl"></i>
+                </div>
+                <div>
+                  <h2 class="text-lg font-bold text-slate-800">Índice del curso</h2>
+                  <p class="text-xs text-slate-500">Paso 2 de 2: Revisa y edita el índice, luego desarrolla los módulos</p>
+                </div>
+              </div>
+            </div>
+            
+            <div id="outline-editor">
+              <!-- Se llena dinámicamente con el editor de índice -->
+            </div>
+          </section>
+
+          <!-- Result Section (Fase 2 resultado: módulos desarrollados) -->
           <section id="result-section" class="hidden space-y-4">
             
             <!-- Result Header -->
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between mb-4">
               <div>
-                <h2 id="result-title" class="text-xl font-bold text-slate-800">Material generado</h2>
+                <h2 id="result-title" class="text-xl font-bold text-slate-800">Curso desarrollado</h2>
                 <p id="result-source" class="text-sm text-slate-500"></p>
               </div>
-              <div class="flex items-center gap-2">
-                <button id="copy-all-btn" class="px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
-                  <i class="iconoir-copy"></i> Copiar todo
-                </button>
-                <button type="button" onclick="window.courseCreator.resetUI()" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg transition-colors">
-                  <i class="iconoir-plus"></i>
-                  <span>Nuevo curso</span>
-                </button>
-              </div>
+              <button type="button" id="new-course-btn" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg transition-colors">
+                <i class="iconoir-plus"></i>
+                <span>Nuevo curso</span>
+              </button>
             </div>
             
-            <!-- Result Tabs -->
-            <div id="result-tabs" class="flex flex-wrap gap-2 pb-2 border-b border-slate-200">
-              <!-- Se llenan dinámicamente -->
-            </div>
-            
-            <!-- Result Panels -->
-            <div id="result-panels">
-              <!-- Se llenan dinámicamente -->
+            <!-- Modules Container -->
+            <div id="modules-container">
+              <!-- Se llenan dinámicamente con los módulos desarrollados -->
             </div>
           </section>
 

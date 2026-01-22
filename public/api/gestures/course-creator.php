@@ -1,15 +1,14 @@
 <?php
 /**
- * API: Creador de Cursos
+ * API: Creador de Cursos - Fase 1: Generar Índice
  * POST /api/gestures/course-creator.php
  * 
- * Genera material de curso a partir de contenido fuente (PDF, texto):
- * - Temario estructurado
- * - Fichas de contenido
- * - Preguntas de autoevaluación
- * - Microlearning / Flashcards
- * - Podcast educativo
- * - Examen final
+ * Fase 1 del flujo de creación de cursos:
+ * - Extrae contenido del PDF/texto
+ * - Genera un índice pedagógico editable (JSON)
+ * - El usuario puede editar el índice antes de la Fase 2
+ * 
+ * Para la Fase 2 (desarrollar módulos), ver course-develop.php
  */
 
 require_once __DIR__ . '/../../../src/App/bootstrap.php';
@@ -45,25 +44,12 @@ $config = [
     'course_format' => $body['course_format'] ?? 'online'
 ];
 
-// Formatos a generar
-$outputFormats = $body['output_formats'] ?? [];
-if (empty($outputFormats)) {
-    $outputFormats = ['syllabus'];
-}
-
 // Validaciones de entrada
 if ($sourceType === 'text' && empty($sourceText)) {
     Response::error('missing_text', 'Se requiere el texto', 400);
 }
 if ($sourceType === 'pdf' && empty($sourcePdf)) {
     Response::error('missing_pdf', 'Se requiere el PDF en base64', 400);
-}
-
-// Validar formatos de salida
-$validFormats = array_keys(CourseGenerator::getOutputFormats());
-$invalidFormats = array_diff($outputFormats, $validFormats);
-if (!empty($invalidFormats)) {
-    Response::error('invalid_format', 'Formatos no válidos: ' . implode(', ', $invalidFormats), 400);
 }
 
 // Validar configuración
@@ -118,68 +104,67 @@ try {
         Response::error('content_too_short', 'El contenido es demasiado corto para generar un curso (mínimo 100 palabras, tienes ' . $wordCount . ')', 400);
     }
 
-    // === PASO 2: Generar material del curso ===
+    // === PASO 2: Generar índice del curso ===
     $generator = new CourseGenerator();
-    $generateResult = $generator->generateMultiple($content, $outputFormats, $title, $config);
+    $outlineResult = $generator->generateOutline($content, $title, $config);
 
-    if (!$generateResult['success']) {
-        $errorMsg = implode(', ', $generateResult['errors']);
-        Response::error('generation_failed', $errorMsg, 500);
+    if (!$outlineResult['success']) {
+        Response::error('generation_failed', $outlineResult['error'] ?? 'Error generando índice', 500);
     }
 
-    $results = $generateResult['results'];
-    $firstFormat = array_key_first($results);
-    $model = $results[$firstFormat]['model'] ?? 'unknown';
+    $outline = $outlineResult['outline'];
+    $model = $outlineResult['model'] ?? 'unknown';
 
-    // === PASO 3: Guardar en historial ===
+    // === PASO 3: Guardar en historial (fase 1) ===
     $repo = new GestureExecutionsRepo();
     
     $executionId = $repo->create([
         'user_id' => $user['id'],
         'gesture_type' => 'course-creator',
-        'title' => $title ?: 'Curso generado',
+        'title' => $outline['course_title'] ?? $title ?: 'Curso generado',
         'input_data' => [
             'source_type' => $sourceType,
             'source' => $source,
-            'output_formats' => $outputFormats,
             'word_count' => $wordCount,
-            'config' => $config
+            'config' => $config,
+            'phase' => 1
         ],
-        'output_content' => json_encode($results, JSON_UNESCAPED_UNICODE),
+        'output_content' => $content, // Guardamos el contenido extraído para la fase 2
         'output_data' => [
-            'formats' => $outputFormats,
-            'results' => $results,
+            'phase' => 1,
+            'outline' => $outline,
+            'raw' => $outlineResult['raw'] ?? '',
             'original_title' => $title,
             'config' => $config,
-            'total_generated' => $generateResult['total_generated'],
-            'total_failed' => $generateResult['total_failed']
+            'parse_error' => $outlineResult['parse_error'] ?? null
         ],
-        'content_type' => 'course_material',
+        'content_type' => 'course_outline',
         'business_line' => $body['business_line'] ?? null,
         'model' => $model
     ]);
 
     // Registrar en estadísticas
     $usageLog = new UsageLogRepo();
-    $usageLog->log($user['id'], 'gesture', count($outputFormats), [
+    $usageLog->log($user['id'], 'gesture', 1, [
         'gesture_type' => 'course-creator', 
-        'formats' => $outputFormats,
+        'phase' => 1,
         'config' => $config
     ]);
 
     // === Respuesta ===
     Response::json([
         'success' => true,
+        'phase' => 1,
         'execution_id' => $executionId,
-        'title' => $title,
-        'results' => $results,
-        'formats' => $outputFormats,
+        'title' => $outline['course_title'] ?? $title,
+        'outline' => $outline,
+        'raw' => $outlineResult['raw'] ?? '',
         'source' => $source,
+        'word_count' => $wordCount,
         'config' => $config,
         'model' => $model,
-        'total_generated' => $generateResult['total_generated'],
-        'total_failed' => $generateResult['total_failed'],
-        'errors' => $generateResult['errors']
+        'parse_error' => $outlineResult['parse_error'] ?? null,
+        'next_step' => 'Edita el índice si lo deseas y luego pulsa "Desarrollar módulos"'
     ]);
 
 } catch (\Exception $e) {

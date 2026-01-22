@@ -1,6 +1,8 @@
 /**
  * Gesto: Creador de Cursos
- * Genera material formativo a partir de PDFs o texto
+ * Flujo de 2 fases:
+ * - Fase 1: Subir PDF/texto → Generar índice editable
+ * - Fase 2: Editar índice (opcional) → Desarrollar módulos → Descargar Word/PDF
  */
 
 (function() {
@@ -12,7 +14,6 @@
   const form = document.getElementById('course-form');
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
-  const formatCards = document.querySelectorAll('.format-card');
   
   const sourcePdf = document.getElementById('source-pdf');
   const sourceText = document.getElementById('source-text');
@@ -25,75 +26,41 @@
   const progressDetail = document.getElementById('progress-detail');
   const errorPanel = document.getElementById('error-panel');
   const errorMessage = document.getElementById('error-message');
-  const selectedCount = document.getElementById('selected-count');
   
   const inputSection = document.getElementById('input-section');
+  const outlineSection = document.getElementById('outline-section');
   const resultSection = document.getElementById('result-section');
   const resultTitle = document.getElementById('result-title');
   const resultSource = document.getElementById('result-source');
-  const resultTabs = document.getElementById('result-tabs');
-  const resultPanels = document.getElementById('result-panels');
-  const copyAllBtn = document.getElementById('copy-all-btn');
+  const modulesContainer = document.getElementById('modules-container');
   
   const historyList = document.getElementById('history-list');
 
   // === State ===
   let currentTab = 'pdf';
-  let selectedFormats = new Set(['syllabus']);
   let pdfBase64 = null;
-  let currentResults = null;
-
-  // === Format config ===
-  const formatConfig = {
-    syllabus: { name: 'Temario', icon: 'iconoir-book-stack', color: 'from-emerald-500 to-teal-600' },
-    content_cards: { name: 'Fichas', icon: 'iconoir-journal-page', color: 'from-blue-500 to-indigo-600' },
-    quiz: { name: 'Autoevaluación', icon: 'iconoir-check-circle', color: 'from-amber-500 to-orange-600' },
-    flashcards: { name: 'Microlearning', icon: 'iconoir-brain', color: 'from-purple-500 to-pink-600' },
-    podcast: { name: 'Podcast', icon: 'iconoir-podcast', color: 'from-red-500 to-orange-500' },
-    final_exam: { name: 'Examen Final', icon: 'iconoir-clipboard-check', color: 'from-slate-600 to-slate-800' }
-  };
+  let currentOutline = null;
+  let currentExecutionId = null;
+  let sourceContent = null;
 
   // === Tab switching ===
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      currentTab = tab;
-      
-      tabBtns.forEach(b => {
-        b.classList.remove('active', 'bg-emerald-100', 'text-emerald-700');
-        b.classList.add('bg-slate-100', 'text-slate-600');
+  if (tabBtns) {
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        currentTab = tab;
+        
+        tabBtns.forEach(b => {
+          b.classList.remove('active', 'bg-emerald-100', 'text-emerald-700');
+          b.classList.add('bg-slate-100', 'text-slate-600');
+        });
+        btn.classList.add('active', 'bg-emerald-100', 'text-emerald-700');
+        btn.classList.remove('bg-slate-100', 'text-slate-600');
+        
+        tabContents.forEach(c => c.classList.add('hidden'));
+        document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
       });
-      btn.classList.add('active', 'bg-emerald-100', 'text-emerald-700');
-      btn.classList.remove('bg-slate-100', 'text-slate-600');
-      
-      tabContents.forEach(c => c.classList.add('hidden'));
-      document.getElementById(`tab-${tab}`).classList.remove('hidden');
     });
-  });
-
-  // === Multiple format selection ===
-  formatCards.forEach(card => {
-    card.addEventListener('click', () => {
-      const format = card.dataset.format;
-      
-      if (selectedFormats.has(format)) {
-        if (selectedFormats.size > 1) {
-          selectedFormats.delete(format);
-          card.classList.remove('selected');
-        }
-      } else {
-        selectedFormats.add(format);
-        card.classList.add('selected');
-      }
-      
-      updateSelectedCount();
-    });
-  });
-
-  function updateSelectedCount() {
-    const count = selectedFormats.size;
-    selectedCount.textContent = `${count} formato${count !== 1 ? 's' : ''} seleccionado${count !== 1 ? 's' : ''}`;
-    generateBtnText.textContent = count > 1 ? `Generar ${count} materiales` : 'Generar material del curso';
   }
 
   // === PDF handling ===
@@ -118,44 +85,47 @@
       reader.onload = (ev) => {
         const base64 = ev.target.result.split(',')[1];
         pdfBase64 = base64;
-        pdfFilename.querySelector('span').textContent = file.name;
-        pdfFilename.classList.remove('hidden');
+        if (pdfFilename) {
+          pdfFilename.querySelector('span').textContent = file.name;
+          pdfFilename.classList.remove('hidden');
+        }
       };
       reader.readAsDataURL(file);
     });
   }
 
-  // === Form submission ===
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await generateContent();
-  });
+  // === Form submission (Fase 1: Generar índice) ===
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await generateOutline();
+    });
+  }
 
-  async function generateContent() {
-    const formats = Array.from(selectedFormats);
-    
-    // Obtener configuración
+  // =========================================================================
+  // FASE 1: GENERAR ÍNDICE
+  // =========================================================================
+  async function generateOutline() {
     const duration = document.querySelector('input[name="duration"]:checked')?.value || '8h';
     const level = document.querySelector('input[name="level"]:checked')?.value || 'intermedio';
     const courseFormat = document.querySelector('input[name="course_format"]:checked')?.value || 'online';
     
     let inputData = { 
       source_type: currentTab,
-      output_formats: formats,
-      duration: duration,
-      level: level,
+      duration,
+      level,
       course_format: courseFormat
     };
     
     switch (currentTab) {
       case 'text':
-        const text = sourceText.value.trim();
+        const text = sourceText?.value?.trim();
         if (!text) {
           showError('Por favor, introduce el texto del material');
           return;
         }
         if (text.split(/\s+/).length < 50) {
-          showError('El texto es demasiado corto (mínimo 50 palabras para generar un curso)');
+          showError('El texto es demasiado corto (mínimo 50 palabras)');
           return;
         }
         inputData.text = text;
@@ -171,8 +141,7 @@
         break;
     }
 
-    const formatCount = formats.length;
-    showProgress(`Generando ${formatCount} material${formatCount > 1 ? 'es' : ''}...`, 'Extrayendo contenido y creando material formativo');
+    showProgress('Analizando contenido...', 'Generando índice pedagógico del curso');
     hideError();
 
     try {
@@ -186,12 +155,13 @@
       const data = await response.json();
 
       if (!data.success) {
-        const errorMsg = data.error?.message || data.message || 'Error desconocido';
-        throw new Error(errorMsg);
+        throw new Error(data.error?.message || data.message || 'Error generando índice');
       }
 
-      currentResults = data;
-      showResults(data);
+      currentOutline = data.outline;
+      currentExecutionId = data.execution_id;
+      
+      showOutlineEditor(data);
       loadHistory();
 
     } catch (err) {
@@ -201,223 +171,277 @@
     }
   }
 
-  // === UI Functions ===
-  function showProgress(text, detail) {
-    progressPanel.classList.remove('hidden');
-    progressText.textContent = text;
-    progressDetail.textContent = detail;
-    generateBtn.disabled = true;
-    generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
-  }
-
-  function hideProgress() {
-    progressPanel.classList.add('hidden');
-    generateBtn.disabled = false;
-    generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-  }
-
-  function showError(msg) {
-    errorPanel.classList.remove('hidden');
-    errorMessage.textContent = msg;
-  }
-
-  function hideError() {
-    errorPanel.classList.add('hidden');
-  }
-
-  // === Show results with tabs ===
-  function showResults(data) {
-    inputSection.classList.add('hidden');
-    resultSection.classList.remove('hidden');
+  // =========================================================================
+  // EDITOR DE ÍNDICE
+  // =========================================================================
+  function showOutlineEditor(data) {
+    if (inputSection) inputSection.classList.add('hidden');
+    if (outlineSection) outlineSection.classList.remove('hidden');
+    if (resultSection) resultSection.classList.add('hidden');
     
-    resultTitle.textContent = data.title || 'Material del curso generado';
-    
-    const configLabels = {
-      duration: data.config?.duration || '8h',
-      level: { basico: 'Básico', intermedio: 'Intermedio', avanzado: 'Avanzado' }[data.config?.level] || 'Intermedio',
-      format: { presencial: 'Presencial', online: 'Online', hibrido: 'Híbrido' }[data.config?.course_format] || 'Online'
-    };
-    resultSource.textContent = `${configLabels.duration} · ${configLabels.level} · ${configLabels.format} · ${data.total_generated} material${data.total_generated > 1 ? 'es' : ''} generado${data.total_generated > 1 ? 's' : ''}`;
-    
-    const formats = Object.keys(data.results);
-    
-    // Render tabs
-    resultTabs.innerHTML = formats.map((format, i) => {
-      const config = formatConfig[format] || { name: format, icon: 'iconoir-document' };
-      return `
-        <button class="result-tab ${i === 0 ? 'active' : ''}" data-format="${format}">
-          <i class="${config.icon}"></i>
-          ${config.name}
+    const outline = data.outline;
+    if (!outline) {
+      showError('No se pudo generar el índice. Intenta de nuevo.');
+      return;
+    }
+
+    // Renderizar editor
+    const editorHtml = `
+      <div class="glass-strong rounded-2xl border border-slate-200/50 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800">${escapeHtml(outline.course_title || 'Índice del Curso')}</h2>
+            <p class="text-sm text-slate-500">${escapeHtml(outline.course_description || '')}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full">${outline.total_hours || 8}h</span>
+            <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">${outline.level || 'intermedio'}</span>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <h3 class="font-semibold text-slate-700 mb-2">Objetivos generales</h3>
+          <ul class="text-sm text-slate-600 space-y-1">
+            ${(outline.objectives || []).map(obj => `<li class="flex items-start gap-2"><i class="iconoir-check-circle text-emerald-500 mt-0.5"></i> ${escapeHtml(obj)}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+
+      <div class="space-y-4 mb-6" id="modules-editor">
+        ${(outline.modules || []).map((module, i) => renderModuleEditor(module, i)).join('')}
+      </div>
+
+      <div class="flex items-center justify-between">
+        <button type="button" id="back-to-input-btn" class="px-4 py-2 text-slate-600 hover:text-slate-800 flex items-center gap-2">
+          <i class="iconoir-arrow-left"></i> Volver
         </button>
-      `;
-    }).join('');
-    
-    // Render panels
-    resultPanels.innerHTML = formats.map((format, i) => {
-      const result = data.results[format];
-      return `
-        <div class="result-panel ${i === 0 ? 'active' : ''}" data-format="${format}">
-          ${renderFormatPanel(format, result)}
-        </div>
-      `;
-    }).join('');
-    
-    // Tab click handlers
-    resultTabs.querySelectorAll('.result-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        const format = tab.dataset.format;
-        
-        resultTabs.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        
-        resultPanels.querySelectorAll('.result-panel').forEach(p => p.classList.remove('active'));
-        resultPanels.querySelector(`.result-panel[data-format="${format}"]`)?.classList.add('active');
+        <button type="button" id="develop-modules-btn" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2">
+          <i class="iconoir-play"></i>
+          <span>Desarrollar ${outline.modules?.length || 0} módulos</span>
+        </button>
+      </div>
+    `;
+
+    const outlineEditor = document.getElementById('outline-editor');
+    if (outlineEditor) {
+      outlineEditor.innerHTML = editorHtml;
+      
+      // Event listeners
+      document.getElementById('back-to-input-btn')?.addEventListener('click', () => {
+        if (outlineSection) outlineSection.classList.add('hidden');
+        if (inputSection) inputSection.classList.remove('hidden');
       });
-    });
-    
-    // Copy buttons
-    resultPanels.querySelectorAll('.copy-format-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const format = btn.dataset.format;
-        const result = data.results[format];
-        
-        try {
-          await navigator.clipboard.writeText(result.raw);
-          btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
-          setTimeout(() => {
-            btn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
-          }, 2000);
-        } catch (err) {
-          console.error('Error copying:', err);
-        }
-      });
-    });
-    
-    // Download buttons
-    resultPanels.querySelectorAll('.download-format-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const format = btn.dataset.format;
-        const result = data.results[format];
-        downloadFormat(format, result, data.title);
-      });
-    });
-    
-    // Preview/Raw toggle
-    resultPanels.querySelectorAll('.preview-toggle button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const panel = btn.closest('.result-panel') || btn.closest('.glass-strong');
-        const view = btn.dataset.view;
-        const previewView = panel.querySelector('.preview-view');
-        const rawView = panel.querySelector('.raw-view');
-        
-        btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        if (view === 'preview') {
-          previewView?.classList.remove('hidden');
-          rawView?.classList.add('hidden');
-        } else {
-          previewView?.classList.add('hidden');
-          rawView?.classList.remove('hidden');
-        }
-      });
-    });
+      
+      document.getElementById('develop-modules-btn')?.addEventListener('click', developModules);
+    }
   }
 
-  function renderFormatPanel(format, result) {
-    const config = formatConfig[format] || { name: format, icon: 'iconoir-document', color: 'bg-slate-600' };
-    const previewHtml = renderMarkdownPreview(result.raw);
-    
+  function renderModuleEditor(module, index) {
+    const lessons = module.lessons || [];
     return `
-      <div class="glass-strong rounded-2xl border border-slate-200/50 overflow-hidden">
-        <div class="p-4 border-b border-slate-200/50 bg-gradient-to-r from-slate-50 to-slate-100">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-gradient-to-br ${config.color} flex items-center justify-center text-white">
-                <i class="${config.icon}"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-slate-800">${config.name}</h3>
-                <p class="text-xs text-slate-500">Modelo: ${result.model || 'AI'}</p>
-              </div>
+      <div class="glass rounded-xl border border-slate-200/50 overflow-hidden module-card" data-module-id="${module.id || index + 1}">
+        <div class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-slate-200/50">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold">
+              ${module.id || index + 1}
             </div>
-            <div class="flex items-center gap-2">
-              <button class="copy-format-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5" data-format="${format}">
-                <i class="iconoir-copy"></i> Copiar
-              </button>
-              <button class="download-format-btn px-3 py-1.5 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-format="${format}">
-                <i class="iconoir-download"></i> Descargar
-              </button>
+            <div class="flex-1">
+              <input type="text" class="module-title-input w-full font-semibold text-slate-800 bg-transparent border-0 focus:ring-0 p-0" value="${escapeHtml(module.title || '')}">
+              <p class="text-xs text-slate-500">${module.duration_hours || 2}h · ${lessons.length} lecciones</p>
             </div>
+            <button type="button" class="toggle-module-btn p-2 hover:bg-white/50 rounded-lg transition-colors">
+              <i class="iconoir-nav-arrow-down text-slate-600"></i>
+            </button>
           </div>
         </div>
-        
-        <div class="p-4">
-          <div class="preview-toggle mb-4">
-            <button class="active" data-view="preview">Vista previa</button>
-            <button data-view="raw">Código</button>
-          </div>
-          <div class="preview-view content-preview">${previewHtml}</div>
-          <div class="raw-view hidden">
-            <div class="raw-preview"><pre>${escapeHtml(result.raw)}</pre></div>
-          </div>
+        <div class="module-content p-4 space-y-3">
+          <div class="text-xs text-slate-500 mb-2">Objetivos: ${(module.objectives || []).join(', ')}</div>
+          ${lessons.map((lesson, li) => `
+            <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+              <span class="text-xs font-medium text-slate-400">${lesson.id || (index + 1) + '.' + (li + 1)}</span>
+              <div class="flex-1">
+                <input type="text" class="lesson-title-input w-full text-sm text-slate-700 bg-transparent border-0 focus:ring-0 p-0 font-medium" value="${escapeHtml(lesson.title || '')}">
+                <p class="text-xs text-slate-400 mt-1">${(lesson.topics || []).join(' · ')}</p>
+              </div>
+              <span class="text-xs text-slate-400">${lesson.duration_minutes || 30}min</span>
+            </div>
+          `).join('')}
         </div>
       </div>
     `;
   }
 
-  function renderMarkdownPreview(text) {
-    if (!text) return '<p class="text-slate-400">Sin contenido</p>';
+  // =========================================================================
+  // FASE 2: DESARROLLAR MÓDULOS
+  // =========================================================================
+  async function developModules() {
+    if (!currentOutline || !currentExecutionId) {
+      showError('No hay índice para desarrollar');
+      return;
+    }
+
+    // Recoger cambios del editor
+    const updatedOutline = collectOutlineChanges();
     
-    // Escape HTML first
-    let html = escapeHtml(text);
-    
-    // Headers
-    html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-    html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-    
-    // Bold and italic
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    
-    // Lists
-    html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
-    html = html.replace(/^(\d+)\. (.*$)/gm, '<li>$2</li>');
-    
-    // Tables (basic)
-    html = html.replace(/\|(.+)\|/g, (match, content) => {
-      const cells = content.split('|').map(c => c.trim());
-      if (cells.every(c => /^[-:]+$/.test(c))) {
-        return ''; // Skip separator rows
+    showProgress('Desarrollando módulos...', `Generando contenido del módulo 1 de ${updatedOutline.modules?.length || 0}`);
+    hideError();
+
+    try {
+      const response = await fetch('/api/gestures/course-develop.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          execution_id: currentExecutionId,
+          outline: updatedOutline
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error?.message || data.message || 'Error desarrollando módulos');
       }
-      const cellHtml = cells.map(c => `<td>${c}</td>`).join('');
-      return `<tr>${cellHtml}</tr>`;
-    });
-    
-    // Wrap consecutive table rows
-    html = html.replace(/(<tr>.*<\/tr>\n?)+/g, '<table>$&</table>');
-    
-    // Paragraphs (double newlines)
-    html = html.replace(/\n\n/g, '</p><p>');
-    html = '<p>' + html + '</p>';
-    
-    // Clean up empty paragraphs
-    html = html.replace(/<p><\/p>/g, '');
-    html = html.replace(/<p>(\s*<h[1-3]>)/g, '$1');
-    html = html.replace(/(<\/h[1-3]>)\s*<\/p>/g, '$1');
-    
-    // Line breaks within paragraphs
-    html = html.replace(/\n/g, '<br>');
-    
-    return html;
+
+      showDevelopedModules(data);
+      loadHistory();
+
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      hideProgress();
+    }
   }
 
-  function downloadFormat(format, result, courseTitle) {
-    const config = formatConfig[format] || { name: format };
-    const filename = `${slugify(courseTitle || 'curso')}-${format}.md`;
+  function collectOutlineChanges() {
+    // Recoger títulos editados de módulos y lecciones
+    const updatedOutline = JSON.parse(JSON.stringify(currentOutline));
     
-    const blob = new Blob([result.raw], { type: 'text/markdown;charset=utf-8' });
+    document.querySelectorAll('.module-card').forEach((card, mi) => {
+      const titleInput = card.querySelector('.module-title-input');
+      if (titleInput && updatedOutline.modules[mi]) {
+        updatedOutline.modules[mi].title = titleInput.value;
+      }
+      
+      card.querySelectorAll('.lesson-title-input').forEach((lessonInput, li) => {
+        if (updatedOutline.modules[mi]?.lessons?.[li]) {
+          updatedOutline.modules[mi].lessons[li].title = lessonInput.value;
+        }
+      });
+    });
+    
+    return updatedOutline;
+  }
+
+  // =========================================================================
+  // MOSTRAR MÓDULOS DESARROLLADOS
+  // =========================================================================
+  function showDevelopedModules(data) {
+    if (inputSection) inputSection.classList.add('hidden');
+    if (outlineSection) outlineSection.classList.add('hidden');
+    if (resultSection) resultSection.classList.remove('hidden');
+    
+    if (resultTitle) resultTitle.textContent = data.course_title || 'Curso desarrollado';
+    if (resultSource) resultSource.textContent = `${data.total_developed} módulo${data.total_developed !== 1 ? 's' : ''} generado${data.total_developed !== 1 ? 's' : ''}`;
+    
+    const modules = data.modules || [];
+    
+    if (modulesContainer) {
+      modulesContainer.innerHTML = modules.map((module, i) => `
+        <div class="glass-strong rounded-2xl border border-slate-200/50 overflow-hidden mb-4">
+          <div class="p-4 border-b border-slate-200/50 bg-gradient-to-r from-emerald-50 to-teal-50">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold">
+                  ${module.module_id || i + 1}
+                </div>
+                <div>
+                  <h3 class="font-semibold text-slate-800">${escapeHtml(module.title)}</h3>
+                  <p class="text-xs text-slate-500">${module.word_count || 0} palabras</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="copy-module-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5" data-index="${i}">
+                  <i class="iconoir-copy"></i> Copiar
+                </button>
+                <button class="download-module-btn px-3 py-1.5 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-index="${i}">
+                  <i class="iconoir-download"></i> Descargar
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="p-4">
+            <div class="preview-toggle mb-4">
+              <button class="active" data-view="preview">Vista previa</button>
+              <button data-view="raw">Markdown</button>
+            </div>
+            <div class="preview-view content-preview max-h-96 overflow-auto">${module.html || renderMarkdownPreview(module.content)}</div>
+            <div class="raw-view hidden">
+              <div class="raw-preview max-h-96 overflow-auto"><pre>${escapeHtml(module.content)}</pre></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      // Event listeners para botones de módulos
+      modulesContainer.querySelectorAll('.copy-module-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const idx = parseInt(btn.dataset.index);
+          const module = modules[idx];
+          try {
+            await navigator.clipboard.writeText(module.content);
+            btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+            setTimeout(() => {
+              btn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
+            }, 2000);
+          } catch (err) {
+            console.error('Error copying:', err);
+          }
+        });
+      });
+      
+      modulesContainer.querySelectorAll('.download-module-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index);
+          const module = modules[idx];
+          downloadModule(module, data.course_title);
+        });
+      });
+      
+      // Preview/Raw toggle
+      modulesContainer.querySelectorAll('.preview-toggle button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const panel = btn.closest('.glass-strong');
+          const view = btn.dataset.view;
+          
+          btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          const previewView = panel.querySelector('.preview-view');
+          const rawView = panel.querySelector('.raw-view');
+          
+          if (view === 'preview') {
+            previewView?.classList.remove('hidden');
+            rawView?.classList.add('hidden');
+          } else {
+            previewView?.classList.add('hidden');
+            rawView?.classList.remove('hidden');
+          }
+        });
+      });
+    }
+
+    // Botón nuevo curso
+    const newCourseBtn = document.getElementById('new-course-btn');
+    if (newCourseBtn) {
+      newCourseBtn.addEventListener('click', resetUI);
+    }
+  }
+
+  function downloadModule(module, courseTitle) {
+    const filename = `${slugify(courseTitle || 'curso')}-modulo-${module.module_id}.md`;
+    const blob = new Blob([module.content], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -428,45 +452,77 @@
     URL.revokeObjectURL(url);
   }
 
+  // === UI Functions ===
+  function showProgress(text, detail) {
+    if (progressPanel) progressPanel.classList.remove('hidden');
+    if (progressText) progressText.textContent = text;
+    if (progressDetail) progressDetail.textContent = detail;
+    if (generateBtn) {
+      generateBtn.disabled = true;
+      generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+  }
+
+  function hideProgress() {
+    if (progressPanel) progressPanel.classList.add('hidden');
+    if (generateBtn) {
+      generateBtn.disabled = false;
+      generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  }
+
+  function showError(msg) {
+    if (errorPanel) errorPanel.classList.remove('hidden');
+    if (errorMessage) errorMessage.textContent = msg;
+  }
+
+  function hideError() {
+    if (errorPanel) errorPanel.classList.add('hidden');
+  }
+
   function resetUI() {
-    resultSection.classList.add('hidden');
-    inputSection.classList.remove('hidden');
+    if (resultSection) resultSection.classList.add('hidden');
+    if (outlineSection) outlineSection.classList.add('hidden');
+    if (inputSection) inputSection.classList.remove('hidden');
     
-    // Reset form
     if (sourceText) sourceText.value = '';
     if (sourcePdf) sourcePdf.value = '';
     pdfBase64 = null;
     if (pdfFilename) pdfFilename.classList.add('hidden');
     
-    currentResults = null;
+    currentOutline = null;
+    currentExecutionId = null;
     hideError();
   }
 
-  // === Copy All ===
-  if (copyAllBtn) {
-    copyAllBtn.addEventListener('click', async () => {
-      if (!currentResults || !currentResults.results) return;
-      
-      let allContent = '';
-      Object.entries(currentResults.results).forEach(([format, result]) => {
-        const config = formatConfig[format] || { name: format };
-        allContent += `${'='.repeat(50)}\n`;
-        allContent += `${config.name.toUpperCase()}\n`;
-        allContent += `${'='.repeat(50)}\n\n`;
-        allContent += result.raw;
-        allContent += '\n\n\n';
-      });
-      
-      try {
-        await navigator.clipboard.writeText(allContent.trim());
-        copyAllBtn.innerHTML = '<i class="iconoir-check"></i> Copiado';
-        setTimeout(() => {
-          copyAllBtn.innerHTML = '<i class="iconoir-copy"></i> Copiar todo';
-        }, 2000);
-      } catch (err) {
-        console.error('Error copying:', err);
-      }
-    });
+  // === Markdown Preview ===
+  function renderMarkdownPreview(text) {
+    if (!text) return '<p class="text-slate-400">Sin contenido</p>';
+    
+    let html = escapeHtml(text);
+    
+    html = html.replace(/^#### (.*$)/gm, '<h4 class="text-base font-semibold text-slate-700 mt-4 mb-2">$1</h4>');
+    html = html.replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold text-slate-800 mt-6 mb-3">$1</h3>');
+    html = html.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-slate-800 mt-8 mb-4 pb-2 border-b">$1</h2>');
+    html = html.replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold text-slate-900 mb-4">$1</h1>');
+    
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    html = html.replace(/^- (.*$)/gm, '<li class="ml-4">$1</li>');
+    html = html.replace(/^(\d+)\. (.*$)/gm, '<li class="ml-4">$2</li>');
+    
+    html = html.replace(/\n\n/g, '</p><p class="mb-3">');
+    html = '<p class="mb-3">' + html + '</p>';
+    
+    html = html.replace(/<p class="mb-3"><\/p>/g, '');
+    html = html.replace(/<p class="mb-3">(\s*<h[1-4])/g, '$1');
+    html = html.replace(/(<\/h[1-4]>)\s*<\/p>/g, '$1');
+    
+    html = html.replace(/\n/g, '<br>');
+    html = html.replace(/^---$/gm, '<hr class="my-6 border-slate-200">');
+    
+    return html;
   }
 
   // === History ===
@@ -486,6 +542,8 @@
   }
 
   function renderHistory(items) {
+    if (!historyList) return;
+    
     if (!items || items.length === 0) {
       historyList.innerHTML = `
         <div class="p-6 text-center">
@@ -500,11 +558,13 @@
     }
 
     const levelIcons = { basico: '🌱', intermedio: '🌿', avanzado: '🌳' };
+    const phaseLabels = { 1: 'Índice', 2: 'Desarrollado' };
 
     historyList.innerHTML = items.map(item => {
       const inputData = typeof item.input_data === 'string' ? JSON.parse(item.input_data) : item.input_data;
+      const outputData = typeof item.output_data === 'string' ? JSON.parse(item.output_data) : item.output_data;
       const config = inputData?.config || {};
-      const formatCount = (inputData?.output_formats || []).length;
+      const phase = inputData?.phase || outputData?.phase || 1;
       const date = new Date(item.created_at).toLocaleDateString('es-ES', {
         day: 'numeric',
         month: 'short',
@@ -512,17 +572,18 @@
         minute: '2-digit'
       });
       const levelIcon = levelIcons[config.level] || '📚';
+      const phaseLabel = phaseLabels[phase] || '';
 
       return `
-        <div class="history-item group border-b border-slate-100 last:border-0" data-id="${item.id}">
+        <div class="history-item group border-b border-slate-100 last:border-0" data-id="${item.id}" data-phase="${phase}">
           <div class="history-item-main p-3 hover:bg-slate-50 cursor-pointer flex items-start gap-3">
-            <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
-              <i class="iconoir-graduation-cap text-emerald-600 text-sm"></i>
+            <div class="w-8 h-8 rounded-lg ${phase === 2 ? 'bg-emerald-600' : 'bg-emerald-100'} flex items-center justify-center shrink-0">
+              <i class="iconoir-graduation-cap ${phase === 2 ? 'text-white' : 'text-emerald-600'} text-sm"></i>
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Sin título')}</p>
               <p class="text-xs text-slate-500 mt-0.5">
-                ${levelIcon} ${config.duration || '8h'} · ${formatCount} material${formatCount !== 1 ? 'es' : ''} · ${date}
+                ${levelIcon} ${config.duration || '8h'} · ${phaseLabel} · ${date}
               </p>
             </div>
             <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Eliminar">
@@ -533,11 +594,11 @@
       `;
     }).join('');
 
-    // Event listeners
     historyList.querySelectorAll('.history-item-main').forEach(el => {
       el.addEventListener('click', () => {
         const id = el.closest('.history-item').dataset.id;
-        loadHistoryItem(id);
+        const phase = parseInt(el.closest('.history-item').dataset.phase) || 1;
+        loadHistoryItem(id, phase);
       });
     });
 
@@ -550,7 +611,7 @@
     });
   }
 
-  async function loadHistoryItem(id) {
+  async function loadHistoryItem(id, phase) {
     try {
       const response = await fetch(`/api/gestures/get.php?id=${id}`, {
         credentials: 'include'
@@ -562,26 +623,25 @@
         const outputData = typeof item.output_data === 'string' 
           ? JSON.parse(item.output_data) 
           : item.output_data;
-        const inputData = typeof item.input_data === 'string'
-          ? JSON.parse(item.input_data)
-          : item.input_data;
         
-        if (outputData?.results) {
-          currentResults = {
-            title: item.title,
-            results: outputData.results,
-            formats: outputData.formats,
-            config: inputData?.config || outputData.config,
-            total_generated: outputData.total_generated || Object.keys(outputData.results).length
-          };
-          showResults(currentResults);
+        if (phase === 2 && outputData?.modules) {
+          // Mostrar módulos desarrollados
+          showDevelopedModules({
+            course_title: outputData.course_title || item.title,
+            modules: outputData.modules,
+            total_developed: outputData.total_developed || outputData.modules.length
+          });
+        } else if (outputData?.outline) {
+          // Mostrar editor de índice
+          currentOutline = outputData.outline;
+          currentExecutionId = id;
+          showOutlineEditor({ outline: outputData.outline });
         }
         
-        // Mark as active
-        historyList.querySelectorAll('.history-item').forEach(el => {
+        historyList?.querySelectorAll('.history-item').forEach(el => {
           el.classList.remove('bg-emerald-50');
         });
-        historyList.querySelector(`.history-item[data-id="${id}"]`)?.classList.add('bg-emerald-50');
+        historyList?.querySelector(`.history-item[data-id="${id}"]`)?.classList.add('bg-emerald-50');
       }
     } catch (err) {
       console.error('Error loading history item:', err);
