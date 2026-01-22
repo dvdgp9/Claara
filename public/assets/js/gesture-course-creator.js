@@ -622,7 +622,11 @@
       const inputData = typeof item.input_data === 'string' ? JSON.parse(item.input_data) : item.input_data;
       const outputData = typeof item.output_data === 'string' ? JSON.parse(item.output_data) : item.output_data;
       const config = inputData?.config || {};
-      const phase = inputData?.phase || outputData?.phase || 1;
+      
+      // Detectar fase: si tiene módulos desarrollados, es fase 2
+      const hasModules = outputData?.modules && outputData.modules.length > 0;
+      const phase = hasModules ? 2 : (inputData?.phase || outputData?.phase || 1);
+      
       const date = new Date(item.created_at).toLocaleDateString('es-ES', {
         day: 'numeric',
         month: 'short',
