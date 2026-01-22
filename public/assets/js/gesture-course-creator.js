@@ -36,16 +36,6 @@
   const modulesContainer = document.getElementById('modules-container');
   
   const historyList = document.getElementById('history-list');
-  
-  // Fase 3: Materiales complementarios
-  const extrasSection = document.getElementById('extras-section');
-  const generateExtrasBtn = document.getElementById('generate-extras-btn');
-  const extrasResults = document.getElementById('extras-results');
-  
-  // Función para obtener checkboxes dinámicamente
-  function getExtrasCheckboxes() {
-    return document.querySelectorAll('input[name="extras"]');
-  }
 
   // === State ===
   let currentTab = 'pdf';
@@ -53,7 +43,7 @@
   let currentOutline = null;
   let currentExecutionId = null;
   let sourceContent = null;
-  let currentDevelopedModules = null;
+  let currentModules = null; // Módulos desarrollados para paso 3
   let currentCourseTitle = null;
 
   // === Tab switching ===
@@ -412,7 +402,12 @@
     if (outlineSection) outlineSection.classList.add('hidden');
     if (resultSection) resultSection.classList.remove('hidden');
     
-    if (resultTitle) resultTitle.textContent = data.course_title || 'Curso desarrollado';
+    // Guardar para paso 3
+    currentModules = data.modules || [];
+    currentCourseTitle = data.course_title || 'Curso desarrollado';
+    currentExecutionId = data.execution_id || currentExecutionId;
+    
+    if (resultTitle) resultTitle.textContent = currentCourseTitle;
     if (resultSource) resultSource.textContent = `${data.total_developed} módulo${data.total_developed !== 1 ? 's' : ''} generado${data.total_developed !== 1 ? 's' : ''}`;
     
     const modules = data.modules || [];
@@ -501,17 +496,10 @@
           }
         });
       });
+      
+      // Añadir panel de materiales complementarios (Paso 3)
+      renderMaterialsPanel(modules);
     }
-
-    // Guardar módulos en estado para Fase 3
-    currentDevelopedModules = modules;
-    currentCourseTitle = data.course_title;
-    
-    // Mostrar y configurar sección de extras
-    if (extrasSection) {
-      extrasSection.classList.remove('hidden');
-    }
-    setupExtrasUI();
 
     // Botón nuevo curso
     const newCourseBtn = document.getElementById('new-course-btn');
@@ -521,237 +509,223 @@
   }
   
   // =========================================================================
-  // FASE 3: MATERIALES COMPLEMENTARIOS
+  // PASO 3: MATERIALES COMPLEMENTARIOS
   // =========================================================================
-  function setupExtrasUI() {
-    // Limpiar resultados previos
-    if (extrasResults) {
-      extrasResults.innerHTML = '';
-      extrasResults.classList.add('hidden');
+  function renderMaterialsPanel(modules) {
+    // Crear el panel si no existe
+    let materialsPanel = document.getElementById('materials-panel');
+    if (materialsPanel) {
+      materialsPanel.remove();
     }
     
-    // Obtener checkboxes dinámicamente
-    const checkboxes = getExtrasCheckboxes();
-    
-    // Reset checkboxes
-    checkboxes.forEach(cb => {
-      cb.checked = false;
-    });
-    
-    // Actualizar estado del botón
-    updateExtrasButton();
-    
-    // Event listeners para checkboxes
-    checkboxes.forEach(cb => {
-      cb.removeEventListener('change', updateExtrasButton);
-      cb.addEventListener('change', (e) => {
-        console.log('Checkbox changed:', cb.value, cb.checked);
-        updateExtrasButton();
-      });
-      
-      // Detener propagación en el label para que no afecte a contenedores superiores
-      const label = cb.closest('label');
-      if (label) {
-        label.addEventListener('click', (e) => {
-          // No hacemos preventDefault para que el checkbox se marque, 
-          // pero detenemos propagación para que no suba al formulario
-          e.stopPropagation();
-        });
-      }
-    });
-    
-    // Event listener para botón generar
-    if (generateExtrasBtn) {
-      generateExtrasBtn.removeEventListener('click', generateExtras);
-      generateExtrasBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        generateExtras();
-      });
-    }
-  }
-  
-  function updateExtrasButton() {
-    const selectedFormats = getSelectedExtras();
-    
-    if (generateExtrasBtn) {
-      if (selectedFormats.length === 0) {
-        generateExtrasBtn.disabled = true;
-        generateExtrasBtn.innerHTML = `
-          <i class="iconoir-magic-wand"></i>
-          <span>Selecciona materiales para generar</span>
-        `;
-      } else {
-        generateExtrasBtn.disabled = false;
-        generateExtrasBtn.innerHTML = `
-          <i class="iconoir-magic-wand"></i>
-          <span>Generar ${selectedFormats.length} material${selectedFormats.length > 1 ? 'es' : ''}</span>
-        `;
-      }
-    }
-  }
-  
-  function getSelectedExtras() {
-    return Array.from(getExtrasCheckboxes())
-      .filter(cb => cb.checked)
-      .map(cb => cb.value);
-  }
-  
-  async function generateExtras() {
-    const formats = getSelectedExtras();
-    
-    if (formats.length === 0 || !currentDevelopedModules) {
-      alert('Selecciona al menos un material para generar');
-      return;
-    }
-    
-    // Mostrar progreso
-    if (generateExtrasBtn) {
-      generateExtrasBtn.disabled = true;
-      generateExtrasBtn.innerHTML = `
-        <i class="iconoir-refresh animate-spin"></i>
-        <span>Generando materiales...</span>
-      `;
-    }
-    
-    // Mostrar panel de progreso
-    if (extrasResults) {
-      extrasResults.innerHTML = `
-        <div class="p-4 bg-violet-50 border border-violet-200 rounded-xl">
+    const panelHtml = `
+      <div id="materials-panel" class="mt-8 glass-strong rounded-2xl border border-slate-200/50 overflow-hidden">
+        <div class="p-4 border-b border-slate-200/50 bg-gradient-to-r from-violet-50 to-purple-50">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
-              <i class="iconoir-refresh animate-spin text-violet-600 text-xl"></i>
+            <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+              <i class="iconoir-spark text-violet-600 text-xl"></i>
             </div>
             <div>
-              <p class="font-semibold text-violet-800">Generando ${formats.length} material${formats.length > 1 ? 'es' : ''}...</p>
-              <p class="text-sm text-violet-600">Esto puede tardar unos minutos.</p>
+              <h3 class="font-bold text-slate-800">Materiales complementarios</h3>
+              <p class="text-xs text-slate-500">Paso 3 (opcional): Genera recursos adicionales a partir del contenido</p>
             </div>
           </div>
         </div>
-      `;
-      extrasResults.classList.remove('hidden');
-    }
+        
+        <div class="p-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <button id="gen-flashcards-btn" class="material-btn group p-4 rounded-xl border-2 border-slate-200 hover:border-violet-400 hover:bg-violet-50 transition-all text-left">
+              <i class="iconoir-multiple-pages text-2xl text-violet-500 mb-2 block"></i>
+              <p class="font-semibold text-slate-700 text-sm">Flashcards</p>
+              <p class="text-xs text-slate-500">Tarjetas de estudio</p>
+            </button>
+            
+            <button id="gen-quiz-btn" class="material-btn group p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all text-left">
+              <i class="iconoir-check-circle text-2xl text-emerald-500 mb-2 block"></i>
+              <p class="font-semibold text-slate-700 text-sm">Tests</p>
+              <p class="text-xs text-slate-500">Preguntas por módulo</p>
+            </button>
+            
+            <button id="gen-exam-btn" class="material-btn group p-4 rounded-xl border-2 border-slate-200 hover:border-orange-400 hover:bg-orange-50 transition-all text-left">
+              <i class="iconoir-graduation-cap text-2xl text-orange-500 mb-2 block"></i>
+              <p class="font-semibold text-slate-700 text-sm">Examen final</p>
+              <p class="text-xs text-slate-500">Evaluación completa</p>
+            </button>
+            
+            <button id="gen-podcast-btn" class="material-btn group p-4 rounded-xl border-2 border-slate-200 hover:border-pink-400 hover:bg-pink-50 transition-all text-left">
+              <i class="iconoir-microphone text-2xl text-pink-500 mb-2 block"></i>
+              <p class="font-semibold text-slate-700 text-sm">Podcast</p>
+              <p class="text-xs text-slate-500">Guion de audio</p>
+            </button>
+          </div>
+          
+          <!-- Área de resultado del material generado -->
+          <div id="material-result" class="hidden mt-4">
+            <div class="flex items-center justify-between mb-3">
+              <h4 id="material-result-title" class="font-semibold text-slate-700"></h4>
+              <div class="flex gap-2">
+                <button id="copy-material-btn" class="px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
+                  <i class="iconoir-copy"></i> Copiar
+                </button>
+                <button id="download-material-btn" class="px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
+                  <i class="iconoir-download"></i> Descargar
+                </button>
+              </div>
+            </div>
+            <div class="preview-toggle mb-3">
+              <button class="active" data-view="preview">Vista previa</button>
+              <button data-view="raw">Texto</button>
+            </div>
+            <div id="material-preview" class="content-preview max-h-96 overflow-auto border border-slate-200 rounded-xl p-4 bg-white"></div>
+            <div id="material-raw" class="hidden">
+              <div class="raw-preview max-h-96 overflow-auto"><pre id="material-raw-content"></pre></div>
+            </div>
+          </div>
+          
+          <!-- Progress/Loading -->
+          <div id="material-progress" class="hidden mt-4 p-4 bg-violet-50 border border-violet-200 rounded-xl">
+            <div class="flex items-center gap-3">
+              <i class="iconoir-refresh animate-spin text-violet-600 text-xl"></i>
+              <div>
+                <p class="font-semibold text-violet-800">Generando material...</p>
+                <p id="material-progress-text" class="text-sm text-violet-600">Esto puede tardar unos segundos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    modulesContainer.insertAdjacentHTML('afterend', panelHtml);
+    
+    // Event listeners para botones de materiales
+    document.getElementById('gen-flashcards-btn')?.addEventListener('click', () => generateMaterial('flashcards'));
+    document.getElementById('gen-quiz-btn')?.addEventListener('click', () => generateMaterial('quiz'));
+    document.getElementById('gen-exam-btn')?.addEventListener('click', () => generateMaterial('final_exam'));
+    document.getElementById('gen-podcast-btn')?.addEventListener('click', () => generateMaterial('podcast'));
+    
+    // Toggle vista previa/raw del material
+    const materialsPanel2 = document.getElementById('materials-panel');
+    materialsPanel2?.querySelectorAll('.preview-toggle button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const preview = document.getElementById('material-preview');
+        const raw = document.getElementById('material-raw');
+        
+        if (btn.dataset.view === 'preview') {
+          preview?.classList.remove('hidden');
+          raw?.classList.add('hidden');
+        } else {
+          preview?.classList.add('hidden');
+          raw?.classList.remove('hidden');
+        }
+      });
+    });
+  }
+  
+  let currentMaterialOutput = null;
+  let currentMaterialType = null;
+  
+  async function generateMaterial(type) {
+    const typeNames = {
+      'flashcards': 'Flashcards',
+      'quiz': 'Tests por módulo',
+      'final_exam': 'Examen final',
+      'podcast': 'Guion de Podcast'
+    };
+    
+    const progress = document.getElementById('material-progress');
+    const progressText = document.getElementById('material-progress-text');
+    const result = document.getElementById('material-result');
+    const btns = document.querySelectorAll('.material-btn');
+    
+    // Mostrar progreso
+    progress?.classList.remove('hidden');
+    result?.classList.add('hidden');
+    if (progressText) progressText.textContent = `Generando ${typeNames[type]}...`;
+    btns.forEach(b => b.disabled = true);
     
     try {
-      const response = await fetch('/api/gestures/course-extras.php', {
+      // Concatenar contenido de módulos
+      const modulesContent = currentModules.map(m => 
+        `## ${m.title}\n\n${m.content}`
+      ).join('\n\n---\n\n');
+      
+      const response = await fetch('/api/gestures/course-materials.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           execution_id: currentExecutionId,
-          formats: formats,
-          modules: currentDevelopedModules,
-          course_title: currentCourseTitle
+          material_type: type,
+          course_title: currentCourseTitle,
+          modules_content: modulesContent
         })
       });
       
       const data = await response.json();
       
-      console.log('Respuesta extras:', data);
-      
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error generando materiales');
+        throw new Error(data.error?.message || data.message || 'Error generando material');
       }
       
-      showExtrasResults(data);
+      // Guardar y mostrar resultado
+      currentMaterialOutput = data.output;
+      currentMaterialType = type;
+      
+      showMaterialResult(typeNames[type], data.output);
       loadHistory();
       
     } catch (err) {
-      if (extrasResults) {
-        extrasResults.innerHTML = `
-          <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
-            <p class="text-red-700"><i class="iconoir-warning-circle mr-2"></i>${err.message}</p>
-          </div>
-        `;
-      }
+      alert('Error: ' + err.message);
     } finally {
-      updateExtrasButton();
+      progress?.classList.add('hidden');
+      btns.forEach(b => b.disabled = false);
     }
   }
   
-  function showExtrasResults(data) {
-    const materials = data.materials || {};
+  function showMaterialResult(title, output) {
+    const result = document.getElementById('material-result');
+    const resultTitle = document.getElementById('material-result-title');
+    const preview = document.getElementById('material-preview');
+    const rawContent = document.getElementById('material-raw-content');
     
-    const formatIcons = {
-      flashcards: 'iconoir-card-wallet',
-      quiz: 'iconoir-check-circle',
-      final_exam: 'iconoir-trophy',
-      podcast: 'iconoir-podcast'
-    };
+    result?.classList.remove('hidden');
+    if (resultTitle) resultTitle.textContent = title;
+    if (preview) preview.innerHTML = renderMarkdownPreview(output);
+    if (rawContent) rawContent.textContent = output;
     
-    if (extrasResults) {
-      extrasResults.innerHTML = Object.entries(materials).map(([key, material]) => `
-        <div class="glass-strong rounded-2xl border border-slate-200/50 overflow-hidden">
-          <div class="p-4 border-b border-slate-200/50 bg-gradient-to-r from-violet-50 to-purple-50">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-violet-600 text-white flex items-center justify-center">
-                  <i class="${formatIcons[key] || 'iconoir-document'} text-lg"></i>
-                </div>
-                <div>
-                  <h3 class="font-semibold text-slate-800">${escapeHtml(material.format_name)}</h3>
-                  <p class="text-xs text-slate-500">Generado con ${material.model || 'IA'}</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <button class="copy-extra-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5" data-format="${key}">
-                  <i class="iconoir-copy"></i> Copiar
-                </button>
-                <button class="download-extra-btn px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-format="${key}">
-                  <i class="iconoir-download"></i> Descargar
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          <div class="p-4">
-            <div class="content-preview max-h-96 overflow-auto text-sm">
-              <pre class="whitespace-pre-wrap font-sans">${escapeHtml(material.content)}</pre>
-            </div>
-          </div>
-        </div>
-      `).join('');
-      
-      extrasResults.classList.remove('hidden');
-      
-      // Event listeners para copiar/descargar
-      extrasResults.querySelectorAll('.copy-extra-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const format = btn.dataset.format;
-          const content = materials[format]?.content;
-          if (content) {
-            try {
-              await navigator.clipboard.writeText(content);
-              btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
-              setTimeout(() => {
-                btn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
-              }, 2000);
-            } catch (err) {
-              console.error('Error copying:', err);
-            }
-          }
-        });
-      });
-      
-      extrasResults.querySelectorAll('.download-extra-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const format = btn.dataset.format;
-          const material = materials[format];
-          if (material) {
-            const filename = `${slugify(currentCourseTitle || 'curso')}-${format}.md`;
-            const blob = new Blob([material.content], { type: 'text/markdown;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }
-        });
-      });
-    }
+    // Copiar material
+    document.getElementById('copy-material-btn')?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(currentMaterialOutput);
+        const btn = document.getElementById('copy-material-btn');
+        if (btn) {
+          btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+          setTimeout(() => {
+            btn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Error copying:', err);
+      }
+    });
+    
+    // Descargar material
+    document.getElementById('download-material-btn')?.addEventListener('click', () => {
+      const filename = `${slugify(currentCourseTitle)}-${currentMaterialType}.md`;
+      const blob = new Blob([currentMaterialOutput], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
   }
 
   function downloadModule(module, courseTitle) {
@@ -800,12 +774,8 @@
     if (outlineSection) outlineSection.classList.add('hidden');
     if (inputSection) inputSection.classList.remove('hidden');
     
-    // Ocultar y limpiar sección de extras
-    if (extrasSection) extrasSection.classList.add('hidden');
-    if (extrasResults) {
-      extrasResults.innerHTML = '';
-      extrasResults.classList.add('hidden');
-    }
+    // Quitar panel de materiales si existe
+    document.getElementById('materials-panel')?.remove();
     
     if (sourceText) sourceText.value = '';
     if (sourcePdf) sourcePdf.value = '';
@@ -814,8 +784,10 @@
     
     currentOutline = null;
     currentExecutionId = null;
-    currentDevelopedModules = null;
+    currentModules = null;
     currentCourseTitle = null;
+    currentMaterialOutput = null;
+    currentMaterialType = null;
     hideError();
   }
 
@@ -882,21 +854,24 @@
     }
 
     const levelIcons = { basico: '🌱', intermedio: '🌿', avanzado: '🌳' };
-    const phaseLabels = { 1: 'Índice', 2: 'Desarrollado', 3: 'Materiales' };
-    const phaseColors = {
-      1: { bg: 'bg-emerald-100', text: 'text-emerald-600', icon: 'iconoir-graduation-cap' },
-      2: { bg: 'bg-emerald-600', text: 'text-white', icon: 'iconoir-graduation-cap' },
-      3: { bg: 'bg-violet-600', text: 'text-white', icon: 'iconoir-magic-wand' }
+    
+    // Mapeo de content_type a fase y etiqueta
+    const contentTypeMap = {
+      'course_outline': { phase: 1, label: 'Índice', icon: 'iconoir-list', bgClass: 'bg-emerald-100', iconClass: 'text-emerald-600' },
+      'course_developed': { phase: 2, label: 'Desarrollado', icon: 'iconoir-graduation-cap', bgClass: 'bg-emerald-600', iconClass: 'text-white' },
+      'course_material_flashcards': { phase: 3, label: 'Flashcards', icon: 'iconoir-multiple-pages', bgClass: 'bg-violet-500', iconClass: 'text-white' },
+      'course_material_quiz': { phase: 3, label: 'Tests', icon: 'iconoir-check-circle', bgClass: 'bg-emerald-500', iconClass: 'text-white' },
+      'course_material_final_exam': { phase: 3, label: 'Examen', icon: 'iconoir-graduation-cap', bgClass: 'bg-orange-500', iconClass: 'text-white' },
+      'course_material_podcast': { phase: 3, label: 'Podcast', icon: 'iconoir-microphone', bgClass: 'bg-pink-500', iconClass: 'text-white' }
     };
 
     historyList.innerHTML = items.map(item => {
       const inputData = typeof item.input_data === 'string' ? JSON.parse(item.input_data) : (item.input_data || {});
       const config = inputData?.config || {};
       
-      // Detectar fase usando content_type
-      let phase = 1;
-      if (item.content_type === 'course_developed') phase = 2;
-      else if (item.content_type === 'course_materials') phase = 3;
+      // Detectar fase y estilo usando content_type
+      const typeInfo = contentTypeMap[item.content_type] || contentTypeMap['course_outline'];
+      const phase = typeInfo.phase;
       
       const date = new Date(item.created_at).toLocaleDateString('es-ES', {
         day: 'numeric',
@@ -905,19 +880,17 @@
         minute: '2-digit'
       });
       const levelIcon = levelIcons[config.level] || '📚';
-      const phaseLabel = phaseLabels[phase] || '';
-      const colors = phaseColors[phase] || phaseColors[1];
 
       return `
-        <div class="history-item group border-b border-slate-100 last:border-0" data-id="${item.id}" data-phase="${phase}">
+        <div class="history-item group border-b border-slate-100 last:border-0" data-id="${item.id}" data-phase="${phase}" data-content-type="${item.content_type || ''}">
           <div class="history-item-main p-3 hover:bg-slate-50 cursor-pointer flex items-start gap-3">
-            <div class="w-8 h-8 rounded-lg ${colors.bg} flex items-center justify-center shrink-0">
-              <i class="${colors.icon} ${colors.text} text-sm"></i>
+            <div class="w-8 h-8 rounded-lg ${typeInfo.bgClass} flex items-center justify-center shrink-0">
+              <i class="${typeInfo.icon} ${typeInfo.iconClass} text-sm"></i>
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Sin título')}</p>
               <p class="text-xs text-slate-500 mt-0.5">
-                ${levelIcon} ${config.duration || '8h'} · ${phaseLabel} · ${date}
+                ${levelIcon} ${typeInfo.label} · ${date}
               </p>
             </div>
             <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Eliminar">
@@ -930,9 +903,11 @@
 
     historyList.querySelectorAll('.history-item-main').forEach(el => {
       el.addEventListener('click', () => {
-        const id = el.closest('.history-item').dataset.id;
-        const phase = parseInt(el.closest('.history-item').dataset.phase) || 1;
-        loadHistoryItem(id, phase);
+        const historyItem = el.closest('.history-item');
+        const id = historyItem.dataset.id;
+        const phase = parseInt(historyItem.dataset.phase) || 1;
+        const contentType = historyItem.dataset.contentType || '';
+        loadHistoryItem(id, phase, contentType);
       });
     });
 
@@ -945,14 +920,12 @@
     });
   }
 
-  async function loadHistoryItem(id, phase) {
+  async function loadHistoryItem(id, phase, contentType = '') {
     try {
       const response = await fetch(`/api/gestures/get.php?id=${id}`, {
         credentials: 'include'
       });
       const data = await response.json();
-      
-      console.log('Loading history item:', { id, phase, data }); // Debug
       
       if (data.execution) {
         const item = data.execution;
@@ -960,46 +933,132 @@
           ? JSON.parse(item.output_data) 
           : item.output_data;
         
-        console.log('Output data:', outputData); // Debug
-        
-        // Detectar tipo de contenido
-        const contentType = item.content_type;
-        
-        // Fase 3: Materiales complementarios
-        if (contentType === 'course_materials' && outputData?.materials) {
-          console.log('Mostrando materiales complementarios'); // Debug
+        // Fase 3: Material complementario
+        if (phase === 3 || contentType.startsWith('course_material_')) {
+          const materialTypeNames = {
+            'course_material_flashcards': 'Flashcards',
+            'course_material_quiz': 'Tests por módulo',
+            'course_material_final_exam': 'Examen final',
+            'course_material_podcast': 'Guion de Podcast'
+          };
+          
+          // Mostrar en un modal o sección especial
+          const materialOutput = outputData?.raw || item.output_content || '';
+          const materialTitle = materialTypeNames[contentType] || 'Material';
+          
+          // Ocultar otras secciones y mostrar resultado
           if (inputSection) inputSection.classList.add('hidden');
           if (outlineSection) outlineSection.classList.add('hidden');
           if (resultSection) resultSection.classList.remove('hidden');
-          if (resultTitle) resultTitle.textContent = outputData.course_title || 'Materiales del curso';
-          if (resultSource) resultSource.textContent = `${outputData.total_generated || Object.keys(outputData.materials).length} materiales generados`;
-          if (modulesContainer) modulesContainer.innerHTML = '';
-          showExtrasResults({ materials: outputData.materials });
+          
+          // Mostrar un módulo "virtual" con el material
+          if (resultTitle) resultTitle.textContent = outputData?.course_title || 'Curso';
+          if (resultSource) resultSource.textContent = materialTitle;
+          
+          if (modulesContainer) {
+            modulesContainer.innerHTML = `
+              <div class="glass-strong rounded-2xl border border-slate-200/50 overflow-hidden mb-4">
+                <div class="p-4 border-b border-slate-200/50 bg-gradient-to-r from-violet-50 to-purple-50">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-lg bg-violet-600 text-white flex items-center justify-center font-bold">
+                        <i class="iconoir-spark"></i>
+                      </div>
+                      <div>
+                        <h3 class="font-semibold text-slate-800">${escapeHtml(materialTitle)}</h3>
+                        <p class="text-xs text-slate-500">${escapeHtml(outputData?.course_title || '')}</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button class="copy-material-hist-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
+                        <i class="iconoir-copy"></i> Copiar
+                      </button>
+                      <button class="download-material-hist-btn px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
+                        <i class="iconoir-download"></i> Descargar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-4">
+                  <div class="preview-toggle mb-4">
+                    <button class="active" data-view="preview">Vista previa</button>
+                    <button data-view="raw">Texto</button>
+                  </div>
+                  <div class="preview-view content-preview max-h-96 overflow-auto">${renderMarkdownPreview(materialOutput)}</div>
+                  <div class="raw-view hidden">
+                    <div class="raw-preview max-h-96 overflow-auto"><pre>${escapeHtml(materialOutput)}</pre></div>
+                  </div>
+                </div>
+              </div>
+            `;
+            
+            // Event listeners
+            modulesContainer.querySelector('.copy-material-hist-btn')?.addEventListener('click', async () => {
+              try {
+                await navigator.clipboard.writeText(materialOutput);
+                const btn = modulesContainer.querySelector('.copy-material-hist-btn');
+                if (btn) {
+                  btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+                  setTimeout(() => btn.innerHTML = '<i class="iconoir-copy"></i> Copiar', 2000);
+                }
+              } catch (err) { console.error(err); }
+            });
+            
+            modulesContainer.querySelector('.download-material-hist-btn')?.addEventListener('click', () => {
+              const filename = `${slugify(outputData?.course_title || 'curso')}-${contentType.replace('course_material_', '')}.md`;
+              const blob = new Blob([materialOutput], { type: 'text/markdown;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            });
+            
+            // Toggle
+            modulesContainer.querySelectorAll('.preview-toggle button').forEach(btn => {
+              btn.addEventListener('click', () => {
+                const panel = btn.closest('.glass-strong');
+                btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const pv = panel.querySelector('.preview-view');
+                const rv = panel.querySelector('.raw-view');
+                if (btn.dataset.view === 'preview') {
+                  pv?.classList.remove('hidden');
+                  rv?.classList.add('hidden');
+                } else {
+                  pv?.classList.add('hidden');
+                  rv?.classList.remove('hidden');
+                }
+              });
+            });
+          }
+          
+          // Quitar panel de materiales si existe
+          document.getElementById('materials-panel')?.remove();
         }
         // Fase 2: Módulos desarrollados
         else if (outputData?.modules && outputData.modules.length > 0) {
-          console.log('Mostrando módulos desarrollados'); // Debug
           showDevelopedModules({
             course_title: outputData.course_title || item.title,
             modules: outputData.modules,
-            total_developed: outputData.total_developed || outputData.modules.length
+            total_developed: outputData.total_developed || outputData.modules.length,
+            execution_id: id
           });
         } 
         // Fase 1: Índice editable
         else if (outputData?.outline) {
-          console.log('Mostrando editor de índice'); // Debug
           currentOutline = outputData.outline;
           currentExecutionId = id;
           showOutlineEditor({ outline: outputData.outline });
         }
-        else {
-          console.warn('No se encontraron datos válidos'); // Debug
-        }
         
         historyList?.querySelectorAll('.history-item').forEach(el => {
-          el.classList.remove('bg-emerald-50');
+          el.classList.remove('bg-emerald-50', 'bg-violet-50');
         });
-        historyList?.querySelector(`.history-item[data-id="${id}"]`)?.classList.add('bg-emerald-50');
+        historyList?.querySelector(`.history-item[data-id="${id}"]`)?.classList.add(phase === 3 ? 'bg-violet-50' : 'bg-emerald-50');
       }
     } catch (err) {
       console.error('Error loading history item:', err);
