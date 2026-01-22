@@ -676,24 +676,35 @@
       });
       const data = await response.json();
       
+      console.log('Loading history item:', { id, phase, data }); // Debug
+      
       if (data.execution) {
         const item = data.execution;
         const outputData = typeof item.output_data === 'string' 
           ? JSON.parse(item.output_data) 
           : item.output_data;
         
-        if (phase === 2 && outputData?.modules) {
-          // Mostrar módulos desarrollados
+        console.log('Output data:', outputData); // Debug
+        console.log('Has modules:', !!outputData?.modules, 'Module count:', outputData?.modules?.length); // Debug
+        
+        // Prioridad 1: Si es fase 2 o tiene módulos, mostrar módulos
+        if (outputData?.modules && outputData.modules.length > 0) {
+          console.log('Mostrando módulos desarrollados'); // Debug
           showDevelopedModules({
             course_title: outputData.course_title || item.title,
             modules: outputData.modules,
             total_developed: outputData.total_developed || outputData.modules.length
           });
-        } else if (outputData?.outline) {
-          // Mostrar editor de índice
+        } 
+        // Prioridad 2: Si tiene outline, mostrar índice editable
+        else if (outputData?.outline) {
+          console.log('Mostrando editor de índice'); // Debug
           currentOutline = outputData.outline;
           currentExecutionId = id;
           showOutlineEditor({ outline: outputData.outline });
+        }
+        else {
+          console.warn('No se encontraron módulos ni outline'); // Debug
         }
         
         historyList?.querySelectorAll('.history-item').forEach(el => {
