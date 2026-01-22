@@ -39,9 +39,13 @@
   
   // Fase 3: Materiales complementarios
   const extrasSection = document.getElementById('extras-section');
-  const extrasCheckboxes = document.querySelectorAll('input[name="extras"]');
   const generateExtrasBtn = document.getElementById('generate-extras-btn');
   const extrasResults = document.getElementById('extras-results');
+  
+  // Función para obtener checkboxes dinámicamente
+  function getExtrasCheckboxes() {
+    return document.querySelectorAll('input[name="extras"]');
+  }
 
   // === State ===
   let currentTab = 'pdf';
@@ -503,7 +507,10 @@
     currentDevelopedModules = modules;
     currentCourseTitle = data.course_title;
     
-    // Configurar checkboxes de extras
+    // Mostrar y configurar sección de extras
+    if (extrasSection) {
+      extrasSection.classList.remove('hidden');
+    }
     setupExtrasUI();
 
     // Botón nuevo curso
@@ -523,8 +530,11 @@
       extrasResults.classList.add('hidden');
     }
     
+    // Obtener checkboxes dinámicamente
+    const checkboxes = getExtrasCheckboxes();
+    
     // Reset checkboxes
-    extrasCheckboxes.forEach(cb => {
+    checkboxes.forEach(cb => {
       cb.checked = false;
     });
     
@@ -532,7 +542,7 @@
     updateExtrasButton();
     
     // Event listeners para checkboxes
-    extrasCheckboxes.forEach(cb => {
+    checkboxes.forEach(cb => {
       cb.removeEventListener('change', updateExtrasButton);
       cb.addEventListener('change', updateExtrasButton);
     });
@@ -565,7 +575,7 @@
   }
   
   function getSelectedExtras() {
-    return Array.from(extrasCheckboxes)
+    return Array.from(getExtrasCheckboxes())
       .filter(cb => cb.checked)
       .map(cb => cb.value);
   }
@@ -773,6 +783,13 @@
     if (outlineSection) outlineSection.classList.add('hidden');
     if (inputSection) inputSection.classList.remove('hidden');
     
+    // Ocultar y limpiar sección de extras
+    if (extrasSection) extrasSection.classList.add('hidden');
+    if (extrasResults) {
+      extrasResults.innerHTML = '';
+      extrasResults.classList.add('hidden');
+    }
+    
     if (sourceText) sourceText.value = '';
     if (sourcePdf) sourcePdf.value = '';
     pdfBase64 = null;
@@ -780,6 +797,8 @@
     
     currentOutline = null;
     currentExecutionId = null;
+    currentDevelopedModules = null;
+    currentCourseTitle = null;
     hideError();
   }
 

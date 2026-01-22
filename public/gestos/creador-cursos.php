@@ -439,8 +439,8 @@ $headerDrawerId = 'course-history-drawer';
               <!-- Se llenan dinámicamente con los módulos desarrollados -->
             </div>
             
-            <!-- Fase 3: Materiales complementarios -->
-            <div id="extras-section" class="mt-8 pt-6 border-t border-slate-200">
+            <!-- Fase 3: Materiales complementarios (oculto inicialmente) -->
+            <div id="extras-section" class="hidden mt-8 pt-6 border-t border-slate-200">
               <div class="flex items-center gap-3 mb-4">
                 <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
                   <i class="iconoir-magic-wand text-violet-600 text-xl"></i>
