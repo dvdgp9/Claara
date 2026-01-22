@@ -31,8 +31,9 @@ require_once dirname(__DIR__) . '/Audio/GeminiTtsClient.php';
 require_once dirname(__DIR__) . '/Audio/ContentExtractor.php';
 require_once dirname(__DIR__) . '/Audio/PodcastScriptGenerator.php';
 
-// Content (Repurposer)
+// Content (Repurposer, Course Generator)
 require_once dirname(__DIR__) . '/Content/ContentRepurposer.php';
+require_once dirname(__DIR__) . '/Content/CourseGenerator.php';
 
 // SOP Generator
 require_once dirname(__DIR__) . '/Sop/AudioTranscriber.php';
