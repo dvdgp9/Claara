@@ -413,7 +413,21 @@
     const modules = data.modules || [];
     
     if (modulesContainer) {
-      modulesContainer.innerHTML = modules.map((module, i) => `
+      // Botón exportar curso completo
+      const exportAllHtml = `
+        <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+          <div>
+            <p class="font-semibold text-blue-800">Exportar curso completo</p>
+            <p class="text-xs text-blue-600">Descarga todos los módulos en un solo documento Word</p>
+          </div>
+          <button id="export-all-course-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2">
+            <i class="iconoir-page"></i>
+            <span>Exportar a Word</span>
+          </button>
+        </div>
+      `;
+      
+      modulesContainer.innerHTML = exportAllHtml + modules.map((module, i) => `
         <div class="glass-strong rounded-2xl border border-slate-200/50 overflow-hidden mb-4">
           <div class="p-4 border-b border-slate-200/50 bg-gradient-to-r from-emerald-50 to-teal-50">
             <div class="flex items-center justify-between">
@@ -430,8 +444,8 @@
                 <button class="copy-module-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5" data-index="${i}">
                   <i class="iconoir-copy"></i> Copiar
                 </button>
-                <button class="download-module-btn px-3 py-1.5 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-index="${i}">
-                  <i class="iconoir-download"></i> Descargar
+                <button class="export-module-word-btn px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-index="${i}">
+                  <i class="iconoir-page"></i> Word
                 </button>
               </div>
             </div>
@@ -467,11 +481,15 @@
         });
       });
       
-      modulesContainer.querySelectorAll('.download-module-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+      modulesContainer.querySelectorAll('.export-module-word-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
           const idx = parseInt(btn.dataset.index);
           const module = modules[idx];
-          downloadModule(module, data.course_title);
+          btn.disabled = true;
+          btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exportando...';
+          await exportToWord('module', module.content, module.title);
+          btn.disabled = false;
+          btn.innerHTML = '<i class="iconoir-page"></i> Word';
         });
       });
       
@@ -495,6 +513,20 @@
             rawView?.classList.remove('hidden');
           }
         });
+      });
+      
+      // Botón exportar todo el curso
+      document.getElementById('export-all-course-btn')?.addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exportando...';
+        
+        // Concatenar todo el contenido de los módulos
+        const allContent = modules.map(m => m.content).join('\n\n---\n\n');
+        await exportToWord('course', allContent, currentCourseTitle);
+        
+        btn.disabled = false;
+        btn.innerHTML = '<i class="iconoir-page"></i> Exportar a Word';
       });
       
       // Añadir panel de materiales complementarios (Paso 3)
@@ -770,19 +802,76 @@
       }
     });
     
-    // Descargar material
-    document.getElementById('download-material-btn')?.addEventListener('click', () => {
-      const filename = `${slugify(currentCourseTitle)}-${currentMaterialType}.md`;
-      const blob = new Blob([currentMaterialOutput], { type: 'text/markdown;charset=utf-8' });
+    // Descargar material a Word
+    document.getElementById('download-material-btn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('download-material-btn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exportando...';
+      }
+      
+      const typeNames = {
+        'flashcards': 'Flashcards',
+        'quiz': 'Tests',
+        'final_exam': 'Examen Final',
+        'podcast': 'Podcast'
+      };
+      const materialTitle = `${currentCourseTitle} - ${typeNames[currentMaterialType] || 'Material'}`;
+      
+      await exportToWord('material', currentMaterialOutput, materialTitle);
+      
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+      }
+    });
+  }
+  
+  // =========================================================================
+  // EXPORTAR A WORD
+  // =========================================================================
+  async function exportToWord(exportType, content, title) {
+    try {
+      const response = await fetch('/api/gestures/course-export.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          export_type: exportType,
+          content: content,
+          title: title,
+          format: 'docx'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error?.message || data.message || 'Error exportando documento');
+      }
+      
+      // Decodificar base64 y descargar
+      const byteCharacters = atob(data.content);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: data.mime_type });
+      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename;
+      a.download = data.filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    });
+      
+    } catch (err) {
+      console.error('Error exportando a Word:', err);
+      alert('Error exportando: ' + err.message);
+    }
   }
 
   // Buscar materiales complementarios ya generados para un curso
@@ -1195,17 +1284,27 @@
               } catch (err) { console.error(err); }
             });
             
-            modulesContainer.querySelector('.download-material-hist-btn')?.addEventListener('click', () => {
-              const filename = `${slugify(outputData?.course_title || 'curso')}-${contentType.replace('course_material_', '')}.md`;
-              const blob = new Blob([materialOutput], { type: 'text/markdown;charset=utf-8' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = filename;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+            modulesContainer.querySelector('.download-material-hist-btn')?.addEventListener('click', async () => {
+              const btn = modulesContainer.querySelector('.download-material-hist-btn');
+              if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exportando...';
+              }
+              
+              const typeNames = {
+                'course_material_flashcards': 'Flashcards',
+                'course_material_quiz': 'Tests',
+                'course_material_final_exam': 'Examen Final',
+                'course_material_podcast': 'Podcast'
+              };
+              const title = `${outputData?.course_title || 'Curso'} - ${typeNames[contentType] || 'Material'}`;
+              
+              await exportToWord('material', materialOutput, title);
+              
+              if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+              }
             });
             
             // Toggle
