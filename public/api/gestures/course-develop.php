@@ -50,7 +50,12 @@ try {
     
     // Si tenemos execution_id, recuperar el contenido original de la fase 1
     if ($executionId && !$sourceContent) {
-        $execution = $repo->getById($executionId, $user['id']);
+        $execution = $repo->findById((int)$executionId);
+        
+        // Verificar que pertenece al usuario
+        if ($execution && (int)$execution['user_id'] !== (int)$user['id']) {
+            Response::error('forbidden', 'No tienes acceso a esta ejecución', 403);
+        }
         
         if (!$execution) {
             Response::error('not_found', 'No se encontró la ejecución de la fase 1', 404);
@@ -110,10 +115,8 @@ try {
 
     // Si había una ejecución de fase 1, actualizarla para vincularla
     if ($executionId) {
-        $repo->updateOutputData($executionId, $user['id'], [
-            'phase_2_execution_id' => $newExecutionId,
-            'phase_2_completed' => true
-        ]);
+        // Por ahora, solo guardamos el vínculo en output_data de la nueva ejecución
+        // El vínculo inverso ya está en input_data.original_execution_id
     }
 
     // Registrar en estadísticas

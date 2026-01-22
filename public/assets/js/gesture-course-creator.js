@@ -246,7 +246,7 @@
               ${module.id || index + 1}
             </div>
             <div class="flex-1">
-              <input type="text" class="module-title-input w-full font-semibold text-slate-800 bg-transparent border-0 focus:ring-0 p-0" value="${escapeHtml(module.title || '')}">
+              <input type="text" class="module-title-input w-full font-semibold text-slate-800 bg-white/50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30" value="${escapeHtml(module.title || '')}">
               <p class="text-xs text-slate-500">${module.duration_hours || 2}h · ${lessons.length} lecciones</p>
             </div>
             <button type="button" class="toggle-module-btn p-2 hover:bg-white/50 rounded-lg transition-colors">
@@ -260,7 +260,7 @@
             <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
               <span class="text-xs font-medium text-slate-400">${lesson.id || (index + 1) + '.' + (li + 1)}</span>
               <div class="flex-1">
-                <input type="text" class="lesson-title-input w-full text-sm text-slate-700 bg-transparent border-0 focus:ring-0 p-0 font-medium" value="${escapeHtml(lesson.title || '')}">
+                <input type="text" class="lesson-title-input w-full text-sm text-slate-700 bg-white border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 font-medium" value="${escapeHtml(lesson.title || '')}">
                 <p class="text-xs text-slate-400 mt-1">${(lesson.topics || []).join(' · ')}</p>
               </div>
               <span class="text-xs text-slate-400">${lesson.duration_minutes || 30}min</span>
