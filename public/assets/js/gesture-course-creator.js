@@ -544,13 +544,30 @@
     // Event listeners para checkboxes
     checkboxes.forEach(cb => {
       cb.removeEventListener('change', updateExtrasButton);
-      cb.addEventListener('change', updateExtrasButton);
+      cb.addEventListener('change', (e) => {
+        console.log('Checkbox changed:', cb.value, cb.checked);
+        updateExtrasButton();
+      });
+      
+      // Detener propagación en el label para que no afecte a contenedores superiores
+      const label = cb.closest('label');
+      if (label) {
+        label.addEventListener('click', (e) => {
+          // No hacemos preventDefault para que el checkbox se marque, 
+          // pero detenemos propagación para que no suba al formulario
+          e.stopPropagation();
+        });
+      }
     });
     
     // Event listener para botón generar
     if (generateExtrasBtn) {
       generateExtrasBtn.removeEventListener('click', generateExtras);
-      generateExtrasBtn.addEventListener('click', generateExtras);
+      generateExtrasBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        generateExtras();
+      });
     }
   }
   
