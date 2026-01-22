@@ -1,0 +1,673 @@
+<?php
+namespace Content;
+
+use Chat\OpenRouterClient;
+
+/**
+ * Generador de material de cursos a partir de contenido fuente (PDF, texto)
+ * Outputs: temario, fichas, quizzes, flashcards, podcasts educativos, examen final
+ */
+class CourseGenerator
+{
+    private OpenRouterClient $llmClient;
+
+    private const OUTPUT_FORMATS = [
+        'syllabus' => [
+            'name' => 'Temario estructurado',
+            'icon' => 'iconoir-book-stack',
+            'description' => 'Módulos, lecciones y objetivos de aprendizaje'
+        ],
+        'content_cards' => [
+            'name' => 'Fichas de contenido',
+            'icon' => 'iconoir-journal-page',
+            'description' => 'Resúmenes y conceptos clave por lección'
+        ],
+        'quiz' => [
+            'name' => 'Autoevaluación',
+            'icon' => 'iconoir-check-circle',
+            'description' => 'Preguntas tipo test para cada módulo'
+        ],
+        'flashcards' => [
+            'name' => 'Microlearning',
+            'icon' => 'iconoir-brain',
+            'description' => 'Flashcards y píldoras de conocimiento'
+        ],
+        'podcast' => [
+            'name' => 'Podcast educativo',
+            'icon' => 'iconoir-podcast',
+            'description' => 'Guion de conversación para audio'
+        ],
+        'final_exam' => [
+            'name' => 'Examen final',
+            'icon' => 'iconoir-clipboard-check',
+            'description' => 'Evaluación completa del temario'
+        ]
+    ];
+
+    private const DURATION_MAP = [
+        '4h' => ['hours' => 4, 'modules' => '2-3', 'lessons_per_module' => '2-3'],
+        '8h' => ['hours' => 8, 'modules' => '3-4', 'lessons_per_module' => '3-4'],
+        '16h' => ['hours' => 16, 'modules' => '4-6', 'lessons_per_module' => '3-5'],
+        '40h' => ['hours' => 40, 'modules' => '6-10', 'lessons_per_module' => '4-6']
+    ];
+
+    private const LEVEL_MAP = [
+        'basico' => 'básico (sin conocimientos previos requeridos)',
+        'intermedio' => 'intermedio (conocimientos básicos asumidos)',
+        'avanzado' => 'avanzado (para profesionales o estudiantes avanzados)'
+    ];
+
+    private const FORMAT_MAP = [
+        'presencial' => 'presencial (dinámicas de grupo, ejercicios en clase)',
+        'online' => 'online asíncrono (autoaprendizaje, recursos digitales)',
+        'hibrido' => 'híbrido (combinación de sesiones en vivo y materiales autónomos)'
+    ];
+
+    public function __construct(?OpenRouterClient $llmClient = null)
+    {
+        $this->llmClient = $llmClient ?? new OpenRouterClient(
+            null,
+            'google/gemini-3-flash-preview',
+            null,
+            0.7,
+            16384
+        );
+    }
+
+    /**
+     * Obtiene los formatos de salida disponibles
+     */
+    public static function getOutputFormats(): array
+    {
+        return self::OUTPUT_FORMATS;
+    }
+
+    /**
+     * Genera contenido en un formato específico
+     */
+    public function generate(string $content, string $format, string $title = '', array $config = []): array
+    {
+        if (!isset(self::OUTPUT_FORMATS[$format])) {
+            return ['success' => false, 'error' => "Formato no soportado: {$format}"];
+        }
+
+        $wordCount = str_word_count($content);
+        if ($wordCount < 50) {
+            return ['success' => false, 'error' => 'El contenido es demasiado corto (mínimo 50 palabras)'];
+        }
+
+        $prompt = $this->buildPrompt($content, $format, $title, $config);
+
+        try {
+            $response = $this->llmClient->generateText($prompt);
+            
+            if (empty($response)) {
+                return ['success' => false, 'error' => 'No se pudo generar el contenido'];
+            }
+
+            return [
+                'success' => true,
+                'output' => $response,
+                'format' => $format,
+                'format_name' => self::OUTPUT_FORMATS[$format]['name'],
+                'model' => $this->llmClient->getModel()
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => 'Error generando contenido: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Genera contenido en múltiples formatos
+     */
+    public function generateMultiple(string $content, array $formats, string $title = '', array $config = []): array
+    {
+        $results = [];
+        $errors = [];
+
+        // Si se pide temario, generarlo primero para usar como referencia
+        $syllabus = null;
+        if (in_array('syllabus', $formats)) {
+            $syllabusResult = $this->generate($content, 'syllabus', $title, $config);
+            if ($syllabusResult['success']) {
+                $syllabus = $syllabusResult['output'];
+                $parsed = $this->parseOutput($syllabusResult['output'], 'syllabus');
+                $results['syllabus'] = [
+                    'format' => 'syllabus',
+                    'format_name' => self::OUTPUT_FORMATS['syllabus']['name'],
+                    'icon' => self::OUTPUT_FORMATS['syllabus']['icon'],
+                    'raw' => $syllabusResult['output'],
+                    'parsed' => $parsed,
+                    'model' => $syllabusResult['model']
+                ];
+            } else {
+                $errors['syllabus'] = $syllabusResult['error'];
+            }
+        }
+
+        // Generar el resto de formatos
+        foreach ($formats as $format) {
+            if ($format === 'syllabus') continue; // Ya procesado
+            
+            // Añadir temario como contexto si está disponible
+            $configWithSyllabus = $config;
+            if ($syllabus) {
+                $configWithSyllabus['syllabus_context'] = $syllabus;
+            }
+            
+            $result = $this->generate($content, $format, $title, $configWithSyllabus);
+            
+            if ($result['success']) {
+                $parsed = $this->parseOutput($result['output'], $format);
+                $results[$format] = [
+                    'format' => $format,
+                    'format_name' => self::OUTPUT_FORMATS[$format]['name'] ?? $format,
+                    'icon' => self::OUTPUT_FORMATS[$format]['icon'] ?? 'iconoir-document',
+                    'raw' => $result['output'],
+                    'parsed' => $parsed,
+                    'model' => $result['model']
+                ];
+            } else {
+                $errors[$format] = $result['error'];
+            }
+        }
+
+        return [
+            'success' => count($results) > 0,
+            'results' => $results,
+            'errors' => $errors,
+            'total_generated' => count($results),
+            'total_failed' => count($errors)
+        ];
+    }
+
+    /**
+     * Parsea el output estructurado según el formato
+     */
+    public function parseOutput(string $output, string $format): array
+    {
+        $parsed = ['raw' => $output];
+
+        switch ($format) {
+            case 'syllabus':
+                $parsed['modules'] = $this->extractSection($output, 'TEMARIO');
+                $parsed['objectives'] = $this->extractSection($output, 'OBJETIVOS');
+                $parsed['duration_breakdown'] = $this->extractSection($output, 'DISTRIBUCION');
+                break;
+
+            case 'content_cards':
+                $parsed['cards'] = $this->extractSection($output, 'FICHAS');
+                break;
+
+            case 'quiz':
+                $parsed['questions'] = $this->extractSection($output, 'PREGUNTAS');
+                $parsed['answers'] = $this->extractSection($output, 'RESPUESTAS');
+                break;
+
+            case 'flashcards':
+                $parsed['flashcards'] = $this->extractSection($output, 'FLASHCARDS');
+                $parsed['tips'] = $this->extractSection($output, 'TIPS');
+                break;
+
+            case 'podcast':
+                $parsed['script'] = $this->extractSection($output, 'GUION');
+                $parsed['summary'] = $this->extractSection($output, 'RESUMEN');
+                break;
+
+            case 'final_exam':
+                $parsed['exam'] = $this->extractSection($output, 'EXAMEN');
+                $parsed['rubric'] = $this->extractSection($output, 'RUBRICA');
+                $parsed['answers'] = $this->extractSection($output, 'SOLUCIONES');
+                break;
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * Extrae una sección delimitada del output
+     */
+    private function extractSection(string $output, string $section): string
+    {
+        $pattern = "/---{$section}---\s*(.*?)\s*---FIN_{$section}---/is";
+        if (preg_match($pattern, $output, $matches)) {
+            return trim($matches[1]);
+        }
+        return '';
+    }
+
+    /**
+     * Construye el prompt según el formato de salida
+     */
+    private function buildPrompt(string $content, string $format, string $title, array $config): string
+    {
+        $duration = $config['duration'] ?? '8h';
+        $level = $config['level'] ?? 'intermedio';
+        $courseFormat = $config['course_format'] ?? 'online';
+        
+        $durationInfo = self::DURATION_MAP[$duration] ?? self::DURATION_MAP['8h'];
+        $levelDesc = self::LEVEL_MAP[$level] ?? self::LEVEL_MAP['intermedio'];
+        $formatDesc = self::FORMAT_MAP[$courseFormat] ?? self::FORMAT_MAP['online'];
+
+        $titleSection = $title ? "TÍTULO DEL MATERIAL FUENTE: {$title}\n\n" : '';
+        
+        // Contexto del temario si está disponible
+        $syllabusContext = '';
+        if (!empty($config['syllabus_context']) && $format !== 'syllabus') {
+            $syllabusContext = "\n\nTEMARIO YA GENERADO (usar como referencia de estructura):\n---\n" . 
+                              mb_substr($config['syllabus_context'], 0, 4000) . "\n---\n";
+        }
+
+        $baseContext = <<<CONTEXT
+Eres un diseñador instruccional experto. Tu tarea es crear material formativo de alta calidad a partir del contenido proporcionado.
+
+{$titleSection}CONTENIDO FUENTE:
+---
+{$content}
+---
+
+CONFIGURACIÓN DEL CURSO:
+- Duración total: {$durationInfo['hours']} horas
+- Número de módulos: {$durationInfo['modules']}
+- Lecciones por módulo: {$durationInfo['lessons_per_module']}
+- Nivel: {$levelDesc}
+- Modalidad: {$formatDesc}
+{$syllabusContext}
+
+REGLAS GENERALES:
+- Extrae y estructura TODOS los conceptos importantes del contenido fuente
+- NO inventes información que no esté en el material
+- Adapta la complejidad al nivel especificado
+- Usa español de España (vosotros, expresiones peninsulares)
+- Sé didáctico, claro y práctico
+- Incluye ejemplos cuando sea posible
+CONTEXT;
+
+        return match($format) {
+            'syllabus' => $this->buildSyllabusPrompt($baseContext, $durationInfo),
+            'content_cards' => $this->buildContentCardsPrompt($baseContext),
+            'quiz' => $this->buildQuizPrompt($baseContext),
+            'flashcards' => $this->buildFlashcardsPrompt($baseContext),
+            'podcast' => $this->buildPodcastPrompt($baseContext, $title),
+            'final_exam' => $this->buildFinalExamPrompt($baseContext, $durationInfo),
+            default => $baseContext
+        };
+    }
+
+    private function buildSyllabusPrompt(string $context, array $durationInfo): string
+    {
+        return $context . <<<PROMPT
+
+
+FORMATO DE SALIDA: TEMARIO ESTRUCTURADO
+
+INSTRUCCIONES ESPECÍFICAS:
+1. Crea un temario completo con {$durationInfo['modules']} módulos
+2. Cada módulo debe tener {$durationInfo['lessons_per_module']} lecciones
+3. Define objetivos de aprendizaje específicos y medibles (verbos de acción)
+4. Incluye estimación de tiempo por módulo/lección
+5. Añade prerrequisitos si los hay
+6. Sugiere orden lógico de progresión
+
+ESTRUCTURA:
+---OBJETIVOS---
+## Objetivos Generales del Curso
+[Lista de 3-5 objetivos principales]
+
+## Competencias a Desarrollar
+[Lista de competencias que adquirirá el alumno]
+---FIN_OBJETIVOS---
+
+---TEMARIO---
+# [Nombre del Curso]
+
+## Módulo 1: [Título]
+**Duración estimada:** X horas
+**Objetivos del módulo:**
+- [Objetivo 1]
+- [Objetivo 2]
+
+### Lección 1.1: [Título]
+- Contenidos: [lista de temas]
+- Duración: X min
+
+### Lección 1.2: [Título]
+[etc.]
+
+## Módulo 2: [Título]
+[Continuar con la misma estructura...]
+---FIN_TEMARIO---
+
+---DISTRIBUCION---
+| Módulo | Duración | Peso |
+|--------|----------|------|
+[Tabla de distribución de tiempo]
+---FIN_DISTRIBUCION---
+PROMPT;
+    }
+
+    private function buildContentCardsPrompt(string $context): string
+    {
+        return $context . <<<PROMPT
+
+
+FORMATO DE SALIDA: FICHAS DE CONTENIDO
+
+INSTRUCCIONES ESPECÍFICAS:
+1. Crea una ficha para cada lección/tema importante
+2. Cada ficha debe incluir:
+   - Título del tema
+   - Resumen (2-3 párrafos)
+   - Conceptos clave (definiciones claras)
+   - Puntos importantes a recordar
+   - Ejemplo práctico si aplica
+3. Usa formato visual con iconos (emojis) para categorías
+4. Las fichas deben ser autocontenidas (entendibles sin contexto adicional)
+
+ESTRUCTURA:
+---FICHAS---
+## 📚 Ficha 1: [Título del Tema]
+
+### 📝 Resumen
+[Resumen del tema en 2-3 párrafos]
+
+### 🔑 Conceptos Clave
+- **[Concepto 1]**: [Definición clara]
+- **[Concepto 2]**: [Definición clara]
+- **[Concepto 3]**: [Definición clara]
+
+### ⭐ Puntos Importantes
+1. [Punto 1]
+2. [Punto 2]
+3. [Punto 3]
+
+### 💡 Ejemplo Práctico
+[Ejemplo aplicado del concepto]
+
+---
+
+## 📚 Ficha 2: [Título del Tema]
+[Continuar con la misma estructura...]
+---FIN_FICHAS---
+PROMPT;
+    }
+
+    private function buildQuizPrompt(string $context): string
+    {
+        return $context . <<<PROMPT
+
+
+FORMATO DE SALIDA: PREGUNTAS DE AUTOEVALUACIÓN
+
+INSTRUCCIONES ESPECÍFICAS:
+1. Crea 3-5 preguntas por cada módulo/tema principal
+2. Tipos de preguntas:
+   - Tipo test (4 opciones, solo 1 correcta)
+   - Verdadero/Falso con justificación
+   - Preguntas cortas (1-2 frases de respuesta)
+3. Las preguntas deben verificar comprensión, no solo memorización
+4. Incluye feedback para respuestas incorrectas
+5. Varía la dificultad (algunas fáciles, otras de reflexión)
+
+ESTRUCTURA:
+---PREGUNTAS---
+## Módulo 1: [Nombre]
+
+### Pregunta 1 (Tipo test)
+¿[Pregunta]?
+
+a) [Opción A]
+b) [Opción B]
+c) [Opción C]
+d) [Opción D]
+
+### Pregunta 2 (Verdadero/Falso)
+"[Afirmación]"
+- [ ] Verdadero
+- [ ] Falso
+
+### Pregunta 3 (Respuesta corta)
+[Pregunta abierta]
+
+---
+
+## Módulo 2: [Nombre]
+[Continuar...]
+---FIN_PREGUNTAS---
+
+---RESPUESTAS---
+## Soluciones Módulo 1
+
+### Pregunta 1
+**Respuesta correcta:** [letra]
+**Explicación:** [Por qué es correcta y por qué las otras no]
+
+### Pregunta 2
+**Respuesta correcta:** [V/F]
+**Explicación:** [Justificación]
+
+### Pregunta 3
+**Respuesta modelo:** [Respuesta esperada]
+**Puntos clave:** [Qué debe incluir una buena respuesta]
+
+[Continuar...]
+---FIN_RESPUESTAS---
+PROMPT;
+    }
+
+    private function buildFlashcardsPrompt(string $context): string
+    {
+        return $context . <<<PROMPT
+
+
+FORMATO DE SALIDA: MICROLEARNING Y FLASHCARDS
+
+INSTRUCCIONES ESPECÍFICAS:
+1. Crea 15-25 flashcards (pregunta/respuesta) para memorización activa
+2. Añade 5-10 "píldoras" de conocimiento (datos curiosos, tips, "¿Sabías que...?")
+3. Las flashcards deben ser:
+   - Concisas (respuesta en 1-3 líneas)
+   - Específicas (un solo concepto por tarjeta)
+   - Accionables (fáciles de recordar y aplicar)
+4. Incluye mnemotécnicas si son útiles
+
+ESTRUCTURA:
+---FLASHCARDS---
+### 🎴 Flashcard 1
+**Pregunta:** [Pregunta corta]
+**Respuesta:** [Respuesta concisa]
+
+### 🎴 Flashcard 2
+**Pregunta:** [Pregunta corta]
+**Respuesta:** [Respuesta concisa]
+
+[Continuar con 15-25 flashcards...]
+---FIN_FLASHCARDS---
+
+---TIPS---
+### 💡 Píldoras de Conocimiento
+
+1. **¿Sabías que...?** [Dato interesante relacionado]
+
+2. **Tip profesional:** [Consejo práctico]
+
+3. **Error común:** [Qué evitar y por qué]
+
+4. **Recuerda:** [Mnemotécnico o regla fácil]
+
+[Continuar con 5-10 tips...]
+---FIN_TIPS---
+PROMPT;
+    }
+
+    private function buildPodcastPrompt(string $context, string $title): string
+    {
+        $courseName = $title ?: 'este curso';
+        
+        return $context . <<<PROMPT
+
+
+FORMATO DE SALIDA: GUION DE PODCAST EDUCATIVO
+
+INSTRUCCIONES ESPECÍFICAS:
+1. Crea un guion para un podcast de 2 presentadores: Iris (mujer) y Bruno (hombre)
+2. El podcast debe ser una CONVERSACIÓN DIDÁCTICA, no una lectura
+3. Duración objetivo: 10-15 minutos de audio
+4. Estructura del episodio:
+   - Intro: Presentación del tema y por qué es importante
+   - Desarrollo: Explicación conversacional de los conceptos clave
+   - Ejemplos: Casos prácticos o analogías para entender mejor
+   - Cierre: Resumen de puntos clave y despedida
+5. Tono: Cercano, profesional pero accesible, con algo de humor natural
+6. IMPORTANTE: Cubrir TODOS los conceptos importantes sin omitir nada relevante
+7. Usar preguntas entre presentadores para simular dudas del oyente
+
+REGLAS DEL DIÁLOGO:
+- Iris y Bruno se complementan, no se repiten
+- Uno explica, el otro pregunta o añade ejemplos
+- Evitar monólogos largos (máx 3-4 frases seguidas)
+- Incluir transiciones naturales ("Eso me recuerda...", "Exacto, y además...")
+
+ESTRUCTURA:
+---RESUMEN---
+**Título del episodio:** [Título atractivo]
+**Tema principal:** [Descripción breve]
+**Conceptos cubiertos:** [Lista de conceptos]
+**Duración estimada:** [X minutos]
+---FIN_RESUMEN---
+
+---GUION---
+**[INTRO]**
+
+Iris: ¡Hola! Bienvenidos a un nuevo episodio. Hoy vamos a hablar de {$courseName}. Bruno, ¿preparado?
+
+Bruno: ¡Por supuesto! Es un tema que...
+
+[Continuar el diálogo natural cubriendo todos los puntos del contenido]
+
+**[DESARROLLO]**
+
+[Explicación conversacional de cada concepto importante]
+
+**[EJEMPLOS Y CASOS PRÁCTICOS]**
+
+[Analogías y ejemplos para facilitar la comprensión]
+
+**[CIERRE]**
+
+Iris: Bueno, para resumir lo que hemos visto hoy...
+
+Bruno: [Resumen de puntos clave]
+
+Iris: ¡Hasta el próximo episodio!
+
+Bruno: ¡Nos vemos!
+---FIN_GUION---
+PROMPT;
+    }
+
+    private function buildFinalExamPrompt(string $context, array $durationInfo): string
+    {
+        $numQuestions = max(15, $durationInfo['hours'] * 2);
+        
+        return $context . <<<PROMPT
+
+
+FORMATO DE SALIDA: EXAMEN FINAL DEL CURSO
+
+INSTRUCCIONES ESPECÍFICAS:
+1. Crea un examen completo de aproximadamente {$numQuestions} preguntas
+2. El examen debe cubrir TODOS los módulos/temas del curso
+3. Distribución de tipos de preguntas:
+   - 50% Tipo test (4 opciones)
+   - 20% Verdadero/Falso
+   - 20% Respuesta corta
+   - 10% Desarrollo/Caso práctico
+4. Incluye puntuación por pregunta
+5. Añade rúbrica de evaluación para preguntas de desarrollo
+6. Tiempo estimado de realización
+
+ESTRUCTURA:
+---EXAMEN---
+# EXAMEN FINAL: [Nombre del Curso]
+
+**Instrucciones:**
+- Tiempo estimado: [X minutos]
+- Puntuación total: 100 puntos
+- Para aprobar: mínimo 60 puntos
+- Lee todas las preguntas antes de empezar
+
+---
+
+## SECCIÓN A: Preguntas Tipo Test (50 puntos)
+*Cada pregunta vale 5 puntos. Marca la opción correcta.*
+
+**1.** [Pregunta]
+   a) [Opción]
+   b) [Opción]
+   c) [Opción]
+   d) [Opción]
+
+[Continuar con más preguntas tipo test...]
+
+---
+
+## SECCIÓN B: Verdadero o Falso (20 puntos)
+*Cada pregunta vale 4 puntos. Indica V o F.*
+
+**11.** "[Afirmación]" ___
+
+[Continuar...]
+
+---
+
+## SECCIÓN C: Respuesta Corta (20 puntos)
+*Responde en 2-3 frases. Cada pregunta vale 5 puntos.*
+
+**16.** [Pregunta]
+
+[Continuar...]
+
+---
+
+## SECCIÓN D: Desarrollo (10 puntos)
+*Responde de forma completa y argumentada.*
+
+**20.** [Pregunta de desarrollo o caso práctico]
+---FIN_EXAMEN---
+
+---RUBRICA---
+## Rúbrica de Evaluación - Sección D
+
+| Criterio | Excelente (10) | Bien (7-8) | Suficiente (5-6) | Insuficiente (<5) |
+|----------|----------------|------------|------------------|-------------------|
+| Comprensión | [Descripción] | [Descripción] | [Descripción] | [Descripción] |
+| Argumentación | [Descripción] | [Descripción] | [Descripción] | [Descripción] |
+| Aplicación | [Descripción] | [Descripción] | [Descripción] | [Descripción] |
+---FIN_RUBRICA---
+
+---SOLUCIONES---
+## Clave de Respuestas
+
+### Sección A
+1. [Respuesta] - [Breve explicación]
+2. [Respuesta] - [Breve explicación]
+[Continuar...]
+
+### Sección B
+11. [V/F] - [Explicación]
+[Continuar...]
+
+### Sección C
+16. **Respuesta modelo:** [Respuesta completa]
+[Continuar...]
+
+### Sección D
+20. **Puntos clave que debe incluir:**
+- [Punto 1]
+- [Punto 2]
+- [Punto 3]
+---FIN_SOLUCIONES---
+PROMPT;
+    }
+}

@@ -114,6 +114,13 @@ $gesturesList = [
         'icon' => 'iconoir-microphone',
         'href' => '/gestos/transcriptor-audio.php',
         'description' => 'Convierte audio en texto'
+    ],
+    [
+        'type' => 'course-creator',
+        'name' => 'Creador de cursos',
+        'icon' => 'iconoir-graduation-cap',
+        'href' => '/gestos/creador-cursos.php',
+        'description' => 'Genera material formativo'
     ]
 ];
 

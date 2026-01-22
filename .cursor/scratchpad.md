@@ -1521,6 +1521,48 @@ Gesto dedicado para convertir archivos de audio en texto. Reutiliza `AudioTransc
 
 ---
 
+## Feature: Gesto "Creador de Cursos" ✅
+
+### Motivación
+Gesto para generar material formativo completo a partir de PDFs o texto (manuales, teoría, documentación). Permite crear cursos estructurados con múltiples tipos de outputs.
+
+### Outputs disponibles (selección múltiple)
+1. **Temario estructurado** (`syllabus`) - Módulos, lecciones, objetivos de aprendizaje
+2. **Fichas de contenido** (`content_cards`) - Resúmenes por tema con conceptos clave
+3. **Autoevaluación** (`quiz`) - Preguntas tipo test por módulo
+4. **Microlearning** (`flashcards`) - Flashcards y píldoras de conocimiento
+5. **Podcast educativo** (`podcast`) - Guion para audio con Iris y Bruno
+6. **Examen final** (`final_exam`) - Evaluación completa del temario
+
+### Configuración
+- **Duración**: 4h, 8h, 16h, 40h
+- **Nivel**: Básico, Intermedio, Avanzado
+- **Modalidad**: Presencial, Online, Híbrido
+
+### Archivos creados
+- `src/Content/CourseGenerator.php` - Servicio con prompts especializados
+- `public/api/gestures/course-creator.php` - API endpoint
+- `public/gestos/creador-cursos.php` - Página del gesto
+- `public/assets/js/gesture-course-creator.js` - JavaScript modular
+- `docs/migrations/012_add_course_creator_gesture.sql` - Permisos
+
+### Tareas completadas
+- [x] Backend: Servicio CourseGenerator con prompts por formato
+- [x] Backend: API endpoint con extracción PDF y generación múltiple
+- [x] Frontend: Página PHP con UI similar a transformador
+- [x] Frontend: JS con selección múltiple, tabs de resultados, historial
+- [x] Navegación: Añadido a left-tabs.php y gestos/index.php
+- [x] Permisos: Migración SQL creada
+- [ ] Testing: Pendiente ejecución de migración y pruebas manuales
+
+### Para activar
+```bash
+# Ejecutar migración
+mysql -u root -p ebonia < docs/migrations/012_add_course_creator_gesture.sql
+```
+
+---
+
 # Lessons
 
 - Mantener comandos idempotentes para poder re-ejecutar sin fallos (p.ej. `git remote set-url` si `origin` ya existe).
