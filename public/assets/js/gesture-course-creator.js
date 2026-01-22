@@ -397,7 +397,7 @@
   // =========================================================================
   // MOSTRAR MÓDULOS DESARROLLADOS
   // =========================================================================
-  function showDevelopedModules(data) {
+  async function showDevelopedModules(data) {
     if (inputSection) inputSection.classList.add('hidden');
     if (outlineSection) outlineSection.classList.add('hidden');
     if (resultSection) resultSection.classList.remove('hidden');
@@ -499,6 +499,11 @@
       
       // Añadir panel de materiales complementarios (Paso 3)
       renderMaterialsPanel(modules);
+    }
+    
+    // Buscar materiales ya generados para este curso
+    if (currentExecutionId) {
+      await loadRelatedMaterials(currentExecutionId);
     }
 
     // Botón nuevo curso
@@ -678,6 +683,11 @@
       showMaterialResult(typeNames[type], data.output);
       loadHistory();
       
+      // Recargar badges de materiales relacionados
+      if (currentExecutionId) {
+        await loadRelatedMaterials(currentExecutionId);
+      }
+      
     } catch (err) {
       alert('Error: ' + err.message);
     } finally {
@@ -726,6 +736,87 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     });
+  }
+
+  // Buscar materiales complementarios ya generados para un curso
+  async function loadRelatedMaterials(courseExecutionId) {
+    try {
+      const response = await fetch(`/api/gestures/history.php?type=${GESTURE_TYPE}&limit=100`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      
+      if (!data.items) return;
+      
+      // Buscar materiales que tengan source_execution_id = courseExecutionId
+      const relatedMaterials = data.items.filter(item => {
+        const contentType = item.content_type || '';
+        if (!contentType.startsWith('course_material_')) return false;
+        
+        // Parsear input_data para obtener source_execution_id
+        const inputData = typeof item.input_data === 'string' ? JSON.parse(item.input_data) : (item.input_data || {});
+        return inputData.source_execution_id == courseExecutionId;
+      });
+      
+      if (relatedMaterials.length > 0) {
+        showRelatedMaterialsBadges(relatedMaterials);
+      }
+    } catch (err) {
+      console.error('Error loading related materials:', err);
+    }
+  }
+  
+  function showRelatedMaterialsBadges(materials) {
+    const materialsPanel = document.getElementById('materials-panel');
+    if (!materialsPanel) return;
+    
+    const materialTypeMap = {
+      'course_material_flashcards': { icon: 'iconoir-multiple-pages', label: 'Flashcards', color: 'violet' },
+      'course_material_quiz': { icon: 'iconoir-check-circle', label: 'Tests', color: 'emerald' },
+      'course_material_final_exam': { icon: 'iconoir-graduation-cap', label: 'Examen', color: 'orange' },
+      'course_material_podcast': { icon: 'iconoir-microphone', label: 'Podcast', color: 'pink' }
+    };
+    
+    // Crear sección de materiales ya generados
+    const existingSection = materialsPanel.querySelector('.existing-materials');
+    if (existingSection) {
+      existingSection.remove();
+    }
+    
+    const materialsHtml = `
+      <div class="existing-materials mb-4 p-4 bg-violet-50 border border-violet-200 rounded-xl">
+        <p class="text-sm font-semibold text-violet-800 mb-3">
+          <i class="iconoir-check-circle mr-1"></i> Materiales ya generados
+        </p>
+        <div class="flex flex-wrap gap-2">
+          ${materials.map(mat => {
+            const info = materialTypeMap[mat.content_type] || { icon: 'iconoir-spark', label: 'Material', color: 'gray' };
+            return `
+              <button class="existing-material-badge px-3 py-2 bg-white border-2 border-${info.color}-300 hover:bg-${info.color}-50 rounded-lg transition-all flex items-center gap-2 text-sm font-medium text-${info.color}-700" data-material-id="${mat.id}" data-content-type="${mat.content_type}">
+                <i class="${info.icon}"></i>
+                <span>${info.label}</span>
+                <i class="iconoir-eye text-xs"></i>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+    
+    // Insertar al principio del panel de materiales
+    const panelContent = materialsPanel.querySelector('.p-4');
+    if (panelContent) {
+      panelContent.insertAdjacentHTML('afterbegin', materialsHtml);
+      
+      // Event listeners para cargar cada material
+      panelContent.querySelectorAll('.existing-material-badge').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const materialId = btn.dataset.materialId;
+          const contentType = btn.dataset.contentType;
+          await loadHistoryItem(materialId, 3, contentType);
+        });
+      });
+    }
   }
 
   function downloadModule(module, courseTitle) {
@@ -840,7 +931,13 @@
   function renderHistory(items) {
     if (!historyList) return;
     
-    if (!items || items.length === 0) {
+    // Filtrar solo fase 1 y 2 (los materiales fase 3 se mostrarán dentro del curso)
+    const mainItems = items.filter(item => {
+      const contentType = item.content_type || '';
+      return !contentType.startsWith('course_material_');
+    });
+    
+    if (!mainItems || mainItems.length === 0) {
       historyList.innerHTML = `
         <div class="p-6 text-center">
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
@@ -865,7 +962,7 @@
       'course_material_podcast': { phase: 3, label: 'Podcast', icon: 'iconoir-microphone', bgClass: 'bg-pink-500', iconClass: 'text-white' }
     };
 
-    historyList.innerHTML = items.map(item => {
+    historyList.innerHTML = mainItems.map(item => {
       const inputData = typeof item.input_data === 'string' ? JSON.parse(item.input_data) : (item.input_data || {});
       const config = inputData?.config || {};
       
