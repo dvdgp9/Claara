@@ -12,7 +12,8 @@ use App\Session;
 use App\Response;
 use Content\CourseGenerator;
 use Gestures\GestureExecutionsRepo;
-use App\UsageLogRepo;
+use Repos\UsageLogRepo;
+use App\DB;
 
 // Solo POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
