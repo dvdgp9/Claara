@@ -438,6 +438,67 @@ $headerDrawerId = 'course-history-drawer';
             <div id="modules-container">
               <!-- Se llenan dinámicamente con los módulos desarrollados -->
             </div>
+            
+            <!-- Fase 3: Materiales complementarios -->
+            <div id="extras-section" class="mt-8 pt-6 border-t border-slate-200">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                  <i class="iconoir-magic-wand text-violet-600 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-slate-800">Materiales complementarios</h3>
+                  <p class="text-xs text-slate-500">Genera recursos adicionales a partir del contenido desarrollado</p>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <label class="extra-option cursor-pointer">
+                  <input type="checkbox" name="extras" value="flashcards" class="sr-only peer">
+                  <div class="p-4 rounded-xl border-2 border-slate-200 hover:border-violet-300 peer-checked:border-violet-500 peer-checked:bg-violet-50 transition-all text-center">
+                    <i class="iconoir-card-wallet text-2xl text-violet-600 mb-2 block"></i>
+                    <span class="text-sm font-medium text-slate-700">Flashcards</span>
+                    <p class="text-xs text-slate-400 mt-1">Tarjetas de memoria</p>
+                  </div>
+                </label>
+                
+                <label class="extra-option cursor-pointer">
+                  <input type="checkbox" name="extras" value="quiz" class="sr-only peer">
+                  <div class="p-4 rounded-xl border-2 border-slate-200 hover:border-violet-300 peer-checked:border-violet-500 peer-checked:bg-violet-50 transition-all text-center">
+                    <i class="iconoir-check-circle text-2xl text-violet-600 mb-2 block"></i>
+                    <span class="text-sm font-medium text-slate-700">Tests por módulo</span>
+                    <p class="text-xs text-slate-400 mt-1">Autoevaluación</p>
+                  </div>
+                </label>
+                
+                <label class="extra-option cursor-pointer">
+                  <input type="checkbox" name="extras" value="final_exam" class="sr-only peer">
+                  <div class="p-4 rounded-xl border-2 border-slate-200 hover:border-violet-300 peer-checked:border-violet-500 peer-checked:bg-violet-50 transition-all text-center">
+                    <i class="iconoir-trophy text-2xl text-violet-600 mb-2 block"></i>
+                    <span class="text-sm font-medium text-slate-700">Examen final</span>
+                    <p class="text-xs text-slate-400 mt-1">Evaluación completa</p>
+                  </div>
+                </label>
+                
+                <label class="extra-option cursor-pointer">
+                  <input type="checkbox" name="extras" value="podcast" class="sr-only peer">
+                  <div class="p-4 rounded-xl border-2 border-slate-200 hover:border-violet-300 peer-checked:border-violet-500 peer-checked:bg-violet-50 transition-all text-center">
+                    <i class="iconoir-podcast text-2xl text-violet-600 mb-2 block"></i>
+                    <span class="text-sm font-medium text-slate-700">Podcast</span>
+                    <p class="text-xs text-slate-400 mt-1">Guion de audio</p>
+                  </div>
+                </label>
+              </div>
+              
+              <button type="button" id="generate-extras-btn" disabled class="w-full py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 disabled:from-slate-300 disabled:to-slate-400 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                <i class="iconoir-magic-wand"></i>
+                <span>Selecciona materiales para generar</span>
+              </button>
+              
+              <!-- Contenedor para los materiales generados -->
+              <div id="extras-results" class="mt-6 space-y-4 hidden">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
           </section>
 
         </div>

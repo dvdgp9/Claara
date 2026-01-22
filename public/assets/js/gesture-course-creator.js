@@ -1,8 +1,9 @@
 /**
  * Gesto: Creador de Cursos
- * Flujo de 2 fases:
+ * Flujo de 3 fases:
  * - Fase 1: Subir PDF/texto → Generar índice editable
- * - Fase 2: Editar índice (opcional) → Desarrollar módulos → Descargar Word/PDF
+ * - Fase 2: Editar índice (opcional) → Desarrollar módulos
+ * - Fase 3 (opcional): Generar materiales complementarios (flashcards, tests, examen, podcast)
  */
 
 (function() {
@@ -35,6 +36,12 @@
   const modulesContainer = document.getElementById('modules-container');
   
   const historyList = document.getElementById('history-list');
+  
+  // Fase 3: Materiales complementarios
+  const extrasSection = document.getElementById('extras-section');
+  const extrasCheckboxes = document.querySelectorAll('input[name="extras"]');
+  const generateExtrasBtn = document.getElementById('generate-extras-btn');
+  const extrasResults = document.getElementById('extras-results');
 
   // === State ===
   let currentTab = 'pdf';
@@ -42,6 +49,8 @@
   let currentOutline = null;
   let currentExecutionId = null;
   let sourceContent = null;
+  let currentDevelopedModules = null;
+  let currentCourseTitle = null;
 
   // === Tab switching ===
   if (tabBtns) {
@@ -490,10 +499,231 @@
       });
     }
 
+    // Guardar módulos en estado para Fase 3
+    currentDevelopedModules = modules;
+    currentCourseTitle = data.course_title;
+    
+    // Configurar checkboxes de extras
+    setupExtrasUI();
+
     // Botón nuevo curso
     const newCourseBtn = document.getElementById('new-course-btn');
     if (newCourseBtn) {
       newCourseBtn.addEventListener('click', resetUI);
+    }
+  }
+  
+  // =========================================================================
+  // FASE 3: MATERIALES COMPLEMENTARIOS
+  // =========================================================================
+  function setupExtrasUI() {
+    // Limpiar resultados previos
+    if (extrasResults) {
+      extrasResults.innerHTML = '';
+      extrasResults.classList.add('hidden');
+    }
+    
+    // Reset checkboxes
+    extrasCheckboxes.forEach(cb => {
+      cb.checked = false;
+    });
+    
+    // Actualizar estado del botón
+    updateExtrasButton();
+    
+    // Event listeners para checkboxes
+    extrasCheckboxes.forEach(cb => {
+      cb.removeEventListener('change', updateExtrasButton);
+      cb.addEventListener('change', updateExtrasButton);
+    });
+    
+    // Event listener para botón generar
+    if (generateExtrasBtn) {
+      generateExtrasBtn.removeEventListener('click', generateExtras);
+      generateExtrasBtn.addEventListener('click', generateExtras);
+    }
+  }
+  
+  function updateExtrasButton() {
+    const selectedFormats = getSelectedExtras();
+    
+    if (generateExtrasBtn) {
+      if (selectedFormats.length === 0) {
+        generateExtrasBtn.disabled = true;
+        generateExtrasBtn.innerHTML = `
+          <i class="iconoir-magic-wand"></i>
+          <span>Selecciona materiales para generar</span>
+        `;
+      } else {
+        generateExtrasBtn.disabled = false;
+        generateExtrasBtn.innerHTML = `
+          <i class="iconoir-magic-wand"></i>
+          <span>Generar ${selectedFormats.length} material${selectedFormats.length > 1 ? 'es' : ''}</span>
+        `;
+      }
+    }
+  }
+  
+  function getSelectedExtras() {
+    return Array.from(extrasCheckboxes)
+      .filter(cb => cb.checked)
+      .map(cb => cb.value);
+  }
+  
+  async function generateExtras() {
+    const formats = getSelectedExtras();
+    
+    if (formats.length === 0 || !currentDevelopedModules) {
+      alert('Selecciona al menos un material para generar');
+      return;
+    }
+    
+    // Mostrar progreso
+    if (generateExtrasBtn) {
+      generateExtrasBtn.disabled = true;
+      generateExtrasBtn.innerHTML = `
+        <i class="iconoir-refresh animate-spin"></i>
+        <span>Generando materiales...</span>
+      `;
+    }
+    
+    // Mostrar panel de progreso
+    if (extrasResults) {
+      extrasResults.innerHTML = `
+        <div class="p-4 bg-violet-50 border border-violet-200 rounded-xl">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+              <i class="iconoir-refresh animate-spin text-violet-600 text-xl"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-violet-800">Generando ${formats.length} material${formats.length > 1 ? 'es' : ''}...</p>
+              <p class="text-sm text-violet-600">Esto puede tardar unos minutos.</p>
+            </div>
+          </div>
+        </div>
+      `;
+      extrasResults.classList.remove('hidden');
+    }
+    
+    try {
+      const response = await fetch('/api/gestures/course-extras.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          execution_id: currentExecutionId,
+          formats: formats,
+          modules: currentDevelopedModules,
+          course_title: currentCourseTitle
+        })
+      });
+      
+      const data = await response.json();
+      
+      console.log('Respuesta extras:', data);
+      
+      if (!data.success) {
+        throw new Error(data.error?.message || data.message || 'Error generando materiales');
+      }
+      
+      showExtrasResults(data);
+      loadHistory();
+      
+    } catch (err) {
+      if (extrasResults) {
+        extrasResults.innerHTML = `
+          <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
+            <p class="text-red-700"><i class="iconoir-warning-circle mr-2"></i>${err.message}</p>
+          </div>
+        `;
+      }
+    } finally {
+      updateExtrasButton();
+    }
+  }
+  
+  function showExtrasResults(data) {
+    const materials = data.materials || {};
+    
+    const formatIcons = {
+      flashcards: 'iconoir-card-wallet',
+      quiz: 'iconoir-check-circle',
+      final_exam: 'iconoir-trophy',
+      podcast: 'iconoir-podcast'
+    };
+    
+    if (extrasResults) {
+      extrasResults.innerHTML = Object.entries(materials).map(([key, material]) => `
+        <div class="glass-strong rounded-2xl border border-slate-200/50 overflow-hidden">
+          <div class="p-4 border-b border-slate-200/50 bg-gradient-to-r from-violet-50 to-purple-50">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-violet-600 text-white flex items-center justify-center">
+                  <i class="${formatIcons[key] || 'iconoir-document'} text-lg"></i>
+                </div>
+                <div>
+                  <h3 class="font-semibold text-slate-800">${escapeHtml(material.format_name)}</h3>
+                  <p class="text-xs text-slate-500">Generado con ${material.model || 'IA'}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="copy-extra-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5" data-format="${key}">
+                  <i class="iconoir-copy"></i> Copiar
+                </button>
+                <button class="download-extra-btn px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-format="${key}">
+                  <i class="iconoir-download"></i> Descargar
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="p-4">
+            <div class="content-preview max-h-96 overflow-auto text-sm">
+              <pre class="whitespace-pre-wrap font-sans">${escapeHtml(material.content)}</pre>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      extrasResults.classList.remove('hidden');
+      
+      // Event listeners para copiar/descargar
+      extrasResults.querySelectorAll('.copy-extra-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const format = btn.dataset.format;
+          const content = materials[format]?.content;
+          if (content) {
+            try {
+              await navigator.clipboard.writeText(content);
+              btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+              setTimeout(() => {
+                btn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
+              }, 2000);
+            } catch (err) {
+              console.error('Error copying:', err);
+            }
+          }
+        });
+      });
+      
+      extrasResults.querySelectorAll('.download-extra-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const format = btn.dataset.format;
+          const material = materials[format];
+          if (material) {
+            const filename = `${slugify(currentCourseTitle || 'curso')}-${format}.md`;
+            const blob = new Blob([material.content], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+        });
+      });
     }
   }
 
@@ -616,15 +846,21 @@
     }
 
     const levelIcons = { basico: '🌱', intermedio: '🌿', avanzado: '🌳' };
-    const phaseLabels = { 1: 'Índice', 2: 'Desarrollado' };
+    const phaseLabels = { 1: 'Índice', 2: 'Desarrollado', 3: 'Materiales' };
+    const phaseColors = {
+      1: { bg: 'bg-emerald-100', text: 'text-emerald-600', icon: 'iconoir-graduation-cap' },
+      2: { bg: 'bg-emerald-600', text: 'text-white', icon: 'iconoir-graduation-cap' },
+      3: { bg: 'bg-violet-600', text: 'text-white', icon: 'iconoir-magic-wand' }
+    };
 
     historyList.innerHTML = items.map(item => {
       const inputData = typeof item.input_data === 'string' ? JSON.parse(item.input_data) : (item.input_data || {});
       const config = inputData?.config || {};
       
-      // Detectar fase usando content_type (disponible en listado)
-      // course_developed = fase 2, course_outline = fase 1
-      const phase = item.content_type === 'course_developed' ? 2 : 1;
+      // Detectar fase usando content_type
+      let phase = 1;
+      if (item.content_type === 'course_developed') phase = 2;
+      else if (item.content_type === 'course_materials') phase = 3;
       
       const date = new Date(item.created_at).toLocaleDateString('es-ES', {
         day: 'numeric',
@@ -634,12 +870,13 @@
       });
       const levelIcon = levelIcons[config.level] || '📚';
       const phaseLabel = phaseLabels[phase] || '';
+      const colors = phaseColors[phase] || phaseColors[1];
 
       return `
         <div class="history-item group border-b border-slate-100 last:border-0" data-id="${item.id}" data-phase="${phase}">
           <div class="history-item-main p-3 hover:bg-slate-50 cursor-pointer flex items-start gap-3">
-            <div class="w-8 h-8 rounded-lg ${phase === 2 ? 'bg-emerald-600' : 'bg-emerald-100'} flex items-center justify-center shrink-0">
-              <i class="iconoir-graduation-cap ${phase === 2 ? 'text-white' : 'text-emerald-600'} text-sm"></i>
+            <div class="w-8 h-8 rounded-lg ${colors.bg} flex items-center justify-center shrink-0">
+              <i class="${colors.icon} ${colors.text} text-sm"></i>
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Sin título')}</p>
@@ -688,10 +925,23 @@
           : item.output_data;
         
         console.log('Output data:', outputData); // Debug
-        console.log('Has modules:', !!outputData?.modules, 'Module count:', outputData?.modules?.length); // Debug
         
-        // Prioridad 1: Si es fase 2 o tiene módulos, mostrar módulos
-        if (outputData?.modules && outputData.modules.length > 0) {
+        // Detectar tipo de contenido
+        const contentType = item.content_type;
+        
+        // Fase 3: Materiales complementarios
+        if (contentType === 'course_materials' && outputData?.materials) {
+          console.log('Mostrando materiales complementarios'); // Debug
+          if (inputSection) inputSection.classList.add('hidden');
+          if (outlineSection) outlineSection.classList.add('hidden');
+          if (resultSection) resultSection.classList.remove('hidden');
+          if (resultTitle) resultTitle.textContent = outputData.course_title || 'Materiales del curso';
+          if (resultSource) resultSource.textContent = `${outputData.total_generated || Object.keys(outputData.materials).length} materiales generados`;
+          if (modulesContainer) modulesContainer.innerHTML = '';
+          showExtrasResults({ materials: outputData.materials });
+        }
+        // Fase 2: Módulos desarrollados
+        else if (outputData?.modules && outputData.modules.length > 0) {
           console.log('Mostrando módulos desarrollados'); // Debug
           showDevelopedModules({
             course_title: outputData.course_title || item.title,
@@ -699,7 +949,7 @@
             total_developed: outputData.total_developed || outputData.modules.length
           });
         } 
-        // Prioridad 2: Si tiene outline, mostrar índice editable
+        // Fase 1: Índice editable
         else if (outputData?.outline) {
           console.log('Mostrando editor de índice'); // Debug
           currentOutline = outputData.outline;
@@ -707,7 +957,7 @@
           showOutlineEditor({ outline: outputData.outline });
         }
         else {
-          console.warn('No se encontraron módulos ni outline'); // Debug
+          console.warn('No se encontraron datos válidos'); // Debug
         }
         
         historyList?.querySelectorAll('.history-item').forEach(el => {

@@ -386,13 +386,19 @@ PROMPT;
         }
 
         return <<<PROMPT
-Eres un experto en diseño instruccional y redacción de contenidos formativos. Tu tarea es DESARROLLAR el contenido completo de un módulo de curso basándote en el material fuente proporcionado.
+Eres un experto en diseño instruccional y redacción de contenidos formativos de alto nivel. Tu misión es desarrollar el contenido didáctico detallado de un módulo basándote ÚNICAMENTE en el material fuente proporcionado.
+
+REGLA DE ORO DE FIDELIDAD:
+- TODO el contenido desarrollado debe provenir directamente del MATERIAL FUENTE.
+- QUEDA ESTRICTAMENTE PROHIBIDO inventar conceptos, datos, fechas, nombres, procedimientos o cualquier información que NO figure en el material fuente.
+- Si una lección o tema solicitado en el índice NO tiene base suficiente en el material fuente, explica los conceptos generales basándote en lo poco que haya, pero NO alucines ni rellenes con información externa de Internet o de tus conocimientos previos.
+- Tu valor no reside en "añadir información nueva", sino en "estructurar pedagógicamente la información existente".
 
 CONTEXTO DEL CURSO:
 {$outlineContext}
 
 MÓDULO A DESARROLLAR: {$module['id']}. {$moduleTitle}
-{$moduleDescription}
+Descripción del módulo: {$moduleDescription}
 
 OBJETIVOS DEL MÓDULO:
 - {$moduleObjectives}
@@ -400,41 +406,31 @@ OBJETIVOS DEL MÓDULO:
 LECCIONES A DESARROLLAR:
 {$lessonsText}
 
-MATERIAL FUENTE (usa esta información para desarrollar el contenido):
+MATERIAL FUENTE (ÚNICA FUENTE DE VERDAD):
 ---
 {$content}
 ---
 
 INSTRUCCIONES DE DESARROLLO:
 
-1. **Estructura de cada lección:**
+1. **Fidelidad Absoluta:** No utilices conocimientos externos. Si el material dice "A", tú explicas "A". Si el material no menciona "B", tú NO hablas de "B", por mucho que creas que falta.
+2. **Estructura de cada lección:**
    - Título de la lección
-   - Introducción (por qué es importante este tema)
-   - Desarrollo del contenido (explicación detallada de cada concepto)
-   - Ejemplos prácticos cuando sea posible
-   - Puntos clave a recordar
-   - Transición a la siguiente lección
-
-2. **Estilo de redacción:**
-   - Tono didáctico, claro y profesional
-   - Español de España (vosotros, expresiones peninsulares)
-   - Explicaciones progresivas (de lo simple a lo complejo)
-   - Usa analogías para conceptos difíciles
-   - Incluye ejemplos reales cuando sea posible
-
-3. **Contenido:**
-   - NO inventes información que no esté en el material fuente
-   - SÍ reorganiza y explica mejor la información
-   - SÍ añade estructura pedagógica (introducciones, resúmenes, conexiones)
-   - Desarrolla TODAS las lecciones indicadas
-   - Extensión: aproximadamente 800-1500 palabras por lección
-
+   - Introducción: Presenta el tema usando exclusivamente el contexto del material.
+   - Desarrollo: Explica detalladamente los puntos del material fuente, organizándolos con subtítulos si es necesario para mejorar la claridad.
+   - Puntos clave: Resume lo más importante extraído de la fuente.
+   - Transición: Conecta con la siguiente lección.
+3. **Estilo:**
+   - Tono profesional, didáctico y directo.
+   - Usa español de España (normativo/peninsular).
+   - Máxima claridad pedagógica.
 4. **Formato Markdown:**
-   - Usa ## para el título del módulo
-   - Usa ### para cada lección
-   - Usa #### para subsecciones dentro de lecciones
-   - Usa listas, negritas y cursivas para resaltar
-   - Incluye separadores --- entre lecciones
+   - ## para el título del módulo.
+   - ### para cada lección.
+   - #### para subapartados.
+   - Usa listas y negritas para facilitar la lectura.
+
+RECUERDA: Cero alucinaciones. Fidelidad 100% al material fuente.
 
 DESARROLLA EL MÓDULO COMPLETO:
 PROMPT;
