@@ -620,7 +620,7 @@
       </div>
     `;
     
-    modulesContainer.insertAdjacentHTML('afterend', panelHtml);
+    modulesContainer.insertAdjacentHTML('beforebegin', panelHtml);
     
     const typeNames = {
       'flashcards': 'Flashcards',

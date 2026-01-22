@@ -111,12 +111,39 @@ class GestureExecutionsRepo
 
     /**
      * Elimina una ejecución (solo si pertenece al usuario)
+     * Implementa borrado en cascada para materiales complementarios del Course Creator
      */
     public function delete(int $id, int $userId): bool
     {
+        // 1. Si es un curso del Course Creator, buscamos materiales que lo tengan como fuente
+        $sqlCheck = "SELECT content_type FROM gesture_executions WHERE id = :id";
+        $stmtCheck = $this->pdo->prepare($sqlCheck);
+        $stmtCheck->execute(['id' => $id]);
+        $row = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+        if ($row && in_array($row['content_type'], ['course_outline', 'course_developed'])) {
+            // Es un curso base, buscar materiales hijos
+            // Nota: Usamos JSON_EXTRACT o LIKE para encontrar el source_execution_id en input_data
+            $sqlDeleteChildren = "DELETE FROM gesture_executions 
+                                WHERE user_id = :user_id 
+                                AND content_type LIKE 'course_material_%'
+                                AND (
+                                    JSON_EXTRACT(input_data, '$.source_execution_id') = :id
+                                    OR input_data LIKE :id_like
+                                )";
+            $stmtChildren = $this->pdo->prepare($sqlDeleteChildren);
+            $stmtChildren->execute([
+                'user_id' => $userId,
+                'id' => $id,
+                'id_like' => '%"source_execution_id":' . $id . '%'
+            ]);
+        }
+
+        // 2. Eliminar el elemento principal
         $sql = "DELETE FROM gesture_executions WHERE id = :id AND user_id = :user_id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $id, 'user_id' => $userId]);
+        
         return $stmt->rowCount() > 0;
     }
 
