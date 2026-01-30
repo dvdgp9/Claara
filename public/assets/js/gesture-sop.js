@@ -16,7 +16,13 @@
     images: [], // [{ file, base64, mime_type }]
     activeSources: new Set(),
     isProcessing: false,
-    currentResult: null
+    currentResult: null,
+    // Grabación de audio
+    mediaRecorder: null,
+    audioChunks: [],
+    recordedBlob: null,
+    recordingTimer: null,
+    recordingSeconds: 0
   };
 
   // Elementos DOM
@@ -82,7 +88,22 @@
     downloadDocx: document.getElementById('download-docx'),
     
     // History
-    historyList: document.getElementById('history-list')
+    historyList: document.getElementById('history-list'),
+    
+    // Audio tabs y grabación
+    audioTabBtns: document.querySelectorAll('.audio-tab-btn'),
+    audioTabUpload: document.getElementById('audio-tab-upload'),
+    audioTabRecord: document.getElementById('audio-tab-record'),
+    recordReady: document.getElementById('record-ready'),
+    recordActive: document.getElementById('record-active'),
+    recordDone: document.getElementById('record-done'),
+    startRecordBtn: document.getElementById('start-record-btn'),
+    stopRecordBtn: document.getElementById('stop-record-btn'),
+    recordTimer: document.getElementById('record-timer'),
+    recordDuration: document.getElementById('record-duration'),
+    playRecordBtn: document.getElementById('play-record-btn'),
+    removeRecordBtn: document.getElementById('remove-record-btn'),
+    recordPlayback: document.getElementById('record-playback')
   };
 
   // Inicialización
@@ -90,6 +111,8 @@
     setupSourceCards();
     setupInputListeners();
     setupFileUploads();
+    setupAudioTabs();
+    setupAudioRecording();
     setupFormSubmit();
     setupResultTabs();
     setupCopyButtons();
@@ -119,6 +142,8 @@
     state.images = [];
     state.activeSources.clear();
     state.currentResult = null;
+    state.recordedBlob = null;
+    state.audioChunks = [];
     
     elements.titleInput.value = '';
     elements.inputText.value = '';
@@ -134,6 +159,14 @@
     removeAudio({ stopPropagation: () => {} });
     removePdf({ stopPropagation: () => {} });
     renderImagesGrid();
+    
+    // Resetear grabación
+    if (elements.recordReady) {
+      elements.recordReady.classList.remove('hidden');
+      elements.recordActive?.classList.add('hidden');
+      elements.recordDone?.classList.add('hidden');
+      if (elements.recordTimer) elements.recordTimer.textContent = '00:00';
+    }
   }
 
   // Configurar tarjetas de fuente
@@ -259,6 +292,142 @@
         handler(fakeEvent);
       }
     });
+  }
+
+  // Tabs de audio (Subir / Grabar)
+  function setupAudioTabs() {
+    elements.audioTabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.audioTab;
+        
+        // Actualizar botones
+        elements.audioTabBtns.forEach(b => {
+          b.classList.remove('bg-emerald-100', 'text-emerald-700', 'active');
+          b.classList.add('bg-slate-100', 'text-slate-600');
+        });
+        btn.classList.remove('bg-slate-100', 'text-slate-600');
+        btn.classList.add('bg-emerald-100', 'text-emerald-700', 'active');
+        
+        // Mostrar tab correspondiente
+        if (tab === 'upload') {
+          elements.audioTabUpload.classList.remove('hidden');
+          elements.audioTabRecord.classList.add('hidden');
+        } else {
+          elements.audioTabUpload.classList.add('hidden');
+          elements.audioTabRecord.classList.remove('hidden');
+        }
+      });
+    });
+  }
+
+  // Grabación de audio
+  function setupAudioRecording() {
+    elements.startRecordBtn?.addEventListener('click', startRecording);
+    elements.stopRecordBtn?.addEventListener('click', stopRecording);
+    elements.playRecordBtn?.addEventListener('click', playRecording);
+    elements.removeRecordBtn?.addEventListener('click', removeRecording);
+  }
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      state.mediaRecorder = new MediaRecorder(stream);
+      state.audioChunks = [];
+      state.recordingSeconds = 0;
+      
+      state.mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          state.audioChunks.push(e.data);
+        }
+      };
+      
+      state.mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+        
+        state.recordedBlob = new Blob(state.audioChunks, { type: 'audio/webm' });
+        
+        // Convertir a base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          state.audioBase64 = reader.result.split(',')[1];
+          state.audioFile = new File([state.recordedBlob], 'grabacion.webm', { type: 'audio/webm' });
+          updateSourceCard('audio');
+        };
+        reader.readAsDataURL(state.recordedBlob);
+        
+        // Mostrar estado completado
+        elements.recordReady.classList.add('hidden');
+        elements.recordActive.classList.add('hidden');
+        elements.recordDone.classList.remove('hidden');
+        elements.recordDuration.textContent = formatTime(state.recordingSeconds);
+        
+        // Preparar playback
+        elements.recordPlayback.src = URL.createObjectURL(state.recordedBlob);
+      };
+      
+      state.mediaRecorder.start(1000);
+      
+      // Mostrar estado grabando
+      elements.recordReady.classList.add('hidden');
+      elements.recordActive.classList.remove('hidden');
+      elements.recordDone.classList.add('hidden');
+      
+      // Timer
+      state.recordingTimer = setInterval(() => {
+        state.recordingSeconds++;
+        elements.recordTimer.textContent = formatTime(state.recordingSeconds);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error al acceder al micrófono:', error);
+      alert('No se pudo acceder al micrófono. Asegúrate de dar permiso.');
+    }
+  }
+
+  function stopRecording() {
+    if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+      state.mediaRecorder.stop();
+    }
+    if (state.recordingTimer) {
+      clearInterval(state.recordingTimer);
+      state.recordingTimer = null;
+    }
+  }
+
+  function playRecording() {
+    if (elements.recordPlayback.paused) {
+      elements.recordPlayback.play();
+      elements.playRecordBtn.innerHTML = '<i class="iconoir-pause"></i>';
+    } else {
+      elements.recordPlayback.pause();
+      elements.playRecordBtn.innerHTML = '<i class="iconoir-play"></i>';
+    }
+  }
+
+  function removeRecording() {
+    state.recordedBlob = null;
+    state.audioBase64 = '';
+    state.audioFile = null;
+    state.audioChunks = [];
+    
+    elements.recordReady.classList.remove('hidden');
+    elements.recordActive.classList.add('hidden');
+    elements.recordDone.classList.add('hidden');
+    elements.recordTimer.textContent = '00:00';
+    
+    if (elements.recordPlayback.src) {
+      URL.revokeObjectURL(elements.recordPlayback.src);
+      elements.recordPlayback.src = '';
+    }
+    
+    updateSourceCard('audio');
+  }
+
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
   async function handleAudioSelect(e) {
@@ -657,32 +826,70 @@
   function renderHistory(items) {
     if (items.length === 0) {
       elements.historyList.innerHTML = `
-        <div class="p-6 text-center text-slate-400">
-          <i class="iconoir-clipboard-check text-4xl mb-2 opacity-50"></i>
-          <p class="text-sm">Sin SOPs generados aún</p>
+        <div class="p-6 text-center">
+          <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+            <i class="iconoir-clipboard-check text-xl text-emerald-400"></i>
+          </div>
+          <p class="text-sm text-slate-500">Sin SOPs generados aún</p>
+          <p class="text-xs text-slate-400 mt-1">Usa el formulario para empezar</p>
         </div>
       `;
       return;
     }
     
     elements.historyList.innerHTML = items.map(item => `
-      <div class="history-item p-4 border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors" data-id="${item.id}">
-        <div class="flex items-start gap-3">
-          <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
-            <i class="iconoir-clipboard-check text-emerald-600"></i>
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="font-medium text-slate-700 truncate">${escapeHtml(item.title || 'SOP sin título')}</div>
-            <div class="text-xs text-slate-400">${formatDate(item.created_at)}</div>
+      <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2" data-id="${item.id}">
+        <i class="iconoir-clipboard-check text-emerald-500 mt-0.5"></i>
+        <div class="flex-1 min-w-0 cursor-pointer history-item-main">
+          <p class="text-sm font-medium text-slate-700 truncate group-hover:text-emerald-600">${escapeHtml(item.title || 'SOP sin título')}</p>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-[10px] text-slate-400">${formatDate(item.created_at)}</span>
           </div>
         </div>
+        <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Eliminar">
+          <i class="iconoir-trash"></i>
+        </button>
       </div>
     `).join('');
     
-    // Añadir listeners
-    elements.historyList.querySelectorAll('.history-item').forEach(item => {
-      item.addEventListener('click', () => loadHistoryItem(item.dataset.id));
+    // Event listeners para cargar item
+    elements.historyList.querySelectorAll('.history-item-main').forEach(el => {
+      const id = el.parentElement.dataset.id;
+      el.addEventListener('click', () => loadHistoryItem(id));
     });
+    
+    // Event listeners para eliminar
+    elements.historyList.querySelectorAll('.history-item-delete').forEach(btn => {
+      const id = btn.parentElement.dataset.id;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteHistoryItem(id);
+      });
+    });
+  }
+  
+  async function deleteHistoryItem(id) {
+    if (!confirm('¿Eliminar este SOP del historial?')) return;
+    
+    try {
+      const csrfToken = (typeof window !== 'undefined' && window.CSRF_TOKEN) ? window.CSRF_TOKEN : '';
+      const response = await fetch('/api/gestures/delete.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        credentials: 'include',
+        body: JSON.stringify({ id, csrf_token: csrfToken })
+      });
+      
+      if (response.ok) {
+        loadHistory();
+      }
+    } catch (error) {
+      console.error('Error eliminando:', error);
+      alert('Error al eliminar');
+    }
   }
 
   async function loadHistoryItem(id) {

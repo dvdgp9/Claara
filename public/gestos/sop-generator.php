@@ -359,25 +359,88 @@ $headerDrawerId = 'sop-history-drawer';
                   
                   <!-- Panel Audio -->
                   <div id="panel-audio" class="source-panel hidden">
-                    <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-emerald-400 transition-colors cursor-pointer" id="audio-dropzone">
-                      <input type="file" id="input-audio" accept="audio/*" class="hidden">
-                      <div id="audio-placeholder">
-                        <i class="iconoir-microphone text-4xl text-slate-300 mb-2"></i>
-                        <p class="text-sm text-slate-500">Arrastra un archivo de audio o haz clic para seleccionar</p>
-                        <p class="text-xs text-slate-400 mt-1">MP3, WAV, M4A, WebM (máx. 25MB)</p>
+                    <!-- Tabs: Subir / Grabar -->
+                    <div class="flex gap-2 mb-3">
+                      <button type="button" data-audio-tab="upload" class="audio-tab-btn active px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-100 text-emerald-700">
+                        <i class="iconoir-upload mr-1"></i> Subir archivo
+                      </button>
+                      <button type="button" data-audio-tab="record" class="audio-tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
+                        <i class="iconoir-mic mr-1"></i> Grabar
+                      </button>
+                    </div>
+                    
+                    <!-- Tab Subir -->
+                    <div id="audio-tab-upload" class="audio-tab-content">
+                      <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-emerald-400 transition-colors cursor-pointer" id="audio-dropzone">
+                        <input type="file" id="input-audio" accept="audio/*" class="hidden">
+                        <div id="audio-placeholder">
+                          <i class="iconoir-upload text-4xl text-slate-300 mb-2"></i>
+                          <p class="text-sm text-slate-500">Arrastra un archivo de audio o haz clic para seleccionar</p>
+                          <p class="text-xs text-slate-400 mt-1">MP3, WAV, M4A, WebM (máx. 25MB)</p>
+                        </div>
+                        <div id="audio-preview" class="hidden">
+                          <div class="file-preview">
+                            <div class="file-icon audio">
+                              <i class="iconoir-sound-high"></i>
+                            </div>
+                            <div class="flex-1 text-left">
+                              <div class="font-medium text-slate-700" id="audio-name">archivo.mp3</div>
+                              <div class="text-sm text-slate-400" id="audio-size">2.5 MB</div>
+                            </div>
+                            <button type="button" id="remove-audio" class="text-slate-400 hover:text-red-500 p-2">
+                              <i class="iconoir-xmark"></i>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div id="audio-preview" class="hidden">
-                        <div class="file-preview">
-                          <div class="file-icon audio">
-                            <i class="iconoir-sound-high"></i>
+                    </div>
+                    
+                    <!-- Tab Grabar -->
+                    <div id="audio-tab-record" class="audio-tab-content hidden">
+                      <div class="border-2 border-slate-200 rounded-xl p-6 text-center bg-slate-50">
+                        <!-- Estado: Listo para grabar -->
+                        <div id="record-ready" class="space-y-4">
+                          <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
+                            <i class="iconoir-mic text-3xl text-emerald-500"></i>
                           </div>
-                          <div class="flex-1 text-left">
-                            <div class="font-medium text-slate-700" id="audio-name">archivo.mp3</div>
-                            <div class="text-sm text-slate-400" id="audio-size">2.5 MB</div>
-                          </div>
-                          <button type="button" id="remove-audio" class="text-slate-400 hover:text-red-500 p-2">
-                            <i class="iconoir-xmark"></i>
+                          <p class="text-sm text-slate-600">Pulsa el botón para empezar a grabar</p>
+                          <button type="button" id="start-record-btn" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all">
+                            <i class="iconoir-mic mr-2"></i> Iniciar grabación
                           </button>
+                        </div>
+                        
+                        <!-- Estado: Grabando -->
+                        <div id="record-active" class="hidden space-y-4">
+                          <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto animate-pulse">
+                            <i class="iconoir-mic text-3xl text-red-500"></i>
+                          </div>
+                          <div>
+                            <p class="text-sm font-medium text-red-600">Grabando...</p>
+                            <p id="record-timer" class="text-2xl font-bold text-slate-700 mt-1">00:00</p>
+                          </div>
+                          <button type="button" id="stop-record-btn" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow-md transition-all">
+                            <i class="iconoir-stop mr-2"></i> Detener
+                          </button>
+                        </div>
+                        
+                        <!-- Estado: Grabación completada -->
+                        <div id="record-done" class="hidden">
+                          <div class="file-preview">
+                            <div class="file-icon audio">
+                              <i class="iconoir-mic"></i>
+                            </div>
+                            <div class="flex-1 text-left">
+                              <div class="font-medium text-slate-700">Grabación de audio</div>
+                              <div class="text-sm text-slate-400" id="record-duration">0:00</div>
+                            </div>
+                            <button type="button" id="play-record-btn" class="text-emerald-500 hover:text-emerald-600 p-2" title="Reproducir">
+                              <i class="iconoir-play"></i>
+                            </button>
+                            <button type="button" id="remove-record-btn" class="text-slate-400 hover:text-red-500 p-2" title="Eliminar">
+                              <i class="iconoir-xmark"></i>
+                            </button>
+                          </div>
+                          <audio id="record-playback" class="hidden"></audio>
                         </div>
                       </div>
                     </div>
@@ -593,6 +656,63 @@ $headerDrawerId = 'sop-history-drawer';
   <script src="/assets/js/gesture-sop.js"></script>
   <script>
     window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';
+    
+    // Sincronizar historial con drawer móvil
+    document.addEventListener('DOMContentLoaded', () => {
+      const desktopHistory = document.getElementById('history-list');
+      const mobileDrawerContent = document.getElementById('sop-history-drawer-content');
+      
+      function syncDrawerContent() {
+        if (desktopHistory && mobileDrawerContent) {
+          mobileDrawerContent.innerHTML = desktopHistory.innerHTML;
+          // Forzar visibilidad de acciones en móvil (no hay hover)
+          mobileDrawerContent.querySelectorAll('.opacity-0, .lg\\:opacity-0').forEach(el => {
+            el.classList.remove('opacity-0', 'lg:opacity-0');
+            el.classList.add('opacity-100');
+          });
+        }
+      }
+      
+      if (desktopHistory && mobileDrawerContent) {
+        syncDrawerContent();
+        
+        const observer = new MutationObserver(syncDrawerContent);
+        observer.observe(desktopHistory, { childList: true, subtree: true });
+        
+        // Event delegation para clics en el drawer móvil
+        mobileDrawerContent.addEventListener('click', (e) => {
+          // Clic en el botón de eliminar
+          const deleteBtn = e.target.closest('.history-item-delete');
+          if (deleteBtn) {
+            const historyItem = deleteBtn.closest('.history-item');
+            if (historyItem) {
+              const id = historyItem.dataset.id;
+              const desktopItem = desktopHistory.querySelector(`.history-item[data-id="${id}"] .history-item-delete`);
+              if (desktopItem) {
+                e.stopPropagation();
+                desktopItem.click();
+              }
+            }
+            return;
+          }
+          
+          // Clic en el item principal (cargar contenido)
+          const historyItemMain = e.target.closest('.history-item-main');
+          if (historyItemMain) {
+            const historyItem = historyItemMain.closest('.history-item');
+            if (historyItem) {
+              const id = historyItem.dataset.id;
+              const desktopItemMain = desktopHistory.querySelector(`.history-item[data-id="${id}"] .history-item-main`);
+              if (desktopItemMain) {
+                closeMobileDrawer('sop-history-drawer');
+                desktopItemMain.click();
+              }
+            }
+            return;
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>
