@@ -260,7 +260,7 @@ PROMPT;
     private function generateMermaid(string $sopMarkdown, string $title): array
     {
         $prompt = <<<PROMPT
-Analiza el siguiente SOP y genera un diagrama de flujo en formato Mermaid que represente visualmente el proceso.
+Analiza el siguiente SOP y genera un diagrama de flujo LIMPIO y ORDENADO en formato Mermaid.
 
 ## SOP A ANALIZAR
 
@@ -268,34 +268,55 @@ Analiza el siguiente SOP y genera un diagrama de flujo en formato Mermaid que re
 
 ---
 
-## INSTRUCCIONES
+## INSTRUCCIONES CRÍTICAS PARA UN DIAGRAMA ORDENADO
 
 Genera SOLO el código Mermaid (sin bloques de código markdown) siguiendo estas reglas:
 
-1. Usa sintaxis `flowchart TD` (top-down)
-2. Nodos de inicio/fin: `([texto])` - forma de estadio
-3. Pasos normales: `[texto]` - rectángulo
-4. Decisiones: `{texto}` - rombo
-5. Sub-procesos: `[[texto]]` - rectángulo doble
-6. Conecta con `-->` y añade etiquetas si hay decisiones: `-->|Sí|`
-7. Usa IDs cortos para nodos: A, B, C... o step1, step2...
-8. Máximo 15-20 nodos para mantener legibilidad
-9. Agrupa pasos relacionados si hay muchos
-10. No uses caracteres especiales que rompan Mermaid (evita comillas, paréntesis en texto de nodos)
+### ESTRUCTURA OBLIGATORIA
+1. Usa `flowchart TD` (top-down, flujo vertical)
+2. El flujo debe ser LINEAL de arriba a abajo
+3. Las decisiones (rombos) solo deben tener 2 salidas: una hacia abajo y otra hacia la derecha
+4. NUNCA crees nodos sueltos o flotantes sin conexión al flujo principal
+5. NO incluyas nodos separados para responsables/personas - intégralos en el texto del paso
 
-## EJEMPLO DE FORMATO
+### SINTAXIS DE NODOS
+- Inicio/fin: `([texto])` - forma de estadio
+- Pasos normales: `[Responsable: Acción a realizar]` - rectángulo
+- Decisiones: `{Pregunta?}` - rombo (máximo 2 salidas)
+
+### REGLAS DE CONEXIÓN
+- Flujo normal: `A --> B` (siempre vertical hacia abajo)
+- Decisiones: rama principal `-->|Sí|` hacia abajo, alternativa `-->|No|` hacia la derecha
+- Si una rama alternativa debe volver al flujo: conectar de vuelta a un nodo existente
+- EVITA líneas que crucen otras líneas
+
+### FORMATO DE IDs
+- Usa IDs secuenciales: A, B, C, D... (más fácil de leer)
+- Máximo 12-15 nodos para mantener legibilidad
+- Agrupa pasos menores en uno solo si hay muchos
+
+### CARACTERES PROHIBIDOS EN TEXTO DE NODOS
+- No uses comillas " ni apóstrofes '
+- No uses paréntesis () excepto en nodos de inicio/fin
+- No uses caracteres especiales: & < > # 
+- Reemplaza caracteres problemáticos por equivalentes seguros
+
+## EJEMPLO DE DIAGRAMA BIEN ESTRUCTURADO
 
 flowchart TD
-    A([Inicio]) --> B[Paso 1: Preparar materiales]
-    B --> C{Materiales completos?}
-    C -->|Sí| D[Paso 2: Ejecutar proceso]
-    C -->|No| E[Obtener materiales faltantes]
-    E --> B
-    D --> F[Paso 3: Verificar resultado]
-    F --> G{Resultado OK?}
-    G -->|Sí| H([Fin])
-    G -->|No| I[Corregir errores]
-    I --> D
+    A([Inicio del Proceso]) --> B[Juan recibe solicitud]
+    B --> C[Juan revisa documentacion]
+    C --> D{Documentacion completa?}
+    D -->|Sí| E[Maria procesa solicitud]
+    D -->|No| F[Juan solicita docs faltantes]
+    F --> C
+    E --> G{Aprobado?}
+    G -->|Sí| H[Ana notifica al cliente]
+    G -->|No| I[Maria devuelve para correccion]
+    I --> E
+    H --> J([Fin del Proceso])
+
+NOTA: Observa cómo los responsables están INTEGRADOS en cada paso, no como nodos separados.
 
 GENERA SOLO EL CÓDIGO MERMAID:
 PROMPT;

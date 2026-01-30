@@ -567,8 +567,28 @@ $headerDrawerId = 'sop-history-drawer';
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script>
-    // Inicializar Mermaid
-    mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+    // Inicializar Mermaid con configuración optimizada para diagramas ordenados
+    mermaid.initialize({ 
+      startOnLoad: false, 
+      theme: 'neutral',
+      flowchart: {
+        htmlLabels: true,
+        curve: 'basis',
+        rankSpacing: 50,
+        nodeSpacing: 30,
+        padding: 15,
+        useMaxWidth: true,
+        defaultRenderer: 'dagre-wrapper'
+      },
+      themeVariables: {
+        primaryColor: '#e0f2f1',
+        primaryBorderColor: '#26a69a',
+        primaryTextColor: '#37474f',
+        lineColor: '#78909c',
+        secondaryColor: '#fff8e1',
+        tertiaryColor: '#f3e5f5'
+      }
+    });
   </script>
   <script src="/assets/js/gesture-sop.js"></script>
   <script>
