@@ -153,7 +153,7 @@ $tabs = [
   <div class="mobile-modal-backdrop absolute inset-0 bg-black/40 backdrop-blur-sm" data-close-modal></div>
   
   <!-- Panel deslizante desde abajo -->
-  <div class="mobile-modal-panel absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out h-[85vh] flex flex-col safe-area-bottom">
+  <div class="mobile-modal-panel absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out max-h-[85vh] flex flex-col safe-area-bottom">
     <!-- Handle -->
     <div class="flex justify-center pt-3 pb-2">
       <div class="w-10 h-1 bg-slate-300 rounded-full"></div>
@@ -224,7 +224,7 @@ $tabs = [
   <div class="mobile-modal-backdrop absolute inset-0 bg-black/40 backdrop-blur-sm" data-close-modal></div>
   
   <!-- Panel deslizante desde abajo -->
-  <div class="mobile-modal-panel absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out h-[85vh] flex flex-col safe-area-bottom">
+  <div class="mobile-modal-panel absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out max-h-[85vh] flex flex-col safe-area-bottom">
     <!-- Handle -->
     <div class="flex justify-center pt-3 pb-2">
       <div class="w-10 h-1 bg-slate-300 rounded-full"></div>

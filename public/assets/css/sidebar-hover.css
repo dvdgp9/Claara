@@ -10,11 +10,11 @@
 
 /* Panel del hover menu */
 .sidebar-hover-panel {
-  position: absolute;
-  left: 100%;
-  top: 0;
+  position: fixed;
+  left: 78px;
   min-width: 280px;
   max-width: 320px;
+  max-height: calc(100vh - 40px);
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -29,8 +29,9 @@
   transform: translateX(-8px);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
-  margin-left: 8px;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Flecha conectora */
@@ -89,14 +90,12 @@
 /* Contenido del panel */
 .hover-panel-content {
   padding: 8px;
-  max-height: 320px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
-.hover-panel-content.overflow-visible {
-  overflow: visible;
-  max-height: none;
-}
+/* Ya no se usa overflow-visible - todos los paneles tienen scroll */
 
 /* Items del listado */
 .hover-panel-item {
@@ -185,10 +184,9 @@
 
 /* Submenú de gestos (historial) */
 .hover-submenu {
-  position: absolute;
-  left: 100%;
-  top: -8px;
+  position: fixed;
   min-width: 260px;
+  max-height: 320px;
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -202,8 +200,9 @@
   transform: translateX(-4px);
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 101;
-  margin-left: 4px;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
 }
 
 .hover-submenu::before {

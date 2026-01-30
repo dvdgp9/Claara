@@ -26,6 +26,7 @@
       if (!tabType) return;
 
       container.addEventListener('mouseenter', () => {
+        positionPanel(container);
         loadPanelContent(container, tabType);
       });
     });
@@ -35,9 +36,56 @@
       if (!e.target || !e.target.closest) return;
       const item = e.target.closest('.hover-panel-item-expandable');
       if (item && item.dataset.gestureType) {
+        positionSubmenu(item);
         loadGestureHistory(item, item.dataset.gestureType);
       }
     }, true);
+  }
+
+  function positionPanel(container) {
+    const panel = container.querySelector('.sidebar-hover-panel');
+    if (!panel) return;
+
+    const rect = container.getBoundingClientRect();
+    const panelHeight = panel.offsetHeight || 400;
+    const viewportHeight = window.innerHeight;
+    const margin = 20;
+
+    // Calcular posición top óptima
+    let top = rect.top;
+    
+    // Si el panel se sale por abajo, ajustar hacia arriba
+    if (top + panelHeight > viewportHeight - margin) {
+      top = Math.max(margin, viewportHeight - panelHeight - margin);
+    }
+
+    panel.style.top = top + 'px';
+  }
+
+  function positionSubmenu(item) {
+    const submenu = item.querySelector('.hover-submenu');
+    if (!submenu) return;
+
+    const panel = item.closest('.sidebar-hover-panel');
+    if (!panel) return;
+
+    const itemRect = item.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const submenuHeight = submenu.offsetHeight || 300;
+    const viewportHeight = window.innerHeight;
+    const margin = 20;
+
+    // Posicionar a la derecha del panel principal
+    const left = panelRect.right + 4;
+    let top = itemRect.top - 8;
+
+    // Si se sale por abajo, ajustar
+    if (top + submenuHeight > viewportHeight - margin) {
+      top = Math.max(margin, viewportHeight - submenuHeight - margin);
+    }
+
+    submenu.style.left = left + 'px';
+    submenu.style.top = top + 'px';
   }
 
   async function loadPanelContent(container, type) {

@@ -235,7 +235,7 @@ $appsList = [
           </div>
         </div>
         
-        <div class="hover-panel-content <?php echo ($tabId === 'gestures') ? 'overflow-visible' : ''; ?>">
+        <div class="hover-panel-content">
           <?php if ($tabId === 'conversations'): ?>
             <!-- Cargado dinámicamente via JS -->
             <div class="hover-panel-loading">
