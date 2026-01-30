@@ -846,6 +846,9 @@
             <span class="text-[10px] text-slate-400">${formatDate(item.created_at)}</span>
           </div>
         </div>
+        <button class="history-item-edit opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-emerald-500 p-1 rounded" title="Editar título">
+          <i class="iconoir-edit-pencil"></i>
+        </button>
         <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Eliminar">
           <i class="iconoir-trash"></i>
         </button>
@@ -858,6 +861,20 @@
       el.addEventListener('click', () => loadHistoryItem(id));
     });
     
+    // Event listeners para editar
+    elements.historyList.querySelectorAll('.history-item-edit').forEach(btn => {
+      const id = btn.parentElement.dataset.id;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const titleEl = btn.parentElement.querySelector('.history-item-main p');
+        const currentTitle = titleEl?.textContent || 'SOP sin título';
+        const nextTitle = prompt('Nuevo título del proceso', currentTitle);
+        if (nextTitle !== null) {
+          updateHistoryTitle(id, nextTitle.trim());
+        }
+      });
+    });
+
     // Event listeners para eliminar
     elements.historyList.querySelectorAll('.history-item-delete').forEach(btn => {
       const id = btn.parentElement.dataset.id;
@@ -866,6 +883,32 @@
         deleteHistoryItem(id);
       });
     });
+  }
+
+  async function updateHistoryTitle(id, title) {
+    if (!title) return;
+
+    try {
+      const csrfToken = (typeof window !== 'undefined' && window.CSRF_TOKEN) ? window.CSRF_TOKEN : '';
+      const response = await fetch('/api/gestures/update-title.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        credentials: 'include',
+        body: JSON.stringify({ id, title, csrf_token: csrfToken })
+      });
+
+      if (response.ok) {
+        loadHistory();
+      } else {
+        alert('No se pudo actualizar el título');
+      }
+    } catch (error) {
+      console.error('Error actualizando título:', error);
+      alert('Error al actualizar el título');
+    }
   }
   
   async function deleteHistoryItem(id) {

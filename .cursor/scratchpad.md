@@ -84,6 +84,7 @@ Chatbot ligero para preguntas rápidas sobre el Grupo Ebone. Usa QWEN Turbo (`qw
 - [x] Scaffolding MVP (public/api/src) y utilidades base.
 - [x] Endpoints mínimos auth/login, auth/logout y chat.
 - [x] `.env` local configurado.
+- [x] SOP Generator: historial con eliminación y edición de título.
 
 ## Gesto: Redes Sociales (en progreso)
 
@@ -174,6 +175,7 @@ Cuando se recibe una respuesta larga del asistente, el scroll automático actual
 - 2025-12-31: **REVISIÓN DE COLISIONES EN BD**: Analizada la estructura de la base de datos para evitar colisiones de nombres entre usuarios. Creada la migración `docs/migrations/007_fix_name_collisions.sql` que añade claves únicas compuestas en `folders`, `voices` y `gestures`.
 - 2025-12-31: **MEJORAS UI ADMIN**: Añadido botón de mostrar/ocultar contraseña en la gestión de usuarios y detección de OS para atajos de teclado (CMD/Ctrl + Enter).
 - 2025-12-31: **SELECTOR DE MODELOS (SUPERADMIN)**: Implementado selector de modelos LLM al lado del botón de Nanobanana exclusivo para superadministradores. Incluye GLM 4.7, Gemini 3 Flash, Deepseek v3.2 y Xiaomi Mimo v2. Sincronización automática entre vistas y envío del modelo seleccionado al backend.
+- 2026-01-30: **SOP Generator**: Historial compacto con botones de eliminar y editar título; añadido endpoint para actualización de título y lógica JS de edición.
 
 ---
 

@@ -161,6 +161,23 @@ class GestureExecutionsRepo
     }
 
     /**
+     * Actualiza el título de una ejecución
+     */
+    public function updateTitle(int $id, int $userId, string $title): bool
+    {
+        $sql = "UPDATE gesture_executions 
+                SET title = :title, updated_at = NOW()
+                WHERE id = :id AND user_id = :user_id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'title' => $title,
+            'id' => $id,
+            'user_id' => $userId
+        ]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
      * Obtiene las últimas publicaciones originales de una línea de negocio
      */
     public function getRecentByBusinessLine(int $userId, string $gestureType, string $businessLine, int $limit = 5): array
