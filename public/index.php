@@ -2053,6 +2053,11 @@ $headerShowLogo = true;
       // Evitar envíos duplicados mientras se genera
       if (isGenerating) return;
       
+      // La conversación ya no está vacía: va a recibir un mensaje
+      if (emptyConversationId === currentConversationId) {
+        emptyConversationId = null;
+      }
+
       // Mostrar modo chat si estábamos en vacío
       showChatMode();
       
