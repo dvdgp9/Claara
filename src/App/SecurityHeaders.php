@@ -30,8 +30,8 @@ class SecurityHeaders
         // XSS Protection (legacy, pero no hace daño)
         header('X-XSS-Protection: 1; mode=block');
         
-        // Permissions Policy (limitar APIs del navegador)
-        header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
+        // Permissions Policy - allow microphone for audio recording (SOP voice)
+        header("Permissions-Policy: geolocation=(), camera=()");
     }
     
     /**
