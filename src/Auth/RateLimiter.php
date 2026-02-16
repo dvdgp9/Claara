@@ -11,12 +11,19 @@ class RateLimiter
 {
     private int $maxAttempts;
     private int $windowSeconds;
+    private bool $tableReady = false;
     
     public function __construct(int $maxAttempts = 5, int $windowSeconds = 900)
     {
         $this->maxAttempts = $maxAttempts;
         $this->windowSeconds = $windowSeconds;
-        $this->ensureTable();
+        try {
+            $this->ensureTable();
+            $this->tableReady = true;
+        } catch (\Exception $e) {
+            error_log("RateLimiter: Could not create table: " . $e->getMessage());
+            $this->tableReady = false;
+        }
     }
     
     /**
@@ -24,17 +31,25 @@ class RateLimiter
      */
     public function isBlocked(string $ip): bool
     {
-        $pdo = DB::get();
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) as attempts 
-            FROM rate_limit_attempts 
-            WHERE ip_address = ? 
-            AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)
-        ");
-        $stmt->execute([$ip, $this->windowSeconds]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
-        return ($row['attempts'] ?? 0) >= $this->maxAttempts;
+        if (!$this->tableReady) {
+            return false; // Fail open si no hay tabla
+        }
+        try {
+            $pdo = DB::get();
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as attempts 
+                FROM rate_limit_attempts 
+                WHERE ip_address = ? 
+                AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)
+            ");
+            $stmt->execute([$ip, $this->windowSeconds]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            return ($row['attempts'] ?? 0) >= $this->maxAttempts;
+        } catch (\Exception $e) {
+            error_log("RateLimiter::isBlocked error: " . $e->getMessage());
+            return false;
+        }
     }
     
     /**
@@ -42,15 +57,22 @@ class RateLimiter
      */
     public function recordAttempt(string $ip): void
     {
-        $pdo = DB::get();
-        $stmt = $pdo->prepare("
-            INSERT INTO rate_limit_attempts (ip_address, attempted_at) 
-            VALUES (?, NOW())
-        ");
-        $stmt->execute([$ip]);
-        
-        // Limpiar intentos antiguos (más de 1 hora)
-        $pdo->exec("DELETE FROM rate_limit_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+        if (!$this->tableReady) {
+            return;
+        }
+        try {
+            $pdo = DB::get();
+            $stmt = $pdo->prepare("
+                INSERT INTO rate_limit_attempts (ip_address, attempted_at) 
+                VALUES (?, NOW())
+            ");
+            $stmt->execute([$ip]);
+            
+            // Limpiar intentos antiguos (más de 1 hora)
+            $pdo->exec("DELETE FROM rate_limit_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+        } catch (\Exception $e) {
+            error_log("RateLimiter::recordAttempt error: " . $e->getMessage());
+        }
     }
     
     /**
@@ -58,9 +80,16 @@ class RateLimiter
      */
     public function clearAttempts(string $ip): void
     {
-        $pdo = DB::get();
-        $stmt = $pdo->prepare("DELETE FROM rate_limit_attempts WHERE ip_address = ?");
-        $stmt->execute([$ip]);
+        if (!$this->tableReady) {
+            return;
+        }
+        try {
+            $pdo = DB::get();
+            $stmt = $pdo->prepare("DELETE FROM rate_limit_attempts WHERE ip_address = ?");
+            $stmt->execute([$ip]);
+        } catch (\Exception $e) {
+            error_log("RateLimiter::clearAttempts error: " . $e->getMessage());
+        }
     }
     
     /**
@@ -68,25 +97,33 @@ class RateLimiter
      */
     public function getBlockedSeconds(string $ip): int
     {
-        $pdo = DB::get();
-        $stmt = $pdo->prepare("
-            SELECT MIN(attempted_at) as first_attempt 
-            FROM rate_limit_attempts 
-            WHERE ip_address = ? 
-            AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)
-        ");
-        $stmt->execute([$ip, $this->windowSeconds]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
-        if (!$row['first_attempt']) {
+        if (!$this->tableReady) {
             return 0;
         }
-        
-        $firstAttempt = strtotime($row['first_attempt']);
-        $unlockTime = $firstAttempt + $this->windowSeconds;
-        $remaining = $unlockTime - time();
-        
-        return max(0, $remaining);
+        try {
+            $pdo = DB::get();
+            $stmt = $pdo->prepare("
+                SELECT MIN(attempted_at) as first_attempt 
+                FROM rate_limit_attempts 
+                WHERE ip_address = ? 
+                AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)
+            ");
+            $stmt->execute([$ip, $this->windowSeconds]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$row['first_attempt']) {
+                return 0;
+            }
+            
+            $firstAttempt = strtotime($row['first_attempt']);
+            $unlockTime = $firstAttempt + $this->windowSeconds;
+            $remaining = $unlockTime - time();
+            
+            return max(0, $remaining);
+        } catch (\Exception $e) {
+            error_log("RateLimiter::getBlockedSeconds error: " . $e->getMessage());
+            return 0;
+        }
     }
     
     /**
