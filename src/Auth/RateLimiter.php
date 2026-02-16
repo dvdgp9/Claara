@@ -35,7 +35,7 @@ class RateLimiter
             return false; // Fail open si no hay tabla
         }
         try {
-            $pdo = DB::get();
+            $pdo = DB::pdo();
             $stmt = $pdo->prepare("
                 SELECT COUNT(*) as attempts 
                 FROM rate_limit_attempts 
@@ -61,7 +61,7 @@ class RateLimiter
             return;
         }
         try {
-            $pdo = DB::get();
+            $pdo = DB::pdo();
             $stmt = $pdo->prepare("
                 INSERT INTO rate_limit_attempts (ip_address, attempted_at) 
                 VALUES (?, NOW())
@@ -84,7 +84,7 @@ class RateLimiter
             return;
         }
         try {
-            $pdo = DB::get();
+            $pdo = DB::pdo();
             $stmt = $pdo->prepare("DELETE FROM rate_limit_attempts WHERE ip_address = ?");
             $stmt->execute([$ip]);
         } catch (\Exception $e) {
@@ -101,7 +101,7 @@ class RateLimiter
             return 0;
         }
         try {
-            $pdo = DB::get();
+            $pdo = DB::pdo();
             $stmt = $pdo->prepare("
                 SELECT MIN(attempted_at) as first_attempt 
                 FROM rate_limit_attempts 
@@ -131,7 +131,7 @@ class RateLimiter
      */
     private function ensureTable(): void
     {
-        $pdo = DB::get();
+        $pdo = DB::pdo();
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS rate_limit_attempts (
                 id INT AUTO_INCREMENT PRIMARY KEY,
