@@ -15,18 +15,18 @@
 ini_set('memory_limit', '512M');
 ini_set('max_execution_time', '600');
 
-// Capturar errores fatales
+// Capturar errores fatales (log interno, no exponer al cliente)
 register_shutdown_function(function() {
     $error = error_get_last();
     if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        error_log("Fatal error: {$error['message']} in {$error['file']}:{$error['line']}");
         header('Content-Type: application/json');
         http_response_code(500);
         echo json_encode([
             'success' => false,
             'error' => [
                 'code' => 'fatal_error',
-                'message' => 'Error del servidor: ' . $error['message'],
-                'debug' => $error
+                'message' => 'Error interno del servidor'
             ]
         ]);
     }
@@ -34,6 +34,7 @@ register_shutdown_function(function() {
 
 // Manejador de errores
 set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    error_log("PHP Error [$errno]: $errstr in $errfile:$errline");
     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 
@@ -61,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Validar CSRF
 $csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 $csrfSession = $_SESSION['csrf_token'] ?? '';
-if (!$csrfHeader || $csrfHeader !== $csrfSession) {
+if (!$csrfHeader || !$csrfSession || !hash_equals($csrfSession, $csrfHeader)) {
     Response::error('csrf_invalid', 'Token CSRF inválido', 403);
 }
 
@@ -194,5 +195,5 @@ try {
     ]);
     
 } catch (\Exception $e) {
-    Response::error('server_error', 'Error: ' . $e->getMessage(), 500);
+    Response::serverError('server_error', $e, 'Error al transcribir');
 }

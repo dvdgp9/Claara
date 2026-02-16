@@ -87,6 +87,8 @@ class Session {
     }
 
     public static function login(array $user): void {
+        // Regenerar session ID para prevenir session fixation
+        session_regenerate_id(true);
         $_SESSION['user'] = $user;
     }
 

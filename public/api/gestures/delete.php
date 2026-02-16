@@ -27,7 +27,9 @@ $rawBody = file_get_contents('php://input');
 $body = json_decode($rawBody, true) ?? [];
 $csrfBody = $body['csrf_token'] ?? '';
 
-if ((!$csrfHeader || $csrfHeader !== $csrfSession) && (!$csrfBody || $csrfBody !== $csrfSession)) {
+$validHeader = $csrfHeader && $csrfSession && hash_equals($csrfSession, $csrfHeader);
+$validBody = $csrfBody && $csrfSession && hash_equals($csrfSession, $csrfBody);
+if (!$validHeader && !$validBody) {
     Response::error('csrf_invalid', 'Token CSRF inválido', 403);
 }
 

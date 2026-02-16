@@ -34,7 +34,7 @@ if (!$user) {
 // Validar CSRF
 $csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 $csrfSession = $_SESSION['csrf_token'] ?? '';
-if (!$csrfHeader || $csrfHeader !== $csrfSession) {
+if (!$csrfHeader || !$csrfSession || !hash_equals($csrfSession, $csrfHeader)) {
     Response::error('csrf_invalid', 'Token CSRF inválido', 403);
 }
 

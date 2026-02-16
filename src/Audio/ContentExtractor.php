@@ -15,6 +15,12 @@ class ContentExtractor
             return ['success' => false, 'error' => 'URL no válida'];
         }
 
+        // SSRF Protection: validar URL antes de fetch
+        $ssrfCheck = $this->validateUrlForSsrf($url);
+        if ($ssrfCheck !== true) {
+            return ['success' => false, 'error' => $ssrfCheck];
+        }
+
         $ctx = stream_context_create([
             'http' => [
                 'method' => 'GET',
@@ -22,8 +28,8 @@ class ContentExtractor
                 'timeout' => 30
             ],
             'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false
+                'verify_peer' => true,
+                'verify_peer_name' => true
             ]
         ]);
 
@@ -441,5 +447,85 @@ class ContentExtractor
         $text = preg_replace('/\s+/', ' ', $text);
 
         return trim($text);
+    }
+
+    /**
+     * Valida una URL contra ataques SSRF
+     * @return true|string True si es válida, string con error si no
+     */
+    private function validateUrlForSsrf(string $url): bool|string
+    {
+        $parsed = parse_url($url);
+        
+        // Solo permitir http/https
+        $scheme = strtolower($parsed['scheme'] ?? '');
+        if (!in_array($scheme, ['http', 'https'])) {
+            return 'Solo se permiten URLs HTTP/HTTPS';
+        }
+        
+        $host = $parsed['host'] ?? '';
+        if (empty($host)) {
+            return 'URL sin host válido';
+        }
+        
+        // Bloquear localhost y variantes
+        $blockedHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
+        if (in_array(strtolower($host), $blockedHosts)) {
+            return 'No se permiten URLs locales';
+        }
+        
+        // Resolver DNS y verificar que no sea IP interna
+        $ips = gethostbynamel($host);
+        if ($ips === false) {
+            return 'No se pudo resolver el dominio';
+        }
+        
+        foreach ($ips as $ip) {
+            if ($this->isPrivateIp($ip)) {
+                return 'No se permiten URLs que apunten a redes internas';
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Verifica si una IP es privada/interna
+     */
+    private function isPrivateIp(string $ip): bool
+    {
+        // Rangos de IPs privadas/internas
+        $privateRanges = [
+            '10.0.0.0/8',        // Clase A privada
+            '172.16.0.0/12',     // Clase B privada
+            '192.168.0.0/16',    // Clase C privada
+            '127.0.0.0/8',       // Loopback
+            '169.254.0.0/16',    // Link-local (AWS metadata, etc.)
+            '0.0.0.0/8',         // "This" network
+            '100.64.0.0/10',     // Carrier-grade NAT
+            '192.0.0.0/24',      // IETF Protocol Assignments
+            '192.0.2.0/24',      // TEST-NET-1
+            '198.51.100.0/24',   // TEST-NET-2
+            '203.0.113.0/24',    // TEST-NET-3
+            '224.0.0.0/4',       // Multicast
+            '240.0.0.0/4',       // Reserved
+        ];
+        
+        $ipLong = ip2long($ip);
+        if ($ipLong === false) {
+            return true; // Si no se puede parsear, bloquear por seguridad
+        }
+        
+        foreach ($privateRanges as $range) {
+            [$subnet, $bits] = explode('/', $range);
+            $subnetLong = ip2long($subnet);
+            $mask = -1 << (32 - (int)$bits);
+            
+            if (($ipLong & $mask) === ($subnetLong & $mask)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

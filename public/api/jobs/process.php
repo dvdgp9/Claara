@@ -245,18 +245,19 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
         throw new \Exception('Error generando audio: ' . $audioResult['error']);
     }
     
-    // Convertir PCM a WAV y guardar
+    // Convertir PCM a WAV y guardar en storage (fuera de public)
     $pcmData = base64_decode($audioResult['audio_data']);
     $wavData = GeminiTtsClient::pcmToWav($pcmData);
     
-    $publicTmp = dirname(__DIR__, 2) . '/tmp';
-    if (!is_dir($publicTmp)) {
-        @mkdir($publicTmp, 0775, true);
+    $storageDir = dirname(__DIR__, 3) . '/storage/podcasts';
+    if (!is_dir($storageDir)) {
+        @mkdir($storageDir, 0775, true);
     }
-    $fileName = 'podcast_' . uniqid() . '.wav';
-    $filePath = $publicTmp . '/' . $fileName;
+    $fileName = 'podcast_' . bin2hex(random_bytes(16)) . '.wav';
+    $filePath = $storageDir . '/' . $fileName;
     file_put_contents($filePath, $wavData);
-    $wavUrl = '/tmp/' . $fileName;
+    // URL segura que requiere autenticación
+    $wavUrl = '/api/files/podcast.php?file=' . urlencode($fileName);
     
     // === PASO 4: Guardar en historial de gestos ===
     $repo->updateProgress($jobId, 'Guardando resultado...');

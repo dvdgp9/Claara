@@ -27,6 +27,8 @@ if (!$user) {
     Response::error('unauthorized', 'No autenticado', 401);
 }
 
+Session::requireCsrf();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     Response::error('method_not_allowed', 'Solo POST', 405);
 }

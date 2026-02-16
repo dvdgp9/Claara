@@ -1590,3 +1590,179 @@ Gesto para generar material formativo completo a partir de PDFs o texto. Pipelin
 - **Bug: Conversaciones desaparecen (emptyConversationId race condition)**: Cuando un usuario crea una conversación nueva con el botón "Nueva conversación", `emptyConversationId` se setea al ID de esa conversación. Al enviar un mensaje, el servidor NO envía evento `conversation` de vuelta (porque `conversation_id > 0`), así que `emptyConversationId` nunca se limpia. Al cambiar a otra conversación, `cleanupEmptyConversation()` borra la conversación que YA tiene mensajes. **Fix**: Limpiar `emptyConversationId` al inicio de `handleSubmit` cuando `emptyConversationId === currentConversationId`, porque la conversación deja de estar vacía en cuanto se envía un mensaje.
 - **Contexto corporativo desacoplado de proveedores**: El conocimiento base (docs/context/*.md) se mantiene independiente del LLM usado. ContextBuilder lo compila una vez y cada proveedor lo inyecta en su formato nativo (systemInstruction para Gemini, mensaje 'system' para OpenAI). Esto permite cambiar de proveedor sin perder el contexto corporativo.
 - **System instructions > mensajes de contexto**: Usar systemInstruction (Gemini) o rol 'system' (OpenAI) es más eficiente que insertar el contexto como mensajes normales, porque no cuenta contra el límite de tokens de historial y tiene mayor peso en las respuestas del modelo.
+
+---
+
+## 🔒 AUDITORÍA DE SEGURIDAD — Ebonia (Feb 2026)
+
+### Resumen ejecutivo
+
+Se han identificado **20 hallazgos** de seguridad clasificados por severidad: 5 CRÍTICOS, 6 ALTOS, 7 MEDIOS, 2 BAJOS. Los problemas críticos deben resolverse **antes de publicar** la aplicación.
+
+---
+
+### 🔴 CRÍTICOS (resolver antes de publicar)
+
+#### C1. Archivos de debug/admin expuestos públicamente
+- **Archivos**: `public/debug-sop.php`, `public/api/voices/ingest_lex_web.php`
+- **Riesgo**: `debug-sop.php` tiene `display_errors=1`, expone rutas internas del servidor, correo del admin y clases internas. `ingest_lex_web.php` permite a CUALQUIERA (sin auth) borrar y reconstruir la colección RAG de Qdrant.
+- **Fix**: Eliminar ambos archivos antes de desplegar. También eliminar `public/index.php.backup`.
+
+#### C2. SSRF (Server-Side Request Forgery) en ContentExtractor
+- **Archivo**: `src/Audio/ContentExtractor.php:12-31`
+- **Riesgo**: `extractFromUrl()` acepta URLs arbitrarias del usuario, solo valida con `FILTER_VALIDATE_URL` (que acepta IPs internas como `http://169.254.169.254`, `http://127.0.0.1`, `http://10.0.0.1`). Además tiene SSL verification deshabilitado (`verify_peer => false`). Un atacante podría acceder a metadata de la nube (AWS/GCP), servicios internos, Qdrant (puerto 6333), BD, etc.
+- **Fix**: 
+  1. Validar que URL sea http/https
+  2. Resolver DNS y bloquear IPs privadas/internas (127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16)
+  3. Habilitar `verify_peer => true`
+
+#### C3. Error disclosure en producción (rutas internas, stack traces)
+- **Archivos**: `public/api/gestures/generate.php:10-21`, `public/api/gestures/generate-image.php`, `public/api/jobs/process.php`, y ~15 endpoints más
+- **Riesgo**: Custom error handlers que exponen `$errfile:$errline`, `$e->getFile()`, `$e->getLine()` en respuestas JSON. Esto revela la estructura de directorios del servidor a atacantes.
+- **Fix**: En producción, devolver solo mensajes genéricos. Loguear detalles internamente con `error_log()`, nunca enviarlos al cliente.
+
+#### C4. Session fixation — No se regenera session ID tras login
+- **Archivo**: `src/Auth/AuthService.php:41`, `src/App/Session.php`
+- **Riesgo**: `session_regenerate_id()` solo se llama en `rememberDays()`, **nunca después del login**. Un atacante podría fijar un session ID en la cookie de la víctima (ej. vía XSS en otro subdominio) y luego secuestrar la sesión autenticada.
+- **Fix**: Añadir `session_regenerate_id(true)` en `Session::login()` inmediatamente después de `$_SESSION['user'] = $user`.
+
+#### C5. Falta de rate limiting en login (brute force)
+- **Archivo**: `public/api/auth/login.php`
+- **Riesgo**: Sin límite de intentos de login. Un atacante puede probar miles de contraseñas por minuto. Combinado con la contraseña débil del admin (`Cacaperr1`), esto es especialmente peligroso.
+- **Fix**: Implementar rate limiting (ej. máx 5 intentos por IP cada 15 min). Opciones: tabla `login_attempts` en BD, o middleware con Redis/APCu.
+
+---
+
+### 🟠 ALTOS (resolver pronto)
+
+#### A1. CSRF con comparación vulnerable a timing attacks
+- **Archivos**: `gestures/generate.php:46`, `gestures/generate-image.php:43`, `voices/chat.php:37`, `voices/delete.php:23`, `gestures/delete.php:30`, `gestures/update-title.php:28`, `gestures/transcribe.php:64`
+- **Riesgo**: Usan `$csrfHeader !== $csrfSession` en vez de `hash_equals()`. Vulnerable a ataques de timing que permiten deducir el token carácter a carácter.
+- **Fix**: Reemplazar `!==` por `!hash_equals($csrfSession, $csrfHeader)` en todos los endpoints afectados (como ya hace `Session::requireCsrf()`).
+
+#### A2. Endpoints POST sin protección CSRF
+- **Archivos afectados**:
+  - `gestures/sop.php` — Sin CSRF
+  - `gestures/podcast.php` — Sin CSRF
+  - `gestures/course-creator.php` — Sin CSRF
+  - `gestures/course-develop.php` — Sin CSRF
+  - `gestures/course-export.php` — Sin CSRF
+  - `gestures/course-materials.php` — Sin CSRF
+  - `gestures/repurposer.php` — Sin CSRF
+  - `jobs/create.php` — Sin CSRF
+  - `jobs/cancel.php` — Sin CSRF
+  - `chat/generate-document.php` — Sin CSRF
+- **Riesgo**: Un sitio malicioso puede ejecutar acciones en nombre del usuario autenticado (generar contenido, crear jobs, consumir API credits).
+- **Fix**: Añadir `Session::requireCsrf()` al inicio de cada endpoint POST/DELETE.
+
+#### A3. Sin headers de seguridad HTTP
+- **Riesgo**: Ninguna página envía `Content-Security-Policy`, `X-Frame-Options`, `Strict-Transport-Security`, `Referrer-Policy`, `Permissions-Policy`.
+  - Sin CSP: vulnerable a XSS persistente
+  - Sin X-Frame-Options: vulnerable a clickjacking
+  - Sin HSTS: vulnerable a downgrade a HTTP
+- **Fix**: Crear middleware o include PHP que envíe estos headers en cada respuesta:
+  ```php
+  header('X-Frame-Options: DENY');
+  header('X-Content-Type-Options: nosniff');
+  header('Referrer-Policy: strict-origin-when-cross-origin');
+  header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+  header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' cdn.tailwindcss.com cdn.jsdelivr.net fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data:; connect-src 'self'");
+  ```
+
+#### A4. Sin rate limiting en API de chat/gestos (abuso de costes)
+- **Riesgo**: Un usuario autenticado (o atacante con sesión robada) puede enviar miles de requests al chat, generando facturas enormes en OpenRouter. No hay límite diario/por hora.
+- **Fix**: Implementar rate limiting por usuario: ej. 100 mensajes/hora para chat, 50 generaciones/día para gestos.
+
+#### A5. Podcast files in public /tmp/ con nombres predecibles
+- **Archivo**: `public/api/jobs/process.php:252-259`
+- **Riesgo**: Los archivos WAV de podcasts se guardan en `public/tmp/podcast_<uniqid>.wav`. Son accesibles sin autenticación y con nombres parcialmente predecibles (`uniqid()` es basado en timestamp).
+- **Fix**: Mover a `storage/` (fuera de public) y servir mediante endpoint autenticado, similar a `files/serve.php`.
+
+#### A6. Logout público no limpia remember tokens
+- **Archivo**: `public/logout.php:5-8`
+- **Riesgo**: Llama `Session::logout()` pero NO `RememberService::clearAllForUser()`. La cookie de remember sigue siendo válida y restaura la sesión automáticamente.
+- **Fix**: Añadir limpieza de remember tokens en logout.php.
+
+---
+
+### 🟡 MEDIOS
+
+#### M1. Contraseña débil del admin en .env
+- **Valor**: `ADMIN_PASSWORD=Cacaperr1`
+- **Fix**: Cambiar a contraseña fuerte (>16 chars, aleatoria). Aunque este valor solo se usa para seed, la misma contraseña podría seguir vigente en BD.
+
+#### M2. Modelo LLM seleccionable desde cliente
+- **Archivo**: `public/api/chat.php:54-56`
+- **Riesgo**: El cliente puede enviar cualquier `model` name, potencialmente seleccionando modelos mucho más caros (ej. `anthropic/claude-3.5-opus`).
+- **Fix**: Validar contra whitelist de modelos permitidos en el backend.
+
+#### M3. Content-Disposition header injection en serve.php
+- **Archivo**: `public/api/files/serve.php:51`
+- **Riesgo**: Usa `addslashes()` para filename, que no es sanitización correcta para HTTP headers. Un nombre de archivo malicioso podría inyectar headers.
+- **Fix**: Usar `rawurlencode()` con formato RFC 5987: `Content-Disposition: inline; filename*=UTF-8''` . rawurlencode($name).
+
+#### M4. Sin límite de tamaño en mensajes al LLM
+- **Riesgo**: No hay validación de longitud máxima del mensaje del usuario, permitiendo enviar mensajes enormes que incrementan costes.
+- **Fix**: Limitar `$message` a un máximo razonable (ej. 50.000 caracteres).
+
+#### M5. Cookie domain demasiado amplio
+- **Archivo**: `src/App/Session.php:30-32`
+- **Riesgo**: La cookie se fija al dominio base (`ebonia.es`), lo que significa que cualquier subdominio (ej. `evil.ebonia.es`) podría leer la cookie de sesión.
+- **Fix**: No fijar domain (el navegador lo limita al hostname exacto) o ser más restrictivo.
+
+#### M6. Tailwind CDN en producción
+- **Archivo**: `public/includes/head.php:30`
+- **Riesgo**: `cdn.tailwindcss.com` es para desarrollo, no producción. Si el CDN se compromete, se inyecta código en todas las páginas. También implica dependencia de un tercero para el funcionamiento.
+- **Fix**: Compilar Tailwind localmente y servir CSS propio.
+
+#### M7. document.php no valida ownership
+- **Archivo**: `public/api/files/document.php:21-31`
+- **Riesgo**: Aunque usa `basename()` para prevenir traversal, no verifica que el documento pertenezca al usuario autenticado. Cualquier usuario autenticado puede descargar documentos de otros conociendo el filename.
+- **Fix**: Asociar documentos a usuarios y verificar ownership.
+
+---
+
+### 🟢 BAJOS
+
+#### B1. CSRF token expuesto en HTML source
+- **Archivo**: `public/includes/head.php:33`
+- **Detalle**: `window.CSRF_TOKEN = '<?= $csrfToken ?>'` — visible en view source. Esto es estándar para SPAs, pero combinado con la falta de CSP podría facilitar extracción vía XSS.
+
+#### B2. .env.example con ADMIN_PASSWORD por defecto predecible
+- **Archivo**: `.env.example:22`
+- **Detalle**: `ADMIN_PASSWORD=admin1234` podría usarse accidentalmente en producción.
+
+---
+
+### ✅ Lo que está BIEN hecho
+
+1. **Argon2id para passwords** — Algoritmo de hashing más seguro disponible.
+2. **Prepared statements en todos los Repos** — Sin SQL injection detectable. Todas las queries usan `$stmt->execute([...])`.
+3. **CSRF token generado con `random_bytes(32)`** — Criptográficamente seguro.
+4. **Remember tokens con rotación** — Se rota el token en cada validación, limitando ventana de ataque.
+5. **Cookies con HttpOnly, SameSite=Lax, Secure** — Buena configuración de cookies.
+6. **File upload con whitelist de MIME types** — Solo tipos específicos permitidos.
+7. **`basename()` para prevenir path traversal** en document.php.
+8. **Archivos en storage/ fuera de public** para chat files.
+9. **.env nunca commiteado a Git** — Verificado en historial de Git.
+10. **Ownership check en serve.php** — `findByIdAndUser()` verifica que el archivo pertenece al usuario.
+
+---
+
+### 📋 Plan de acción prioritario (pre-publicación)
+
+| # | Severidad | Acción | Esfuerzo |
+|---|-----------|--------|----------|
+| 1 | 🔴 CRÍTICO | Eliminar `debug-sop.php`, `ingest_lex_web.php`, `index.php.backup` | 2 min |
+| 2 | 🔴 CRÍTICO | Proteger contra SSRF en ContentExtractor | 30 min |
+| 3 | 🔴 CRÍTICO | Eliminar error disclosure (getMessage, getFile, getLine) | 30 min |
+| 4 | 🔴 CRÍTICO | Añadir `session_regenerate_id(true)` tras login | 5 min |
+| 5 | 🔴 CRÍTICO | Implementar rate limiting en login | 1 hora |
+| 6 | 🟠 ALTO | Cambiar `!==` por `hash_equals()` en CSRF checks | 15 min |
+| 7 | 🟠 ALTO | Añadir `Session::requireCsrf()` a ~10 endpoints | 20 min |
+| 8 | 🟠 ALTO | Añadir security headers (CSP, HSTS, X-Frame) | 30 min |
+| 9 | 🟠 ALTO | Mover podcast WAVs fuera de public/ | 30 min |
+| 10 | 🟠 ALTO | Fijar logout para limpiar remember tokens | 5 min |
+| 11 | 🟡 MEDIO | Cambiar contraseña admin | 5 min |
+| 12 | 🟡 MEDIO | Whitelist de modelos LLM en backend | 15 min |
+| 13 | 🟡 MEDIO | Rate limiting en API de chat/gestos | 1 hora |

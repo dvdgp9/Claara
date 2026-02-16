@@ -9,15 +9,17 @@
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    error_log("PHP Error [$errno]: $errstr in $errfile:$errline");
     header('Content-Type: application/json');
     http_response_code(500);
-    echo json_encode(['error' => ['code' => 'php_error', 'message' => "$errstr in $errfile:$errline"]]);
+    echo json_encode(['error' => ['code' => 'php_error', 'message' => 'Error interno del servidor']]);
     exit;
 });
 set_exception_handler(function($e) {
+    error_log("Exception: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
     header('Content-Type: application/json');
     http_response_code(500);
-    echo json_encode(['error' => ['code' => 'exception', 'message' => $e->getMessage(), 'file' => $e->getFile(), 'line' => $e->getLine()]]);
+    echo json_encode(['error' => ['code' => 'exception', 'message' => 'Error interno del servidor']]);
     exit;
 });
 
@@ -40,7 +42,7 @@ if (!$user) {
 // Validar CSRF
 $csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 $csrfSession = $_SESSION['csrf_token'] ?? '';
-if (!$csrfHeader || $csrfHeader !== $csrfSession) {
+if (!$csrfHeader || !$csrfSession || !hash_equals($csrfSession, $csrfHeader)) {
     Response::error('csrf_invalid', 'Token CSRF inválido', 403);
 }
 

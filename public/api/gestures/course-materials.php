@@ -26,6 +26,8 @@ if (!$user) {
     Response::error('unauthorized', 'Sesión no válida', 401);
 }
 
+Session::requireCsrf();
+
 try {
     $body = json_decode(file_get_contents('php://input'), true);
     

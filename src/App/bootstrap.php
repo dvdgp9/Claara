@@ -12,6 +12,10 @@ require_once __DIR__ . '/Env.php';
 require_once __DIR__ . '/Response.php';
 require_once __DIR__ . '/Session.php';
 require_once __DIR__ . '/DB.php';
+require_once __DIR__ . '/SecurityHeaders.php';
+
+// Enviar security headers en todas las respuestas
+\App\SecurityHeaders::send();
 
 // Gestures
 require_once dirname(__DIR__) . '/Gestures/GestureExecutionsRepo.php';
