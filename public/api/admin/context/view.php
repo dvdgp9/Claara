@@ -1,6 +1,7 @@
 <?php
 /**
  * GET /api/admin/context/view.php?id=X
+ * GET /api/admin/context/view.php?id=X&raw=1 (para servir PDF directamente)
  * 
  * Obtiene el contenido de un documento de contexto.
  * Requiere superadmin.
@@ -14,12 +15,13 @@ use Auth\AdminGuard;
 use Repos\ContextDocsRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    Response::error('method_not_allowed', 'Sólo GET', 405);
+    Response::error('method_not_allowed', 'Solo GET', 405);
 }
 
 AdminGuard::requireSuperadmin();
 
 $id = (int)($_GET['id'] ?? 0);
+$raw = isset($_GET['raw']);
 
 if ($id <= 0) {
     Response::error('invalid_id', 'ID de documento inválido', 400);
@@ -41,17 +43,27 @@ if (!file_exists($filePath)) {
     Response::error('file_not_found', 'El archivo físico no existe en el servidor', 404);
 }
 
+$ext = strtolower($doc['file_extension']);
+
+// Si es PDF y se pide raw, servir directamente
+if ($ext === 'pdf' && $raw) {
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="' . $doc['filename'] . '"');
+    header('Content-Length: ' . filesize($filePath));
+    readfile($filePath);
+    exit;
+}
+
 // Leer contenido solo para archivos de texto (md, txt)
 $content = null;
 $canEdit = false;
 
-$ext = strtolower($doc['file_extension']);
 if (in_array($ext, ['md', 'txt'])) {
     $content = file_get_contents($filePath);
     $canEdit = true;
 } elseif ($ext === 'pdf') {
-    // Para PDFs, indicar que no se puede mostrar/editar inline
-    $content = '[Archivo PDF - No se puede mostrar inline]';
+    // Para PDFs, devolver URL para ver
+    $content = null;
     $canEdit = false;
 }
 
@@ -59,5 +71,6 @@ Response::json([
     'document' => $doc,
     'content' => $content,
     'can_edit' => $canEdit,
-    'file_exists' => true
+    'file_exists' => true,
+    'pdf_url' => ($ext === 'pdf') ? "/api/admin/context/view.php?id={$id}&raw=1" : null
 ]);

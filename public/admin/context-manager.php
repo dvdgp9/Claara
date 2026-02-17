@@ -790,19 +790,23 @@ if (!$isSuperadmin) {
       selectedDoc = doc;
       const canEdit = ['md', 'txt'].includes(doc.file_extension?.toLowerCase());
       const ext = doc.file_extension?.toLowerCase() || '';
+      const isPdf = ext === 'pdf';
       
       // Update header info
-      document.getElementById('edit-modal-title').textContent = canEdit ? 'Editar documento' : 'Ver documento';
+      document.getElementById('edit-modal-title').textContent = canEdit ? 'Editar documento' : (isPdf ? 'Ver documento PDF' : 'Ver documento');
       document.getElementById('edit-doc-name').textContent = doc.filename || 'documento';
       
       // Icon según tipo
-      const iconClass = ext === 'pdf' ? 'iconoir-page' : ext === 'md' ? 'iconoir-page-edit' : 'iconoir-notes';
+      const iconClass = isPdf ? 'iconoir-page' : ext === 'md' ? 'iconoir-page-edit' : 'iconoir-notes';
       document.getElementById('edit-doc-icon').className = iconClass + ' text-xl';
       
       // Info bar
       document.getElementById('edit-doc-target').textContent = doc.target || '-';
       document.getElementById('edit-doc-size').textContent = formatBytes(doc.file_size || 0);
       document.getElementById('edit-doc-date').textContent = formatDate(doc.created_at);
+      
+      // Ocultar contadores para PDFs
+      document.getElementById('edit-char-count').parentElement.classList.toggle('hidden', isPdf);
       
       // Config UI
       document.getElementById('edit-content').disabled = !canEdit;
@@ -811,15 +815,40 @@ if (!$isSuperadmin) {
       document.getElementById('edit-rag-notice').classList.toggle('hidden', !(canEdit && doc.target === 'lex'));
       document.getElementById('edit-error').classList.add('hidden');
       
+      const contentArea = document.getElementById('edit-content');
+      const contentWrapper = contentArea.parentElement;
+      
       // Load content
-      document.getElementById('edit-content').value = 'Cargando contenido...';
       try {
         const data = await api(`/api/admin/context/view.php?id=${docId}`);
-        const content = data.content || '';
-        document.getElementById('edit-content').value = content;
-        updateCharCount(content);
+        
+        if (isPdf && data.pdf_url) {
+          // Mostrar visor de PDF embebido
+          contentArea.classList.add('hidden');
+          
+          // Crear o actualizar iframe
+          let iframe = document.getElementById('pdf-viewer');
+          if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'pdf-viewer';
+            iframe.className = 'flex-1 w-full border-0';
+            iframe.style.minHeight = '400px';
+            contentWrapper.appendChild(iframe);
+          }
+          iframe.classList.remove('hidden');
+          iframe.src = data.pdf_url;
+        } else {
+          // Ocultar iframe si existe
+          const iframe = document.getElementById('pdf-viewer');
+          if (iframe) iframe.classList.add('hidden');
+          contentArea.classList.remove('hidden');
+          
+          const content = data.content || '';
+          contentArea.value = content;
+          updateCharCount(content);
+        }
       } catch (err) {
-        document.getElementById('edit-content').value = 'Error al cargar contenido: ' + err.message;
+        contentArea.value = 'Error al cargar contenido: ' + err.message;
         updateCharCount('');
       }
       
