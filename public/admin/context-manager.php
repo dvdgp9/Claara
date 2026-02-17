@@ -195,7 +195,7 @@ if (!$isSuperadmin) {
 
   <!-- Modal View/Edit -->
   <div id="edit-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full p-6 max-h-[90vh] flex flex-col">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full p-6 h-[90vh] flex flex-col">
       <!-- Header -->
       <div class="flex items-center justify-between mb-4 flex-shrink-0">
         <div class="flex items-center gap-3">
