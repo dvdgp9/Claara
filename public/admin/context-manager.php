@@ -497,9 +497,16 @@ if (!$isSuperadmin) {
         const typeHtml = isLex ? getDocTypeHtml(ext) : '';
 
         const canEdit = ['md', 'txt'].includes(ext);
-        const editBtn = canEdit 
-          ? `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#23AAC5] hover:bg-[#23AAC5]/5 rounded transition-colors"><i class="iconoir-edit-pencil"></i>Editar</button>`
-          : `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-eye"></i>Ver</button>`;
+        const isPdf = ext === 'pdf';
+        
+        let editBtn;
+        if (isPdf) {
+          editBtn = `<button onclick="window.open('/api/admin/context/view.php?id=${doc.id}&raw=1', '_blank')" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-eye"></i>Ver</button>`;
+        } else if (canEdit) {
+          editBtn = `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#23AAC5] hover:bg-[#23AAC5]/5 rounded transition-colors"><i class="iconoir-edit-pencil"></i>Editar</button>`;
+        } else {
+          editBtn = `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-eye"></i>Ver</button>`;
+        }
 
         const processBtn = isLex && doc.rag_status !== 'processed' 
           ? `<button onclick="processRag(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 rounded transition-colors"><i class="iconoir-refresh"></i>Procesar</button>`
