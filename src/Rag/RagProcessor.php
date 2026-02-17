@@ -2,6 +2,7 @@
 namespace Rag;
 
 use App\Env;
+use Smalot\PdfParser\Parser;
 
 /**
  * Procesador RAG reutilizable para documentos de Lex.
@@ -187,30 +188,23 @@ class RagProcessor
     }
 
     /**
-     * Extrae texto de un PDF usando pdftotext (poppler-utils)
+     * Extrae texto de un PDF usando PDFParser (librería PHP)
      */
     private function extractTextFromPdf(string $file): string
     {
-        // Verificar que pdftotext está disponible
-        exec('which pdftotext', $output, $returnCode);
-        if ($returnCode !== 0) {
-            throw new \Exception("pdftotext no instalado. Instalar con: brew install poppler (Mac) o apt install poppler-utils (Linux)");
+        try {
+            $parser = new Parser();
+            $pdf = $parser->parseFile($file);
+            $text = $pdf->getText();
+            
+            if (empty(trim($text))) {
+                throw new \Exception("No se pudo extraer texto del PDF");
+            }
+            
+            return $text;
+        } catch (\Exception $e) {
+            throw new \Exception("Error al extraer texto del PDF: " . $e->getMessage());
         }
-        
-        $tempFile = sys_get_temp_dir() . '/rag_pdf_' . uniqid() . '.txt';
-        $escapedFile = escapeshellarg($file);
-        $escapedTemp = escapeshellarg($tempFile);
-        
-        exec("pdftotext -layout -enc UTF-8 {$escapedFile} {$escapedTemp} 2>&1", $output, $returnCode);
-        
-        if ($returnCode !== 0 || !file_exists($tempFile)) {
-            throw new \Exception("Error al extraer texto del PDF");
-        }
-        
-        $text = file_get_contents($tempFile);
-        unlink($tempFile);
-        
-        return $text;
     }
 
     /**
