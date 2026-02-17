@@ -1,0 +1,313 @@
+<?php
+namespace Repos;
+
+use App\DB;
+use PDO;
+
+/**
+ * Repositorio para gestionar documentos de contexto.
+ * 
+ * Soporta tres targets:
+ * - lex: Documentos RAG para la voz legal (convenios)
+ * - eboniato: Documentos de contexto para el chatbot FAQ
+ * - ebonia: Documentos de contexto para el chat general
+ */
+class ContextDocsRepo
+{
+    private PDO $pdo;
+
+    /** Rutas físicas por target (relativas a la raíz del proyecto) */
+    private const TARGET_PATHS = [
+        'lex' => 'docs/context/voices/lex/convenios',
+        'eboniato' => 'docs/context_faq',
+        'ebonia' => 'docs/context',
+    ];
+
+    /** Extensiones permitidas por target */
+    private const ALLOWED_EXTENSIONS = [
+        'lex' => ['pdf', 'txt', 'md'],
+        'eboniato' => ['md'],
+        'ebonia' => ['md'],
+    ];
+
+    public function __construct(?PDO $pdo = null)
+    {
+        $this->pdo = $pdo ?? DB::pdo();
+    }
+
+    /**
+     * Lista todos los documentos de un target
+     */
+    public function listByTarget(string $target): array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT cd.*, u.first_name, u.last_name, u.email as created_by_email
+            FROM context_documents cd
+            LEFT JOIN users u ON u.id = cd.created_by
+            WHERE cd.target = ?
+            ORDER BY cd.filename ASC
+        ');
+        $stmt->execute([$target]);
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * Obtiene un documento por ID
+     */
+    public function getById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT cd.*, u.first_name, u.last_name, u.email as created_by_email
+            FROM context_documents cd
+            LEFT JOIN users u ON u.id = cd.created_by
+            WHERE cd.id = ?
+            LIMIT 1
+        ');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /**
+     * Obtiene un documento por target y filename
+     */
+    public function getByFilename(string $target, string $filename): ?array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT * FROM context_documents
+            WHERE target = ? AND filename = ?
+            LIMIT 1
+        ');
+        $stmt->execute([$target, $filename]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /**
+     * Crea un nuevo registro de documento
+     */
+    public function create(array $data): int
+    {
+        $now = date('Y-m-d H:i:s');
+        
+        $ragStatus = $data['target'] === 'lex' ? 'pending' : 'not_applicable';
+        
+        $stmt = $this->pdo->prepare('
+            INSERT INTO context_documents 
+            (target, filename, original_filename, file_extension, file_size, status, rag_status, description, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ');
+        
+        $stmt->execute([
+            $data['target'],
+            $data['filename'],
+            $data['original_filename'],
+            $data['file_extension'],
+            $data['file_size'] ?? 0,
+            $data['status'] ?? 'active',
+            $ragStatus,
+            $data['description'] ?? null,
+            $data['created_by'],
+            $now,
+            $now
+        ]);
+        
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    /**
+     * Actualiza metadatos de un documento
+     */
+    public function update(int $id, array $data): bool
+    {
+        $fields = [];
+        $values = [];
+        
+        $allowedFields = ['filename', 'original_filename', 'file_size', 'status', 'description'];
+        
+        foreach ($allowedFields as $field) {
+            if (array_key_exists($field, $data)) {
+                $fields[] = "{$field} = ?";
+                $values[] = $data[$field];
+            }
+        }
+        
+        if (empty($fields)) {
+            return false;
+        }
+        
+        $fields[] = 'updated_at = ?';
+        $values[] = date('Y-m-d H:i:s');
+        $values[] = $id;
+        
+        $sql = 'UPDATE context_documents SET ' . implode(', ', $fields) . ' WHERE id = ?';
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($values);
+    }
+
+    /**
+     * Actualiza el estado RAG de un documento
+     */
+    public function updateRagStatus(int $id, string $ragStatus, ?int $chunkCount = null, ?string $errorMessage = null): bool
+    {
+        $sql = 'UPDATE context_documents SET rag_status = ?, updated_at = ?';
+        $values = [$ragStatus, date('Y-m-d H:i:s')];
+        
+        if ($chunkCount !== null) {
+            $sql .= ', rag_chunk_count = ?';
+            $values[] = $chunkCount;
+        }
+        
+        if ($errorMessage !== null) {
+            $sql .= ', rag_error_message = ?';
+            $values[] = $errorMessage;
+        } elseif ($ragStatus !== 'error') {
+            $sql .= ', rag_error_message = NULL';
+        }
+        
+        $sql .= ' WHERE id = ?';
+        $values[] = $id;
+        
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($values);
+    }
+
+    /**
+     * Elimina un documento
+     */
+    public function delete(int $id): bool
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM context_documents WHERE id = ?');
+        return $stmt->execute([$id]);
+    }
+
+    /**
+     * Obtiene estadísticas de un target
+     */
+    public function getStatsByTarget(string $target): array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT 
+                COUNT(*) as total_documents,
+                SUM(file_size) as total_size,
+                SUM(rag_chunk_count) as total_chunks,
+                SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_count,
+                SUM(CASE WHEN rag_status = "processed" THEN 1 ELSE 0 END) as rag_processed_count,
+                SUM(CASE WHEN rag_status = "pending" THEN 1 ELSE 0 END) as rag_pending_count,
+                SUM(CASE WHEN rag_status = "error" THEN 1 ELSE 0 END) as rag_error_count
+            FROM context_documents
+            WHERE target = ?
+        ');
+        $stmt->execute([$target]);
+        $row = $stmt->fetch();
+        
+        return [
+            'total_documents' => (int)($row['total_documents'] ?? 0),
+            'total_size' => (int)($row['total_size'] ?? 0),
+            'total_chunks' => (int)($row['total_chunks'] ?? 0),
+            'active_count' => (int)($row['active_count'] ?? 0),
+            'rag_processed_count' => (int)($row['rag_processed_count'] ?? 0),
+            'rag_pending_count' => (int)($row['rag_pending_count'] ?? 0),
+            'rag_error_count' => (int)($row['rag_error_count'] ?? 0),
+        ];
+    }
+
+    /**
+     * Obtiene la ruta física del directorio para un target
+     */
+    public static function getTargetPath(string $target): ?string
+    {
+        if (!isset(self::TARGET_PATHS[$target])) {
+            return null;
+        }
+        
+        $basePath = dirname(dirname(__DIR__));
+        return $basePath . '/' . self::TARGET_PATHS[$target];
+    }
+
+    /**
+     * Obtiene las extensiones permitidas para un target
+     */
+    public static function getAllowedExtensions(string $target): array
+    {
+        return self::ALLOWED_EXTENSIONS[$target] ?? [];
+    }
+
+    /**
+     * Verifica si una extensión es válida para un target
+     */
+    public static function isExtensionAllowed(string $target, string $extension): bool
+    {
+        $allowed = self::getAllowedExtensions($target);
+        return in_array(strtolower($extension), $allowed, true);
+    }
+
+    /**
+     * Sanitiza un nombre de archivo
+     */
+    public static function sanitizeFilename(string $filename): string
+    {
+        // Obtener extensión
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $name = pathinfo($filename, PATHINFO_FILENAME);
+        
+        // Remover caracteres peligrosos, mantener solo alfanuméricos, guiones, underscores y puntos
+        $name = preg_replace('/[^a-zA-Z0-9_\-\.\s]/', '', $name);
+        $name = preg_replace('/\s+/', '_', $name);
+        $name = trim($name, '._-');
+        
+        // Limitar longitud
+        if (strlen($name) > 200) {
+            $name = substr($name, 0, 200);
+        }
+        
+        // Si el nombre quedó vacío, usar timestamp
+        if (empty($name)) {
+            $name = 'document_' . time();
+        }
+        
+        return $name . '.' . strtolower($ext);
+    }
+
+    /**
+     * Genera un nombre único si ya existe
+     */
+    public function generateUniqueFilename(string $target, string $filename): string
+    {
+        $sanitized = self::sanitizeFilename($filename);
+        $existing = $this->getByFilename($target, $sanitized);
+        
+        if (!$existing) {
+            return $sanitized;
+        }
+        
+        // Añadir sufijo numérico
+        $ext = pathinfo($sanitized, PATHINFO_EXTENSION);
+        $name = pathinfo($sanitized, PATHINFO_FILENAME);
+        
+        $counter = 1;
+        do {
+            $newFilename = "{$name}_{$counter}.{$ext}";
+            $existing = $this->getByFilename($target, $newFilename);
+            $counter++;
+        } while ($existing && $counter < 100);
+        
+        return $newFilename;
+    }
+
+    /**
+     * Lista todos los targets válidos
+     */
+    public static function getValidTargets(): array
+    {
+        return array_keys(self::TARGET_PATHS);
+    }
+
+    /**
+     * Verifica si un target es válido
+     */
+    public static function isValidTarget(string $target): bool
+    {
+        return isset(self::TARGET_PATHS[$target]);
+    }
+}

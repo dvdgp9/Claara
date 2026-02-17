@@ -121,6 +121,41 @@ class QdrantClient
     }
 
     /**
+     * Cuenta los puntos que coinciden con un filtro
+     */
+    public function countPointsByFilter(string $collection, array $filter): int
+    {
+        $response = $this->request('POST', "/collections/{$collection}/points/count", [
+            'filter' => $filter,
+            'exact' => true
+        ]);
+        return $response['result']['count'] ?? 0;
+    }
+
+    /**
+     * Elimina puntos por filtro de payload
+     * 
+     * @param string $collection Nombre de la colección
+     * @param array $filter Filtro en formato Qdrant (must, should, must_not)
+     */
+    public function deletePointsByFilter(string $collection, array $filter): array
+    {
+        return $this->request('POST', "/collections/{$collection}/points/delete", [
+            'filter' => $filter
+        ]);
+    }
+
+    /**
+     * Obtiene el siguiente ID disponible para insertar puntos
+     */
+    public function getNextPointId(string $collection): int
+    {
+        // Qdrant no tiene auto-increment, usamos el count + 1 como aproximación
+        // En producción, se podría usar un campo de metadatos o UUID
+        return $this->countPoints($collection) + 1;
+    }
+
+    /**
      * Realiza una petición HTTP a Qdrant
      */
     private function request(string $method, string $path, array $body = null): array

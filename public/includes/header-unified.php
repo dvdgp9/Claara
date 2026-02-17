@@ -163,6 +163,10 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
             <i class="iconoir-graph-up"></i>
             <span>Panel de control</span>
           </a>
+          <a href="/admin/context-manager.php" id="context-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <i class="iconoir-folder"></i>
+            <span>Gestor de contexto</span>
+          </a>
         <?php endif; ?>
         
         <button id="logout-btn" class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 border-t border-slate-100">

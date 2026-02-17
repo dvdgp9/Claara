@@ -159,6 +159,236 @@ Cuando se recibe una respuesta larga del asistente, el scroll automático actual
 
 ---
 
+## Feature: Gestor de Contexto (Superadmin)
+
+### Motivación
+Panel de administración para que los superadministradores puedan gestionar el contexto/RAG de los diferentes componentes de Ebonia:
+- **Lex** (voz legal): Documentos del RAG (convenios laborales)
+- **Eboniato** (chatbot de ayuda del inicio): Archivos de contexto FAQ
+- **Ebonia general**: Archivos de contexto del chat principal
+
+### Análisis de la arquitectura actual
+
+**1. Lex (RAG con Qdrant)**
+- **Ubicación física**: `docs/context/voices/lex/convenios/`
+- **Formatos**: PDF (fuente), TXT (extraído)
+- **Colección Qdrant**: `lex_convenios`
+- **Procesamiento**: `scripts/rag/ingest_lex.php` → Chunking → Embeddings → Qdrant
+- **Servicios**: `QdrantClient`, `EmbeddingService`, `LexRetriever`
+- **Contenido actual**: 28 convenios colectivos (PDFs + TXTs)
+- ⚠️ **Sin API de gestión**: Solo script CLI para ingestar
+
+**2. Eboniato (Chatbot FAQ)**
+- **Ubicación física**: `docs/context_faq/`
+- **Formatos**: Markdown (.md)
+- **Lectura**: `ContextBuilder($faqContextDir)` concatena todos los .md
+- **Contenido actual**: 4 archivos (faq_prompt.md, Área Proyectos.md, etc.)
+- **Sin RAG**: Contexto directo en system prompt (~6KB total)
+
+**3. Ebonia general**
+- **Ubicación física**: `docs/context/`
+- **Formatos**: Markdown (.md)
+- **Lectura**: `ContextBuilder()` concatena todos los .md
+- **Contenido actual**: system_prompt.md, grupo_ebone_overview.md
+- **Sin RAG**: Contexto directo en system prompt (~13KB total)
+
+---
+
+### Diseño propuesto
+
+#### Decisión clave: ¿BD o sistema de archivos?
+
+**Opción elegida: Híbrido (BD para metadatos + archivos físicos)**
+
+Razones:
+1. Los archivos .md se leen directamente del filesystem por `ContextBuilder`
+2. Qdrant ya tiene los vectores, solo necesitamos tracking de qué documentos están procesados
+3. Una tabla de metadatos permite tracking de estado, quién subió, cuándo, etc.
+
+#### Estructura de datos
+
+```sql
+-- Tabla para tracking de documentos de contexto
+CREATE TABLE context_documents (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  target ENUM('lex', 'eboniato', 'ebonia') NOT NULL,
+  filename VARCHAR(255) NOT NULL,
+  original_filename VARCHAR(255) NOT NULL,
+  file_extension VARCHAR(10) NOT NULL,
+  file_size INT NOT NULL DEFAULT 0,
+  status ENUM('active', 'processing', 'error', 'pending') DEFAULT 'active',
+  rag_status ENUM('not_applicable', 'pending', 'processed', 'error') DEFAULT 'not_applicable',
+  rag_chunk_count INT DEFAULT 0,
+  description TEXT NULL,
+  created_by INT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by) REFERENCES users(id),
+  INDEX idx_target (target),
+  INDEX idx_status (status),
+  UNIQUE KEY unique_target_filename (target, filename)
+);
+```
+
+#### Rutas de archivos por target
+
+| Target | Ruta física | Formatos permitidos |
+|--------|-------------|--------------------|
+| `lex` | `docs/context/voices/lex/convenios/` | .pdf, .txt, .md |
+| `eboniato` | `docs/context_faq/` | .md |
+| `ebonia` | `docs/context/` | .md |
+
+#### UI: Página de gestión
+
+**Ruta**: `/public/admin/context-manager.php`
+
+**Layout**:
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Gestor de Contexto                           [Superadmin]   │
+├──────────────────────────────────────────────────────────────┤
+│  [Tab: Lex]  [Tab: Eboniato]  [Tab: Ebonia General]          │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  📊 Estadísticas: 28 documentos | 1,245 chunks | 5.2MB       │
+│                                                              │
+│  [+ Añadir documento]                                        │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 📄 CC1 - Instalaciones deportivas...  │ 565KB │ ✅ RAG │  │
+│  │    [👁 Ver] [✏️ Editar] [🔄 Reprocesar] [🗑️ Eliminar]  │  │
+│  ├────────────────────────────────────────────────────────┤  │
+│  │ 📄 CC2 - Actividades deportivas...    │ 132KB │ ✅ RAG │  │
+│  │    [👁 Ver] [✏️ Editar] [🔄 Reprocesar] [🗑️ Eliminar]  │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Acciones por target**:
+
+| Acción | Lex | Eboniato | Ebonia |
+|--------|-----|----------|--------|
+| Ver contenido | ✅ | ✅ | ✅ |
+| Editar contenido | ✅ (solo .md/.txt) | ✅ | ✅ |
+| Eliminar | ✅ (+borrar de Qdrant) | ✅ | ✅ |
+| Añadir | ✅ (upload) | ✅ (upload) | ✅ (upload) |
+| Procesar RAG | ✅ | ❌ | ❌ |
+| Reprocesar RAG | ✅ | ❌ | ❌ |
+
+#### Endpoints API
+
+**Base**: `/api/admin/context/`
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `list.php?target=lex` | Listar documentos de un target |
+| GET | `view.php?id=X` | Ver contenido de un documento |
+| POST | `upload.php` | Subir nuevo documento (multipart) |
+| PUT | `update.php` | Actualizar contenido/metadatos |
+| DELETE | `delete.php?id=X` | Eliminar documento |
+| POST | `process-rag.php?id=X` | Procesar documento a Qdrant (solo Lex) |
+| GET | `stats.php?target=lex` | Estadísticas del target |
+
+#### Flujo de procesamiento RAG (Lex)
+
+```
+1. Usuario sube PDF/TXT
+   ↓
+2. Archivo guardado en docs/context/voices/lex/convenios/
+   ↓
+3. Registro creado en context_documents (status='active', rag_status='pending')
+   ↓
+4. Usuario pulsa "Procesar RAG" (o automático)
+   ↓
+5. Backend:
+   a. Extraer texto (si PDF: usar pdftotext o similar)
+   b. Chunking (~500 tokens, overlap 50)
+   c. Generar embeddings via OpenRouter
+   d. Upsert en Qdrant (colección lex_convenios)
+   e. Actualizar rag_status='processed', rag_chunk_count=N
+   ↓
+6. Documento listo para búsqueda semántica
+```
+
+#### Consideraciones de seguridad
+
+1. **Autenticación**: Todos los endpoints protegidos con `AdminGuard::requireSuperadmin()`
+2. **Validación de archivos**:
+   - Verificar extensión permitida por target
+   - Verificar MIME type real
+   - Límite de tamaño: 10MB por archivo
+3. **Sanitización de nombres**: Evitar path traversal, caracteres especiales
+4. **CSRF**: Tokens en todas las operaciones de escritura
+
+---
+
+### Tareas de implementación
+
+#### Fase 1: Backend base
+1. [ ] **Crear migración SQL** `docs/migrations/014_context_documents.sql`
+2. [ ] **Crear `ContextDocsRepo.php`** en `src/Repos/`
+   - `listByTarget(string $target): array`
+   - `getById(int $id): ?array`
+   - `create(array $data): int`
+   - `update(int $id, array $data): bool`
+   - `delete(int $id): bool`
+   - `getStatsByTarget(string $target): array`
+
+#### Fase 2: Endpoints API
+3. [ ] **GET `/api/admin/context/list.php`** - Listar documentos
+4. [ ] **GET `/api/admin/context/view.php`** - Ver contenido
+5. [ ] **POST `/api/admin/context/upload.php`** - Subir documento
+6. [ ] **PUT `/api/admin/context/update.php`** - Editar documento
+7. [ ] **DELETE `/api/admin/context/delete.php`** - Eliminar documento
+8. [ ] **POST `/api/admin/context/process-rag.php`** - Procesar RAG (Lex)
+9. [ ] **GET `/api/admin/context/stats.php`** - Estadísticas
+
+#### Fase 3: Servicio RAG
+10. [ ] **Crear `RagProcessor.php`** en `src/Rag/`
+    - Refactorizar lógica de `ingest_lex.php` a clase reutilizable
+    - Métodos: `processDocument()`, `deleteDocumentVectors()`, `getDocumentChunkCount()`
+
+#### Fase 4: UI
+11. [ ] **Crear página `/public/admin/context-manager.php`**
+    - Tabs para cada target
+    - Tabla de documentos con acciones
+    - Modal para upload
+    - Modal para edición de contenido
+12. [ ] **Crear JS `/public/assets/js/admin-context-manager.js`**
+    - Fetch API para todas las operaciones
+    - Feedback visual de estados
+
+#### Fase 5: Testing y polish
+13. [x] **Testing manual** de todos los flujos
+14. [x] **Sincronizar documentos existentes** - Script `scripts/sync_context_docs.php`
+15. [x] **Enlace en menú admin** - Añadido en header-unified.php
+
+### Archivos creados
+- `docs/migrations/013_context_documents.sql` - Migración BD
+- `src/Repos/ContextDocsRepo.php` - Repositorio CRUD
+- `src/Rag/RagProcessor.php` - Servicio RAG reutilizable
+- `public/api/admin/context/list.php` - Listar documentos
+- `public/api/admin/context/view.php` - Ver contenido
+- `public/api/admin/context/stats.php` - Estadísticas
+- `public/api/admin/context/upload.php` - Subir documento
+- `public/api/admin/context/update.php` - Editar documento
+- `public/api/admin/context/delete.php` - Eliminar documento
+- `public/api/admin/context/process-rag.php` - Procesar RAG
+- `public/admin/context-manager.php` - UI completa
+- `scripts/sync_context_docs.php` - Script sincronización
+
+### Archivos modificados
+- `src/Rag/QdrantClient.php` - Añadidos métodos deletePointsByFilter, countPointsByFilter
+- `public/includes/header-unified.php` - Enlace al gestor en menú admin
+
+### Pasos para activar
+1. Ejecutar migración: `php scripts/migrate.php`
+2. Sincronizar documentos existentes: `php scripts/sync_context_docs.php`
+3. Acceder desde menú de perfil → "Gestor de contexto"
+
+---
+
 # Current Status / Progress Tracking
 
 - 2025-11-03: `index.php` creado. Repo inicializado en `main` y push a remoto realizado.
