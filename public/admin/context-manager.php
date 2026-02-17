@@ -96,9 +96,13 @@ if (!$isSuperadmin) {
                 <span class="text-sm text-slate-600">Chunks RAG: <strong id="stat-chunks" class="text-slate-800">0</strong></span>
               </div>
               <div class="flex-1"></div>
+              <button id="create-btn" class="px-4 py-2 border border-[#23AAC5] text-[#23AAC5] rounded-lg font-medium hover:bg-[#23AAC5]/10 transition-all flex items-center gap-2 text-sm">
+                <i class="iconoir-edit-pencil"></i>
+                <span>Crear documento</span>
+              </button>
               <button id="upload-btn" class="px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center gap-2 shadow-md text-sm">
                 <i class="iconoir-upload"></i>
-                <span>Añadir documento</span>
+                <span>Subir archivo</span>
               </button>
             </div>
 
@@ -115,6 +119,7 @@ if (!$isSuperadmin) {
                   <thead class="bg-slate-50 border-b border-slate-200">
                     <tr>
                       <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Documento</th>
+                      <th id="col-type" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden">Tipo</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tamaño</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
                       <th id="col-rag" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">RAG</th>
@@ -190,6 +195,63 @@ if (!$isSuperadmin) {
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Create Document -->
+  <div id="create-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between mb-4 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600">
+            <i class="iconoir-page-plus text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-slate-800">Crear documento</h3>
+            <p class="text-xs text-slate-500">Nuevo documento de contexto para <span id="create-target-name" class="font-medium">Lex</span></p>
+          </div>
+        </div>
+        <button id="close-create-modal" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+          <i class="iconoir-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-4 flex-shrink-0">
+        <div>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Nombre del archivo</label>
+          <div class="flex">
+            <input type="text" id="create-filename" class="flex-1 px-3 py-2 border border-slate-200 rounded-l-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="mi_documento">
+            <span id="create-extension" class="px-3 py-2 bg-slate-100 border border-l-0 border-slate-200 rounded-r-lg text-slate-600 text-sm">.md</span>
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Descripción (opcional)</label>
+          <input type="text" id="create-description" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="Breve descripción...">
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-hidden flex flex-col min-h-0">
+        <label class="text-sm font-medium text-slate-700 block mb-2">Contenido</label>
+        <textarea id="create-content" class="flex-1 w-full px-4 py-3 bg-white border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none" placeholder="Pega o escribe el contenido del documento aquí..." spellcheck="false"></textarea>
+      </div>
+
+      <div class="flex items-center gap-4 pt-3 text-xs text-slate-500 flex-shrink-0">
+        <span id="create-char-count">0 caracteres</span>
+        <span>•</span>
+        <span id="create-line-count">0 líneas</span>
+      </div>
+
+      <div id="create-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3 flex-shrink-0"></div>
+
+      <div class="flex gap-3 pt-4 border-t border-slate-100 mt-4 flex-shrink-0">
+        <button type="button" id="create-submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
+          <i class="iconoir-plus mr-1"></i>
+          Crear documento
+        </button>
+        <button type="button" id="cancel-create" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
+          Cancelar
+        </button>
+      </div>
     </div>
   </div>
 
@@ -389,9 +451,10 @@ if (!$isSuperadmin) {
         document.getElementById('stat-size').textContent = formatBytes(stats.total_size || 0);
         document.getElementById('stat-chunks').textContent = stats.total_chunks || 0;
         
-        // Show/hide RAG column
+        // Show/hide RAG and Type columns
         const isLex = currentTarget === 'lex';
         document.getElementById('col-rag').classList.toggle('hidden', !isLex);
+        document.getElementById('col-type').classList.toggle('hidden', !isLex);
         document.getElementById('stat-chunks-container').classList.toggle('hidden', !isLex);
         
         renderDocuments();
@@ -429,6 +492,9 @@ if (!$isSuperadmin) {
         
         const ragStatusHtml = isLex ? getRagStatusHtml(doc) : '';
         const ragColClass = isLex ? '' : 'hidden';
+        
+        // Type badge for Lex (PDF = original, TXT = extracted)
+        const typeHtml = isLex ? getDocTypeHtml(ext) : '';
 
         const canEdit = ['md', 'txt'].includes(ext);
         const editBtn = canEdit 
@@ -454,6 +520,7 @@ if (!$isSuperadmin) {
                 </div>
               </div>
             </td>
+            <td class="px-6 py-4 ${ragColClass}">${typeHtml}</td>
             <td class="px-6 py-4 text-sm text-slate-600">${formatBytes(doc.file_size || 0)}</td>
             <td class="px-6 py-4"><span class="status-badge ${statusClass}">${doc.status}</span></td>
             <td class="px-6 py-4 ${ragColClass}">${ragStatusHtml}</td>
@@ -485,6 +552,33 @@ if (!$isSuperadmin) {
       
       const cfg = configs[status] || configs.not_applicable;
       return `<span class="rag-badge ${cfg.class}"><i class="${cfg.icon}"></i>${cfg.text}</span>`;
+    }
+
+    // Get document type HTML for Lex
+    function getDocTypeHtml(ext) {
+      const configs = {
+        pdf: { 
+          class: 'bg-orange-100 text-orange-700', 
+          icon: 'iconoir-page', 
+          text: 'Original',
+          tooltip: 'Documento original PDF para procesar'
+        },
+        txt: { 
+          class: 'bg-blue-100 text-blue-700', 
+          icon: 'iconoir-notes', 
+          text: 'Extraído',
+          tooltip: 'Texto extraído del PDF original'
+        },
+        md: { 
+          class: 'bg-purple-100 text-purple-700', 
+          icon: 'iconoir-page-edit', 
+          text: 'Manual',
+          tooltip: 'Documento creado manualmente'
+        }
+      };
+      
+      const cfg = configs[ext] || { class: 'bg-slate-100 text-slate-500', icon: 'iconoir-file', text: ext.toUpperCase(), tooltip: '' };
+      return `<span class="rag-badge ${cfg.class}" title="${cfg.tooltip}"><i class="${cfg.icon}"></i>${cfg.text}</span>`;
     }
 
     // Tab switching
@@ -594,6 +688,97 @@ if (!$isSuperadmin) {
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Subir documento';
+      }
+    });
+
+    // Create document modal
+    const targetNames = { lex: 'Lex', eboniato: 'Eboniato', ebonia: 'Ebonia' };
+    const createContent = document.getElementById('create-content');
+
+    document.getElementById('create-btn').addEventListener('click', () => {
+      document.getElementById('create-target-name').textContent = targetNames[currentTarget] || currentTarget;
+      document.getElementById('create-filename').value = '';
+      document.getElementById('create-description').value = '';
+      document.getElementById('create-content').value = '';
+      document.getElementById('create-error').classList.add('hidden');
+      
+      // Set extension based on target (only md for eboniato/ebonia, allow txt/md for lex)
+      const ext = currentTarget === 'lex' ? '.txt' : '.md';
+      document.getElementById('create-extension').textContent = ext;
+      
+      updateCreateCharCount('');
+      document.getElementById('create-modal').classList.remove('hidden');
+    });
+
+    document.getElementById('close-create-modal').addEventListener('click', () => {
+      document.getElementById('create-modal').classList.add('hidden');
+    });
+    document.getElementById('cancel-create').addEventListener('click', () => {
+      document.getElementById('create-modal').classList.add('hidden');
+    });
+
+    function updateCreateCharCount(text) {
+      const chars = text.length;
+      const lines = text.split('\n').length;
+      document.getElementById('create-char-count').textContent = `${chars.toLocaleString()} caracteres`;
+      document.getElementById('create-line-count').textContent = `${lines.toLocaleString()} líneas`;
+    }
+
+    createContent.addEventListener('input', (e) => {
+      updateCreateCharCount(e.target.value);
+    });
+
+    document.getElementById('create-submit').addEventListener('click', async () => {
+      const errorEl = document.getElementById('create-error');
+      errorEl.classList.add('hidden');
+
+      const filename = document.getElementById('create-filename').value.trim();
+      const content = document.getElementById('create-content').value;
+      const description = document.getElementById('create-description').value.trim();
+
+      if (!filename) {
+        errorEl.textContent = 'El nombre del archivo es obligatorio';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      if (!content) {
+        errorEl.textContent = 'El contenido no puede estar vacío';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      const ext = document.getElementById('create-extension').textContent;
+      const fullFilename = filename.replace(/[^a-zA-Z0-9_\-]/g, '_') + ext;
+
+      const submitBtn = document.getElementById('create-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="iconoir-refresh animate-spin mr-1"></i>Creando...';
+
+      try {
+        // Create file as blob and upload
+        const blob = new Blob([content], { type: 'text/plain' });
+        const file = new File([blob], fullFilename, { type: 'text/plain' });
+
+        const formData = new FormData();
+        formData.append('target', currentTarget);
+        formData.append('file', file);
+        formData.append('description', description);
+
+        await api('/api/admin/context/upload.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        document.getElementById('create-modal').classList.add('hidden');
+        showToast('Documento creado correctamente');
+        await loadDocuments();
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="iconoir-plus mr-1"></i>Crear documento';
       }
     });
 
