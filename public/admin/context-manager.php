@@ -195,27 +195,69 @@ if (!$isSuperadmin) {
 
   <!-- Modal View/Edit -->
   <div id="edit-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 max-h-[90vh] flex flex-col">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full p-6 max-h-[90vh] flex flex-col">
+      <!-- Header -->
       <div class="flex items-center justify-between mb-4 flex-shrink-0">
-        <h3 class="text-lg font-semibold text-slate-800" id="edit-modal-title">Ver documento</h3>
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+            <i id="edit-doc-icon" class="iconoir-page text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-slate-800" id="edit-modal-title">Ver documento</h3>
+            <p class="text-xs text-slate-500" id="edit-doc-name">documento.md</p>
+          </div>
+        </div>
         <button id="close-edit-modal" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
           <i class="iconoir-xmark text-xl"></i>
         </button>
       </div>
 
-      <div class="flex-1 overflow-hidden flex flex-col min-h-0">
-        <textarea id="edit-content" class="flex-1 w-full px-4 py-3 border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none" placeholder="Contenido del documento..."></textarea>
+      <!-- Info bar -->
+      <div class="flex items-center gap-4 px-4 py-3 bg-slate-50 rounded-lg mb-4 text-sm flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <i class="iconoir-folder text-slate-400"></i>
+          <span class="text-slate-600">Target: <strong class="text-slate-800" id="edit-doc-target">lex</strong></span>
+        </div>
+        <div class="h-4 w-px bg-slate-300"></div>
+        <div class="flex items-center gap-2">
+          <i class="iconoir-file-not-found text-slate-400"></i>
+          <span class="text-slate-600">Tamaño: <strong class="text-slate-800" id="edit-doc-size">0 KB</strong></span>
+        </div>
+        <div class="h-4 w-px bg-slate-300"></div>
+        <div class="flex items-center gap-2">
+          <i class="iconoir-calendar text-slate-400"></i>
+          <span class="text-slate-600">Creado: <strong class="text-slate-800" id="edit-doc-date">-</strong></span>
+        </div>
+        <div class="flex-1"></div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="text-slate-500" id="edit-char-count">0 caracteres</span>
+          <span class="text-slate-300">•</span>
+          <span class="text-slate-500" id="edit-line-count">0 líneas</span>
+        </div>
       </div>
 
-      <div id="edit-readonly-notice" class="hidden mt-3 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex-shrink-0">
-        <i class="iconoir-info-circle mr-1"></i>
-        Los archivos PDF no se pueden editar. Solo se muestra información de metadatos.
+      <!-- Content editor -->
+      <div class="flex-1 overflow-hidden flex flex-col min-h-0 bg-slate-50 rounded-lg border border-slate-200">
+        <textarea id="edit-content" class="flex-1 w-full px-4 py-3 bg-white font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none border-0" placeholder="Contenido del documento..." spellcheck="false"></textarea>
+      </div>
+
+      <!-- Notices -->
+      <div id="edit-readonly-notice" class="hidden mt-3 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-2 flex-shrink-0">
+        <i class="iconoir-info-circle"></i>
+        <span>Los archivos PDF no se pueden editar inline. Descarga el archivo para modificarlo.</span>
+      </div>
+
+      <div id="edit-rag-notice" class="hidden mt-3 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center gap-2 flex-shrink-0">
+        <i class="iconoir-info-circle"></i>
+        <span>Al guardar cambios en un documento de Lex, deberás <strong>reprocesar el RAG</strong> para actualizar los vectores.</span>
       </div>
 
       <div id="edit-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3 flex-shrink-0"></div>
 
+      <!-- Footer actions -->
       <div class="flex gap-3 pt-4 border-t border-slate-100 mt-4 flex-shrink-0">
-        <button type="button" id="save-content-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
+        <button type="button" id="save-content-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
+          <i class="iconoir-floppy-disk mr-1"></i>
           Guardar cambios
         </button>
         <button type="button" id="close-edit-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
@@ -562,23 +604,55 @@ if (!$isSuperadmin) {
       
       selectedDoc = doc;
       const canEdit = ['md', 'txt'].includes(doc.file_extension?.toLowerCase());
+      const ext = doc.file_extension?.toLowerCase() || '';
       
+      // Update header info
       document.getElementById('edit-modal-title').textContent = canEdit ? 'Editar documento' : 'Ver documento';
+      document.getElementById('edit-doc-name').textContent = doc.filename || 'documento';
+      
+      // Icon según tipo
+      const iconClass = ext === 'pdf' ? 'iconoir-page' : ext === 'md' ? 'iconoir-page-edit' : 'iconoir-notes';
+      document.getElementById('edit-doc-icon').className = iconClass + ' text-xl';
+      
+      // Info bar
+      document.getElementById('edit-doc-target').textContent = doc.target || '-';
+      document.getElementById('edit-doc-size').textContent = formatBytes(doc.file_size || 0);
+      document.getElementById('edit-doc-date').textContent = formatDate(doc.created_at);
+      
+      // Config UI
       document.getElementById('edit-content').disabled = !canEdit;
       document.getElementById('save-content-btn').classList.toggle('hidden', !canEdit);
       document.getElementById('edit-readonly-notice').classList.toggle('hidden', canEdit);
+      document.getElementById('edit-rag-notice').classList.toggle('hidden', !(canEdit && doc.target === 'lex'));
       document.getElementById('edit-error').classList.add('hidden');
       
       // Load content
+      document.getElementById('edit-content').value = 'Cargando contenido...';
       try {
         const data = await api(`/api/admin/context/view.php?id=${docId}`);
-        document.getElementById('edit-content').value = data.content || '';
+        const content = data.content || '';
+        document.getElementById('edit-content').value = content;
+        updateCharCount(content);
       } catch (err) {
         document.getElementById('edit-content').value = 'Error al cargar contenido: ' + err.message;
+        updateCharCount('');
       }
       
       document.getElementById('edit-modal').classList.remove('hidden');
     };
+
+    // Update character and line count
+    function updateCharCount(text) {
+      const chars = text.length;
+      const lines = text.split('\n').length;
+      document.getElementById('edit-char-count').textContent = `${chars.toLocaleString()} caracteres`;
+      document.getElementById('edit-line-count').textContent = `${lines.toLocaleString()} líneas`;
+    }
+
+    // Update count on input
+    document.getElementById('edit-content').addEventListener('input', (e) => {
+      updateCharCount(e.target.value);
+    });
 
     document.getElementById('close-edit-modal').addEventListener('click', () => {
       document.getElementById('edit-modal').classList.add('hidden');
