@@ -51,8 +51,26 @@ if (!file_exists($filePath)) {
     Response::error('file_not_found', 'El archivo físico no existe', 404);
 }
 
+// Verificar extensión del archivo
+$extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+// Si es PDF, verificar que pdftotext está disponible
+if ($extension === 'pdf') {
+    exec('which pdftotext 2>&1', $output, $returnCode);
+    if ($returnCode !== 0) {
+        Response::error('pdftotext_not_installed', 
+            'pdftotext no está instalado en el servidor. Para procesar PDFs, instala poppler-utils. ' .
+            'Alternativamente, sube el documento en formato TXT o MD.', 
+            503);
+    }
+}
+
 // Inicializar procesador RAG
-$processor = new RagProcessor();
+try {
+    $processor = new RagProcessor();
+} catch (\Exception $e) {
+    Response::error('rag_init_error', 'Error al inicializar procesador RAG: ' . $e->getMessage(), 500);
+}
 
 // Verificar que Qdrant está disponible
 if (!$processor->isQdrantHealthy()) {
