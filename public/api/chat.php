@@ -177,6 +177,11 @@ if ($file && count($history) > 0) {
     }
 }
 
+// En modo imagen, usar solo el último mensaje para reducir desvíos a respuesta textual.
+if ($imageMode && !empty($history)) {
+    $history = [end($history)];
+}
+
 // Limitar contexto para no exceder límites de Gemini (250k tokens → ~1M chars)
 // Dejamos margen: ~150k chars de historial (~37.5k tokens estimados)
 $contextTruncated = false;
@@ -207,13 +212,40 @@ $modalities = $imageMode ? ['image', 'text'] : null;
 // Web search no es compatible con modo imagen
 $useWebSearch = $webSearch && !$imageMode;
 
-$assistantMsg = $svc->replyWithHistory($history, $modalities, $useWebSearch);
+if ($imageMode) {
+    $assistantMsg = null;
+    $generatedImages = null;
+    $attemptHistory = $history;
+
+    for ($attempt = 1; $attempt <= 2; $attempt++) {
+        $assistantMsg = $svc->replyWithHistory($attemptHistory, $modalities, false);
+        $generatedImages = $svc->getLastImages();
+
+        if ($generatedImages && !empty($generatedImages)) {
+            break;
+        }
+
+        if ($attempt === 1) {
+            $attemptHistory = enforceImageOutputHistory($history);
+        }
+    }
+
+    if (!$generatedImages || empty($generatedImages)) {
+        Response::error(
+            'image_generation_failed',
+            'No se pudo generar una imagen con ese prompt. Prueba acortándolo o dividiéndolo en pasos.',
+            422
+        );
+    }
+} else {
+    $assistantMsg = $svc->replyWithHistory($history, $modalities, $useWebSearch);
+}
 
 // Determinar el modelo usado
 $usedModel = $provider->getModel();
 
 // Obtener imágenes generadas si las hay
-$generatedImages = $svc->getLastImages();
+$generatedImages = $generatedImages ?? $svc->getLastImages();
 
 // Obtener anotaciones/citas web si las hay
 $webAnnotations = $svc->getLastAnnotations();
@@ -349,3 +381,26 @@ if ($webAnnotations && !empty($webAnnotations)) {
 }
 
 Response::json($response);
+
+function enforceImageOutputHistory(array $history): array
+{
+    $enforced = $history;
+    $instruction = "\n\nIMPORTANT: Return at least one generated image in this response. Do not return text-only output. If the prompt is long, prioritize the key visual requirements and still generate the image.";
+
+    for ($i = count($enforced) - 1; $i >= 0; $i--) {
+        if (($enforced[$i]['role'] ?? '') !== 'user') {
+            continue;
+        }
+
+        $content = $enforced[$i]['content'] ?? '';
+        if (is_array($content)) {
+            $content[] = ['type' => 'text', 'text' => trim($instruction)];
+            $enforced[$i]['content'] = $content;
+        } else {
+            $enforced[$i]['content'] = (string)$content . $instruction;
+        }
+        break;
+    }
+
+    return $enforced;
+}

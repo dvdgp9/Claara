@@ -193,6 +193,9 @@ $convos->autoTitle($conversationId, $message);
 $withContext = !$imageMode;
 $contextBuilder = $withContext ? new ContextBuilder() : null;
 $systemPrompt = $contextBuilder ? $contextBuilder->buildSystemPrompt() : null;
+if ($imageMode) {
+    $systemPrompt = 'You are an image generation assistant. Always return at least one generated image for image_mode requests. Text-only responses are not allowed unless image generation is impossible.';
+}
 
 // Construir historial
 $allMessages = $msgs->listByConversation($conversationId);
@@ -227,6 +230,12 @@ if ($file && count($history) > 0) {
     }
 }
 
+// En modo imagen, usar solo el último mensaje para evitar que el contexto largo
+// desvíe al modelo hacia respuestas de solo texto.
+if ($imageMode && !empty($history)) {
+    $history = [end($history)];
+}
+
 // Limitar contexto
 $contextTruncated = false;
 if (count($history) > 20) {
@@ -253,15 +262,30 @@ if (count($history) > 20) {
 if ($imageMode) {
     try {
         $client = new OpenRouterClient(null, $modelName, $systemPrompt);
-        $response = $client->generateWithMessages($history, ['image', 'text'], false);
-        
-        $usedModel = $client->getModel();
-        $generatedImages = $client->getLastImages();
-        
-        // Guardar mensaje del asistente
+        $attemptHistory = $history;
+        $response = '';
+        $usedModel = $modelName;
         $imagesToSave = null;
-        if ($generatedImages && !empty($generatedImages)) {
-            $imagesToSave = processGeneratedImages($generatedImages, $conversationId, $user, $filesRepo);
+
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            $response = $client->generateWithMessages($attemptHistory, ['image', 'text'], false);
+            $usedModel = $client->getModel();
+            $generatedImages = $client->getLastImages();
+
+            if ($generatedImages && !empty($generatedImages)) {
+                $imagesToSave = processGeneratedImages($generatedImages, $conversationId, $user, $filesRepo);
+                if ($imagesToSave && !empty($imagesToSave)) {
+                    break;
+                }
+            }
+
+            if ($attempt === 1) {
+                $attemptHistory = enforceImageOutputHistory($history);
+            }
+        }
+
+        if (!$imagesToSave || empty($imagesToSave)) {
+            sendError('No se pudo generar una imagen con ese prompt. Prueba acortándolo o dividiéndolo en pasos.', 422);
         }
         
         $assistantMsgId = $msgs->create($conversationId, null, 'assistant', $response, $usedModel, null, null, null, $imagesToSave);
@@ -414,4 +438,26 @@ function processGeneratedImages(array $generatedImages, int $conversationId, arr
     }
 
     return !empty($imagesNormalized) ? $imagesNormalized : null;
+}
+
+function enforceImageOutputHistory(array $history): array {
+    $enforced = $history;
+    $instruction = "\n\nIMPORTANT: Return at least one generated image in this response. Do not return text-only output. If the prompt is long, prioritize the key visual requirements and still generate the image.";
+
+    for ($i = count($enforced) - 1; $i >= 0; $i--) {
+        if (($enforced[$i]['role'] ?? '') !== 'user') {
+            continue;
+        }
+
+        $content = $enforced[$i]['content'] ?? '';
+        if (is_array($content)) {
+            $content[] = ['type' => 'text', 'text' => trim($instruction)];
+            $enforced[$i]['content'] = $content;
+        } else {
+            $enforced[$i]['content'] = (string)$content . $instruction;
+        }
+        break;
+    }
+
+    return $enforced;
 }
