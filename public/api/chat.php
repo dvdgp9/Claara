@@ -177,9 +177,10 @@ if ($file && count($history) > 0) {
     }
 }
 
-// En modo imagen, usar solo el último mensaje para reducir desvíos a respuesta textual.
+// En modo imagen, condensar contexto para reducir respuestas textuales,
+// pero conservando intención cuando el último mensaje es genérico.
 if ($imageMode && !empty($history)) {
-    $history = [end($history)];
+    $history = buildImageModeHistory($history);
 }
 
 // Limitar contexto para no exceder límites de Gemini (250k tokens → ~1M chars)
@@ -403,4 +404,83 @@ function enforceImageOutputHistory(array $history): array
     }
 
     return $enforced;
+}
+
+function buildImageModeHistory(array $history): array
+{
+    $lastUserIdx = -1;
+    for ($i = count($history) - 1; $i >= 0; $i--) {
+        if (($history[$i]['role'] ?? '') === 'user') {
+            $lastUserIdx = $i;
+            break;
+        }
+    }
+
+    if ($lastUserIdx === -1) {
+        return [end($history)];
+    }
+
+    $lastUser = $history[$lastUserIdx];
+    $lastText = extractTextFromContent($lastUser['content'] ?? '');
+
+    if (!isGenericImageFollowup($lastText)) {
+        return [$lastUser];
+    }
+
+    $prevUserText = '';
+    for ($i = $lastUserIdx - 1; $i >= 0; $i--) {
+        if (($history[$i]['role'] ?? '') !== 'user') {
+            continue;
+        }
+        $candidate = trim(extractTextFromContent($history[$i]['content'] ?? ''));
+        if (mb_strlen($candidate) >= 20) {
+            $prevUserText = $candidate;
+            break;
+        }
+    }
+
+    if ($prevUserText === '') {
+        return [$lastUser];
+    }
+
+    $combined = "Contexto previo de la imagen:\n{$prevUserText}\n\nInstrucción actual:\n{$lastText}";
+    $result = $lastUser;
+
+    if (is_array($result['content'] ?? null)) {
+        $result['content'][] = ['type' => 'text', 'text' => $combined];
+    } else {
+        $result['content'] = $combined;
+    }
+
+    return [$result];
+}
+
+function extractTextFromContent($content): string
+{
+    if (is_string($content)) {
+        return trim($content);
+    }
+    if (!is_array($content)) {
+        return '';
+    }
+
+    $parts = [];
+    foreach ($content as $item) {
+        if (is_array($item) && ($item['type'] ?? '') === 'text' && isset($item['text'])) {
+            $parts[] = (string)$item['text'];
+        }
+    }
+    return trim(implode("\n", $parts));
+}
+
+function isGenericImageFollowup(string $text): bool
+{
+    $normalized = mb_strtolower(trim($text));
+    if ($normalized === '') return true;
+
+    if (mb_strlen($normalized) <= 45 && preg_match('/^(genera( la)? imagen|hazlo|dale|adelante|ok|vale|perfecto|sí|si)$/u', $normalized)) {
+        return true;
+    }
+
+    return (bool)preg_match('/^(genera( la)? imagen|hazlo|dale|adelante)\b/u', $normalized);
 }
