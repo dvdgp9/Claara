@@ -64,6 +64,9 @@ $mode = $inputData['mode'] ?? 'generate';
 $sourceImage = $inputData['source_image'] ?? null; // Base64 de imagen fuente (para edición)
 $targetImage = $inputData['target_image'] ?? null; // Base64 de imagen objetivo (opcional, para edición)
 $model = 'google/gemini-3-pro-image-preview';
+$systemInstruction = $mode === 'edit'
+    ? "You are an expert image editor focused on instruction fidelity. Perform targeted, minimal, non-destructive edits. Keep all existing elements intact unless the user explicitly asks to modify them. If adding a logo to clothing that already has a logo, preserve the existing logo and place the new logo beside it, keeping realistic scale, perspective, fabric deformation, lighting, and readability."
+    : "You are an expert image generator focused on photorealistic, high-quality outputs that strictly follow user instructions.";
 
 if ($mode === 'edit' && !$sourceImage) {
     Response::error('missing_source_image', 'Se requiere una imagen fuente para el modo edición', 400);
@@ -72,7 +75,7 @@ if ($mode === 'edit' && !$sourceImage) {
 // Generar/Editar imagen
 try {
     // Usar OpenRouter para Nanobanana (Gemini)
-    $client = new OpenRouterClient(null, $model, null, null, null);
+    $client = new OpenRouterClient(null, $model, $systemInstruction, null, null);
     
     // Si hay imágenes (modo edición), las pasamos
     $messages = [];

@@ -331,6 +331,30 @@
     return prompt;
   }
 
+  function buildEditPrompt(description) {
+    const userRequest = (description || '').trim();
+    const isLogoRequest = /\blogo\b/i.test(userRequest) || /\bemblema\b/i.test(userRequest);
+
+    let prompt = `Apply a precise, localized edit to the input image.\n`;
+    prompt += `Primary request: ${userRequest}\n\n`;
+    prompt += `Hard constraints:\n`;
+    prompt += `- Preserve identity, face, pose, camera angle, framing, and background unless explicitly requested otherwise.\n`;
+    prompt += `- Do not remove, replace, or alter existing logos, text, or graphics unless explicitly requested.\n`;
+    prompt += `- Keep garment texture, folds, shadows, and perspective consistent.\n`;
+    prompt += `- Match original lighting, color grading, and realism.\n`;
+    prompt += `- Output exactly one coherent edited image.\n`;
+
+    if (isLogoRequest) {
+      prompt += `\nLogo-specific constraints:\n`;
+      prompt += `- If there is already a logo on the shirt, keep it intact.\n`;
+      prompt += `- Add the new logo next to the existing one (side-by-side), not on top of it.\n`;
+      prompt += `- Keep both logos visible, readable, and naturally integrated with fabric perspective.\n`;
+      prompt += `- Maintain realistic print size, alignment, and occlusion.\n`;
+    }
+
+    return prompt;
+  }
+
   // === Generate Image ===
   generateBtn?.addEventListener('click', async () => {
     await generateImage();
@@ -373,7 +397,7 @@
       prompt = buildPrompt(description, options);
       inputData = { mode: 'generate', description, provider: currentProviderInput?.value || 'nanobanana', ...options };
     } else {
-      prompt = description;
+      prompt = buildEditPrompt(description);
       inputData = { mode: 'edit', description, provider: currentProviderInput?.value || 'nanobanana', source_image: sourceImageBase64, target_image: targetImageBase64 || null };
     }
 
