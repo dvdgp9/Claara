@@ -1,7 +1,7 @@
 /**
  * Gesto: Editor de Imágenes con IA (v2 - Nueva UX)
  * Layout: 3 columnas con imagen central
- * Genera y edita imágenes usando Qwen, Nanobanana o FLUX
+ * Genera y edita imágenes usando Nanobanana
  * Incluye edición iterativa de imágenes generadas
  */
 (function() {
@@ -25,10 +25,6 @@
   const modeEditBtn = document.getElementById('mode-edit');
   const currentModeInput = document.getElementById('current-mode');
 
-  // Provider toggles
-  const providerQwenBtn = document.getElementById('provider-qwen');
-  const providerNanobananaBtn = document.getElementById('provider-nanobanana');
-  const providerFluxBtn = document.getElementById('provider-flux');
   const currentProviderInput = document.getElementById('current-provider');
 
   // UI Sections
@@ -172,21 +168,7 @@
   modeGenerateBtn?.addEventListener('click', () => setMode('generate'));
   modeEditBtn?.addEventListener('click', () => setMode('edit'));
 
-  // === Provider Toggle ===
-  function setProvider(provider) {
-    if (!currentProviderInput) return;
-    currentProviderInput.value = provider;
-
-    document.querySelectorAll('.provider-toggle-btn').forEach(btn => btn.classList.remove('active'));
-
-    if (provider === 'qwen') providerQwenBtn?.classList.add('active');
-    else if (provider === 'nanobanana') providerNanobananaBtn?.classList.add('active');
-    else if (provider === 'flux') providerFluxBtn?.classList.add('active');
-  }
-
-  providerQwenBtn?.addEventListener('click', () => setProvider('qwen'));
-  providerNanobananaBtn?.addEventListener('click', () => setProvider('nanobanana'));
-  providerFluxBtn?.addEventListener('click', () => setProvider('flux'));
+  if (currentProviderInput) currentProviderInput.value = 'nanobanana';
 
   // === Image Upload Handler ===
   function setupSourceImageUpload() {
@@ -389,10 +371,10 @@
 
     if (mode === 'generate') {
       prompt = buildPrompt(description, options);
-      inputData = { mode: 'generate', description, provider: currentProviderInput?.value || 'qwen', ...options };
+      inputData = { mode: 'generate', description, provider: currentProviderInput?.value || 'nanobanana', ...options };
     } else {
       prompt = description;
-      inputData = { mode: 'edit', description, provider: currentProviderInput?.value || 'qwen', source_image: sourceImageBase64, target_image: targetImageBase64 || null };
+      inputData = { mode: 'edit', description, provider: currentProviderInput?.value || 'nanobanana', source_image: sourceImageBase64, target_image: targetImageBase64 || null };
     }
 
     lastPrompt = prompt;

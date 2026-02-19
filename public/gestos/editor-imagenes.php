@@ -105,7 +105,7 @@ $headerDrawerId = 'gesture-history-drawer';
                 placeholder="Describe la imagen que quieres crear..."></textarea>
             </div>
             
-            <!-- Fila 3: Modo, Provider y Botón -->
+            <!-- Fila 3: Modo y Botón -->
             <div class="flex flex-col sm:flex-row sm:items-center gap-2">
               <div class="flex items-center gap-2">
                 <!-- Toggle Modo -->
@@ -115,19 +115,6 @@ $headerDrawerId = 'gesture-history-drawer';
                   </button>
                   <button type="button" id="mode-edit" class="mode-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
                     <i class="iconoir-edit mr-1"></i>Editar
-                  </button>
-                </div>
-                
-                <!-- Toggle Provider -->
-                <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                  <button type="button" id="provider-qwen" class="provider-toggle-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all active" data-provider="qwen">
-                    <span class="w-2 h-2 rounded-full bg-purple-500 inline-block mr-1"></span>Qwen
-                  </button>
-                  <button type="button" id="provider-nanobanana" class="provider-toggle-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all" data-provider="nanobanana">
-                    <span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-1"></span>Nanobanana
-                  </button>
-                  <button type="button" id="provider-flux" class="provider-toggle-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all" data-provider="flux">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span>FLUX
                   </button>
                 </div>
               </div>
@@ -140,7 +127,7 @@ $headerDrawerId = 'gesture-history-drawer';
               </button>
               
               <input type="hidden" id="current-mode" value="generate" />
-              <input type="hidden" id="current-provider" value="qwen" />
+              <input type="hidden" id="current-provider" value="nanobanana" />
             </div>
           </div>
           
@@ -651,20 +638,6 @@ $headerDrawerId = 'gesture-history-drawer';
       box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
     }
     
-    .provider-toggle-btn {
-      color: #64748b;
-      background: transparent;
-    }
-    
-    .provider-toggle-btn.active {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
-      color: white !important;
-      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
-    }
-    
-    .provider-toggle-btn.active span {
-      background: white !important;
-    }
   </style>
   
   <script>

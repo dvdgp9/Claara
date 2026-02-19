@@ -27,7 +27,6 @@ require_once __DIR__ . '/../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../src/Chat/OpenRouterClient.php';
 require_once __DIR__ . '/../../../src/Repos/UsageLogRepo.php';
 
-use App\Env;
 use App\Session;
 use App\Response;
 use Chat\OpenRouterClient;
@@ -64,133 +63,35 @@ if (!$gestureType || !$prompt) {
 $mode = $inputData['mode'] ?? 'generate';
 $sourceImage = $inputData['source_image'] ?? null; // Base64 de imagen fuente (para edición)
 $targetImage = $inputData['target_image'] ?? null; // Base64 de imagen objetivo (opcional, para edición)
-$selectedProvider = $inputData['provider'] ?? 'qwen'; // 'qwen', 'nanobanana' o 'flux'
+$model = 'google/gemini-3-pro-image-preview';
 
-// Seleccionar modelo según el proveedor y el modo
-if ($selectedProvider === 'qwen') {
-    $model = ($mode === 'edit') ? 'qwen-image-edit-plus-2025-12-15' : 'qwen-image-max';
-} elseif ($selectedProvider === 'flux') {
-    // FLUX - Modelo de alta calidad de Black Forest Labs
-    $model = 'black-forest-labs/flux.2-max';
-} else {
-    // Nanobanana (Gemini) - Nota: Gemini en OpenRouter soporta generación de imágenes vía modalities
-    $model = 'google/gemini-3-pro-image-preview';
+if ($mode === 'edit' && !$sourceImage) {
+    Response::error('missing_source_image', 'Se requiere una imagen fuente para el modo edición', 400);
 }
 
 // Generar/Editar imagen
 try {
-    if ($selectedProvider === 'qwen') {
-        $qwenApiKey = Env::get('QWEN_API_KEY');
-        if (!$qwenApiKey) {
-            Response::error('qwen_api_key_missing', 'Falta QWEN_API_KEY en .env', 500);
-        }
-        
-        // Endpoint Internacional para Qwen Image
-        $url = 'https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
-        
-        // Construir contenido del mensaje según el modo
-        $content = [];
-        
-        if ($mode === 'edit') {
-            if (!$sourceImage) {
-                Response::error('missing_source_image', 'Se requiere una imagen fuente para el modo edición', 400);
-            }
-            $content[] = ['image' => 'data:image/png;base64,' . $sourceImage];
-            if ($targetImage) {
-                $content[] = ['image' => 'data:image/png;base64,' . $targetImage];
-            }
-        }
-        
-        $content[] = ['text' => $prompt];
-        
-        $payload = [
-            'model' => $model,
-            'input' => [
-                'messages' => [
-                    [
-                        'role' => 'user',
-                        'content' => $content
-                    ]
-                ]
-            ],
-            'parameters' => [
-                'n' => 1,
-                'negative_prompt' => 'low quality, blurry, distorted, deformed',
-                'prompt_extend' => true,
-                'watermark' => false
-            ]
+    // Usar OpenRouter para Nanobanana (Gemini)
+    $client = new OpenRouterClient(null, $model, null, null, null);
+    
+    // Si hay imágenes (modo edición), las pasamos
+    $messages = [];
+    if ($mode === 'edit') {
+        $content = [
+            ['type' => 'text', 'text' => $prompt],
+            ['type' => 'image_url', 'image_url' => ['url' => 'data:image/png;base64,' . $sourceImage]]
         ];
-        
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $qwenApiKey,
-                'Content-Type: application/json',
-                'X-DashScope-Async: disable'
-            ],
-            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            CURLOPT_TIMEOUT => 300,
-            CURLOPT_CONNECTTIMEOUT => 30,
-        ]);
-        
-        $raw = curl_exec($ch);
-        $err = curl_error($ch);
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($raw === false || $err) {
-            Response::error('qwen_request_failed', 'Fallo al contactar con DashScope: ' . $err, 502);
+        if ($targetImage) {
+            $content[] = ['type' => 'image_url', 'image_url' => ['url' => 'data:image/png;base64,' . $targetImage]];
         }
-        
-        $data = json_decode($raw, true);
-        if ($status < 200 || $status >= 300) {
-            $msg = $data['error']['message'] ?? $data['message'] ?? ('HTTP '.$status);
-            Response::error('qwen_bad_response', 'Error de DashScope: ' . $msg, 502);
-        }
-        
-        $output = $data['output'] ?? [];
-        $results = $output['choices'][0]['message']['content'] ?? [];
-        $text = '';
-        $images = [];
-        $usedModel = $model;
-        
-        foreach ($results as $item) {
-            if (isset($item['text'])) {
-                $text = $item['text'];
-            }
-            if (isset($item['image'])) {
-                $imageUrl = $item['image'];
-                $imageData = @file_get_contents($imageUrl);
-                if ($imageData !== false) {
-                    $images[] = base64_encode($imageData);
-                }
-            }
-        }
+        $messages[] = ['role' => 'user', 'content' => $content];
     } else {
-        // Usar OpenRouter para Nanobanana (Gemini)
-        $client = new OpenRouterClient(null, $model, null, null, null);
-        
-        // Si hay imágenes (modo edición), las pasamos
-        $messages = [];
-        if ($mode === 'edit' && $sourceImage) {
-            $content = [
-                ['type' => 'text', 'text' => $prompt],
-                ['type' => 'image_url', 'image_url' => ['url' => 'data:image/png;base64,' . $sourceImage]]
-            ];
-            if ($targetImage) {
-                $content[] = ['type' => 'image_url', 'image_url' => ['url' => 'data:image/png;base64,' . $targetImage]];
-            }
-            $messages[] = ['role' => 'user', 'content' => $content];
-        } else {
-            $messages[] = ['role' => 'user', 'content' => $prompt];
-        }
-
-        $text = $client->generateWithMessages($messages, ['image', 'text']);
-        $images = $client->getLastImages();
-        $usedModel = $client->getModel();
+        $messages[] = ['role' => 'user', 'content' => $prompt];
     }
+
+    $text = $client->generateWithMessages($messages, ['image', 'text']);
+    $images = $client->getLastImages();
+    $usedModel = $client->getModel();
 } catch (\Exception $e) {
     Response::error('llm_error', 'Error al generar imagen: ' . $e->getMessage(), 500);
 }
