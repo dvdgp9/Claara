@@ -1241,6 +1241,22 @@ $headerShowLogo = true;
       return window.innerWidth < 768;
     }
     
+    // Flag para detectar si el usuario está activamente seleccionando (mouse presionado)
+    let isSelecting = false;
+    
+    // Detectar inicio de selección (mousedown en mensajes)
+    messagesEl.addEventListener('mousedown', () => {
+      isSelecting = true;
+    });
+    
+    // Detectar fin de selección (mouseup en cualquier lugar)
+    document.addEventListener('mouseup', () => {
+      // Pequeño delay para permitir que selectionchange se procese primero
+      setTimeout(() => {
+        isSelecting = false;
+      }, 100);
+    });
+    
     // Detectar selección de texto en mensajes del asistente
     document.addEventListener('selectionchange', () => {
       const selection = window.getSelection();
@@ -1391,10 +1407,10 @@ $headerShowLogo = true;
       }
     });
     
-    // Ocultar toolbar al hacer scroll
+    // Ocultar toolbar al hacer scroll (solo si no está seleccionando activamente)
     messagesContainer.addEventListener('scroll', () => {
-      if (!isMobile()) {
-        // Ocultar toolbar y limpiar selección en desktop
+      if (!isMobile() && !isSelecting) {
+        // Ocultar toolbar y limpiar selección en desktop (solo si no está arrastrando para seleccionar)
         clearSelection();
       }
     });

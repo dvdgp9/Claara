@@ -91,13 +91,33 @@
     const viewportHeight = window.innerHeight;
     const margin = 20;
 
-    // Posicionar a la derecha del panel principal
-    const left = panelRect.right + 4;
+    // El sidebar tiene 70px, el panel hover tiene 280-320px de ancho
+    // Calcular la posición correcta basándose en valores conocidos
+    // El panel está a left: 78px cuando está visible, con max-width: 320px
+    const sidebarWidth = 70;
+    const panelMaxWidth = 320;
+    const gap = 8;
+    
+    // Usar el valor calculado del panel si es válido, sino usar posición fija
+    let left;
+    if (panelRect.right > sidebarWidth + 100) {
+      // El panel está correctamente posicionado
+      left = panelRect.right + gap;
+    } else {
+      // Fallback: calcular basándose en posiciones conocidas
+      left = sidebarWidth + panelMaxWidth + gap;
+    }
+    
     let top = itemRect.top - 8;
 
     // Si se sale por abajo, ajustar
     if (top + submenuHeight > viewportHeight - margin) {
       top = Math.max(margin, viewportHeight - submenuHeight - margin);
+    }
+    
+    // Asegurar que top sea válido
+    if (top < margin || isNaN(top)) {
+      top = margin;
     }
 
     submenu.style.left = left + 'px';
