@@ -32,14 +32,30 @@
     });
 
     // Inicializar submenús de gestos (delegación de eventos)
-    document.addEventListener('mouseenter', (e) => {
+    // Usamos mouseover en lugar de mouseenter para capturar antes
+    document.addEventListener('mouseover', (e) => {
       if (!e.target || !e.target.closest) return;
       const item = e.target.closest('.hover-panel-item-expandable');
       if (item && item.dataset.gestureType) {
+        // Posicionar inmediatamente antes de que CSS lo haga visible
         positionSubmenu(item);
         loadGestureHistory(item, item.dataset.gestureType);
       }
     }, true);
+
+    // Pre-posicionar submenús cuando se abre el panel principal
+    containers.forEach(container => {
+      const tabType = container.dataset.tabType;
+      if (tabType === 'gestures') {
+        container.addEventListener('mouseenter', () => {
+          // Pre-posicionar todos los submenús del panel de gestos
+          requestAnimationFrame(() => {
+            const expandableItems = container.querySelectorAll('.hover-panel-item-expandable');
+            expandableItems.forEach(item => positionSubmenu(item));
+          });
+        });
+      }
+    });
   }
 
   function positionPanel(container) {
