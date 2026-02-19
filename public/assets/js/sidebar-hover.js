@@ -79,49 +79,10 @@
   }
 
   function positionSubmenu(item) {
-    const submenu = item.querySelector('.hover-submenu');
-    if (!submenu) return;
-
-    const panel = item.closest('.sidebar-hover-panel');
-    if (!panel) return;
-
-    const itemRect = item.getBoundingClientRect();
-    const panelRect = panel.getBoundingClientRect();
-    const submenuHeight = submenu.offsetHeight || 300;
-    const viewportHeight = window.innerHeight;
-    const margin = 20;
-
-    // El sidebar tiene 70px, el panel hover tiene 280-320px de ancho
-    // Calcular la posición correcta basándose en valores conocidos
-    // El panel está a left: 78px cuando está visible, con max-width: 320px
-    const sidebarWidth = 70;
-    const panelMaxWidth = 320;
-    const gap = 8;
-    
-    // Usar el valor calculado del panel si es válido, sino usar posición fija
-    let left;
-    if (panelRect.right > sidebarWidth + 100) {
-      // El panel está correctamente posicionado
-      left = panelRect.right + gap;
-    } else {
-      // Fallback: calcular basándose en posiciones conocidas
-      left = sidebarWidth + panelMaxWidth + gap;
-    }
-    
-    let top = itemRect.top - 8;
-
-    // Si se sale por abajo, ajustar
-    if (top + submenuHeight > viewportHeight - margin) {
-      top = Math.max(margin, viewportHeight - submenuHeight - margin);
-    }
-    
-    // Asegurar que top sea válido
-    if (top < margin || isNaN(top)) {
-      top = margin;
-    }
-
-    submenu.style.left = left + 'px';
-    submenu.style.top = top + 'px';
+    // Con position: absolute y left: 100%, el submenú ya se posiciona
+    // automáticamente pegado al wrapper padre. Solo necesitamos
+    // cargar el contenido del historial.
+    // La función se mantiene por compatibilidad con las llamadas existentes.
   }
 
   async function loadPanelContent(container, type) {

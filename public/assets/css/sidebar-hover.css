@@ -184,9 +184,10 @@
 
 /* Submenú de gestos (historial) */
 .hover-submenu {
-  position: fixed;
-  left: 358px; /* 70px sidebar + 280px panel + 8px gap - será ajustado por JS */
-  top: 100px; /* Valor inicial - será ajustado por JS */
+  position: absolute;
+  left: 100%; /* Pegado al borde derecho del wrapper padre */
+  top: -8px; /* Ligeramente arriba para alinear con el item */
+  margin-left: 4px; /* Pequeño gap */
   min-width: 260px;
   max-height: 320px;
   background: rgba(255, 255, 255, 0.98);
