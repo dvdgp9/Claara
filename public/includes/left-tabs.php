@@ -258,33 +258,15 @@ $appsList = [
           <?php elseif ($tabId === 'gestures'): ?>
             <?php foreach ($gesturesList as $gesture): ?>
               <?php if ($accessRepo->hasGestureAccess($userId, $gesture['type'])): ?>
-                <div class="hover-panel-item-wrapper hover-panel-item-expandable" data-gesture-type="<?php echo $gesture['type']; ?>">
-                  <a href="<?php echo $gesture['href']; ?>" class="hover-panel-item">
-                    <div class="hover-panel-item-icon">
-                      <i class="<?php echo $gesture['icon']; ?>"></i>
-                    </div>
-                    <div class="hover-panel-item-info">
-                      <div class="hover-panel-item-title"><?php echo htmlspecialchars($gesture['name']); ?></div>
-                      <div class="hover-panel-item-meta"><?php echo htmlspecialchars($gesture['description']); ?></div>
-                    </div>
-                  </a>
-                  
-                  <!-- Submenú con historial -->
-                  <div class="hover-submenu">
-                    <div class="hover-submenu-header">
-                      <span class="hover-submenu-title">Historial reciente</span>
-                      <a href="<?php echo $gesture['href']; ?>" class="hover-submenu-new">
-                        <i class="iconoir-plus"></i> Crear
-                      </a>
-                    </div>
-                    <div class="hover-submenu-content">
-                      <!-- Cargado dinámicamente via JS -->
-                      <div class="hover-panel-loading">
-                        <i class="iconoir-refresh"></i>
-                      </div>
-                    </div>
+                <a href="<?php echo $gesture['href']; ?>" class="hover-panel-item">
+                  <div class="hover-panel-item-icon">
+                    <i class="<?php echo $gesture['icon']; ?>"></i>
                   </div>
-                </div>
+                  <div class="hover-panel-item-info">
+                    <div class="hover-panel-item-title"><?php echo htmlspecialchars($gesture['name']); ?></div>
+                    <div class="hover-panel-item-meta"><?php echo htmlspecialchars($gesture['description']); ?></div>
+                  </div>
+                </a>
               <?php endif; ?>
             <?php endforeach; ?>
           <?php elseif ($tabId === 'apps'): ?>
