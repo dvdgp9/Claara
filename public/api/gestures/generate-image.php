@@ -63,7 +63,7 @@ if (!$gestureType || !$prompt) {
 $mode = $inputData['mode'] ?? 'generate';
 $sourceImage = $inputData['source_image'] ?? null; // Base64 de imagen fuente (para edición)
 $targetImage = $inputData['target_image'] ?? null; // Base64 de imagen objetivo (opcional, para edición)
-$model = 'google/gemini-3-pro-image-preview';
+$model = 'google/gemini-3.1-flash-image-preview';
 $systemInstruction = $mode === 'edit'
     ? "You are an expert image editor focused on instruction fidelity. Perform targeted, minimal, non-destructive edits. Keep all existing elements intact unless the user explicitly asks to modify them. If adding a logo to clothing that already has a logo, preserve the existing logo and place the new logo beside it, keeping realistic scale, perspective, fabric deformation, lighting, and readability."
     : "You are an expert image generator focused on photorealistic, high-quality outputs that strictly follow user instructions.";

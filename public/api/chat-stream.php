@@ -94,7 +94,7 @@ $modelName = isset($input['model']) && $input['model'] !== ''
     : 'google/gemini-3-flash-preview';
 
 if ($imageMode) {
-    $modelName = 'google/gemini-3-pro-image-preview';
+    $modelName = 'google/gemini-3.1-flash-image-preview';
 }
 
 // Validar input

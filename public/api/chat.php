@@ -57,7 +57,7 @@ $modelName = isset($input['model']) && $input['model'] !== ''
 
 // Si es modo imagen, forzar modelo de generación de imágenes
 if ($imageMode) {
-    $modelName = 'google/gemini-3-pro-image-preview';
+    $modelName = 'google/gemini-3.1-flash-image-preview';
 }
 
 // Validar que haya mensaje o archivo
