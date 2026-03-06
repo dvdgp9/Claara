@@ -121,6 +121,13 @@ $gesturesList = [
         'icon' => 'iconoir-graduation-cap',
         'href' => '/gestos/creador-cursos.php',
         'description' => 'Genera material formativo'
+    ],
+    [
+        'type' => 'project-admin',
+        'name' => 'Admin Proyectos',
+        'icon' => 'iconoir-folder-settings',
+        'href' => '/gestos/admin-proyectos.php',
+        'description' => 'Analiza pliegos de concursos'
     ]
 ];
 

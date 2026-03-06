@@ -389,6 +389,166 @@ CREATE TABLE context_documents (
 
 ---
 
+---
+
+## Feature: Gesto "Admin Proyectos" (Análisis de Pliegos)
+
+### Motivación
+Herramienta para el equipo de administración/licitaciones que analiza pliegos de concursos públicos. El gesto recibe documentos (PDFs de pliegos) y ofrece análisis automatizados para extraer información clave que ayude a decidir si presentarse a un concurso y preparar la oferta.
+
+### Funcionalidades principales
+
+**1. Extracción de gastos no personales**
+- Identifica TODOS los costes obligatorios que no sean personal (maquinaria, equipamiento, licencias, materiales, seguros, etc.)
+- Agrupa por categoría
+- Suma totales cuando corresponda
+- Presenta de forma clara y estructurada
+
+**2. Conteo de horas**
+- Localiza TODAS las horas de trabajo mencionadas en el pliego (dispersas en diferentes secciones)
+- Agrupa por tipo/categoría (técnico, administrativo, formación, etc.)
+- Suma totales por categoría y total general
+- Muestra ubicación/referencia en el documento
+
+### Input del gesto
+- **Documentos**: Uno o varios PDFs de pliegos (obligatorio)
+- **Texto adicional**: Instrucciones o contexto opcional del usuario
+- **Acción**: Selector de qué análisis realizar (gastos / horas / ambos)
+
+### Output esperado
+- Resultado estructurado en formato legible
+- Tablas con totales y subtotales
+- Posibilidad de copiar/exportar
+
+### Diseño UI
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ← Todos los gestos    Admin Proyectos              [Historial]│
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Sidebar (historial)  │  Área principal                        │
+│                       │                                         │
+│  [Análisis recientes] │  ┌─────────────────────────────────┐   │
+│                       │  │  📄 Arrastra pliegos aquí       │   │
+│  • Pliego 2024-001    │  │     o haz clic para subir       │   │
+│  • Pliego 2024-002    │  │     (PDF, máx 10MB)              │   │
+│                       │  └─────────────────────────────────┘   │
+│                       │                                         │
+│                       │  [Lista de archivos subidos]            │
+│                       │                                         │
+│                       │  ┌─────────────────────────────────┐   │
+│                       │  │ Instrucciones adicionales       │   │
+│                       │  │ (opcional)                       │   │
+│                       │  └─────────────────────────────────┘   │
+│                       │                                         │
+│                       │  ¿Qué quieres analizar?                 │
+│                       │  ┌─────────┐  ┌─────────┐              │
+│                       │  │💰 Gastos│  │⏱️ Horas │              │
+│                       │  │no person│  │ totales │              │
+│                       │  └─────────┘  └─────────┘              │
+│                       │                                         │
+│                       │  [Analizar pliego]                      │
+│                       │                                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Arquitectura técnica
+
+**Archivos a crear:**
+1. `/public/gestos/admin-proyectos.php` - Vista PHP del gesto
+2. `/public/assets/js/gesture-admin-proyectos.js` - Lógica JS
+3. `/public/api/gestures/admin-proyectos.php` - Endpoint API
+
+**Archivos a modificar:**
+1. `/public/includes/left-tabs.php` - Añadir al submenú de gestos
+2. (Opcional) `UserFeatureAccessRepo` - Control de acceso si es necesario
+
+### Prompts especializados
+
+**Para extracción de gastos:**
+```
+Analiza el siguiente pliego de licitación pública y extrae TODOS los gastos, 
+costes y requisitos económicos que NO sean de personal (salarios, cotizaciones).
+
+Busca específicamente:
+- Equipamiento y maquinaria obligatoria
+- Licencias y software requerido
+- Materiales y consumibles
+- Seguros y garantías
+- Certificaciones necesarias
+- Obras o adaptaciones de instalaciones
+- Cualquier otro coste directo o indirecto
+
+Presenta los resultados en formato estructurado:
+1. Agrupa por categoría
+2. Indica cantidad/unidades si se especifica
+3. Incluye estimación de coste si aparece
+4. Suma subtotales por categoría
+5. Calcula total general estimado
+
+Si algún coste no tiene valor específico, indícalo como "A determinar" pero inclúyelo.
+```
+
+**Para conteo de horas:**
+```
+Analiza el siguiente pliego de licitación pública y localiza TODAS las horas 
+de trabajo o dedicación mencionadas en cualquier parte del documento.
+
+Busca específicamente:
+- Horas de servicio directo
+- Horas de atención al público
+- Horas de formación requerida
+- Horas de reuniones/coordinación
+- Horas de guardia o disponibilidad
+- Cualquier otra referencia temporal
+
+Presenta los resultados:
+1. Agrupa por tipo/categoría de horas
+2. Indica período (semanal/mensual/anual)
+3. Normaliza a horas/año cuando sea posible
+4. Suma subtotales por categoría
+5. Calcula total general de horas
+
+Incluye la sección/página del documento donde se encuentra cada dato.
+```
+
+### Tareas de implementación
+
+#### Fase 1: Estructura base
+1. [x] Crear `/public/gestos/admin-proyectos.php` con layout base (sidebar + main)
+2. [x] Crear `/public/assets/js/gesture-admin-proyectos.js` con lógica básica
+3. [x] Añadir gesto a `left-tabs.php` e `index.php`
+
+#### Fase 2: Upload de documentos
+4. [x] Implementar zona de drag & drop para PDFs
+5. [x] Mostrar lista de archivos subidos con opción de eliminar
+6. [x] Enviar PDFs como base64 al backend (procesados por Gemini)
+
+#### Fase 3: Análisis
+7. [x] Crear endpoint `/api/gestures/admin-proyectos.php`
+8. [x] Implementar prompt de extracción de gastos
+9. [x] Implementar prompt de conteo de horas
+10. [x] Parsear y formatear resultados
+
+#### Fase 4: Resultados y UX
+11. [x] Renderizar resultados con markdown
+12. [x] Añadir botones copiar/exportar
+13. [x] Implementar historial de análisis
+
+#### Fase 5: Testing
+14. [ ] Probar con pliegos reales
+15. [ ] Ajustar prompts según resultados
+
+### Success Criteria
+- El gesto puede recibir uno o varios PDFs de pliegos
+- Extrae correctamente los gastos no personales agrupados
+- Extrae correctamente las horas totales agrupadas
+- Los resultados son claros y exportables
+- El historial permite recuperar análisis anteriores
+
+---
+
 # Current Status / Progress Tracking
 
 - 2025-11-03: `index.php` creado. Repo inicializado en `main` y push a remoto realizado.
