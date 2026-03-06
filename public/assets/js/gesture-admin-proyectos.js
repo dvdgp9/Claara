@@ -313,29 +313,131 @@
     if (!text) return '';
     if (typeof text !== 'string') text = JSON.stringify(text, null, 2);
     
-    return text
-      // Tables
-      .replace(/^\|(.+)\|$/gm, (match) => {
-        const cells = match.split('|').filter(c => c.trim());
-        const isHeader = cells.some(c => /^[-:]+$/.test(c.trim()));
-        if (isHeader) return '';
-        return `<tr>${cells.map(c => `<td class="px-3 py-2 border-b border-slate-200">${c.trim()}</td>`).join('')}</tr>`;
-      })
-      // Headers
-      .replace(/^#### (.*$)/gm, '<h4 class="text-base font-semibold text-slate-800 mt-4 mb-2">$1</h4>')
-      .replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold text-slate-800 mt-4 mb-2">$1</h3>')
-      .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-slate-800 mt-6 mb-3">$1</h2>')
-      .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold text-slate-800 mt-6 mb-3">$1</h1>')
+    // Procesar tablas primero (antes de otros reemplazos)
+    text = processMarkdownTables(text);
+    
+    // Procesar el resto del markdown
+    let html = text
+      // Horizontal rules
+      .replace(/^---$/gm, '<hr class="my-6 border-slate-200">')
+      // Headers con emojis (mantener emojis)
+      .replace(/^#### (.*$)/gm, '<h4 class="text-base font-semibold text-slate-700 mt-5 mb-2 flex items-center gap-2">$1</h4>')
+      .replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold text-slate-800 mt-5 mb-3 flex items-center gap-2">$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-slate-800 mt-6 mb-3 pb-2 border-b border-slate-200 flex items-center gap-2">$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold text-slate-900 mt-6 mb-4">$1</h1>')
       // Bold and italic
-      .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-800">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      // Lists
-      .replace(/^- (.*$)/gm, '<li class="ml-4 text-slate-700">$1</li>')
+      .replace(/\*\*\*(.*?)\*\*\*/g, '<strong class="text-slate-900"><em>$1</em></strong>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900">$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em class="text-slate-600">$1</em>')
+      // Inline code
+      .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-sm font-mono">$1</code>')
+      // Lists con indentación
+      .replace(/^  - (.*$)/gm, '<li class="ml-8 text-slate-600 text-sm list-disc">$1</li>')
+      .replace(/^- (.*$)/gm, '<li class="ml-4 text-slate-700 list-disc">$1</li>')
       .replace(/^\d+\. (.*$)/gm, '<li class="ml-4 text-slate-700 list-decimal">$1</li>')
-      // Line breaks
-      .replace(/\n\n/g, '</p><p class="text-slate-700 mb-3">')
+      // Párrafos
+      .replace(/\n\n/g, '</p><p class="text-slate-700 mb-3 leading-relaxed">')
       .replace(/\n/g, '<br>');
+    
+    // Envolver en párrafo si no empieza con elemento de bloque
+    if (!html.match(/^<(h[1-6]|ul|ol|table|div|hr)/)) {
+      html = '<p class="text-slate-700 mb-3 leading-relaxed">' + html + '</p>';
+    }
+    
+    // Agrupar <li> consecutivos en <ul>
+    html = html.replace(/(<li class="ml-4[^"]*list-disc">[^<]*<\/li>(\s*<br>)?)+/g, (match) => {
+      const items = match.replace(/<br>/g, '');
+      return `<ul class="my-3 space-y-1">${items}</ul>`;
+    });
+    
+    html = html.replace(/(<li class="ml-8[^"]*">[^<]*<\/li>(\s*<br>)?)+/g, (match) => {
+      const items = match.replace(/<br>/g, '');
+      return `<ul class="my-2 space-y-0.5">${items}</ul>`;
+    });
+    
+    // Limpiar <br> innecesarios después de elementos de bloque
+    html = html.replace(/<\/(h[1-6]|table|ul|ol|hr)><br>/g, '</$1>');
+    html = html.replace(/<br><(h[1-6]|table|ul|ol|hr)/g, '<$1');
+    
+    return html;
+  }
+
+  function processMarkdownTables(text) {
+    const lines = text.split('\n');
+    let result = [];
+    let inTable = false;
+    let tableLines = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Detectar inicio de tabla
+      if (line.startsWith('|') && line.endsWith('|')) {
+        if (!inTable) {
+          inTable = true;
+          tableLines = [];
+        }
+        tableLines.push(line);
+      } else {
+        // Si estábamos en tabla, renderizarla
+        if (inTable && tableLines.length > 0) {
+          result.push(renderTable(tableLines));
+          inTable = false;
+          tableLines = [];
+        }
+        result.push(lines[i]);
+      }
+    }
+    
+    // Cerrar tabla si quedó abierta
+    if (inTable && tableLines.length > 0) {
+      result.push(renderTable(tableLines));
+    }
+    
+    return result.join('\n');
+  }
+
+  function renderTable(lines) {
+    if (lines.length < 2) return lines.join('\n');
+    
+    let html = '<div class="overflow-x-auto my-4"><table class="w-full text-sm border-collapse bg-white rounded-lg overflow-hidden shadow-sm border border-slate-200">';
+    
+    // Primera fila = header
+    const headerCells = lines[0].split('|').filter(c => c.trim());
+    html += '<thead class="bg-gradient-to-r from-slate-50 to-slate-100"><tr>';
+    headerCells.forEach(cell => {
+      html += `<th class="px-4 py-3 text-left font-semibold text-slate-700 border-b border-slate-200">${cell.trim()}</th>`;
+    });
+    html += '</tr></thead>';
+    
+    // Resto = body (saltar línea de separación ---)
+    html += '<tbody>';
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      // Saltar línea separadora
+      if (line.match(/^\|[\s\-:]+\|$/)) continue;
+      
+      const cells = line.split('|').filter(c => c.trim());
+      const isLastRow = i === lines.length - 1;
+      const hasTotal = cells.some(c => c.toLowerCase().includes('total'));
+      
+      const rowClass = hasTotal 
+        ? 'bg-gradient-to-r from-emerald-50 to-teal-50 font-semibold' 
+        : (i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50');
+      
+      html += `<tr class="${rowClass} hover:bg-slate-100/50 transition-colors">`;
+      cells.forEach((cell, idx) => {
+        const cellContent = cell.trim();
+        const isNumeric = /^[\d.,€%\s]+$/.test(cellContent) || cellContent.includes('€');
+        const alignment = isNumeric && idx > 0 ? 'text-right' : 'text-left';
+        const borderClass = isLastRow ? '' : 'border-b border-slate-100';
+        html += `<td class="px-4 py-3 ${alignment} ${borderClass} text-slate-700">${cellContent}</td>`;
+      });
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+    
+    return html;
   }
 
   // === Copy Results ===

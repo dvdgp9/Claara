@@ -196,63 +196,82 @@ Response::json([
 function buildExpensesPrompt(string $additionalInstructions = ''): string
 {
     $prompt = <<<PROMPT
-Analiza el siguiente pliego de licitación pública y extrae TODOS los gastos, costes y requisitos económicos que NO sean de personal (salarios, cotizaciones, seguridad social).
+Eres un experto en análisis de pliegos de licitaciones públicas españolas. Analiza el documento y extrae información sobre gastos NO PERSONALES de forma INTELIGENTE y PRÁCTICA.
 
-## Qué buscar específicamente:
+## REGLAS CRÍTICAS:
 
-1. **Equipamiento y maquinaria obligatoria**
-   - Equipos informáticos, software, licencias
-   - Maquinaria específica del servicio
-   - Vehículos o medios de transporte
+1. **NO listes elementos genéricos** como "equipos y medios técnicos" sin especificar qué son exactamente.
+2. **SOLO incluye gastos CONCRETOS** que aparezcan en el pliego con suficiente detalle.
+3. **AGRUPA conceptos similares** en lugar de listar cada mención por separado.
+4. **CALCULA cuando sea posible**: si dice "500 camisetas por municipio" y hay 15 municipios, calcula 7.500 camisetas.
+5. **ESTIMA costes de mercado** cuando el pliego no los especifique pero el concepto sea concreto (ej: "camisetas serigrafiadas" → estima 5-8€/ud).
+6. **IGNORA las penalidades** - no son gastos, son riesgos.
+7. **DIFERENCIA claramente** entre gastos OBLIGATORIOS y gastos OPCIONALES/propuestos.
 
-2. **Materiales y consumibles**
-   - Material de oficina
-   - Uniformes y EPIs
-   - Productos de limpieza, mantenimiento, etc.
+## FORMATO DE RESPUESTA:
 
-3. **Seguros y garantías**
-   - Seguros de responsabilidad civil
-   - Garantías de ejecución
-   - Avales bancarios
-
-4. **Certificaciones y formación**
-   - Certificaciones obligatorias
-   - Cursos de formación requeridos
-   - Homologaciones
-
-5. **Infraestructura**
-   - Obras o adaptaciones de instalaciones
-   - Alquileres de locales
-   - Suministros (agua, luz, teléfono)
-
-6. **Otros costes**
-   - Tasas y tributos
-   - Gastos de desplazamiento
-   - Cualquier otro coste directo o indirecto
-
-## Formato de respuesta:
-
-Presenta los resultados en formato estructurado:
-
-### [Categoría]
-| Concepto | Cantidad/Unidades | Coste estimado | Observaciones |
-|----------|-------------------|----------------|---------------|
-| ... | ... | ... | ... |
-
-**Subtotal categoría: X€**
+Responde en formato estructurado usando SOLO estas secciones:
 
 ---
 
-Al final, incluye:
-- **TOTAL ESTIMADO DE GASTOS NO PERSONALES: X€**
-- Lista de gastos sin cuantificar que necesitan valoración
+## 📋 RESUMEN EJECUTIVO
 
-Si algún coste no tiene valor específico en el pliego, indícalo como "A determinar" pero inclúyelo igualmente.
+Breve párrafo (2-3 líneas) indicando el tipo de contrato, presupuesto base y principales partidas de gasto detectadas.
+
+---
+
+## 💰 GASTOS CUANTIFICADOS
+
+Lista SOLO los gastos donde puedas dar una cifra concreta o estimación razonable:
+
+- **[Concepto]**: [Cantidad] × [Precio unitario estimado] = **[Total]€**
+  - Fuente: [Dónde aparece en el pliego]
+
+---
+
+## 📦 GASTOS OBLIGATORIOS SIN CUANTIFICAR
+
+Lista los gastos que el contratista DEBE asumir pero que requieren valoración:
+
+- **[Concepto]**: [Descripción breve de qué incluye]
+  - Cómo valorar: [Sugerencia práctica para estimar]
+
+---
+
+## 🔒 GARANTÍAS Y AVALES
+
+- **Garantía definitiva**: [Porcentaje]% = [Importe]€
+- **Otros avales requeridos**: [Si aplica]
+
+---
+
+## ⚠️ RIESGOS ECONÓMICOS A CONSIDERAR
+
+Menciona brevemente (sin detallar cada penalidad):
+- Principales incumplimientos penalizados
+- Rango de penalidades (mín-máx)
+
+---
+
+## 📊 ESTIMACIÓN TOTAL
+
+| Categoría | Estimación |
+|-----------|------------|
+| Gastos cuantificados | X€ |
+| Garantías | X€ |
+| **Gastos a valorar** | Pendiente |
+| **TOTAL MÍNIMO ESTIMADO** | **X€** |
+
+---
+
+## 💡 RECOMENDACIONES
+
+Lista 2-3 puntos clave que el licitador debería investigar o valorar con más detalle.
 
 PROMPT;
 
     if ($additionalInstructions) {
-        $prompt .= "\n\n## Instrucciones adicionales del usuario:\n" . $additionalInstructions;
+        $prompt .= "\n\n## INSTRUCCIONES ADICIONALES DEL USUARIO:\n" . $additionalInstructions . "\n\nTen muy en cuenta estas instrucciones en tu análisis.";
     }
 
     return $prompt;
@@ -264,52 +283,87 @@ PROMPT;
 function buildHoursPrompt(string $additionalInstructions = ''): string
 {
     $prompt = <<<PROMPT
-Analiza el siguiente pliego de licitación pública y localiza TODAS las horas de trabajo o dedicación mencionadas en cualquier parte del documento.
+Eres un experto en análisis de pliegos de licitaciones públicas españolas. Analiza el documento y extrae información sobre HORAS DE TRABAJO de forma INTELIGENTE y PRÁCTICA.
 
-## Qué buscar específicamente:
+## REGLAS CRÍTICAS:
 
-1. **Horas de servicio directo**
-   - Atención al público
-   - Prestación del servicio principal
-   - Horarios de apertura/cierre
+1. **BUSCA datos concretos**: horarios, jornadas, dedicaciones específicas.
+2. **CALCULA siempre que puedas**: si dice "8h/día × 5 días × 52 semanas", haz el cálculo.
+3. **NORMALIZA todo a horas/año** para facilitar comparaciones.
+4. **AGRUPA por tipo de servicio o perfil profesional** si el pliego los distingue.
+5. **INDICA la ubicación** en el documento donde encontraste cada dato.
+6. **DISTINGUE** entre horas de servicio directo y horas de coordinación/gestión.
 
-2. **Horas de personal de apoyo**
-   - Coordinación y supervisión
-   - Administración
-   - Mantenimiento
-
-3. **Horas de formación**
-   - Formación inicial obligatoria
-   - Formación continua
-   - Reciclajes
-
-4. **Horas especiales**
-   - Guardias o disponibilidad
-   - Turnos nocturnos o festivos
-   - Horas extras previstas
-
-5. **Reuniones y coordinación**
-   - Reuniones de seguimiento
-   - Coordinación con la administración
-   - Comités técnicos
-
-## Formato de respuesta:
-
-### [Tipo de horas]
-| Descripción | Horas/período | Período | Horas/año | Ubicación en documento |
-|-------------|---------------|---------|-----------|------------------------|
-| ... | ... | ... | ... | Cláusula X, página Y |
-
-**Subtotal: X horas/año**
+## FORMATO DE RESPUESTA:
 
 ---
 
-Al final, incluye:
-- **TOTAL HORAS/AÑO: X**
-- Desglose por tipo de personal si aplica
-- Notas sobre cálculos o estimaciones realizadas
+## 📋 RESUMEN EJECUTIVO
 
-Si encuentras referencias ambiguas o rangos, indica el mínimo y máximo.
+Breve párrafo indicando el tipo de servicio, duración del contrato y volumen aproximado de horas detectado.
+
+---
+
+## ⏱️ HORAS DE SERVICIO DIRECTO
+
+Horas donde el personal está prestando el servicio principal:
+
+### [Nombre del servicio/actividad]
+- **Horario**: [Ej: L-V de 9:00 a 14:00]
+- **Días/semana**: [X días]
+- **Semanas/año**: [X semanas]
+- **Cálculo**: [Detalle del cálculo]
+- **Total**: **[X] horas/año**
+- 📍 Fuente: [Cláusula/página]
+
+---
+
+## 👥 HORAS DE COORDINACIÓN Y GESTIÓN
+
+Reuniones, supervisión, tareas administrativas:
+
+- **[Tipo de reunión/tarea]**: [Frecuencia] × [Duración] = **[X] horas/año**
+  - 📍 Fuente: [Cláusula/página]
+
+---
+
+## 📚 HORAS DE FORMACIÓN
+
+Formación inicial y continua requerida:
+
+- **[Tipo de formación]**: [Horas totales]
+  - 📍 Fuente: [Cláusula/página]
+
+---
+
+## 📊 RESUMEN DE HORAS
+
+| Categoría | Horas/año |
+|-----------|----------:|
+| Servicio directo | X |
+| Coordinación/gestión | X |
+| Formación | X |
+| **TOTAL** | **X** |
+
+---
+
+## 👷 EQUIVALENCIA EN PERSONAL
+
+Si es posible calcular:
+- **Jornada completa** (1.720 h/año): [X] personas
+- **Media jornada** (860 h/año): [X] personas
+
+---
+
+## ⚠️ DATOS AMBIGUOS O INCOMPLETOS
+
+Menciona cualquier referencia a horas que no hayas podido cuantificar y por qué.
+
+---
+
+## 💡 NOTAS DEL ANÁLISIS
+
+Cualquier consideración importante sobre los cálculos realizados o supuestos asumidos.
 
 PROMPT;
 
