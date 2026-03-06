@@ -50,7 +50,7 @@ if (empty($files)) {
 }
 
 // Modelo para análisis de documentos largos
-$model = 'google/gemini-2.5-flash';
+$model = 'google/gemini-3-flash-preview';
 
 // Procesar cada archivo y concatenar contenido
 $documentsContent = [];
