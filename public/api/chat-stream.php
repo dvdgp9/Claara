@@ -293,12 +293,14 @@ if ($imageMode) {
         
         // Enviar respuesta completa
         sendEvent('chunk', ['content' => $response]);
-        sendEvent('meta', ['message_id' => $assistantMsgId, 'model' => $usedModel]);
         
+        // Incluir imágenes en el evento meta para que el frontend las reciba al finalizar
+        $metaData = ['message_id' => $assistantMsgId, 'model' => $usedModel];
         if ($imagesToSave) {
-            sendEvent('images', ['images' => $imagesToSave]);
+            $metaData['images'] = $imagesToSave;
             $usageLog->log((int)$user['id'], 'image', count($imagesToSave));
         }
+        sendEvent('meta', $metaData);
         
         echo "data: [DONE]\n\n";
         flush();
