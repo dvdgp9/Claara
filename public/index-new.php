@@ -1023,7 +1023,7 @@ $userName = htmlspecialchars($user['first_name'] ?? 'Usuario');
   fileInput?.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { alert('Máximo 10MB'); return; }
+    if (file.size > 30 * 1024 * 1024) { alert('Máximo 30MB'); return; }
     currentFile = file;
     document.getElementById('file-name').textContent = file.name;
     document.getElementById('file-size').textContent = formatFileSize(file.size);

@@ -480,8 +480,8 @@
       }
       
       // Validar tamaño
-      if (file.size > 10 * 1024 * 1024) {
-        alert(`La imagen ${file.name} es demasiado grande. Máximo 10MB por imagen.`);
+      if (file.size > 30 * 1024 * 1024) {
+        alert(`La imagen ${file.name} es demasiado grande. Máximo 30MB por imagen.`);
         continue;
       }
       

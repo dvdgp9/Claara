@@ -60,10 +60,10 @@ if (!ContextDocsRepo::isExtensionAllowed($target, $extension)) {
     Response::error('invalid_extension', "Extensión '{$extension}' no permitida para {$target}. Permitidas: {$allowed}", 400);
 }
 
-// Validar tamaño (máximo 10MB)
-$maxSize = 10 * 1024 * 1024;
+// Validar tamaño (máximo 30MB)
+$maxSize = 30 * 1024 * 1024;
 if ($fileSize > $maxSize) {
-    Response::error('file_too_large', 'El archivo excede el tamaño máximo de 10MB', 400);
+    Response::error('file_too_large', 'El archivo excede el tamaño máximo de 30MB', 400);
 }
 
 // Validar MIME type para mayor seguridad

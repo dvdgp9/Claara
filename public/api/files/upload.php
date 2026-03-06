@@ -89,11 +89,11 @@ if (!isset($allowedTypes[$mimeType])) {
     Response::error('validation_error', 'Tipo de archivo no soportado', 400);
 }
 
-// Validar tamaño (máx 10MB)
-$maxSize = 10 * 1024 * 1024;
+// Validar tamaño (máx 30MB)
+$maxSize = 30 * 1024 * 1024;
 $size = strlen($binaryData);
 if ($size > $maxSize) {
-    Response::error('validation_error', 'El archivo excede el límite de 10MB', 400);
+    Response::error('validation_error', 'El archivo excede el límite de 30MB', 400);
 }
 
 // Generar nombre único

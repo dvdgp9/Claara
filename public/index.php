@@ -2318,12 +2318,12 @@ $headerShowLogo = true;
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
 
-      const maxSize = 10 * 1024 * 1024;
+      const maxSize = 30 * 1024 * 1024;
       const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
       
       for (const file of files) {
         if (file.size > maxSize) {
-          alert(`El archivo "${file.name}" es demasiado grande. Máximo 10MB.`);
+          alert(`El archivo "${file.name}" es demasiado grande. Máximo 30MB.`);
           continue;
         }
         if (!validTypes.includes(file.type)) {
@@ -2460,12 +2460,12 @@ $headerShowLogo = true;
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
 
-      const maxSize = 10 * 1024 * 1024;
+      const maxSize = 30 * 1024 * 1024;
       const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
       
       for (const file of files) {
         if (file.size > maxSize) {
-          alert(`El archivo "${file.name}" es demasiado grande. Máximo 10MB.`);
+          alert(`El archivo "${file.name}" es demasiado grande. Máximo 30MB.`);
           continue;
         }
         if (!validTypes.includes(file.type)) {
