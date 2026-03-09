@@ -168,6 +168,7 @@ $headerShowLogo = true;
                       <?php if ($user['is_superadmin']): ?>
                       <select id="model-select-empty" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Seleccionar modelo (Solo Superadmin)">
                         <option value="google/gemini-3-flash-preview">Gemini 3 Flash</option>
+                        <option value="anthropic/claude-sonnet-4.6">Claude Sonnet 4.6</option>
                         <option value="deepseek/deepseek-v3.2">Deepseek v3.2</option>
                         <option value="z-ai/glm-4.7">GLM 4.7</option>
                         <option value="xiaomi/mimo-v2-flash:free">Xiaomi Mimo v2</option>
@@ -373,6 +374,7 @@ $headerShowLogo = true;
                 <?php if ($user['is_superadmin']): ?>
                 <select id="model-select-chat" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Seleccionar modelo (Solo Superadmin)">
                   <option value="google/gemini-3-flash-preview">Gemini 3 Flash</option>
+                  <option value="anthropic/claude-sonnet-4.6">Claude Sonnet 4.6</option>
                   <option value="deepseek/deepseek-v3.2">Deepseek v3.2</option>
                   <option value="z-ai/glm-4.7">GLM 4.7</option>
                   <option value="xiaomi/mimo-v2-flash:free">Xiaomi Mimo v2</option>
