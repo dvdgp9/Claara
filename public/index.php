@@ -2096,7 +2096,6 @@ $headerShowLogo = true;
       const { bubble: assistantBubble } = append('assistant', '', null, [], null, { isStreaming: true });
       
       isGenerating = true;
-      typingIndicator.classList.remove('hidden');
       
       let uploadedFileId = null;
 
@@ -2180,7 +2179,6 @@ $headerShowLogo = true;
         assistantBubble.innerHTML = `<span class="text-red-500">Error: ${escapeHtml(e.message)}</span>`;
       } finally {
         isGenerating = false;
-        typingIndicator.classList.add('hidden');
         
         // Limpiar archivos después de enviar (unificado)
         currentFiles = [];
