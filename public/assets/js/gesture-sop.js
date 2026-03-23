@@ -84,6 +84,7 @@
     mermaidContainer: document.getElementById('mermaid-container'),
     copyMarkdownBtn: document.getElementById('copy-markdown-btn'),
     copyMermaidBtn: document.getElementById('copy-mermaid-btn'),
+    downloadDiagramPng: document.getElementById('download-diagram-png'),
     downloadPdf: document.getElementById('download-pdf'),
     downloadDocx: document.getElementById('download-docx'),
     
@@ -786,6 +787,85 @@
         showCopyFeedback(elements.copyMermaidBtn);
       }
     });
+    
+    elements.downloadDiagramPng.addEventListener('click', () => {
+      downloadMermaidAsPng();
+    });
+  }
+
+  async function downloadMermaidAsPng() {
+    const svgElement = elements.mermaidContainer.querySelector('svg');
+    if (!svgElement) {
+      console.error('No hay diagrama SVG para descargar');
+      return;
+    }
+    
+    try {
+      // Clonar el SVG para manipularlo
+      const svgClone = svgElement.cloneNode(true);
+      
+      // Obtener dimensiones
+      const bbox = svgElement.getBBox();
+      const width = Math.ceil(bbox.width + 40);
+      const height = Math.ceil(bbox.height + 40);
+      
+      // Configurar viewBox y dimensiones
+      svgClone.setAttribute('width', width);
+      svgClone.setAttribute('height', height);
+      svgClone.setAttribute('viewBox', `${bbox.x - 20} ${bbox.y - 20} ${width} ${height}`);
+      
+      // Añadir fondo blanco
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', bbox.x - 20);
+      rect.setAttribute('y', bbox.y - 20);
+      rect.setAttribute('width', width);
+      rect.setAttribute('height', height);
+      rect.setAttribute('fill', 'white');
+      svgClone.insertBefore(rect, svgClone.firstChild);
+      
+      // Serializar SVG
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svgClone);
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      
+      // Crear imagen y canvas
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = 2; // Escala para mejor calidad
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Descargar
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `diagrama-${state.currentResult?.title || 'proceso'}.png`.replace(/[^a-zA-Z0-9\-_.]/g, '_');
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          URL.revokeObjectURL(svgUrl);
+        }, 'image/png');
+      };
+      
+      img.onerror = () => {
+        console.error('Error cargando SVG para conversión');
+        URL.revokeObjectURL(svgUrl);
+      };
+      
+      img.src = svgUrl;
+    } catch (error) {
+      console.error('Error descargando diagrama:', error);
+    }
   }
 
   function copyToClipboard(text) {

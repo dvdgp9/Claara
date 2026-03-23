@@ -560,10 +560,16 @@ $headerDrawerId = 'sop-history-drawer';
                   <i class="iconoir-git-fork text-emerald-500 mr-1"></i>
                   Diagrama de flujo
                 </h3>
-                <button id="copy-mermaid-btn" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
-                  <i class="iconoir-copy"></i>
-                  Copiar código
-                </button>
+                <div class="flex items-center gap-3">
+                  <button id="download-diagram-png" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                    <i class="iconoir-download"></i>
+                    Descargar PNG
+                  </button>
+                  <button id="copy-mermaid-btn" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                    <i class="iconoir-copy"></i>
+                    Copiar código
+                  </button>
+                </div>
               </div>
               <div id="mermaid-container" class="mermaid-container">
                 <!-- Diagrama renderizado aquí -->
