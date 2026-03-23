@@ -794,71 +794,100 @@
   }
 
   async function downloadMermaidAsPng() {
-    const svgElement = elements.mermaidContainer.querySelector('svg');
-    if (!svgElement) {
-      console.error('No hay diagrama SVG para descargar');
+    const mermaidCode = state.currentResult?.formats?.mermaid;
+    if (!mermaidCode) {
+      console.error('No hay código Mermaid para exportar');
       return;
     }
     
     try {
-      // Clonar el SVG para manipularlo
-      const svgClone = svgElement.cloneNode(true);
+      // Re-renderizar con htmlLabels:false para obtener SVG puro (sin foreignObject)
+      // Esto evita el error "tainted canvas" al exportar
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      document.body.appendChild(tempDiv);
       
-      // Obtener dimensiones
+      const id = 'mermaid-export-' + Date.now();
+      
+      // Guardar config original y usar config sin htmlLabels
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'neutral',
+        flowchart: {
+          htmlLabels: false,
+          curve: 'basis',
+          rankSpacing: 50,
+          nodeSpacing: 30,
+          padding: 15,
+          useMaxWidth: false
+        },
+        themeVariables: {
+          primaryColor: '#e0f2f1',
+          primaryBorderColor: '#26a69a',
+          primaryTextColor: '#37474f',
+          lineColor: '#78909c',
+          secondaryColor: '#fff8e1',
+          tertiaryColor: '#f3e5f5'
+        }
+      });
+      
+      const { svg } = await mermaid.render(id, mermaidCode);
+      tempDiv.innerHTML = svg;
+      const svgElement = tempDiv.querySelector('svg');
+      
+      // Restaurar config original con htmlLabels para la vista
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'neutral',
+        flowchart: {
+          htmlLabels: true,
+          curve: 'basis',
+          rankSpacing: 50,
+          nodeSpacing: 30,
+          padding: 15,
+          useMaxWidth: true,
+          defaultRenderer: 'dagre-wrapper'
+        },
+        themeVariables: {
+          primaryColor: '#e0f2f1',
+          primaryBorderColor: '#26a69a',
+          primaryTextColor: '#37474f',
+          lineColor: '#78909c',
+          secondaryColor: '#fff8e1',
+          tertiaryColor: '#f3e5f5'
+        }
+      });
+      
+      // Obtener dimensiones del SVG renderizado
       const bbox = svgElement.getBBox();
-      const width = Math.ceil(bbox.width + 40);
-      const height = Math.ceil(bbox.height + 40);
+      const width = Math.ceil(bbox.width + 60);
+      const height = Math.ceil(bbox.height + 60);
       
-      // Configurar viewBox y dimensiones
-      svgClone.setAttribute('width', width);
-      svgClone.setAttribute('height', height);
-      svgClone.setAttribute('viewBox', `${bbox.x - 20} ${bbox.y - 20} ${width} ${height}`);
-      svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      svgElement.setAttribute('width', width);
+      svgElement.setAttribute('height', height);
+      svgElement.setAttribute('viewBox', `${bbox.x - 30} ${bbox.y - 30} ${width} ${height}`);
       
       // Añadir fondo blanco
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      rect.setAttribute('x', bbox.x - 20);
-      rect.setAttribute('y', bbox.y - 20);
+      rect.setAttribute('x', bbox.x - 30);
+      rect.setAttribute('y', bbox.y - 30);
       rect.setAttribute('width', width);
       rect.setAttribute('height', height);
       rect.setAttribute('fill', 'white');
-      svgClone.insertBefore(rect, svgClone.firstChild);
+      svgElement.insertBefore(rect, svgElement.firstChild);
       
-      // Embeber estilos computados en el SVG para evitar tainted canvas
-      const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-      styleElement.textContent = `
-        * { font-family: Arial, sans-serif; }
-        .node rect, .node circle, .node ellipse, .node polygon, .node path { fill: #f9f9f9; stroke: #333; stroke-width: 1px; }
-        .edgePath path { stroke: #333; stroke-width: 1.5px; fill: none; }
-        .edgeLabel { background-color: white; }
-        .label { font-size: 14px; }
-        .cluster rect { fill: #ffffde; stroke: #aaaa33; stroke-width: 1px; }
-      `;
-      svgClone.insertBefore(styleElement, svgClone.firstChild);
-      
-      // Eliminar referencias externas (foreignObject, use con href externo)
-      svgClone.querySelectorAll('foreignObject').forEach(fo => {
-        const text = fo.textContent;
-        const parent = fo.parentNode;
-        const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        textEl.textContent = text;
-        textEl.setAttribute('font-size', '14');
-        textEl.setAttribute('fill', '#333');
-        parent.replaceChild(textEl, fo);
-      });
-      
-      // Serializar SVG
+      // Serializar a base64 data URL
       const serializer = new XMLSerializer();
-      let svgString = serializer.serializeToString(svgClone);
-      
-      // Asegurar que el SVG es válido
-      svgString = '<?xml version="1.0" encoding="UTF-8"?>' + svgString;
-      
-      // Convertir a base64 data URL (evita problemas de CORS/tainted)
+      const svgString = serializer.serializeToString(svgElement);
       const base64 = btoa(unescape(encodeURIComponent(svgString)));
       const dataUrl = 'data:image/svg+xml;base64,' + base64;
       
-      // Crear imagen y canvas
+      // Limpiar
+      document.body.removeChild(tempDiv);
+      
+      // Canvas para convertir a PNG
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -872,7 +901,6 @@
         ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
         
-        // Descargar
         canvas.toBlob((blob) => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
