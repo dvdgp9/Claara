@@ -813,6 +813,7 @@
       svgClone.setAttribute('width', width);
       svgClone.setAttribute('height', height);
       svgClone.setAttribute('viewBox', `${bbox.x - 20} ${bbox.y - 20} ${width} ${height}`);
+      svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       
       // Añadir fondo blanco
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -823,17 +824,45 @@
       rect.setAttribute('fill', 'white');
       svgClone.insertBefore(rect, svgClone.firstChild);
       
+      // Embeber estilos computados en el SVG para evitar tainted canvas
+      const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      styleElement.textContent = `
+        * { font-family: Arial, sans-serif; }
+        .node rect, .node circle, .node ellipse, .node polygon, .node path { fill: #f9f9f9; stroke: #333; stroke-width: 1px; }
+        .edgePath path { stroke: #333; stroke-width: 1.5px; fill: none; }
+        .edgeLabel { background-color: white; }
+        .label { font-size: 14px; }
+        .cluster rect { fill: #ffffde; stroke: #aaaa33; stroke-width: 1px; }
+      `;
+      svgClone.insertBefore(styleElement, svgClone.firstChild);
+      
+      // Eliminar referencias externas (foreignObject, use con href externo)
+      svgClone.querySelectorAll('foreignObject').forEach(fo => {
+        const text = fo.textContent;
+        const parent = fo.parentNode;
+        const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textEl.textContent = text;
+        textEl.setAttribute('font-size', '14');
+        textEl.setAttribute('fill', '#333');
+        parent.replaceChild(textEl, fo);
+      });
+      
       // Serializar SVG
       const serializer = new XMLSerializer();
-      const svgString = serializer.serializeToString(svgClone);
-      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-      const svgUrl = URL.createObjectURL(svgBlob);
+      let svgString = serializer.serializeToString(svgClone);
+      
+      // Asegurar que el SVG es válido
+      svgString = '<?xml version="1.0" encoding="UTF-8"?>' + svgString;
+      
+      // Convertir a base64 data URL (evita problemas de CORS/tainted)
+      const base64 = btoa(unescape(encodeURIComponent(svgString)));
+      const dataUrl = 'data:image/svg+xml;base64,' + base64;
       
       // Crear imagen y canvas
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const scale = 2; // Escala para mejor calidad
+        const scale = 2;
         canvas.width = width * scale;
         canvas.height = height * scale;
         
@@ -853,16 +882,14 @@
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          URL.revokeObjectURL(svgUrl);
         }, 'image/png');
       };
       
-      img.onerror = () => {
-        console.error('Error cargando SVG para conversión');
-        URL.revokeObjectURL(svgUrl);
+      img.onerror = (e) => {
+        console.error('Error cargando SVG para conversión:', e);
       };
       
-      img.src = svgUrl;
+      img.src = dataUrl;
     } catch (error) {
       console.error('Error descargando diagrama:', error);
     }
