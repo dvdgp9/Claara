@@ -269,14 +269,14 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
             <?php endif; ?>
 
             <?php if ($accessRepo->hasGestureAccess($userId, 'project-admin')): ?>
-            <!-- Gesto: Admin Proyectos -->
+            <!-- Gesto: Análisis Eco Proy. -->
             <a href="/gestos/admin-proyectos.php" class="glass-strong rounded-3xl p-6 border border-slate-200/50 card-hover block">
               <div class="flex items-start gap-4 mb-4">
                 <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg">
                   <i class="iconoir-folder-settings text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Admin Proyectos</h3>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Análisis Eco Proy.</h3>
                   <p class="text-sm text-slate-500">Análisis de pliegos</p>
                 </div>
                 <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Nuevo</span>

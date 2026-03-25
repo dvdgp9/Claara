@@ -124,7 +124,7 @@ $gesturesList = [
     ],
     [
         'type' => 'project-admin',
-        'name' => 'Admin Proyectos',
+        'name' => 'Análisis Eco Proy.',
         'icon' => 'iconoir-folder-settings',
         'href' => '/gestos/admin-proyectos.php',
         'description' => 'Analiza pliegos de concursos'

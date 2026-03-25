@@ -33,7 +33,7 @@ $activeTab = 'gestures';
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
 $headerBackText = 'Todos los gestos';
-$headerTitle = 'Admin Proyectos';
+$headerTitle = 'Análisis Eco Proy.';
 $headerIcon = 'iconoir-folder-settings';
 $headerIconColor = 'from-emerald-500 to-teal-600';
 $headerDrawerId = 'project-admin-history-drawer';
@@ -165,7 +165,7 @@ $headerDrawerId = 'project-admin-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 mb-2">
-              Análisis de Pliegos
+              Análisis Eco Proy.
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
               Sube pliegos de concursos públicos y extrae automáticamente gastos no personales, horas de trabajo y otra información clave.
