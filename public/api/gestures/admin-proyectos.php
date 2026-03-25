@@ -44,6 +44,7 @@ $gestureType = $body['gesture_type'] ?? 'project-admin';
 $files = $body['files'] ?? [];
 $actions = $body['actions'] ?? ['expenses'];
 $instructions = trim($body['instructions'] ?? '');
+$maxFileSizeBytes = 40 * 1024 * 1024;
 
 if (empty($files)) {
     Response::error('missing_files', 'Se requiere al menos un documento', 400);
@@ -61,6 +62,15 @@ foreach ($files as $file) {
     
     if (empty($fileData)) {
         continue;
+    }
+
+    if ($mimeType !== 'application/pdf') {
+        Response::error('invalid_file_type', "El archivo {$fileName} no es PDF", 400);
+    }
+
+    $estimatedBytes = estimateBase64SizeBytes($fileData);
+    if ($estimatedBytes > $maxFileSizeBytes) {
+        Response::error('file_too_large', "El archivo {$fileName} supera el límite de 40MB", 400);
     }
     
     $documentsContent[] = [
@@ -275,6 +285,27 @@ PROMPT;
     }
 
     return $prompt;
+}
+
+/**
+ * Estima el tamaño original en bytes a partir de un string base64
+ */
+function estimateBase64SizeBytes(string $base64): int
+{
+    $sanitized = preg_replace('/\s+/', '', $base64);
+    $length = strlen($sanitized);
+    if ($length === 0) {
+        return 0;
+    }
+
+    $padding = 0;
+    if (str_ends_with($sanitized, '==')) {
+        $padding = 2;
+    } elseif (str_ends_with($sanitized, '=')) {
+        $padding = 1;
+    }
+
+    return (int)(($length * 3) / 4) - $padding;
 }
 
 /**

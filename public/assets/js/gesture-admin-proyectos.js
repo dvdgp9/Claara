@@ -7,6 +7,7 @@
 
   const GESTURE_TYPE = window.GESTURE_TYPE || 'project-admin';
   const CSRF_TOKEN = window.CSRF_TOKEN || '';
+  const MAX_FILE_SIZE_BYTES = 40 * 1024 * 1024;
 
   // === DOM References ===
   const form = document.getElementById('project-admin-form');
@@ -88,8 +89,8 @@
         continue;
       }
       
-      if (file.size > 20 * 1024 * 1024) {
-        showError(`${file.name} es demasiado grande (máximo 20MB)`);
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        showError(`${file.name} es demasiado grande (máximo 40MB)`);
         continue;
       }
       

@@ -186,7 +186,7 @@ $headerDrawerId = 'project-admin-history-drawer';
                 <div id="dropzone" class="dropzone flex flex-col items-center justify-center w-full h-32 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-all">
                   <i class="iconoir-upload text-2xl text-slate-400 mb-2"></i>
                   <span class="text-sm text-slate-500">Arrastra PDFs aquí o haz clic para seleccionar</span>
-                  <span class="text-xs text-slate-400 mt-1">Máximo 20MB por archivo</span>
+                  <span class="text-xs text-slate-400 mt-1">Máximo 40MB por archivo</span>
                   <input type="file" id="file-input" accept=".pdf" multiple class="hidden" />
                 </div>
                 
