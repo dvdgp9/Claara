@@ -178,6 +178,10 @@ $headerShowLogo = true;
                     </div>
                     <span id="shortcut-hint-empty" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter para enviar</span>
                   </div>
+                  <div id="image-mode-files-warning-empty" class="hidden mt-2 px-1 text-xs text-amber-600 flex items-center gap-1.5">
+                    <i class="iconoir-warning-triangle"></i>
+                    <span>En modo imagen no se pueden adjuntar, arrastrar ni pegar archivos.</span>
+                  </div>
                 </form>
               </div>
             </div>
@@ -337,6 +341,13 @@ $headerShowLogo = true;
             </div>
           </div>
         </div>
+        <div id="drop-overlay" class="hidden absolute inset-4 z-30 pointer-events-none">
+          <div class="w-full h-full rounded-2xl border-2 border-dashed border-[#23AAC5] bg-[#23AAC5]/10 flex items-center justify-center">
+            <div class="px-4 py-2 rounded-xl bg-white/80 backdrop-blur-sm text-sm font-medium text-[#115c6c] shadow-sm">
+              Suelta archivos aquí para adjuntarlos
+            </div>
+          </div>
+        </div>
       </section>
       <!-- Footer del chat: fijo en móvil sobre el bottom-nav -->
       <footer id="chat-footer" class="hidden fixed lg:relative bottom-16 lg:bottom-0 left-0 right-0 p-3 lg:p-4 bg-gradient-to-t from-white via-white to-white/80 z-40">
@@ -384,6 +395,10 @@ $headerShowLogo = true;
                 <?php endif; ?>
               </div>
               <span id="shortcut-hint-chat" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter para enviar</span>
+            </div>
+            <div id="image-mode-files-warning-chat" class="hidden mt-2 px-1 text-xs text-amber-600 flex items-center gap-1.5">
+              <i class="iconoir-warning-triangle"></i>
+              <span>En modo imagen no se pueden adjuntar, arrastrar ni pegar archivos.</span>
             </div>
           </div>
         </form>
@@ -601,6 +616,9 @@ $headerShowLogo = true;
     const filesPreviewEmpty = document.getElementById('files-preview-empty');
     const filesListEmpty = document.getElementById('files-list-empty');
     const clearAllFilesEmptyBtn = document.getElementById('clear-all-files-empty');
+    const dropOverlay = document.getElementById('drop-overlay');
+    const imageModeFilesWarningChat = document.getElementById('image-mode-files-warning-chat');
+    const imageModeFilesWarningEmpty = document.getElementById('image-mode-files-warning-empty');
 
     let csrf = null;
     let currentConversationId = null;
@@ -624,6 +642,123 @@ $headerShowLogo = true;
     // Estado de selección para regeneración parcial
     let selectedText = null;
     let selectedMessageId = null;
+    let dragCounter = 0;
+
+    const MAX_FILE_SIZE = 30 * 1024 * 1024;
+    const VALID_FILE_TYPES = [
+      'application/pdf',
+      'image/png',
+      'image/jpeg',
+      'image/gif',
+      'image/webp',
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+
+    function showImageModeAttachmentWarning() {
+      const warningId = 'image-mode-drop-paste-warning';
+      const existing = document.getElementById(warningId);
+      if (existing) {
+        existing.remove();
+      }
+
+      const warning = document.createElement('div');
+      warning.id = warningId;
+      warning.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-amber-500 text-white px-4 py-2 rounded-xl shadow-lg z-[70] text-sm flex items-center gap-2';
+      warning.innerHTML = '<i class="iconoir-warning-triangle"></i><span>Desactiva modo imagen para adjuntar archivos.</span>';
+      document.body.appendChild(warning);
+
+      setTimeout(() => {
+        warning.style.opacity = '0';
+        warning.style.transition = 'opacity 0.3s';
+        setTimeout(() => warning.remove(), 300);
+      }, 2200);
+    }
+
+    function isEmptyStateVisible() {
+      return !emptyState.classList.contains('hidden');
+    }
+
+    function validateAndAddFiles(files, targetArray, renderFn) {
+      let addedCount = 0;
+      for (const file of files) {
+        if (file.size > MAX_FILE_SIZE) {
+          alert(`El archivo "${file.name}" es demasiado grande. Máximo 30MB.`);
+          continue;
+        }
+        if (!VALID_FILE_TYPES.includes(file.type)) {
+          alert(`El archivo "${file.name}" no es un tipo soportado.`);
+          continue;
+        }
+        targetArray.push(file);
+        addedCount++;
+      }
+
+      if (addedCount > 0) {
+        renderFn();
+      }
+
+      return addedCount;
+    }
+
+    function addFilesToActiveComposer(files) {
+      if (imageMode) {
+        showImageModeAttachmentWarning();
+        return;
+      }
+
+      if (isEmptyStateVisible()) {
+        validateAndAddFiles(files, currentFilesEmpty, renderFilesPreviewEmpty);
+      } else {
+        validateAndAddFiles(files, currentFiles, renderFilesPreview);
+      }
+    }
+
+    function hasDataTransferFiles(event) {
+      const types = event.dataTransfer?.types;
+      if (!types) return false;
+      return Array.from(types).includes('Files');
+    }
+
+    function showDropOverlay() {
+      if (!dropOverlay) return;
+      dropOverlay.classList.remove('hidden');
+    }
+
+    function hideDropOverlay() {
+      if (!dropOverlay) return;
+      dropOverlay.classList.add('hidden');
+    }
+
+    function getClipboardFiles(event) {
+      const files = [];
+      const clipboard = event.clipboardData;
+      if (!clipboard) return files;
+
+      if (clipboard.files && clipboard.files.length > 0) {
+        files.push(...Array.from(clipboard.files));
+      }
+
+      if (clipboard.items && clipboard.items.length > 0) {
+        for (const item of clipboard.items) {
+          if (item.kind === 'file') {
+            const file = item.getAsFile();
+            if (file) files.push(file);
+          }
+        }
+      }
+
+      return files;
+    }
+
+    function handleComposerPaste(event) {
+      const files = getClipboardFiles(event);
+      if (files.length === 0) return;
+
+      event.preventDefault();
+      addFilesToActiveComposer(files);
+    }
 
     function showChatMode(){
       emptyState.classList.add('hidden');
@@ -2254,6 +2389,8 @@ $headerShowLogo = true;
         webSearchBtn.classList.add('opacity-50', 'cursor-not-allowed');
         webSearchBtnEmpty.disabled = true;
         webSearchBtnEmpty.classList.add('opacity-50', 'cursor-not-allowed');
+        imageModeFilesWarningChat?.classList.remove('hidden');
+        imageModeFilesWarningEmpty?.classList.remove('hidden');
       } else {
         // Chat normal
         imageModeBtn.className = btnInactive;
@@ -2274,6 +2411,8 @@ $headerShowLogo = true;
         webSearchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         webSearchBtnEmpty.disabled = false;
         webSearchBtnEmpty.classList.remove('opacity-50', 'cursor-not-allowed');
+        imageModeFilesWarningChat?.classList.add('hidden');
+        imageModeFilesWarningEmpty?.classList.add('hidden');
       }
     }
 
@@ -2319,24 +2458,9 @@ $headerShowLogo = true;
     fileInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
-
-      const maxSize = 30 * 1024 * 1024;
-      const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-      
-      for (const file of files) {
-        if (file.size > maxSize) {
-          alert(`El archivo "${file.name}" es demasiado grande. Máximo 30MB.`);
-          continue;
-        }
-        if (!validTypes.includes(file.type)) {
-          alert(`El archivo "${file.name}" no es un tipo soportado.`);
-          continue;
-        }
-        currentFiles.push(file);
-      }
+      validateAndAddFiles(files, currentFiles, renderFilesPreview);
       
       fileInput.value = '';
-      renderFilesPreview();
     });
 
     clearAllFilesBtn?.addEventListener('click', () => {
@@ -2461,25 +2585,52 @@ $headerShowLogo = true;
     fileInputEmpty.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
-
-      const maxSize = 30 * 1024 * 1024;
-      const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-      
-      for (const file of files) {
-        if (file.size > maxSize) {
-          alert(`El archivo "${file.name}" es demasiado grande. Máximo 30MB.`);
-          continue;
-        }
-        if (!validTypes.includes(file.type)) {
-          alert(`El archivo "${file.name}" no es un tipo soportado.`);
-          continue;
-        }
-        currentFilesEmpty.push(file);
-      }
+      validateAndAddFiles(files, currentFilesEmpty, renderFilesPreviewEmpty);
       
       fileInputEmpty.value = '';
-      renderFilesPreviewEmpty();
     });
+
+    messagesContainer.addEventListener('dragenter', (e) => {
+      if (!hasDataTransferFiles(e)) return;
+      e.preventDefault();
+      dragCounter++;
+      if (!imageMode) {
+        showDropOverlay();
+      }
+    });
+
+    messagesContainer.addEventListener('dragover', (e) => {
+      if (!hasDataTransferFiles(e)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = imageMode ? 'none' : 'copy';
+      if (!imageMode) {
+        showDropOverlay();
+      }
+    });
+
+    messagesContainer.addEventListener('dragleave', (e) => {
+      if (!hasDataTransferFiles(e)) return;
+      e.preventDefault();
+      dragCounter = Math.max(0, dragCounter - 1);
+      if (dragCounter === 0) {
+        hideDropOverlay();
+      }
+    });
+
+    messagesContainer.addEventListener('drop', (e) => {
+      if (!hasDataTransferFiles(e)) return;
+      e.preventDefault();
+      dragCounter = 0;
+      hideDropOverlay();
+
+      const droppedFiles = Array.from(e.dataTransfer?.files || []);
+      if (droppedFiles.length === 0) return;
+
+      addFilesToActiveComposer(droppedFiles);
+    });
+
+    inputEl.addEventListener('paste', handleComposerPaste);
+    inputEmptyEl.addEventListener('paste', handleComposerPaste);
 
     clearAllFilesEmptyBtn?.addEventListener('click', () => {
       currentFilesEmpty = [];

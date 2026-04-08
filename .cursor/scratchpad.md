@@ -566,6 +566,7 @@ Incluye la sección/página del documento donde se encuentra cada dato.
 - 2025-12-31: **MEJORAS UI ADMIN**: Añadido botón de mostrar/ocultar contraseña en la gestión de usuarios y detección de OS para atajos de teclado (CMD/Ctrl + Enter).
 - 2025-12-31: **SELECTOR DE MODELOS (SUPERADMIN)**: Implementado selector de modelos LLM al lado del botón de Nanobanana exclusivo para superadministradores. Incluye GLM 4.7, Gemini 3 Flash, Deepseek v3.2 y Xiaomi Mimo v2. Sincronización automática entre vistas y envío del modelo seleccionado al backend.
 - 2026-01-30: **SOP Generator**: Historial compacto con botones de eliminar y editar título; añadido endpoint para actualización de título y lógica JS de edición.
+- 2026-04-08: **CHAT UX ARCHIVOS**: Implementado drag & drop de archivos y pegado multimedia (clipboard) en `public/index.php` para ambos estados (vacío y chat activo). Refactorizada validación de archivos a función reutilizable (`validateAndAddFiles`). Añadido overlay visual de drop y mensajes de aviso cuando `imageMode` está activo (adjuntar/arrastrar/pegar bloqueado).
 
 ---
 
@@ -1652,6 +1653,15 @@ CREATE TABLE background_jobs (
 - **URGENTE - RBAC no funcional**: Las tablas `user_roles` y `role_permissions` están vacías. El sistema de permisos no funciona. Script de corrección creado en `docs/migrations/004_fix_rbac.sql`. Aplicar para activar el RBAC.
 - **Limpieza de migraciones**: Eliminar duplicado de tabla `voices` en `001_init.sql` (líneas 198-225). Eliminar tabla `schema_migrations` si no se usa.
 - **FOLDERS IMPLEMENTADOS**: Sistema completo de carpetas privadas por usuario funcionando. Falta aplicar `004_fix_rbac.sql` y probar todo end-to-end.
+- **EJECUTOR (2026-04-08) - Tarea implementada**: Drag & drop + paste multimedia en chat general completado.
+  - Archivo modificado: `public/index.php`
+  - Validación técnica: `php -l public/index.php` ✅
+  - Pendiente validación manual del usuario:
+    1. Arrastrar PNG/PDF a estado vacío → debe aparecer en preview de adjuntos.
+    2. Arrastrar PNG/PDF en chat activo → debe aparecer en preview de adjuntos.
+    3. Pegar captura de pantalla (Cmd/Ctrl+V) en ambos textareas → debe adjuntarse archivo.
+    4. Pegar texto normal → debe seguir pegando texto (sin adjuntar archivos).
+    5. Con `imageMode` activo, intentar adjuntar/arrastrar/pegar archivo → debe mostrarse aviso explicando por qué no se puede.
 
 ## Feature: Transformador de Contenido (Content Repurposer)
 
@@ -2156,3 +2166,93 @@ Se han identificado **20 hallazgos** de seguridad clasificados por severidad: 5 
 | 11 | 🟡 MEDIO | Cambiar contraseña admin | 5 min |
 | 12 | 🟡 MEDIO | Whitelist de modelos LLM en backend | 15 min |
 | 13 | 🟡 MEDIO | Rate limiting en API de chat/gestos | 1 hora |
+
+---
+
+## Feature: Drag & Drop y Paste de archivos multimedia en Chat
+
+### Motivación
+Actualmente los archivos solo se pueden adjuntar al chat mediante el botón de adjuntar (clip). Se quiere mejorar la UX permitiendo:
+1. **Arrastrar archivos** directamente sobre la ventana de chat o el estado vacío para adjuntarlos
+2. **Pegar archivos multimedia** (imágenes, PDFs, etc.) desde el portapapeles con Ctrl/Cmd+V, no solo texto
+
+### Análisis del estado actual
+
+**Archivo principal**: `public/index.php` (~3011 líneas, JS inline)
+
+**Dos zonas de input independientes:**
+1. **Estado vacío** (`#empty-state` / `#chat-form-empty`): Formulario hero con textarea, se muestra cuando no hay mensajes
+2. **Chat activo** (`#chat-footer` / `#chat-form`): Footer fijo con textarea, se muestra cuando hay mensajes
+
+**Variables de archivos existentes:**
+- `currentFiles[]` → archivos adjuntos en chat activo
+- `currentFilesEmpty[]` → archivos adjuntos en estado vacío
+- Funciones de render: `renderFilesPreview()` y `renderFilesPreviewEmpty()`
+
+**Validación de archivos (ya existe, reutilizable):**
+- Tipos permitidos: PDF, PNG, JPEG, GIF, WebP, CSV, XLS, XLSX
+- Tamaño máximo: 30MB por archivo
+- Lógica duplicada en `fileInput.change` y `fileInputEmpty.change`
+
+**Backend**: Ya soporta FormData upload (`/api/files/upload.php`) y procesamiento multimodal. No requiere cambios.
+
+### Key Challenges
+
+1. **Drag & drop visual feedback**: Necesitamos un overlay/indicador visual cuando el usuario arrastra un archivo sobre la ventana, y desactivarlo cuando sale o suelta
+2. **Distinguir entre las dos zonas**: Según si estamos en `emptyState` visible o `chatFooter` visible, los archivos deben ir a `currentFilesEmpty[]` o `currentFiles[]`
+3. **Paste multimedia**: El evento `paste` del textarea puede contener `clipboardData.files` (imágenes pegadas desde captura de pantalla) o `clipboardData.items` con tipo `file`. Hay que interceptar solo cuando hay archivos, no cuando se pega texto normal
+4. **No romper el pegado de texto**: Si el clipboard solo tiene texto, el comportamiento por defecto debe mantenerse intacto
+5. **Modo imagen (nanobanana)**: Cuando imageMode está activo, los archivos adjuntos están deshabilitados. Drag & drop y paste deben respetar este estado
+
+### Diseño propuesto
+
+#### 1. Drag & Drop
+
+- **Zona de drop global**: Escuchar `dragenter`/`dragover`/`dragleave`/`drop` en `#messages-container` (toda el área principal)
+- **Overlay visual**: Al detectar drag con archivos, mostrar un overlay semitransparente con borde dashed y texto "Suelta archivos aquí" centrado
+- **Al soltar**: Extraer archivos del `DataTransfer`, validar tipos/tamaño, añadir al array correcto (`currentFiles` o `currentFilesEmpty` según estado visible)
+- **Al salir sin soltar**: Ocultar overlay
+
+#### 2. Paste multimedia
+
+- Escuchar evento `paste` en ambos textareas (`#chat-input` y `#chat-input-empty`)
+- Si `e.clipboardData.files.length > 0` o hay items de tipo `file`:
+  - Prevenir default
+  - Extraer archivos, validar y añadir al array correspondiente
+- Si no hay archivos en el clipboard: no hacer nada (dejar paste de texto normal)
+
+### High-level Task Breakdown
+
+#### Tarea 1: Refactorizar validación de archivos a función compartida
+- Extraer la lógica de validación (tipos, tamaño) que está duplicada en `fileInput.change` y `fileInputEmpty.change` a una función `validateAndAddFiles(files, targetArray, renderFn)`
+- **Success criteria**: La función acepta un FileList/Array, valida cada archivo, lo añade al array target, y llama al render. Los event listeners de `fileInput.change` y `fileInputEmpty.change` la reutilizan sin duplicar código.
+
+#### Tarea 2: Implementar Drag & Drop en el área de chat
+- Añadir un div overlay oculto (`#drop-overlay`) dentro de `#messages-container` (o como sibling)
+- Escuchar eventos `dragenter`, `dragover`, `dragleave`, `drop` en `#messages-container`
+- En `dragenter`/`dragover`: mostrar overlay si hay archivos en el dataTransfer y no estamos en imageMode
+- En `dragleave`: ocultar overlay (con cuidado del bubbling entre hijos)
+- En `drop`: ocultar overlay, extraer archivos, llamar a `validateAndAddFiles()` con el array correcto
+- **Success criteria**: Al arrastrar un archivo sobre el chat aparece un overlay visual. Al soltarlo, el archivo se adjunta a la conversación (aparece en preview de archivos). Funciona tanto en estado vacío como en chat activo.
+
+#### Tarea 3: Implementar Paste de archivos multimedia
+- Añadir event listener `paste` en ambos textareas
+- Detectar si clipboard contiene archivos (`clipboardData.files` o items de tipo `file`)
+- Si hay archivos: `preventDefault()`, extraer y llamar a `validateAndAddFiles()`
+- Si no hay archivos: no intervenir (paste de texto normal)
+- **Success criteria**: Pegar una imagen (ej. captura de pantalla) en el textarea la adjunta como archivo. Pegar texto sigue funcionando normalmente. Funciona en ambas zonas (vacío y chat).
+
+#### Tarea 4: Testing manual y ajustes
+- Verificar drag & drop en estado vacío
+- Verificar drag & drop en chat activo
+- Verificar paste de imagen (captura de pantalla)
+- Verificar paste de texto no se ve afectado
+- Verificar que imageMode bloquea drag & drop y paste de archivos
+- **Success criteria**: Todos los flujos funcionan sin regresiones
+
+### Archivos a modificar
+- `public/index.php` — Añadir overlay HTML + lógica JS de drag/drop y paste
+
+### Archivos que NO requieren cambios
+- Backend (`upload.php`, `chat-stream.php`, `ChatFilesRepo.php`): Ya soportan los archivos
+- Validación de tipos ya existe en el frontend, solo hay que centralizarla
