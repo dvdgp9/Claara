@@ -737,10 +737,6 @@ $headerShowLogo = true;
       const clipboard = event.clipboardData;
       if (!clipboard) return files;
 
-      if (clipboard.files && clipboard.files.length > 0) {
-        files.push(...Array.from(clipboard.files));
-      }
-
       if (clipboard.items && clipboard.items.length > 0) {
         for (const item of clipboard.items) {
           if (item.kind === 'file') {
@@ -748,6 +744,10 @@ $headerShowLogo = true;
             if (file) files.push(file);
           }
         }
+      }
+
+      if (files.length === 0 && clipboard.files && clipboard.files.length > 0) {
+        files.push(...Array.from(clipboard.files));
       }
 
       return files;
