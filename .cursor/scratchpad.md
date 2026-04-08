@@ -1662,6 +1662,7 @@ CREATE TABLE background_jobs (
     3. Pegar captura de pantalla (Cmd/Ctrl+V) en ambos textareas → debe adjuntarse archivo.
     4. Pegar texto normal → debe seguir pegando texto (sin adjuntar archivos).
     5. Con `imageMode` activo, intentar adjuntar/arrastrar/pegar archivo → debe mostrarse aviso explicando por qué no se puede.
+- **EJECUTOR (2026-04-08) - Ajuste UX conversación**: overlay de drag & drop cambiado a `fixed` para que siempre se vea completo aunque haya scroll en conversación. Añadida ayuda visual bajo ambos composers con tipos soportados y límite: `PDF, PNG, JPG, GIF, WEBP, CSV, XLS, XLSX (30MB)`.
 
 ## Feature: Transformador de Contenido (Content Repurposer)
 
