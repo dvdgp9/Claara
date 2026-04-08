@@ -343,13 +343,9 @@ $headerShowLogo = true;
         </div>
         <div id="drop-overlay" class="hidden fixed inset-0 z-[65] pointer-events-none p-4 lg:p-8">
           <div class="w-full h-full rounded-2xl border-2 border-dashed border-[#23AAC5] bg-[#23AAC5]/10 flex items-center justify-center">
-            <div class="text-center">
-              <div class="px-4 py-2 rounded-xl bg-white/90 backdrop-blur-sm text-sm font-medium text-[#115c6c] shadow-sm inline-block">
-                Suelta archivos aquí para adjuntarlos
-              </div>
-              <div class="mt-2 text-[11px] text-[#115c6c]/60">
-                PDF, PNG, JPG, GIF, WEBP, CSV, XLS, XLSX (máx. 30MB)
-              </div>
+            <div class="px-5 py-3 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm text-center">
+              <div class="text-sm font-medium text-[#115c6c]">Suelta archivos aquí para adjuntarlos</div>
+              <div class="mt-1 text-[11px] text-slate-400">PDF, PNG, JPG, GIF, WEBP, CSV, XLS, XLSX (máx. 30MB)</div>
             </div>
           </div>
         </div>
