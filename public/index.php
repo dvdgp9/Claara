@@ -3027,6 +3027,10 @@ $headerShowLogo = true;
       const manageModelsBtnEmpty = document.getElementById('manage-models-btn-empty');
       const manageModelsBtnChat = document.getElementById('manage-models-btn-chat');
 
+      function escapeModelHtml(str) {
+        return String(str).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+      }
+
       async function loadModels() {
         if (!modelSelectEmpty || !modelSelectChat) return;
 
@@ -3040,8 +3044,8 @@ $headerShowLogo = true;
           const currentValue = modelSelectEmpty.value || modelSelectChat.value || models[0].model_key;
 
           const options = models.map((m) => {
-            const value = escapeHtml(m.model_key || '');
-            const label = escapeHtml(m.label || m.model_key || 'Modelo');
+            const value = escapeModelHtml(m.model_key || '');
+            const label = escapeModelHtml(m.label || m.model_key || 'Modelo');
             return `<option value="${value}">${label}</option>`;
           }).join('');
 
