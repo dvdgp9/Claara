@@ -114,6 +114,48 @@ class ContentExtractor
     }
 
     /**
+     * Extrae texto de PDF usando solo herramientas locales.
+     */
+    public function extractFromPdfLocally(string $base64Data): array
+    {
+        $pdfData = base64_decode($base64Data);
+        
+        if ($pdfData === false) {
+            return ['success' => false, 'error' => 'Datos PDF inválidos'];
+        }
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'pdf_');
+        file_put_contents($tempFile, $pdfData);
+
+        try {
+            $text = $this->extractWithPdftotext($tempFile);
+
+            if (empty($text)) {
+                $text = $this->extractPdfBasic($pdfData);
+            }
+
+            @unlink($tempFile);
+
+            if (empty($text)) {
+                return ['success' => false, 'error' => 'No se pudo extraer texto del PDF localmente'];
+            }
+
+            $title = $this->extractTitleFromText($text);
+
+            return [
+                'success' => true,
+                'title' => $title,
+                'content' => $text,
+                'source' => 'PDF upload (local)',
+                'word_count' => str_word_count($text)
+            ];
+        } catch (\Exception $e) {
+            @unlink($tempFile);
+            return ['success' => false, 'error' => 'Error procesando PDF localmente: ' . $e->getMessage()];
+        }
+    }
+
+    /**
      * Extrae el contenido de un archivo de texto plano
      */
     public function extractFromText(string $text): array

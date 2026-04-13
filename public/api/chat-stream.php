@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../src/Chat/OpenRouterClient.php';
 require_once __DIR__ . '/../../src/Chat/OpenRouterProvider.php';
 require_once __DIR__ . '/../../src/Chat/LlmProviderFactory.php';
 require_once __DIR__ . '/../../src/Auth/AuthService.php';
+require_once __DIR__ . '/../../src/Audio/ContentExtractor.php';
 require_once __DIR__ . '/../../src/Repos/ConversationsRepo.php';
 require_once __DIR__ . '/../../src/Repos/MessagesRepo.php';
 require_once __DIR__ . '/../../src/Repos/ChatFilesRepo.php';
@@ -20,6 +21,7 @@ require_once __DIR__ . '/../../src/Utils/SpreadsheetReader.php';
 
 use App\Env;
 use App\Session;
+use Audio\ContentExtractor;
 use Auth\AuthService;
 use Chat\OpenRouterClient;
 use Chat\ContextBuilder;
@@ -355,8 +357,55 @@ try {
     
     echo "data: [DONE]\n\n";
     flush();
-    
-} catch (\Exception $e) {
+    } catch (\Exception $e) {
+     if ($file && ($file['mime_type'] ?? '') === 'application/pdf' && shouldFallbackPdfToLocalText($e)) {
+         $extractor = new ContentExtractor();
+         $pdfExtraction = $extractor->extractFromPdfLocally((string)($file['data'] ?? ''));
+
+         if (!empty($pdfExtraction['success']) && !empty($pdfExtraction['content'])) {
+             $fallbackMessage = buildPdfFallbackPrompt($message, (string)$pdfExtraction['content'], (string)($file['name'] ?? 'documento.pdf'));
+             $fallbackHistory = replaceLastUserPdfWithText($history, $fallbackMessage);
+
+             try {
+                 $client = new OpenRouterClient(null, $modelName, $systemPrompt);
+                 $fullText = '';
+                 $usedModel = $modelName;
+
+                 $client->generateWithMessagesStreaming(
+                     $fallbackHistory,
+                     function($chunk) use (&$fullText) {
+                         $fullText .= $chunk;
+                         sendEvent('chunk', ['content' => $chunk]);
+                     },
+                     function($text, $model) use (&$usedModel) {
+                         $usedModel = $model;
+                     },
+                     $webSearch
+                 );
+
+                 $annotations = $client->getLastAnnotations();
+                 $assistantMsgId = $msgs->create($conversationId, null, 'assistant', $fullText, $usedModel, null, null, null, null);
+                 $convos->touch($conversationId);
+
+                 sendEvent('meta', [
+                     'message_id' => $assistantMsgId,
+                     'model' => $usedModel,
+                     'context_truncated' => $contextTruncated
+                 ]);
+
+                 if ($annotations && !empty($annotations)) {
+                     sendEvent('annotations', ['annotations' => $annotations]);
+                 }
+
+                 echo "data: [DONE]\n\n";
+                 flush();
+                 exit;
+             } catch (\Exception $fallbackException) {
+                 sendError($fallbackException->getMessage());
+             }
+         }
+     }
+
     sendError($e->getMessage());
 }
 
@@ -538,4 +587,39 @@ function isGenericImageFollowup(string $text): bool {
     }
 
     return (bool)preg_match('/^(genera( la)? imagen|hazlo|dale|adelante)\b/u', $normalized);
+}
+
+function shouldFallbackPdfToLocalText(\Exception $e): bool {
+    $message = mb_strtolower($e->getMessage());
+    return str_contains($message, 'failed to parse') && str_contains($message, 'pdf');
+}
+
+function buildPdfFallbackPrompt(string $message, string $pdfText, string $fileName): string {
+    $prefix = "IMPORTANTE: El siguiente contenido proviene del PDF '" . $fileName . "'.\n" .
+              "Úsalo como fuente principal para responder sobre el documento.\n" .
+              "Si el dato no aparece en el texto extraído, indícalo claramente.\n\n";
+
+    if (trim($message) !== '') {
+        return $prefix . $message . "\n\n" . $pdfText;
+    }
+
+    return $prefix . "Analiza el contenido de este PDF:\n\n" . $pdfText;
+}
+
+function replaceLastUserPdfWithText(array $history, string $fallbackMessage): array {
+    for ($i = count($history) - 1; $i >= 0; $i--) {
+        if (($history[$i]['role'] ?? '') !== 'user') {
+            continue;
+        }
+
+        if (($history[$i]['file']['mime_type'] ?? '') !== 'application/pdf') {
+            continue;
+        }
+
+        $history[$i]['content'] = $fallbackMessage;
+        unset($history[$i]['file']);
+        break;
+    }
+
+    return $history;
 }
