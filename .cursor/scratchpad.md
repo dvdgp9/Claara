@@ -822,3 +822,30 @@ Actualmente los archivos solo se pueden adjuntar al chat mediante el botón de a
 ### Archivos que NO requieren cambios
 - Backend (`upload.php`, `chat-stream.php`, `ChatFilesRepo.php`): Ya soportan los archivos
 - Validación de tipos ya existe en el frontend, solo hay que centralizarla
+
+---
+
+# Current Status / Progress Tracking
+
+- 2026-04-13 (Executor): Iniciada implementación de catálogo de modelos editable para superadmin.
+- 2026-04-13 (Executor): Añadida migración `docs/migrations/015_llm_models.sql` con tabla `llm_models` + seed inicial.
+- 2026-04-13 (Executor): Añadido repositorio `src/Repos/LlmModelsRepo.php`.
+- 2026-04-13 (Executor): Añadidos endpoints:
+  - `public/api/models/list.php` (lista activa para selector)
+  - `public/api/admin/models/list.php` (lista completa para superadmin)
+  - `public/api/admin/models/create.php` (alta)
+  - `public/api/admin/models/delete.php` (baja)
+- 2026-04-13 (Executor): `public/index.php` actualizado para cargar modelos dinámicamente y gestionar alta/baja desde frontend (botón ⚙ con prompts).
+
+# Executor's Feedback or Assistance Requests
+
+- Milestone completado: ya puedes añadir y eliminar modelos sin tocar código, desde el chat como superadmin.
+- Pendiente validación manual por parte del usuario:
+  1. Ejecutar migración `015_llm_models.sql` en la BD.
+  2. Recargar sesión de superadmin y comprobar que el selector carga desde API.
+  3. Probar `add` y `remove` desde el botón de gestión en ambos selectores (empty/chat).
+- Solicitud al planner/usuario: confirmar si este MVP por prompts es suficiente o si quieres que en el siguiente paso lo convierta a modal completo con edición inline/reordenación.
+
+# Lessons
+
+- Para cambios de configuración editable por superadmin, conviene desacoplar la lista hardcodeada del frontend y moverla a una tabla + API admin, manteniendo un endpoint de solo lectura para UI (`/api/models/list.php`).

@@ -13,6 +13,7 @@ storage/
 # Dependencies (if added later)
 vendor/
 node_modules/
+migrations/
 
 # IDE
 .idea/

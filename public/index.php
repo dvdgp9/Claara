@@ -167,13 +167,11 @@ $headerShowLogo = true;
                       </button>
                       <?php if ($user['is_superadmin']): ?>
                       <select id="model-select-empty" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Seleccionar modelo (Solo Superadmin)">
-                        <option value="google/gemini-3-flash-preview">Gemini 3 Flash</option>
-                        <option value="google/gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
-                        <option value="anthropic/claude-sonnet-4.6">Claude Sonnet 4.6</option>
-                        <option value="deepseek/deepseek-v3.2">Deepseek v3.2</option>
-                        <option value="z-ai/glm-4.7">GLM 4.7</option>
-                        <option value="xiaomi/mimo-v2-flash:free">Xiaomi Mimo v2</option>
+                        <option value="google/gemini-3-flash-preview">Cargando modelos...</option>
                       </select>
+                      <button type="button" id="manage-models-btn-empty" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-smooth" title="Gestionar modelos (Solo Superadmin)">
+                        <i class="iconoir-settings text-lg"></i>
+                      </button>
                       <?php endif; ?>
                     </div>
                     <span id="shortcut-hint-empty" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter para enviar</span>
@@ -386,13 +384,11 @@ $headerShowLogo = true;
                 </button>
                 <?php if ($user['is_superadmin']): ?>
                 <select id="model-select-chat" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Seleccionar modelo (Solo Superadmin)">
-                  <option value="google/gemini-3-flash-preview">Gemini 3 Flash</option>
-                  <option value="google/gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
-                  <option value="anthropic/claude-sonnet-4.6">Claude Sonnet 4.6</option>
-                  <option value="deepseek/deepseek-v3.2">Deepseek v3.2</option>
-                  <option value="z-ai/glm-4.7">GLM 4.7</option>
-                  <option value="xiaomi/mimo-v2-flash:free">Xiaomi Mimo v2</option>
+                  <option value="google/gemini-3-flash-preview">Cargando modelos...</option>
                 </select>
+                <button type="button" id="manage-models-btn-chat" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-smooth" title="Gestionar modelos (Solo Superadmin)">
+                  <i class="iconoir-settings text-lg"></i>
+                </button>
                 <?php endif; ?>
               </div>
               <span id="shortcut-hint-chat" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter para enviar</span>
@@ -3027,13 +3023,132 @@ $headerShowLogo = true;
       // Sincronizar selectores de modelos (Solo Superadmin)
       const modelSelectEmpty = document.getElementById('model-select-empty');
       const modelSelectChat = document.getElementById('model-select-chat');
+      const manageModelsBtnEmpty = document.getElementById('manage-models-btn-empty');
+      const manageModelsBtnChat = document.getElementById('manage-models-btn-chat');
+
+      async function loadModels() {
+        if (!modelSelectEmpty || !modelSelectChat) return;
+
+        try {
+          const response = await api('/api/models/list.php');
+          const models = Array.isArray(response.models) ? response.models : [];
+          if (models.length === 0) {
+            return;
+          }
+
+          const currentValue = modelSelectEmpty.value || modelSelectChat.value || models[0].model_key;
+
+          const options = models.map((m) => {
+            const value = escapeHtml(m.model_key || '');
+            const label = escapeHtml(m.label || m.model_key || 'Modelo');
+            return `<option value="${value}">${label}</option>`;
+          }).join('');
+
+          modelSelectEmpty.innerHTML = options;
+          modelSelectChat.innerHTML = options;
+
+          const hasCurrent = models.some((m) => m.model_key === currentValue);
+          const selected = hasCurrent ? currentValue : models[0].model_key;
+          modelSelectEmpty.value = selected;
+          modelSelectChat.value = selected;
+        } catch (error) {
+          console.warn('No se pudo cargar catálogo de modelos:', error);
+        }
+      }
+
+      async function loadAllModelsForAdmin() {
+        const response = await api('/api/admin/models/list.php');
+        return Array.isArray(response.models) ? response.models : [];
+      }
+
+      async function createModelFromPrompt() {
+        const modelKey = (window.prompt('Clave del modelo (ej: openai/gpt-4.1-mini):') || '').trim();
+        if (!modelKey) return;
+
+        const labelDefault = modelKey;
+        const label = (window.prompt('Etiqueta visible en el selector:', labelDefault) || '').trim();
+        if (!label) return;
+
+        await api('/api/admin/models/create.php', {
+          method: 'POST',
+          body: {
+            model_key: modelKey,
+            label
+          }
+        });
+
+        await loadModels();
+      }
+
+      async function deleteModelFromPrompt() {
+        const models = await loadAllModelsForAdmin();
+        if (models.length === 0) {
+          alert('No hay modelos para eliminar.');
+          return;
+        }
+
+        const listText = models.map((m) => `${m.id}: ${m.label} (${m.model_key})`).join('\n');
+        const rawId = (window.prompt(`Introduce el ID del modelo a eliminar:\n\n${listText}`) || '').trim();
+        if (!rawId) return;
+
+        const id = parseInt(rawId, 10);
+        if (!id) {
+          alert('ID inválido.');
+          return;
+        }
+
+        if (!window.confirm('¿Seguro que quieres eliminar este modelo del catálogo?')) {
+          return;
+        }
+
+        await api('/api/admin/models/delete.php', {
+          method: 'POST',
+          body: { id }
+        });
+
+        await loadModels();
+      }
+
+      async function openManageModels() {
+        const action = (window.prompt('Gestor de modelos\n\nEscribe una acción:\n- add\n- remove', 'add') || '').trim().toLowerCase();
+
+        try {
+          if (action === 'add') {
+            await createModelFromPrompt();
+            alert('Modelo añadido correctamente.');
+            return;
+          }
+
+          if (action === 'remove') {
+            await deleteModelFromPrompt();
+            alert('Modelo eliminado correctamente.');
+            return;
+          }
+
+          if (action !== '') {
+            alert('Acción no reconocida. Usa add o remove.');
+          }
+        } catch (error) {
+          alert('Error gestionando modelos: ' + (error.message || 'desconocido'));
+        }
+      }
+
       if (modelSelectEmpty && modelSelectChat) {
+        loadModels();
+
         modelSelectEmpty.addEventListener('change', () => {
           modelSelectChat.value = modelSelectEmpty.value;
         });
         modelSelectChat.addEventListener('change', () => {
           modelSelectEmpty.value = modelSelectChat.value;
         });
+
+        if (manageModelsBtnEmpty) {
+          manageModelsBtnEmpty.addEventListener('click', openManageModels);
+        }
+        if (manageModelsBtnChat) {
+          manageModelsBtnChat.addEventListener('click', openManageModels);
+        }
       }
 
       const desktopSidebar = document.getElementById('conversations-sidebar');
