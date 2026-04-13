@@ -120,6 +120,16 @@ class OpenRouterClient {
                 }
             }
             
+            // Safeguard: si content quedó como array vacío, usar string vacío
+            if (is_array($content) && empty($content)) {
+                $content = '';
+            }
+            
+            // Omitir mensajes sin contenido real (evita 400 en OpenRouter)
+            if ($content === '' || $content === null) {
+                continue;
+            }
+            
             $messagesPayload[] = [
                 'role' => $m['role'] === 'assistant' ? 'assistant' : 'user',
                 'content' => $content
@@ -316,6 +326,16 @@ class OpenRouterClient {
                 }
             }
             
+            // Safeguard: si content quedó como array vacío, usar string vacío
+            if (is_array($content) && empty($content)) {
+                $content = '';
+            }
+            
+            // Omitir mensajes sin contenido real (evita 400 en OpenRouter)
+            if ($content === '' || $content === null) {
+                continue;
+            }
+            
             $messagesPayload[] = [
                 'role' => $m['role'] === 'assistant' ? 'assistant' : 'user',
                 'content' => $content
@@ -354,6 +374,7 @@ class OpenRouterClient {
 
         $fullText = '';
         $buffer = '';
+        $rawErrorBody = ''; // Capturar body en caso de error HTTP
         
         // Referencia a $this para usar dentro del closure
         $self = $this;
@@ -373,7 +394,9 @@ class OpenRouterClient {
             CURLOPT_TIMEOUT => 180,
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_BUFFERSIZE => 128, // Buffer pequeño para recibir chunks rápido
-            CURLOPT_WRITEFUNCTION => function($ch, $data) use (&$fullText, &$buffer, $onChunk, $self) {
+            CURLOPT_WRITEFUNCTION => function($ch, $data) use (&$fullText, &$buffer, &$rawErrorBody, $onChunk, $self) {
+                // Acumular body bruto para diagnóstico de errores HTTP
+                $rawErrorBody .= $data;
                 $buffer .= $data;
                 
                 // Procesar líneas completas del buffer
@@ -417,7 +440,18 @@ class OpenRouterClient {
         }
         
         if ($status >= 400) {
-            throw new \Exception('Error HTTP ' . $status . ' de OpenRouter');
+            // Intentar extraer mensaje de error del body
+            $errorMsg = 'Error HTTP ' . $status . ' de OpenRouter';
+            if ($rawErrorBody !== '') {
+                $errorJson = json_decode($rawErrorBody, true);
+                if ($errorJson) {
+                    $detail = $errorJson['error']['message'] ?? $errorJson['message'] ?? null;
+                    if ($detail) {
+                        $errorMsg .= ': ' . $detail;
+                    }
+                }
+            }
+            throw new \Exception($errorMsg);
         }
         
         if ($onComplete) {
