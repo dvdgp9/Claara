@@ -1679,6 +1679,7 @@ $headerShowLogo = true;
       if(!res.ok) throw new Error(data?.error?.message || res.statusText);
       return data;
     }
+    window.appApi = api;
     
     // Generar y descargar documento (PDF/DOCX)
     async function downloadDocument(content, format, buttonElement) {
@@ -3030,7 +3031,7 @@ $headerShowLogo = true;
         if (!modelSelectEmpty || !modelSelectChat) return;
 
         try {
-          const response = await api('/api/models/list.php');
+          const response = await window.appApi('/api/models/list.php');
           const models = Array.isArray(response.models) ? response.models : [];
           if (models.length === 0) {
             return;
@@ -3057,7 +3058,7 @@ $headerShowLogo = true;
       }
 
       async function loadAllModelsForAdmin() {
-        const response = await api('/api/admin/models/list.php');
+        const response = await window.appApi('/api/admin/models/list.php');
         return Array.isArray(response.models) ? response.models : [];
       }
 
@@ -3069,7 +3070,7 @@ $headerShowLogo = true;
         const label = (window.prompt('Etiqueta visible en el selector:', labelDefault) || '').trim();
         if (!label) return;
 
-        await api('/api/admin/models/create.php', {
+        await window.appApi('/api/admin/models/create.php', {
           method: 'POST',
           body: {
             model_key: modelKey,
@@ -3101,7 +3102,7 @@ $headerShowLogo = true;
           return;
         }
 
-        await api('/api/admin/models/delete.php', {
+        await window.appApi('/api/admin/models/delete.php', {
           method: 'POST',
           body: { id }
         });
