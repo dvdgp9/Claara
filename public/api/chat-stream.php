@@ -232,6 +232,9 @@ if ($file && count($history) > 0) {
     }
 }
 
+// Evitar parser remoto de OpenRouter para PDFs problemáticos: convertir PDFs a texto localmente
+$history = preprocessPdfHistoryForStreaming($history);
+
 // En modo imagen, condensar contexto para evitar respuestas textuales,
 // pero conservando intención si el último mensaje es genérico.
 if ($imageMode && !empty($history)) {
@@ -619,6 +622,50 @@ function replaceLastUserPdfWithText(array $history, string $fallbackMessage): ar
         $history[$i]['content'] = $fallbackMessage;
         unset($history[$i]['file']);
         break;
+    }
+
+    return $history;
+}
+
+function preprocessPdfHistoryForStreaming(array $history): array {
+    if (empty($history)) {
+        return $history;
+    }
+
+    $extractor = new ContentExtractor();
+
+    foreach ($history as $idx => $item) {
+        if (($item['role'] ?? '') !== 'user') {
+            continue;
+        }
+
+        $mimeType = (string)($item['file']['mime_type'] ?? '');
+        if ($mimeType !== 'application/pdf') {
+            continue;
+        }
+
+        $pdfData = (string)($item['file']['data'] ?? '');
+        $fileName = (string)($item['file']['name'] ?? 'documento.pdf');
+        if ($pdfData === '') {
+            unset($history[$idx]['file']);
+            continue;
+        }
+
+        $extraction = $extractor->extractFromPdfLocally($pdfData);
+
+        if (!empty($extraction['success']) && !empty($extraction['content'])) {
+            $pdfText = (string)$extraction['content'];
+            $maxChars = 15000;
+            if (mb_strlen($pdfText) > $maxChars) {
+                $pdfText = mb_substr($pdfText, 0, $maxChars) . "\n\n[Contenido truncado para mantener contexto manejable]";
+            }
+
+            $currentMessage = is_string($item['content'] ?? null) ? (string)$item['content'] : '';
+            $history[$idx]['content'] = buildPdfFallbackPrompt($currentMessage, $pdfText, $fileName);
+        }
+
+        // Siempre quitar adjunto PDF del historial para que OpenRouter no intente parsearlo
+        unset($history[$idx]['file']);
     }
 
     return $history;
