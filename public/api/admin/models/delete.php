@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../../../../src/App/bootstrap.php';
-require_once __DIR__ . '/../../../../../src/Auth/AuthService.php';
-require_once __DIR__ . '/../../../../../src/Repos/LlmModelsRepo.php';
+require_once __DIR__ . '/../../../../src/App/bootstrap.php';
+require_once __DIR__ . '/../../../../src/Auth/AuthService.php';
+require_once __DIR__ . '/../../../../src/Repos/LlmModelsRepo.php';
 
 use App\Response;
 use App\Session;
