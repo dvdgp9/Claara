@@ -19,11 +19,15 @@ if (!$user['is_superadmin']) {
 }
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
+$id = isset($input['id']) ? (int)$input['id'] : 0;
 $modelKey = trim((string)($input['model_key'] ?? ''));
 $label = trim((string)($input['label'] ?? ''));
-$isActive = array_key_exists('is_active', $input) ? !empty($input['is_active']) : true;
-$sortOrder = isset($input['sort_order']) ? (int)$input['sort_order'] : null;
+$isActive = !empty($input['is_active']);
+$sortOrder = isset($input['sort_order']) ? (int)$input['sort_order'] : 0;
 
+if ($id <= 0) {
+    Response::error('validation_error', 'id requerido', 400);
+}
 if ($modelKey === '') {
     Response::error('validation_error', 'model_key requerido', 400);
 }
@@ -37,15 +41,8 @@ if (strlen($modelKey) > 120 || strlen($label) > 120) {
 $repo = new LlmModelsRepo();
 
 try {
-    $id = $repo->create($modelKey, $label, $isActive, $sortOrder);
-    Response::json([
-        'success' => true,
-        'id' => $id,
-        'model_key' => $modelKey,
-        'label' => $label,
-        'is_active' => $isActive ? 1 : 0,
-        'sort_order' => $sortOrder
-    ]);
+    $repo->update($id, $modelKey, $label, $isActive, $sortOrder);
+    Response::json(['success' => true]);
 } catch (\Throwable $e) {
-    Response::error('create_failed', 'No se pudo crear el modelo (puede que ya exista)', 400);
+    Response::error('update_failed', 'No se pudo actualizar el modelo (puede que la clave ya exista)', 400);
 }

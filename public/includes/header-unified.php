@@ -167,6 +167,12 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
             <i class="iconoir-folder"></i>
             <span>Gestor de contexto</span>
           </a>
+          <?php if (!empty($user['is_superadmin'])): ?>
+            <a href="/admin/models.php" id="models-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
+              <i class="iconoir-settings"></i>
+              <span>Modelos del chat</span>
+            </a>
+          <?php endif; ?>
         <?php endif; ?>
         
         <button id="logout-btn" class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 border-t border-slate-100">

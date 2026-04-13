@@ -3061,81 +3061,8 @@ $headerShowLogo = true;
         }
       }
 
-      async function loadAllModelsForAdmin() {
-        const response = await window.appApi('/api/admin/models/list.php');
-        return Array.isArray(response.models) ? response.models : [];
-      }
-
-      async function createModelFromPrompt() {
-        const modelKey = (window.prompt('Clave del modelo (ej: openai/gpt-4.1-mini):') || '').trim();
-        if (!modelKey) return;
-
-        const labelDefault = modelKey;
-        const label = (window.prompt('Etiqueta visible en el selector:', labelDefault) || '').trim();
-        if (!label) return;
-
-        await window.appApi('/api/admin/models/create.php', {
-          method: 'POST',
-          body: {
-            model_key: modelKey,
-            label
-          }
-        });
-
-        await loadModels();
-      }
-
-      async function deleteModelFromPrompt() {
-        const models = await loadAllModelsForAdmin();
-        if (models.length === 0) {
-          alert('No hay modelos para eliminar.');
-          return;
-        }
-
-        const listText = models.map((m) => `${m.id}: ${m.label} (${m.model_key})`).join('\n');
-        const rawId = (window.prompt(`Introduce el ID del modelo a eliminar:\n\n${listText}`) || '').trim();
-        if (!rawId) return;
-
-        const id = parseInt(rawId, 10);
-        if (!id) {
-          alert('ID inválido.');
-          return;
-        }
-
-        if (!window.confirm('¿Seguro que quieres eliminar este modelo del catálogo?')) {
-          return;
-        }
-
-        await window.appApi('/api/admin/models/delete.php', {
-          method: 'POST',
-          body: { id }
-        });
-
-        await loadModels();
-      }
-
-      async function openManageModels() {
-        const action = (window.prompt('Gestor de modelos\n\nEscribe una acción:\n- add\n- remove', 'add') || '').trim().toLowerCase();
-
-        try {
-          if (action === 'add') {
-            await createModelFromPrompt();
-            alert('Modelo añadido correctamente.');
-            return;
-          }
-
-          if (action === 'remove') {
-            await deleteModelFromPrompt();
-            alert('Modelo eliminado correctamente.');
-            return;
-          }
-
-          if (action !== '') {
-            alert('Acción no reconocida. Usa add o remove.');
-          }
-        } catch (error) {
-          alert('Error gestionando modelos: ' + (error.message || 'desconocido'));
-        }
+      function openManageModels() {
+        window.location.href = '/admin/models.php';
       }
 
       if (modelSelectEmpty && modelSelectChat) {

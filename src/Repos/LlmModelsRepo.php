@@ -25,12 +25,23 @@ class LlmModelsRepo
         return $stmt->fetchAll() ?: [];
     }
 
-    public function create(string $modelKey, string $label, bool $isActive = true): int
+    public function create(string $modelKey, string $label, bool $isActive = true, ?int $sortOrder = null): int
     {
-        $sortOrder = $this->nextSortOrder();
+        $sortOrder = $sortOrder ?? $this->nextSortOrder();
         $stmt = $this->pdo->prepare('INSERT INTO llm_models (model_key, label, is_active, sort_order) VALUES (?, ?, ?, ?)');
         $stmt->execute([$modelKey, $label, $isActive ? 1 : 0, $sortOrder]);
         return (int)$this->pdo->lastInsertId();
+    }
+
+    public function update(int $id, string $modelKey, string $label, bool $isActive, int $sortOrder): bool
+    {
+        $stmt = $this->pdo->prepare('
+            UPDATE llm_models
+            SET model_key = ?, label = ?, is_active = ?, sort_order = ?
+            WHERE id = ?
+        ');
+        $stmt->execute([$modelKey, $label, $isActive ? 1 : 0, $sortOrder, $id]);
+        return $stmt->rowCount() > 0;
     }
 
     public function delete(int $id): bool
