@@ -147,7 +147,7 @@ $headerShowLogo = true;
                   
                   <!-- Fila superior: textarea + botón enviar -->
                   <div class="flex items-start gap-3 mb-3">
-                    <textarea id="chat-input-empty" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none overflow-hidden" placeholder="Pregúntame lo que quieras" style="min-height: 28px; max-height: 120px;"></textarea>
+                    <textarea id="chat-input-empty" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Pregúntame lo que quieras" style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
                     <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-xl transition-smooth shrink-0" title="Enviar">
                       <i class="iconoir-arrow-up text-xl"></i>
                     </button>
@@ -364,7 +364,7 @@ $headerShowLogo = true;
             
             <!-- Fila superior: textarea + botón enviar -->
             <div class="flex items-start gap-3 mb-2">
-              <textarea id="chat-input" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none overflow-hidden" placeholder="Escribe un mensaje..." style="min-height: 28px; max-height: 120px;"></textarea>
+              <textarea id="chat-input" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Escribe un mensaje..." style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
               <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-xl transition-smooth shrink-0" title="Enviar">
                 <i class="iconoir-arrow-up text-xl"></i>
               </button>
@@ -2352,10 +2352,27 @@ $headerShowLogo = true;
     const imagePlaceholder = 'Describe la imagen que quieres crear... 🍌';
     const webSearchPlaceholder = 'Pregunta algo y buscaré en internet... 🌐';
 
-    // Auto-resize para textareas
+    const chatInputMaxHeight = 160;
+
+    // Auto-resize para textareas. Cuando llegan al máximo, activan scroll interno.
     function autoResize(textarea) {
+      const wasAtBottom = textarea.scrollTop + textarea.clientHeight >= textarea.scrollHeight - 4;
+      const caretAtEnd = textarea.selectionStart === textarea.value.length && textarea.selectionEnd === textarea.value.length;
       textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+      const nextHeight = Math.min(textarea.scrollHeight, chatInputMaxHeight);
+      textarea.style.height = nextHeight + 'px';
+      textarea.style.overflowY = textarea.scrollHeight > chatInputMaxHeight ? 'auto' : 'hidden';
+
+      if (textarea.scrollHeight > chatInputMaxHeight && (wasAtBottom || caretAtEnd)) {
+        textarea.scrollTop = textarea.scrollHeight;
+      }
+    }
+
+    function resetChatTextarea(textarea) {
+      textarea.value = '';
+      textarea.style.height = '';
+      textarea.style.overflowY = 'hidden';
+      textarea.scrollTop = 0;
     }
 
     // Event listeners para auto-resize
@@ -2509,7 +2526,7 @@ $headerShowLogo = true;
       
       if (!text && currentFiles.length === 0) return;
       
-      inputEl.value = '';
+      resetChatTextarea(inputEl);
       // Enviar solo el primer archivo por ahora (el backend procesa de a uno)
       await handleSubmit(text, currentFiles.length > 0 ? currentFiles[0] : null);
       
@@ -2527,7 +2544,7 @@ $headerShowLogo = true;
       
       if (!text && currentFilesEmpty.length === 0) return;
       
-      inputEmptyEl.value = '';
+      resetChatTextarea(inputEmptyEl);
       // Enviar solo el primer archivo por ahora
       await handleSubmit(text, currentFilesEmpty.length > 0 ? currentFilesEmpty[0] : null);
       
