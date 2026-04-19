@@ -101,35 +101,40 @@ entre {$this->speaker1} (mujer, presentadora principal, español de españa, pen
 El podcast debe sonar como DOS EXPERTOS AMIGOS charlando en un bar, no como presentadores leyendo un guion. Incluye OBLIGATORIAMENTE:
 
 1. **REACCIONES CORTAS INTERCALADAS** - Esenciales para naturalidad:
-   - "Exacto.", "Sí.", "Vale.", "Claro.", "Totalmente.", "Eso es."
-   - "Uff.", "Vaya.", "Madre mía.", "Fíjate.", "Ah, vale."
-   - "¿En serio?", "¿Uno solo?", "Espera, espera..."
-   - Estas reacciones deben aparecer FRECUENTEMENTE (cada 2-3 intervenciones largas)
+   - Usa acuerdos, dudas, sorpresa suave, matices y pequeñas réplicas de escucha activa.
+   - Deben sentirse espontáneas y variadas, no como una lista repetida.
+   - Alterna microintervenciones de una palabra con frases breves, sin abusar de ninguna muletilla.
 
 2. **ANÉCDOTAS PERSONALES FICTICIAS** - Hacen humano el contenido:
-   - "Yo recuerdo una vez que me pasé horas con este problema..."
-   - "Me pasó algo parecido el otro día..."
-   - "Un compañero mío siempre dice que..."
+   - Puedes incluir pequeñas escenas cotidianas o recuerdos ficticios si ayudan a entender el contenido.
+   - No inventes datos del artículo; las anécdotas deben ser genéricas y claramente ilustrativas.
+   - Varía el tipo de ejemplo: oficina, equipo, carretera, cocina, aula, deporte, tecnología, trámites.
 
 3. **METÁFORAS Y ANALOGÍAS VÍVIDAS**:
-   - "Es como tener los ladrillos pero no el pegamento"
-   - "Es la diferencia entre buscar una aguja en un pajar y preguntarle a Google"
-   - "Es como el fontanero: instala las tuberías pero no decide qué agua pasa"
+   - Crea analogías nuevas y contextuales para cada episodio.
+   - Evita reutilizar fórmulas demasiado reconocibles o comodines genéricos.
+   - Si una idea se entiende mejor en lenguaje directo, no fuerces una metáfora.
 
 4. **EXPRESIONES COLOQUIALES ESPAÑOLAS**:
-   - "la madre del cordero", "el pan de cada día", "el quid de la cuestión" (español peninsular, ir variando expresiones y añadir otras nuevas, no usar solo las de aquí)
-   - "no se anda con chiquitas", "vamos al grano", "atar cabos" (español peninsular)
-   - "el marrón de turno", "quedarse flipando", "eso es otro cantar" (español peninsular)
+   - Usa español peninsular natural, con expresiones coloquiales solo cuando encajen.
+   - No conviertas el podcast en una sucesión de frases hechas.
+   - Ninguna expresión coloquial debe repetirse dentro del mismo episodio.
+   - Prioriza frescura, precisión y variedad sobre ocurrencias llamativas.
 
 5. **PREGUNTAS RETÓRICAS Y PAUSAS**:
-   - "¿Y cuál es el problema? Pues que..."
-   - "Piénsalo un momento: si tienes X, ¿cómo vas a...?"
-   - "La pregunta del millón es..."
+   - Formula preguntas naturales para abrir bloques, profundizar o cambiar de ángulo.
+   - Varía las transiciones: pregunta directa, recapitulación, contraste, ejemplo, matiz.
+   - Evita usar siempre la misma estructura de apertura o de sorpresa.
 
 6. **INTERRUPCIONES NATURALES**:
-   - Uno puede cortar al otro para añadir algo
-   - "Espera, que esto es importante..."
-   - "Perdona que te corte, pero..."
+   - Uno puede cortar al otro para aclarar, matizar o aterrizar una idea.
+   - Que parezca conversación viva, no interrupción teatral.
+   - No repitas la misma fórmula de interrupción.
+
+7. **VARIEDAD DE EPISODIO**:
+   - Cada podcast debe tener aperturas, transiciones, analogías y cierres distintos.
+   - No uses fórmulas de entusiasmo grandilocuentes por defecto.
+   - Evita prometer que algo "sorprenderá" si el contenido no lo justifica.
 
 ## ESTRUCTURA
 
@@ -162,18 +167,17 @@ El podcast debe sonar como DOS EXPERTOS AMIGOS charlando en un bar, no como pres
 - Variar la longitud de intervenciones: algunas largas (3-5 frases), otras cortísimas (1 palabra)
 - El guion debe ser MUCHO más largo que un resumen: desarrollar, no resumir
 - No escribir instrucciones tipo "risas", "pausa" o "música" fuera de tags de audio entre corchetes.
+- No apoyarte en expresiones comodín: si una frase hecha aparece, debe ser puntual, contextual y no repetida.
 
 ## EJEMPLO DEL ESTILO DESEADO
 
-{$this->speaker1}: [warmly] Hoy vamos a analizar un tema que es casi una provocación: por qué nuestros sistemas actuales están fallando.
-{$this->speaker2}: Y ojo, no es que fallen con mala intención. Es algo peor: la idea es que son fundamentalmente inadecuados para los problemas de hoy. Yo recuerdo una vez que me pasé horas intentando encontrar un bug, solo para darme cuenta de que el problema venía de un sitio que ni sabía que existía.
-{$this->speaker1}: Esa historia es el pan de cada día para muchísima gente.
-{$this->speaker2}: Exacto.
-{$this->speaker1}: Y el problema de fondo es que estamos usando herramientas del siglo XX para problemas del siglo XXI.
-{$this->speaker2}: Sí, muy simple en teoría.
-{$this->speaker1}: Pero es que hoy un solo clic puede desencadenar una reacción en cadena que toque veinte sistemas distintos. Y nuestras herramientas siguen siendo, en esencia, las mismas de antes.
-{$this->speaker2}: La madre del cordero, vamos. El autor lo describe genial: dice que es como jugar a los detectives con una mano atada a la espalda.
-{$this->speaker1}: Me encanta esa analogía.
+{$this->speaker1}: [warmly] Hoy traemos un tema que parece técnico, pero que afecta a decisiones muy del día a día.
+{$this->speaker2}: Sí, y lo interesante es que el artículo no se queda en la superficie. Plantea una pregunta bastante práctica: qué cambia cuando intentamos aplicar esto en un entorno real.
+{$this->speaker1}: Vale, empecemos por ahí. ¿Cuál es la primera idea importante?
+{$this->speaker2}: La primera es que no basta con entender el concepto en abstracto. Hay que mirar qué implica para una persona, un equipo o una organización cuando tiene que tomar decisiones con información incompleta.
+{$this->speaker1}: [short pause] Y eso ya nos lleva a un punto delicado.
+{$this->speaker2}: Claro. Porque en teoría todo parece ordenado, pero en la práctica aparecen prioridades, plazos, dudas y pequeñas excepciones.
+{$this->speaker1}: Ahí es donde el tema empieza a tener vida.
 
 ## FORMATO DE SALIDA
 
@@ -280,6 +284,18 @@ PROMPT;
         $wordCount = str_word_count($script);
         // ~2.5 palabras por segundo en habla natural
         return (int)($wordCount / 2.5);
+    }
+
+    /**
+     * Elimina tags de audio tipo [warmly] o [short pause] para la transcripción visible.
+     */
+    public static function cleanAudioTags(string $script): string
+    {
+        $clean = preg_replace('/[ \t]*\[[a-zA-Z][a-zA-Z \t,\-]*\][ \t]*/u', ' ', $script);
+        $clean = preg_replace('/[ \t]+/u', ' ', $clean);
+        $clean = preg_replace('/\s+\n/u', "\n", $clean);
+        $clean = preg_replace('/\n\s+/u', "\n", $clean);
+        return trim($clean);
     }
 
     /**

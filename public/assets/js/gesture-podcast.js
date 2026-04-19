@@ -319,7 +319,7 @@
     audioPlayer.src = audioUrl;
     podcastTitle.textContent = outputData.title || 'Podcast generado';
     podcastSummary.textContent = outputData.summary || '';
-    podcastScript.innerHTML = mdToHtml(formatScript(outputData.script));
+    podcastScript.innerHTML = mdToHtml(formatScript(outputData.script_display || outputData.script));
 
     showResult();
     loadHistory();
@@ -637,7 +637,7 @@
       // Mostrar resultado
       podcastTitle.textContent = exec.title || 'Podcast';
       podcastSummary.textContent = outputData.summary || '';
-      podcastScript.innerHTML = mdToHtml(formatScript(outputData.script || ''));
+      podcastScript.innerHTML = mdToHtml(formatScript(outputData.script_display || outputData.script || ''));
       
       // Resaltar en historial
       document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
@@ -714,7 +714,16 @@
   function formatScript(script) {
     if (!script) return '';
     // Añadir separación entre intervenciones de los presentadores (admite nombres actuales y anteriores)
-    return script.replace(/\n(Ana:|Carlos:|Iris:|Bruno:)/g, '\n\n$1');
+    return stripAudioTags(script).replace(/\n(Ana:|Carlos:|Iris:|Bruno:)/g, '\n\n$1');
+  }
+
+  function stripAudioTags(script) {
+    return String(script)
+      .replace(/[ \t]*\[[a-zA-Z][a-zA-Z \t,\-]*\][ \t]*/g, ' ')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\s+\n/g, '\n')
+      .replace(/\n\s+/g, '\n')
+      .trim();
   }
 
   function mdToHtml(text) {

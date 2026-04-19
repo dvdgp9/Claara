@@ -128,6 +128,7 @@ try {
     $speaker1 = $scriptResult['speaker1'];
     $speaker2 = $scriptResult['speaker2'];
     $estimatedDuration = $scriptResult['estimated_duration'];
+    $scriptDisplay = PodcastScriptGenerator::cleanAudioTags($script);
 
     // Si solo queremos el guion, devolver aquí
     if ($action === 'script') {
@@ -137,6 +138,7 @@ try {
             'title' => $title,
             'summary' => $summary,
             'script' => $script,
+            'script_display' => $scriptDisplay,
             'speaker1' => $speaker1,
             'speaker2' => $speaker2,
             'estimated_duration' => $estimatedDuration,
@@ -192,6 +194,7 @@ try {
         'output_data' => [
             'summary' => $summary,
             'script' => $script,
+            'script_display' => $scriptDisplay,
             'audio_url' => $wavUrl,
             'duration_estimate' => $estimatedDuration,
             'speaker1' => $speaker1,
@@ -211,6 +214,7 @@ try {
         'title' => $title,
         'summary' => $summary,
         'script' => $script,
+        'script_display' => $scriptDisplay,
         'speaker1' => $speaker1,
         'speaker2' => $speaker2,
         'audio' => [

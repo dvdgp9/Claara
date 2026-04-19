@@ -221,6 +221,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     $speaker1 = $scriptResult['speaker1'];
     $speaker2 = $scriptResult['speaker2'];
     $estimatedDuration = $scriptResult['estimated_duration'];
+    $scriptDisplay = PodcastScriptGenerator::cleanAudioTags($script);
     
     // === PASO 3: Generar audio ===
     $repo->updateProgress($jobId, 'Sintetizando audio con IA (esto puede tardar hasta 5 minutos)...');
@@ -277,6 +278,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
         'output_data' => [
             'summary' => $summary,
             'script' => $script,
+            'script_display' => $scriptDisplay,
             'audio_url' => $wavUrl,
             'duration_estimate' => $estimatedDuration,
             'speaker1' => $speaker1,
@@ -298,6 +300,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
         'title' => $title,
         'summary' => $summary,
         'script' => $script,
+        'script_display' => $scriptDisplay,
         'speaker1' => $speaker1,
         'speaker2' => $speaker2,
         'audio_url' => $wavUrl,
