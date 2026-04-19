@@ -9,7 +9,7 @@
   const GESTURE_TYPE = 'podcast-from-article';
   const POLL_INTERVAL_INITIAL = 3000; // 3s al inicio
   const POLL_INTERVAL_LONG = 8000;    // 8s después de 30s
-  const POLL_TIMEOUT = 300000;        // 5 min máximo
+  const POLL_TIMEOUT = 900000;        // 15 min máximo
 
   // === DOM Elements ===
   const podcastForm = document.getElementById('podcast-form');
@@ -224,7 +224,7 @@
             pollTimer = setInterval(poll, POLL_INTERVAL_LONG);
           }
           
-          // Timeout después de 5 minutos
+          // Timeout después de 15 minutos
           if (elapsed > POLL_TIMEOUT) {
             stopPolling();
             showError('La generación está tardando demasiado. Revisa el historial en unos minutos.');

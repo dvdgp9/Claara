@@ -149,11 +149,16 @@ try {
     // === PASO 3: Generar audio ===
     $ttsClient = new GeminiTtsClient();
     
-    // Preparar el texto para Gemini 3.1 TTS con perfiles, escena y notas de dirección.
-    $ttsPrompt = $scriptGenerator->buildTtsPrompt($script);
+    // Generar por segmentos para evitar deriva de calidad en podcasts largos.
+    $scriptSegments = $scriptGenerator->splitScriptForTts($script);
+    $totalSegments = count($scriptSegments);
+    $ttsPrompts = [];
+    foreach ($scriptSegments as $index => $segment) {
+        $ttsPrompts[] = $scriptGenerator->buildTtsPromptForSegment($segment, $index + 1, $totalSegments);
+    }
     
-    $audioResult = $ttsClient->generateMultiSpeaker(
-        $ttsPrompt,
+    $audioResult = $ttsClient->generateMultiSpeakerSegments(
+        $ttsPrompts,
         $speaker1,
         $speaker2,
         'Aoede',  // Voz femenina
@@ -199,7 +204,8 @@ try {
             'duration_estimate' => $estimatedDuration,
             'speaker1' => $speaker1,
             'speaker2' => $speaker2,
-            'tts_model' => $ttsClient->getModel()
+            'tts_model' => $ttsClient->getModel(),
+            'tts_segments' => $audioResult['segments'] ?? $totalSegments
         ],
         'content_type' => 'original',
         'business_line' => null,
@@ -221,7 +227,8 @@ try {
             'url' => $wavUrl,
             'mime_type' => 'audio/wav',
             'duration_estimate' => $estimatedDuration,
-            'model' => $ttsClient->getModel()
+            'model' => $ttsClient->getModel(),
+            'segments' => $audioResult['segments'] ?? $totalSegments
         ],
         'source' => $source
     ]);

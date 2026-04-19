@@ -39,6 +39,73 @@ class GeminiTtsClient
     }
 
     /**
+     * Genera audio multi-speaker por segmentos y concatena PCM para reducir
+     * la deriva de calidad en podcasts largos.
+     *
+     * @param array<int, string> $prompts Prompts TTS ya preparados para cada segmento
+     * @param callable|null $onSegment Callback fn(int $current, int $total): void
+     */
+    public function generateMultiSpeakerSegments(
+        array $prompts,
+        string $speaker1Name = 'Ana',
+        string $speaker2Name = 'Carlos',
+        string $voice1 = 'Aoede',
+        string $voice2 = 'Orus',
+        int $pauseMs = 350,
+        ?callable $onSegment = null
+    ): array {
+        $prompts = array_values(array_filter(array_map('trim', $prompts)));
+        if (empty($prompts)) {
+            return ['success' => false, 'error' => 'No hay segmentos para generar audio'];
+        }
+
+        if (count($prompts) === 1) {
+            return $this->generateMultiSpeaker($prompts[0], $speaker1Name, $speaker2Name, $voice1, $voice2);
+        }
+
+        $pcmParts = [];
+        $total = count($prompts);
+        $pause = self::silentPcm($pauseMs);
+
+        foreach ($prompts as $index => $prompt) {
+            if ($onSegment) {
+                $onSegment($index + 1, $total);
+            }
+
+            $result = $this->generateMultiSpeaker($prompt, $speaker1Name, $speaker2Name, $voice1, $voice2);
+            if (!$result['success']) {
+                return [
+                    'success' => false,
+                    'error' => 'Error en segmento ' . ($index + 1) . '/' . $total . ': ' . ($result['error'] ?? 'desconocido')
+                ];
+            }
+
+            $pcm = base64_decode($result['audio_data'], true);
+            if ($pcm === false || $pcm === '') {
+                return [
+                    'success' => false,
+                    'error' => 'No se recibió audio válido en segmento ' . ($index + 1) . '/' . $total
+                ];
+            }
+
+            $pcmParts[] = $pcm;
+            if ($pause !== '' && $index < $total - 1) {
+                $pcmParts[] = $pause;
+            }
+        }
+
+        return [
+            'success' => true,
+            'audio_data' => base64_encode(implode('', $pcmParts)),
+            'mime_type' => 'audio/wav',
+            'sample_rate' => 24000,
+            'channels' => 1,
+            'bit_depth' => 16,
+            'segments' => $total
+        ];
+    }
+
+    /**
      * Genera audio de un diálogo con dos voces
      * 
      * @param string $script El guion con formato "Speaker1: texto\nSpeaker2: texto..."
@@ -237,5 +304,12 @@ class GeminiTtsClient
         $header .= pack('V', $dataSize);
 
         return $header . $pcmData;
+    }
+
+    public static function silentPcm(int $durationMs, int $sampleRate = 24000, int $channels = 1, int $bitsPerSample = 16): string
+    {
+        $bytesPerSample = (int)($bitsPerSample / 8);
+        $sampleCount = (int)round($sampleRate * ($durationMs / 1000) * $channels);
+        return str_repeat("\0", $sampleCount * $bytesPerSample);
     }
 }

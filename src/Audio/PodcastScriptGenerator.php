@@ -299,6 +299,60 @@ PROMPT;
     }
 
     /**
+     * Divide el guion en bloques manteniendo turnos completos de speaker.
+     *
+     * @return array<int, string>
+     */
+    public function splitScriptForTts(string $script, int $targetWords = 320, int $maxWords = 430): array
+    {
+        $turns = $this->extractTurns($script);
+        if (empty($turns)) {
+            return [trim($script)];
+        }
+
+        $segments = [];
+        $current = [];
+        $currentWords = 0;
+
+        foreach ($turns as $turn) {
+            $turnWords = str_word_count(PodcastScriptGenerator::cleanAudioTags($turn));
+            $wouldExceed = $currentWords > 0 && ($currentWords + $turnWords) > $maxWords;
+            $hasReachedTarget = $currentWords >= $targetWords;
+
+            if ($wouldExceed || ($hasReachedTarget && $turnWords > 0)) {
+                $segments[] = trim(implode("\n", $current));
+                $current = [];
+                $currentWords = 0;
+            }
+
+            $current[] = $turn;
+            $currentWords += $turnWords;
+        }
+
+        if (!empty($current)) {
+            $segments[] = trim(implode("\n", $current));
+        }
+
+        return array_values(array_filter($segments));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function extractTurns(string $script): array
+    {
+        $pattern = '/(?=^(' . preg_quote($this->speaker1, '/') . '|' . preg_quote($this->speaker2, '/') . '):)/m';
+        $parts = preg_split($pattern, trim($script), -1, PREG_SPLIT_NO_EMPTY);
+        if (!$parts) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', $parts), function ($part) {
+            return preg_match('/^(' . preg_quote($this->speaker1, '/') . '|' . preg_quote($this->speaker2, '/') . '):/u', $part) === 1;
+        }));
+    }
+
+    /**
      * Getters para los nombres de los speakers
      */
     public function getSpeaker1(): string
@@ -320,6 +374,20 @@ PROMPT;
      */
     public function buildTtsPrompt(string $script): string
     {
+        return $this->buildTtsPromptForSegment($script, null, null);
+    }
+
+    /**
+     * Construye el prompt TTS para un segmento. Se usa para generar podcasts largos
+     * por bloques y evitar deriva de calidad en audios de muchos minutos.
+     */
+    public function buildTtsPromptForSegment(string $script, ?int $segmentIndex = null, ?int $totalSegments = null): string
+    {
+        $segmentNote = '';
+        if ($segmentIndex !== null && $totalSegments !== null && $totalSegments > 1) {
+            $segmentNote = "\nSegment continuity:\n* Este es el segmento {$segmentIndex} de {$totalSegments} de un mismo podcast.\n* Mantén exactamente la misma presencia de estudio, distancia de micro, timbre, claridad, volumen percibido y energía que en el resto de segmentos.\n* No sonar lejos, amortiguado, reverberante, filtrado, dentro de un vaso ni como si las voces estuvieran en otra habitación.\n";
+        }
+
         return <<<PROMPT
 # AUDIO PROFILES
 ## {$this->speaker1}: presentadora principal
@@ -352,6 +420,8 @@ Delivery:
 * No leer los nombres de los speakers en voz alta.
 * Interpretar los tags de audio en inglés entre corchetes como instrucciones de interpretación, no como texto hablado.
 * No añadir música, efectos, títulos externos ni contenido que no esté en el transcript.
+* Mantener voces claras, cercanas y limpias durante todo el segmento, sin cambiar la calidad acústica.
+{$segmentNote}
 
 # TRANSCRIPT
 TTS the following podcast conversation between {$this->speaker1} and {$this->speaker2}:

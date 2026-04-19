@@ -44,8 +44,8 @@ if (!$isCliOrCron) {
     session_write_close();
 }
 
-// Configurar tiempo máximo de ejecución (5 minutos para podcasts largos)
-set_time_limit(300);
+// Configurar tiempo máximo de ejecución (15 minutos para podcasts largos por segmentos)
+set_time_limit(900);
 
 // Enviar respuesta inmediata al frontend para no bloquear
 if (!$isCliOrCron && isset($_SERVER['HTTP_HOST'])) {
@@ -71,8 +71,8 @@ if (!$isCliOrCron && isset($_SERVER['HTTP_HOST'])) {
 
 $repo = new BackgroundJobsRepo();
 
-// Primero, resetear jobs "colgados" (más de 5 minutos en processing)
-$stuckReset = $repo->resetStuckJobs(5);
+// Primero, resetear jobs "colgados" (más de 15 minutos en processing)
+$stuckReset = $repo->resetStuckJobs(15);
 
 // Obtener siguiente job pendiente
 $job = $repo->getNextPending();
@@ -224,7 +224,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     $scriptDisplay = PodcastScriptGenerator::cleanAudioTags($script);
     
     // === PASO 3: Generar audio ===
-    $repo->updateProgress($jobId, 'Sintetizando audio con IA (esto puede tardar hasta 5 minutos)...');
+    $repo->updateProgress($jobId, 'Sintetizando audio con IA por bloques...');
     
     $geminiKey = Env::get('GEMINI_API_KEY');
     if (empty($geminiKey)) {
@@ -232,14 +232,27 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     }
     
     $ttsClient = new GeminiTtsClient();
-    $ttsPrompt = $scriptGenerator->buildTtsPrompt($script);
+    $scriptSegments = $scriptGenerator->splitScriptForTts($script);
+    $totalSegments = count($scriptSegments);
+    $ttsPrompts = [];
+    foreach ($scriptSegments as $index => $segment) {
+        $ttsPrompts[] = $scriptGenerator->buildTtsPromptForSegment($segment, $index + 1, $totalSegments);
+    }
     
-    $audioResult = $ttsClient->generateMultiSpeaker(
-        $ttsPrompt,
+    $audioResult = $ttsClient->generateMultiSpeakerSegments(
+        $ttsPrompts,
         $speaker1,
         $speaker2,
         'Aoede',
-        'Orus'
+        'Orus',
+        350,
+        function (int $current, int $total) use ($repo, $jobId) {
+            $repo->updateProgress(
+                $jobId,
+                "Sintetizando audio con IA ({$current}/{$total})...",
+                'Generando el podcast por bloques para mantener la calidad de voz.'
+            );
+        }
     );
     
     if (!$audioResult['success']) {
@@ -283,7 +296,8 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
             'duration_estimate' => $estimatedDuration,
             'speaker1' => $speaker1,
             'speaker2' => $speaker2,
-            'tts_model' => $ttsClient->getModel()
+            'tts_model' => $ttsClient->getModel(),
+            'tts_segments' => $audioResult['segments'] ?? $totalSegments
         ],
         'content_type' => 'original',
         'business_line' => null,
@@ -306,6 +320,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
         'audio_url' => $wavUrl,
         'duration_estimate' => $estimatedDuration,
         'tts_model' => $ttsClient->getModel(),
+        'tts_segments' => $audioResult['segments'] ?? $totalSegments,
         'source' => $source
     ];
 }
