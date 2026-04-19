@@ -51,6 +51,12 @@
   let pollTimer = null;
   let pollStartTime = null;
 
+  function getCsrfToken() {
+    return (typeof window !== 'undefined' && window.CSRF_TOKEN)
+      ? window.CSRF_TOKEN
+      : (document.querySelector('meta[name="csrf-token"]')?.content || '');
+  }
+
   // === Tab switching ===
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -136,13 +142,18 @@
 
     try {
       // Crear job en background
+      const csrfToken = getCsrfToken();
       const response = await fetch('/api/jobs/create.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
         credentials: 'include',
         body: JSON.stringify({
           job_type: 'podcast',
-          input_data: inputData
+          input_data: inputData,
+          csrf_token: csrfToken
         })
       });
 
@@ -262,11 +273,15 @@
     }
 
     try {
+      const csrfToken = getCsrfToken();
       const res = await fetch('/api/jobs/cancel.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
         credentials: 'include',
-        body: JSON.stringify({ job_id: currentJobId })
+        body: JSON.stringify({ job_id: currentJobId, csrf_token: csrfToken })
       });
 
       const data = await res.json();
@@ -676,7 +691,7 @@
     if (!confirm('¿Eliminar este podcast del historial?')) return;
 
     try {
-      const csrfToken = (typeof window !== 'undefined' && window.CSRF_TOKEN) ? window.CSRF_TOKEN : (document.querySelector('meta[name="csrf-token"]')?.content || '');
+      const csrfToken = getCsrfToken();
       const res = await fetch('/api/gestures/delete.php', {
         method: 'POST',
         headers: {
