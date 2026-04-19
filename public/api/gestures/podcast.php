@@ -147,8 +147,8 @@ try {
     // === PASO 3: Generar audio ===
     $ttsClient = new GeminiTtsClient();
     
-    // Preparar el texto para TTS con formato de diálogo
-    $ttsPrompt = "TTS the following podcast conversation between {$speaker1} and {$speaker2} in Spanish:\n\n" . $script;
+    // Preparar el texto para Gemini 3.1 TTS con perfiles, escena y notas de dirección.
+    $ttsPrompt = $scriptGenerator->buildTtsPrompt($script);
     
     $audioResult = $ttsClient->generateMultiSpeaker(
         $ttsPrompt,
@@ -195,11 +195,12 @@ try {
             'audio_url' => $wavUrl,
             'duration_estimate' => $estimatedDuration,
             'speaker1' => $speaker1,
-            'speaker2' => $speaker2
+            'speaker2' => $speaker2,
+            'tts_model' => $ttsClient->getModel()
         ],
         'content_type' => 'original',
         'business_line' => null,
-        'model' => 'gemini-2.5-flash-preview-tts'
+        'model' => $ttsClient->getModel()
     ]);
 
     // === Respuesta final ===
@@ -215,7 +216,8 @@ try {
         'audio' => [
             'url' => $wavUrl,
             'mime_type' => 'audio/wav',
-            'duration_estimate' => $estimatedDuration
+            'duration_estimate' => $estimatedDuration,
+            'model' => $ttsClient->getModel()
         ],
         'source' => $source
     ]);

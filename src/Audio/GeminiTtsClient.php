@@ -7,28 +7,35 @@ use App\Env;
  * Cliente para Gemini TTS (Text-to-Speech)
  * 
  * Usa la API directa de Google AI Studio para generar audio
- * con el modelo gemini-2.5-flash-preview-tts
+ * con el modelo Gemini 3.1 Flash TTS
  * 
  * Soporta multi-speaker (hasta 2 voces) para diálogos/podcasts
  */
 class GeminiTtsClient
 {
+    public const MODEL = 'gemini-3.1-flash-tts-preview';
+
     private string $apiKey;
-    private string $model = 'gemini-2.5-flash-preview-tts';
+    private string $model = self::MODEL;
     private string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/';
     
-    // Voces disponibles (30 en total)
-    // Ver todas en: https://aistudio.google.com/generate-speech
+    // Voces oficiales de Gemini TTS. El acento y estilo se controlan con el prompt.
     public const VOICES = [
-        'Puck', 'Charon', 'Kore', 'Fenrir', 'Aoede', 'Leda', 'Orus', 'Zephyr',
-        'Kari', 'Perseus', 'Mira', 'Stella', 'Aurora', 'Luna', 'Sol', 'Nova',
-        'Orion', 'Phoenix', 'Sirius', 'Vega', 'Callisto', 'Titan', 'Io', 'Europa',
-        'Ganymede', 'Rhea', 'Dione', 'Tethys', 'Enceladus', 'Mimas'
+        'Zephyr', 'Puck', 'Charon', 'Kore', 'Fenrir', 'Leda', 'Orus', 'Aoede',
+        'Callirrhoe', 'Autonoe', 'Enceladus', 'Iapetus', 'Umbriel', 'Algieba',
+        'Despina', 'Erinome', 'Algenib', 'Rasalgethi', 'Laomedeia', 'Achernar',
+        'Alnilam', 'Schedar', 'Gacrux', 'Pulcherrima', 'Achird', 'Zubenelgenubi',
+        'Vindemiatrix', 'Sadachbia', 'Sadaltager', 'Sulafat'
     ];
 
     public function __construct(?string $apiKey = null)
     {
         $this->apiKey = $apiKey ?? Env::get('GEMINI_API_KEY', '');
+    }
+
+    public function getModel(): string
+    {
+        return $this->model;
     }
 
     /**

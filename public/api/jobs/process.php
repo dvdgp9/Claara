@@ -231,7 +231,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     }
     
     $ttsClient = new GeminiTtsClient();
-    $ttsPrompt = "TTS the following podcast conversation between {$speaker1} and {$speaker2} in Spanish:\n\n" . $script;
+    $ttsPrompt = $scriptGenerator->buildTtsPrompt($script);
     
     $audioResult = $ttsClient->generateMultiSpeaker(
         $ttsPrompt,
@@ -280,11 +280,12 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
             'audio_url' => $wavUrl,
             'duration_estimate' => $estimatedDuration,
             'speaker1' => $speaker1,
-            'speaker2' => $speaker2
+            'speaker2' => $speaker2,
+            'tts_model' => $ttsClient->getModel()
         ],
         'content_type' => 'original',
         'business_line' => null,
-        'model' => 'gemini-2.5-flash-preview-tts'
+        'model' => $ttsClient->getModel()
     ]);
     
     // Registrar en estadísticas (usage_log)
@@ -301,6 +302,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
         'speaker2' => $speaker2,
         'audio_url' => $wavUrl,
         'duration_estimate' => $estimatedDuration,
+        'tts_model' => $ttsClient->getModel(),
         'source' => $source
     ];
 }
