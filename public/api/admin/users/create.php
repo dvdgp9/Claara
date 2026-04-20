@@ -2,11 +2,14 @@
 require_once __DIR__ . '/../../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../../src/Auth/AdminGuard.php';
 require_once __DIR__ . '/../../../../src/Repos/UsersRepo.php';
+require_once __DIR__ . '/../../../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Response;
 use App\Session;
+use App\DB;
 use Auth\AdminGuard;
 use Repos\UsersRepo;
+use Repos\UserFeatureAccessRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     Response::error('method_not_allowed', 'Sólo POST', 405);
@@ -36,16 +39,33 @@ if (strlen($password) < 8) {
     Response::error('validation_error', 'La contraseña debe tener al menos 8 caracteres', 400);
 }
 
+$pdo = DB::pdo();
+
 // Verificar si el email ya existe
-$repo = new UsersRepo();
+$repo = new UsersRepo($pdo);
 $existing = $repo->findByEmail($email);
 if ($existing) {
     Response::error('validation_error', 'El email ya está en uso', 400);
 }
 
 // Crear usuario
-$passwordHash = password_hash($password, PASSWORD_ARGON2ID);
-$userId = $repo->create($email, $passwordHash, $firstName, $lastName, $departmentId, $isSuperadmin);
+$pdo->beginTransaction();
+try {
+    $passwordHash = password_hash($password, PASSWORD_ARGON2ID);
+    $userId = $repo->create($email, $passwordHash, $firstName, $lastName, $departmentId, $isSuperadmin);
+
+    $accessRepo = new UserFeatureAccessRepo($pdo);
+    if (!$accessRepo->grantDefaultAccessForNewUser($userId)) {
+        throw new \RuntimeException('No se pudieron aplicar los permisos por defecto');
+    }
+
+    $pdo->commit();
+} catch (\Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    Response::serverError('create_failed', $e, 'No se pudo crear el usuario');
+}
 
 Response::json([
     'success' => true,

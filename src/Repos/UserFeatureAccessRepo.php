@@ -6,11 +6,20 @@ use PDO;
 
 class UserFeatureAccessRepo
 {
+    public const DEFAULT_NEW_USER_ACCESS = [
+        'feature:image-generation' => true,
+        'voice:lex' => true,
+        'gesture:podcast-from-article' => true,
+        'gesture:image-editor' => true,
+        'gesture:content-repurposer' => true,
+        'gesture:sop-generator' => true,
+    ];
+
     private PDO $pdo;
 
-    public function __construct()
+    public function __construct(?PDO $pdo = null)
     {
-        $this->pdo = DB::pdo();
+        $this->pdo = $pdo ?? DB::pdo();
     }
 
     /**
@@ -162,18 +171,34 @@ class UserFeatureAccessRepo
      */
     public function setMultipleAccess(int $userId, array $permissions): bool
     {
-        $this->pdo->beginTransaction();
+        $startedTransaction = !$this->pdo->inTransaction();
+        if ($startedTransaction) {
+            $this->pdo->beginTransaction();
+        }
+
         try {
             foreach ($permissions as $key => $enabled) {
                 [$featureType, $featureSlug] = explode(':', $key, 2);
                 $this->setAccess($userId, $featureType, $featureSlug, $enabled);
             }
-            $this->pdo->commit();
+            if ($startedTransaction) {
+                $this->pdo->commit();
+            }
             return true;
-        } catch (\Exception $e) {
-            $this->pdo->rollBack();
+        } catch (\Throwable $e) {
+            if ($startedTransaction && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             return false;
         }
+    }
+
+    /**
+     * Aplica el paquete de permisos inicial para usuarios creados desde admin.
+     */
+    public function grantDefaultAccessForNewUser(int $userId): bool
+    {
+        return $this->setMultipleAccess($userId, self::DEFAULT_NEW_USER_ACCESS);
     }
 
     /**
