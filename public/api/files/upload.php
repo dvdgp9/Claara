@@ -41,39 +41,7 @@ foreach ($expiredFiles as $expired) {
 }
 $repo->deleteExpired();
 
-// Procesar request - soportar FormData (multipart/form-data) y JSON
-$isFormData = isset($_FILES['file']);
-
-if ($isFormData) {
-    // FormData: archivo binario directo
-    if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-        Response::error('validation_error', 'Error al subir archivo', 400);
-    }
-    
-    $uploadedFile = $_FILES['file'];
-    $binaryData = file_get_contents($uploadedFile['tmp_name']);
-    $mimeType = $uploadedFile['type'];
-    $originalName = $uploadedFile['name'];
-    $conversationId = isset($_POST['conversation_id']) ? (int)$_POST['conversation_id'] : null;
-} else {
-    // JSON: archivo en base64
-    $body = json_decode(file_get_contents('php://input'), true) ?? [];
-    $base64Data = $body['data'] ?? '';
-    $mimeType = $body['mime_type'] ?? '';
-    $originalName = $body['name'] ?? 'archivo';
-    $conversationId = isset($body['conversation_id']) ? (int)$body['conversation_id'] : null;
-    
-    if (empty($base64Data) || empty($mimeType)) {
-        Response::error('validation_error', 'Datos de archivo requeridos', 400);
-    }
-    
-    $binaryData = base64_decode($base64Data);
-    if ($binaryData === false) {
-        Response::error('validation_error', 'Datos base64 inválidos', 400);
-    }
-}
-
-// Validar tipo MIME
+// Tipos permitidos (mime => extensión)
 $allowedTypes = [
     'application/pdf' => 'pdf',
     'image/png' => 'png',
@@ -85,7 +53,88 @@ $allowedTypes = [
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx'
 ];
 
-if (!isset($allowedTypes[$mimeType])) {
+// Mapa de extensiones a mime canónico (para cuando el navegador no lo detecta bien)
+$extensionToMime = [
+    'pdf'  => 'application/pdf',
+    'png'  => 'image/png',
+    'jpg'  => 'image/jpeg',
+    'jpeg' => 'image/jpeg',
+    'gif'  => 'image/gif',
+    'webp' => 'image/webp',
+    'csv'  => 'text/csv',
+    'xls'  => 'application/vnd.ms-excel',
+    'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+
+/**
+ * Resuelve un mime type válido combinando: tipo declarado, detección por
+ * magic bytes (finfo) y extensión del nombre de archivo. Devuelve cadena
+ * vacía si no se puede mapear a un tipo permitido.
+ */
+$resolveAllowedMimeType = function (string $declared, string $filename, ?string $tmpPath) use ($allowedTypes, $extensionToMime): string {
+    $declared = strtolower(trim(preg_replace('/;.*$/', '', $declared)));
+    if ($declared !== '' && isset($allowedTypes[$declared])) {
+        return $declared;
+    }
+
+    // Detección por contenido (finfo) si hay archivo físico
+    if ($tmpPath && function_exists('finfo_open')) {
+        $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo) {
+            $detected = strtolower((string)@finfo_file($finfo, $tmpPath));
+            @finfo_close($finfo);
+            if ($detected !== '' && isset($allowedTypes[$detected])) {
+                return $detected;
+            }
+        }
+    }
+
+    // Fallback por extensión del nombre original
+    $ext = strtolower((string)pathinfo($filename, PATHINFO_EXTENSION));
+    if ($ext !== '' && isset($extensionToMime[$ext])) {
+        return $extensionToMime[$ext];
+    }
+
+    return '';
+};
+
+// Procesar request - soportar FormData (multipart/form-data) y JSON
+$isFormData = isset($_FILES['file']);
+
+if ($isFormData) {
+    // FormData: archivo binario directo
+    if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        Response::error('validation_error', 'Error al subir archivo', 400);
+    }
+
+    $uploadedFile = $_FILES['file'];
+    $binaryData = file_get_contents($uploadedFile['tmp_name']);
+    $originalName = $uploadedFile['name'];
+    $mimeType = $resolveAllowedMimeType(
+        (string)($uploadedFile['type'] ?? ''),
+        $originalName,
+        $uploadedFile['tmp_name'] ?? null
+    );
+    $conversationId = isset($_POST['conversation_id']) ? (int)$_POST['conversation_id'] : null;
+} else {
+    // JSON: archivo en base64
+    $body = json_decode(file_get_contents('php://input'), true) ?? [];
+    $base64Data = $body['data'] ?? '';
+    $originalName = $body['name'] ?? 'archivo';
+    $mimeType = $resolveAllowedMimeType((string)($body['mime_type'] ?? ''), $originalName, null);
+    $conversationId = isset($body['conversation_id']) ? (int)$body['conversation_id'] : null;
+
+    if (empty($base64Data)) {
+        Response::error('validation_error', 'Datos de archivo requeridos', 400);
+    }
+
+    $binaryData = base64_decode($base64Data);
+    if ($binaryData === false) {
+        Response::error('validation_error', 'Datos base64 inválidos', 400);
+    }
+}
+
+if ($mimeType === '' || !isset($allowedTypes[$mimeType])) {
     Response::error('validation_error', 'Tipo de archivo no soportado', 400);
 }
 

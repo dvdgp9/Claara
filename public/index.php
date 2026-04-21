@@ -2219,7 +2219,7 @@ $headerShowLogo = true;
       // 1. Mostrar mensaje de usuario inmediatamente
       const userFile = fileToUpload ? {
         name: fileToUpload.name,
-        mime_type: fileToUpload.mime_type,
+        mime_type: fileToUpload.type || '',
         url: URL.createObjectURL(fileToUpload)
       } : null;
       
@@ -2244,10 +2244,14 @@ $headerShowLogo = true;
             method: 'POST',
             body: formData
           });
-          const uploadData = await uploadRes.json();
-          if (uploadData.success) {
-            uploadedFileId = uploadData.file_id;
+          const uploadData = await uploadRes.json().catch(() => ({}));
+          if (!uploadRes.ok || !uploadData.success) {
+            const reason = uploadData?.error?.message
+              || uploadData?.message
+              || `HTTP ${uploadRes.status}`;
+            throw new Error('No se ha podido subir el archivo: ' + reason);
           }
+          uploadedFileId = uploadData.file_id;
         }
 
         // 4. Iniciar stream
