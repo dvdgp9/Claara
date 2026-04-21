@@ -46,6 +46,7 @@
   const addGenerateReferenceBtn = document.getElementById('add-generate-reference-btn');
   const generateReferenceInput = document.getElementById('generate-reference-input');
   const generateReferenceList = document.getElementById('generate-reference-list');
+  const generateReferenceCount = document.getElementById('generate-reference-count');
   const intentCards = document.querySelectorAll('.intent-card');
   const editQuickChips = document.querySelectorAll('.edit-quick-chip');
 
@@ -181,6 +182,15 @@
       renderGenerateReferences();
     }
 
+    // Auto-abrir referencias cuando son claramente necesarias (cartel con logos)
+    if (generateReferencesSection && cfg.mode === 'generate') {
+      if (intentKey === 'poster-logos') {
+        generateReferencesSection.open = true;
+      } else if (generateReferenceImages.length === 0) {
+        generateReferencesSection.open = false;
+      }
+    }
+
     updateSummary();
   }
 
@@ -313,7 +323,12 @@
   }
 
   function setupGenerateReferences() {
-    addGenerateReferenceBtn?.addEventListener('click', () => {
+    addGenerateReferenceBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (generateReferencesSection && !generateReferencesSection.open) {
+        generateReferencesSection.open = true;
+      }
       generateReferenceInput?.click();
     });
 
@@ -350,8 +365,17 @@
 
   function renderGenerateReferences() {
     if (!generateReferenceList) return;
+
+    // Actualizar contador en la etiqueta del summary
+    if (generateReferenceCount) {
+      const n = generateReferenceImages.length;
+      generateReferenceCount.textContent = n === 0
+        ? '(opcional · máx 4)'
+        : `(${n}/4)`;
+    }
+
     if (generateReferenceImages.length === 0) {
-      generateReferenceList.innerHTML = '<div class="col-span-full text-xs text-slate-400">Sin referencias cargadas.</div>';
+      generateReferenceList.innerHTML = '<div class="col-span-full text-[11px] text-slate-400 pt-1">Sin referencias cargadas. Útil para cartel con logos, paletas o estilo.</div>';
       return;
     }
 
@@ -450,10 +474,6 @@
   function updateSummary() {
     if (!summaryText) return;
     const mode = currentModeInput?.value || 'generate';
-    const intent = getCurrentIntent();
-    const intentLabel = intentCards.length > 0
-      ? (Array.from(intentCards).find(card => card.dataset.intent === intent)?.querySelector('.text-xs')?.textContent || 'Crear desde cero')
-      : 'Crear desde cero';
 
     const format = document.querySelector('input[name="format"]:checked')?.value || '';
     const style = document.querySelector('input[name="style"]:checked')?.value || '';
@@ -461,22 +481,23 @@
     const lighting = document.querySelector('input[name="lighting"]:checked')?.value || '';
     const composition = document.querySelector('input[name="composition"]:checked')?.value || '';
 
-    const parts = [mode === 'generate' ? `Modo generar` : `Modo editar`, intentLabel];
-
-    if (format) parts.push(`formato ${format}`);
-    if (style) parts.push(`estilo ${style}`);
-    if (lighting) parts.push(`luz ${lighting}`);
-    if (color) parts.push(`color ${color}`);
-    if (composition) parts.push(`composicion ${composition}`);
+    const parts = [];
+    if (format) parts.push(format);
+    if (style) parts.push(style);
+    if (composition) parts.push(composition);
+    if (lighting) parts.push(lighting);
+    if (color) parts.push(color);
 
     if (mode === 'generate' && generateReferenceImages.length > 0) {
-      parts.push(`${generateReferenceImages.length} referencia${generateReferenceImages.length > 1 ? 's' : ''}`);
+      parts.push(`${generateReferenceImages.length} ref${generateReferenceImages.length > 1 ? 's' : ''}`);
     }
     if (mode === 'edit' && sourceImageBase64) {
-      parts.push(targetImageBase64 ? 'con referencia objetivo' : 'con imagen base');
+      parts.push(targetImageBase64 ? 'con objetivo' : 'base cargada');
     }
 
-    summaryText.textContent = parts.join(' · ');
+    summaryText.textContent = parts.length === 0
+      ? 'Parámetros automáticos'
+      : parts.join(' · ');
   }
 
   function buildPrompt(description, options) {

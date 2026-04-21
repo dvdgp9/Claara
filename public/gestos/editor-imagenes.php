@@ -73,118 +73,105 @@ $headerDrawerId = 'gesture-history-drawer';
 
       <div class="flex-1 flex overflow-hidden">
         <!-- Zona central: imagen + controles superiores/inferiores -->
-        <div class="flex-1 flex flex-col overflow-hidden p-4 lg:p-6">
+        <div class="flex-1 flex flex-col overflow-hidden p-3 lg:p-4">
           
           <!-- Controles superiores: intención + prompt + acciones -->
-          <div class="shrink-0 mb-4 space-y-3 rounded-2xl border border-slate-200/70 bg-white/85 p-3 lg:p-4 shadow-sm">
+          <div class="shrink-0 mb-3 space-y-2.5 rounded-2xl border border-slate-200/70 bg-white/85 p-3 shadow-sm">
             <!-- Selector de intención -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2" id="intent-grid">
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all active min-h-[74px]" data-intent="from-scratch">
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5" id="intent-grid">
+              <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all active" data-intent="from-scratch">
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-sparks text-amber-500"></i>
                   Crear desde cero
                 </div>
-                <div class="text-[11px] text-slate-500 mt-1 pl-6">Idea libre y estilo visual</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Idea libre</div>
               </button>
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all min-h-[74px]" data-intent="edit-image">
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="edit-image">
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-edit text-amber-500"></i>
-                  Editar una imagen
+                  Editar imagen
                 </div>
-                <div class="text-[11px] text-slate-500 mt-1 pl-6">Cambios precisos sobre base</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Cambios sobre base</div>
               </button>
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all min-h-[74px]" data-intent="corporate-image">
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="corporate-image">
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-building text-amber-500"></i>
-                  Imagen corporativa
+                  Corporativa
                 </div>
-                <div class="text-[11px] text-slate-500 mt-1 pl-6">Comunicación de marca</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Marca y comunicación</div>
               </button>
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all min-h-[74px]" data-intent="product-mockup">
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="product-mockup">
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-box text-amber-500"></i>
-                  Producto / mockup
+                  Producto
                 </div>
-                <div class="text-[11px] text-slate-500 mt-1 pl-6">Presentación comercial</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Mockup comercial</div>
               </button>
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all min-h-[74px]" data-intent="poster-logos">
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="poster-logos">
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-media-image text-amber-500"></i>
-                  Cartel con logos
+                  Cartel + logos
                 </div>
-                <div class="text-[11px] text-slate-500 mt-1 pl-6">Hasta 4 referencias visuales</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Hasta 4 referencias</div>
               </button>
-            </div>
-
-            <!-- Fila 1: Resumen de parámetros -->
-            <div class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 text-xs text-slate-600 shrink-0">
-                  <i class="iconoir-frame"></i>
-                  <span class="font-medium">Parámetros:</span>
-                </div>
-                <!-- Desktop hint -->
-                <div class="text-xs text-slate-500 hidden lg:block">
-                  Ajusta en el panel derecho →
-                </div>
-                <!-- Mobile button to open parameters -->
-                <button type="button" id="open-params-mobile" class="lg:hidden px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors flex items-center gap-1 shrink-0">
-                  <i class="iconoir-settings"></i>
-                  Ajustar
-                </button>
-              </div>
-              <!-- Valores seleccionados en línea separada -->
-              <div id="summary-text" class="mt-1.5 text-xs text-slate-600 leading-relaxed">Decisión del modelo (IA)</div>
             </div>
 
             <div id="image-error" class="hidden px-3 py-2 text-sm bg-red-50 border border-red-200 text-red-700 rounded-xl"></div>
-            
-            <!-- Fila 2: Prompt principal -->
-            <div class="flex-1 relative">
-              <textarea id="image-description" rows="3" 
-                class="w-full border-2 border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white text-sm"
-                placeholder="Describe la imagen que quieres crear..."></textarea>
-            </div>
 
-            <!-- Referencias para modo generar -->
-            <div id="generate-references-section" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-              <div class="flex items-center justify-between gap-2 mb-2">
-                <div>
-                  <p class="text-xs font-semibold text-slate-700">Referencias visuales (modo generar)</p>
-                  <p class="text-[11px] text-slate-500">Útil para carteles, logos y estilo. Máximo 4 imágenes.</p>
+            <!-- Prompt principal con botón integrado -->
+            <div class="relative">
+              <textarea id="image-description" rows="3"
+                class="w-full border-2 border-slate-200 rounded-xl pl-4 pr-4 pt-3 pb-14 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white text-sm"
+                placeholder="Describe la imagen que quieres crear..."></textarea>
+
+              <!-- Barra inferior dentro del textarea: resumen params + botón generar -->
+              <div class="absolute left-2 right-2 bottom-2 flex items-center gap-2 pointer-events-none">
+                <div class="flex-1 min-w-0 flex items-center gap-1.5 text-[11px] text-slate-500 pointer-events-auto">
+                  <button type="button" id="open-params-mobile" class="lg:hidden px-2 py-1 text-[11px] font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors flex items-center gap-1 shrink-0">
+                    <i class="iconoir-settings"></i> Ajustar
+                  </button>
+                  <i class="iconoir-frame shrink-0 hidden lg:inline text-slate-400"></i>
+                  <span id="summary-text" class="truncate hidden lg:inline">Parámetros automáticos</span>
                 </div>
-                <button type="button" id="add-generate-reference-btn" class="px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors">
-                  Añadir
+                <button type="button" id="generate-image-btn"
+                  class="pointer-events-auto px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 shrink-0">
+                  <i class="iconoir-sparks"></i>
+                  <span>Generar</span>
                 </button>
               </div>
-              <input type="file" id="generate-reference-input" accept="image/*" multiple class="hidden" />
-              <div id="generate-reference-list" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1"></div>
-            </div>
 
-            <!-- Acciones rápidas para modo edición -->
-            <div id="edit-quick-actions" class="hidden rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-              <p class="text-xs font-semibold text-slate-700 mb-2">Acciones rápidas</p>
-              <div class="flex flex-wrap gap-1.5">
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Cambia el fondo por uno más profesional">Cambiar fondo</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Añade un logo de forma natural y proporcional">Añadir logo</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Quita el objeto del primer plano y rellena el fondo">Quitar objeto</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Mejora la iluminación y el contraste manteniendo realismo">Mejorar luz</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Cambia la paleta de color manteniendo composición">Cambiar color</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Extiende el encuadre con más espacio alrededor">Extender encuadre</button>
-              </div>
-            </div>
-            
-            <!-- Fila 3: Modo y Botón -->
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-              <button type="button" id="generate-image-btn" 
-                class="w-full sm:w-auto sm:ml-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
-                <i class="iconoir-sparks"></i>
-                <span>Generar</span>
-              </button>
-              
               <input type="hidden" id="current-mode" value="generate" />
               <input type="hidden" id="current-provider" value="nanobanana" />
               <input type="hidden" id="current-intent" value="from-scratch" />
+            </div>
+
+            <!-- Referencias para modo generar (colapsable) -->
+            <details id="generate-references-section" class="group rounded-xl border border-slate-200 bg-slate-50">
+              <summary class="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer list-none">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <i class="iconoir-media-image text-amber-500 shrink-0"></i>
+                  <span class="text-xs font-semibold text-slate-700">Referencias visuales</span>
+                  <span id="generate-reference-count" class="text-[11px] text-slate-500 truncate">(opcional · máx 4)</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span id="add-generate-reference-btn" class="px-2 py-0.5 text-[11px] font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-md transition-colors">Añadir</span>
+                  <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+                </div>
+              </summary>
+              <input type="file" id="generate-reference-input" accept="image/*" multiple class="hidden" />
+              <div id="generate-reference-list" class="grid grid-cols-2 sm:grid-cols-4 gap-2 px-3 pb-3"></div>
+            </details>
+
+            <!-- Acciones rápidas para modo edición -->
+            <div id="edit-quick-actions" class="hidden rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Cambia el fondo por uno más profesional">Cambiar fondo</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Añade un logo de forma natural y proporcional">Añadir logo</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Quita el objeto del primer plano y rellena el fondo">Quitar objeto</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Mejora la iluminación y el contraste manteniendo realismo">Mejorar luz</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Cambia la paleta de color manteniendo composición">Cambiar color</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Extiende el encuadre con más espacio alrededor">Extender encuadre</button>
+              </div>
             </div>
           </div>
           
