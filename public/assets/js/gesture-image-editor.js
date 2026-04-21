@@ -23,8 +23,6 @@
   const loadingMeta = document.getElementById('loading-meta');
   const currentIntentInput = document.getElementById('current-intent');
 
-  const modeGenerateBtn = document.getElementById('mode-generate');
-  const modeEditBtn = document.getElementById('mode-edit');
   const currentModeInput = document.getElementById('current-mode');
   const currentProviderInput = document.getElementById('current-provider');
 
@@ -79,13 +77,6 @@
       promptHint: '',
       preset: {}
     },
-    'portrait-pro': {
-      mode: 'generate',
-      placeholder: 'Describe el retrato profesional (persona, ropa, fondo, actitud)...',
-      defaultDescription: 'Retrato profesional para perfil corporativo, natural y creible',
-      promptHint: 'Prioriza nitidez facial, mirada clara y acabado realista.',
-      preset: { style: 'headshot-pro', composition: 'closeup', lighting: 'studio', color: 'cool', format: '3:4' }
-    },
     'corporate-image': {
       mode: 'generate',
       placeholder: 'Describe la escena corporativa (contexto, personas, mensaje)...',
@@ -118,7 +109,6 @@
     '3d-render': 'Ultra-realistic 3D render with ray-traced lighting and physically accurate materials.',
     'flat-design': 'Premium flat design illustration with clear hierarchy and polished geometry.',
     'isometric': 'Isometric 3D composition with professional visual structure.',
-    'headshot-pro': 'Professional studio headshot, shallow depth of field and crisp facial detail.',
     'luxury-product': 'Luxury product photography for commercial advertising with studio setup.'
   };
 
@@ -211,9 +201,6 @@
     clearError();
 
     const isGenerate = mode === 'generate';
-    modeGenerateBtn?.classList.toggle('active', isGenerate);
-    modeEditBtn?.classList.toggle('active', !isGenerate);
-
     if (!fromIntent && isGenerate && getCurrentIntent() === 'edit-image') {
       setIntent('from-scratch', false);
       return;
@@ -434,9 +421,7 @@
     const lighting = document.querySelector('input[name="lighting"]:checked')?.value || '';
     const composition = document.querySelector('input[name="composition"]:checked')?.value || '';
 
-    const parts = [
-      mode === 'generate' ? `Generar (${intentLabel})` : `Editar (${intentLabel})`
-    ];
+    const parts = [mode === 'generate' ? `Modo generar` : `Modo editar`, intentLabel];
 
     if (format) parts.push(`formato ${format}`);
     if (style) parts.push(`estilo ${style}`);
@@ -709,13 +694,11 @@
       const title = escapeHtml(item.title || 'Imagen generada');
       const timeAgo = formatTimeAgo(new Date(item.created_at));
       const mode = item.mode === 'edit' ? 'Editar' : 'Generar';
-      const thumb = item.thumbnail_image
-        ? `<img src="data:image/png;base64,${item.thumbnail_image}" alt="Miniatura" class="w-12 h-12 rounded-lg object-cover shrink-0" />`
-        : `<div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center shrink-0"><i class="iconoir-media-image text-slate-400"></i></div>`;
-
       return `
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2" data-id="${item.id}">
-          ${thumb}
+          <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
+            <i class="iconoir-media-image text-slate-400"></i>
+          </div>
           <div class="flex-1 min-w-0 cursor-pointer history-item-main">
             <p class="text-sm font-medium text-slate-700 truncate group-hover:text-amber-700">${title}</p>
             <div class="flex items-center gap-2 mt-1">
@@ -902,8 +885,6 @@
     }
   });
 
-  modeGenerateBtn?.addEventListener('click', () => setMode('generate', false));
-  modeEditBtn?.addEventListener('click', () => setMode('edit', false));
   intentCards.forEach(card => {
     card.addEventListener('click', () => setIntent(card.dataset.intent || 'from-scratch', true));
   });

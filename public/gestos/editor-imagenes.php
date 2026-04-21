@@ -78,7 +78,7 @@ $headerDrawerId = 'gesture-history-drawer';
           <!-- Controles superiores: intención + prompt + acciones -->
           <div class="shrink-0 mb-4 space-y-3">
             <!-- Selector de intención -->
-            <div class="grid grid-cols-2 lg:grid-cols-3 gap-2" id="intent-grid">
+            <div class="grid grid-cols-2 lg:grid-cols-2 gap-2" id="intent-grid">
               <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all active" data-intent="from-scratch">
                 <div class="text-xs font-semibold text-slate-700">Crear desde cero</div>
                 <div class="text-[11px] text-slate-500 mt-1">Idea libre y estilo visual</div>
@@ -86,10 +86,6 @@ $headerDrawerId = 'gesture-history-drawer';
               <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="edit-image">
                 <div class="text-xs font-semibold text-slate-700">Editar una imagen</div>
                 <div class="text-[11px] text-slate-500 mt-1">Cambios precisos sobre base</div>
-              </button>
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="portrait-pro">
-                <div class="text-xs font-semibold text-slate-700">Retrato profesional</div>
-                <div class="text-[11px] text-slate-500 mt-1">Headshot limpio y usable</div>
               </button>
               <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="corporate-image">
                 <div class="text-xs font-semibold text-slate-700">Imagen corporativa</div>
@@ -165,19 +161,10 @@ $headerDrawerId = 'gesture-history-drawer';
             
             <!-- Fila 3: Modo y Botón -->
             <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-              <div class="flex items-center gap-2">
-                <!-- Toggle Modo -->
-                <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                  <button type="button" id="mode-generate" class="mode-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active">
-                    <i class="iconoir-sparks mr-1"></i>Generar
-                  </button>
-                  <button type="button" id="mode-edit" class="mode-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
-                    <i class="iconoir-edit mr-1"></i>Editar
-                  </button>
-                </div>
+              <div class="text-xs text-slate-500 px-1">
+                Elige una intención para cambiar el flujo. "Editar una imagen" abre la carga de imagen base.
               </div>
-              
-              <!-- Botón generar -->
+
               <button type="button" id="generate-image-btn" 
                 class="w-full sm:w-auto sm:ml-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 <i class="iconoir-sparks"></i>
@@ -484,13 +471,6 @@ $headerDrawerId = 'gesture-history-drawer';
                   </div>
                 </label>
                 <label class="cursor-pointer">
-                  <input type="radio" name="style" value="headshot-pro" class="hidden peer" />
-                  <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
-                    <i class="iconoir-user text-sm"></i>
-                    <span class="text-[10px] font-medium">Retrato Pro</span>
-                  </div>
-                </label>
-                <label class="cursor-pointer">
                   <input type="radio" name="style" value="luxury-product" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-diamond text-sm"></i>
@@ -687,17 +667,6 @@ $headerDrawerId = 'gesture-history-drawer';
       color: #b45309;
     }
     
-    .mode-toggle-btn {
-      color: #64748b;
-      background: transparent;
-    }
-    
-    .mode-toggle-btn.active {
-      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%) !important;
-      color: white !important;
-      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
-    }
-
     .intent-card.active {
       border-color: #f59e0b;
       background: rgba(245, 158, 11, 0.08);
