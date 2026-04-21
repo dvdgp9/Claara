@@ -128,11 +128,13 @@ class ContentExtractor
         file_put_contents($tempFile, $pdfData);
 
         try {
+            // Solo aceptamos pdftotext como extractor local. El fallback de
+            // extractPdfBasic (regex sobre bytes crudos) devuelve basura en
+            // PDFs modernos con FlateDecode, y esa basura pasaba por válida
+            // reemplazando al PDF real en el contexto. Si pdftotext no está
+            // disponible, devolvemos fallo y el llamador dejará el PDF
+            // adjunto para que OpenRouter lo procese con su parser nativo.
             $text = $this->extractWithPdftotext($tempFile);
-
-            if (empty($text)) {
-                $text = $this->extractPdfBasic($pdfData);
-            }
 
             @unlink($tempFile);
 
