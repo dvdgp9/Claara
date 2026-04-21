@@ -13,6 +13,56 @@ use App\Session;
 use App\Response;
 use Repos\ChatFilesRepo;
 
+function resolveAllowedMimeType(?string $browserMimeType, string $originalName, ?string $tmpPath = null): ?string
+{
+    $browserMimeType = strtolower(trim((string)$browserMimeType));
+    $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+    $allowedTypes = [
+        'application/pdf' => 'pdf',
+        'image/png' => 'png',
+        'image/jpeg' => 'jpg',
+        'image/gif' => 'gif',
+        'image/webp' => 'webp',
+        'text/csv' => 'csv',
+        'application/vnd.ms-excel' => 'xls',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx'
+    ];
+
+    if (isset($allowedTypes[$browserMimeType])) {
+        return $browserMimeType;
+    }
+
+    $extensionMap = [
+        'pdf' => 'application/pdf',
+        'png' => 'image/png',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'csv' => 'text/csv',
+        'xls' => 'application/vnd.ms-excel',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+
+    if (isset($extensionMap[$extension])) {
+        return $extensionMap[$extension];
+    }
+
+    if ($tmpPath && is_file($tmpPath) && function_exists('finfo_open')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo) {
+            $detectedMimeType = strtolower((string)finfo_file($finfo, $tmpPath));
+            finfo_close($finfo);
+            if (isset($allowedTypes[$detectedMimeType])) {
+                return $detectedMimeType;
+            }
+        }
+    }
+
+    return null;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     Response::error('method_not_allowed', 'Solo POST', 405);
 }
@@ -52,15 +102,15 @@ if ($isFormData) {
     
     $uploadedFile = $_FILES['file'];
     $binaryData = file_get_contents($uploadedFile['tmp_name']);
-    $mimeType = $uploadedFile['type'];
     $originalName = $uploadedFile['name'];
+    $mimeType = resolveAllowedMimeType($uploadedFile['type'] ?? '', $originalName, $uploadedFile['tmp_name'] ?? null);
     $conversationId = isset($_POST['conversation_id']) ? (int)$_POST['conversation_id'] : null;
 } else {
     // JSON: archivo en base64
     $body = json_decode(file_get_contents('php://input'), true) ?? [];
     $base64Data = $body['data'] ?? '';
-    $mimeType = $body['mime_type'] ?? '';
     $originalName = $body['name'] ?? 'archivo';
+    $mimeType = resolveAllowedMimeType($body['mime_type'] ?? '', $originalName);
     $conversationId = isset($body['conversation_id']) ? (int)$body['conversation_id'] : null;
     
     if (empty($base64Data) || empty($mimeType)) {
@@ -85,7 +135,7 @@ $allowedTypes = [
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx'
 ];
 
-if (!isset($allowedTypes[$mimeType])) {
+if (!$mimeType || !isset($allowedTypes[$mimeType])) {
     Response::error('validation_error', 'Tipo de archivo no soportado', 400);
 }
 

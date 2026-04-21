@@ -653,6 +653,28 @@ $headerShowLogo = true;
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     ];
 
+    function getMimeTypeFromName(fileName) {
+      const lowerName = (fileName || '').toLowerCase();
+      if (lowerName.endsWith('.pdf')) return 'application/pdf';
+      if (lowerName.endsWith('.png')) return 'image/png';
+      if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) return 'image/jpeg';
+      if (lowerName.endsWith('.gif')) return 'image/gif';
+      if (lowerName.endsWith('.webp')) return 'image/webp';
+      if (lowerName.endsWith('.csv')) return 'text/csv';
+      if (lowerName.endsWith('.xls')) return 'application/vnd.ms-excel';
+      if (lowerName.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      return '';
+    }
+
+    function getNormalizedMimeType(file) {
+      if (!file) return '';
+      const browserType = (file.type || '').toLowerCase();
+      if (VALID_FILE_TYPES.includes(browserType)) {
+        return browserType;
+      }
+      return getMimeTypeFromName(file.name);
+    }
+
     function showImageModeAttachmentWarning() {
       const warningId = 'image-mode-drop-paste-warning';
       const existing = document.getElementById(warningId);
@@ -680,11 +702,12 @@ $headerShowLogo = true;
     function validateAndAddFiles(files, targetArray, renderFn) {
       let addedCount = 0;
       for (const file of files) {
+        const normalizedType = getNormalizedMimeType(file);
         if (file.size > MAX_FILE_SIZE) {
           alert(`El archivo "${file.name}" es demasiado grande. Máximo 30MB.`);
           continue;
         }
-        if (!VALID_FILE_TYPES.includes(file.type)) {
+        if (!normalizedType) {
           alert(`El archivo "${file.name}" no es un tipo soportado.`);
           continue;
         }
@@ -2219,7 +2242,7 @@ $headerShowLogo = true;
       // 1. Mostrar mensaje de usuario inmediatamente
       const userFile = fileToUpload ? {
         name: fileToUpload.name,
-        mime_type: fileToUpload.mime_type,
+        mime_type: getNormalizedMimeType(fileToUpload),
         url: URL.createObjectURL(fileToUpload)
       } : null;
       
@@ -2245,9 +2268,10 @@ $headerShowLogo = true;
             body: formData
           });
           const uploadData = await uploadRes.json();
-          if (uploadData.success) {
-            uploadedFileId = uploadData.file_id;
+          if (!uploadRes.ok || !uploadData.success) {
+            throw new Error(uploadData.error?.message || 'No se ha podido subir el archivo.');
           }
+          uploadedFileId = uploadData.file_id;
         }
 
         // 4. Iniciar stream
@@ -2499,9 +2523,10 @@ $headerShowLogo = true;
       filesPreview.classList.remove('hidden');
       filesList.innerHTML = currentFiles.map((file, idx) => {
         let iconClass = 'iconoir-page text-[#23AAC5]';
-        if (file.type === 'application/pdf') iconClass = 'iconoir-page text-red-500';
-        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#23AAC5]';
-        else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
+        const mimeType = getNormalizedMimeType(file);
+        if (mimeType === 'application/pdf') iconClass = 'iconoir-page text-red-500';
+        else if (mimeType.startsWith('image/')) iconClass = 'iconoir-media-image text-[#23AAC5]';
+        else if (mimeType === 'text/csv' || mimeType.includes('spreadsheet') || mimeType.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
         
         return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
           <i class="${iconClass} text-lg"></i>
@@ -2668,9 +2693,10 @@ $headerShowLogo = true;
       filesPreviewEmpty.classList.remove('hidden');
       filesListEmpty.innerHTML = currentFilesEmpty.map((file, idx) => {
         let iconClass = 'iconoir-page text-[#23AAC5]';
-        if (file.type === 'application/pdf') iconClass = 'iconoir-page text-red-500';
-        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#23AAC5]';
-        else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
+        const mimeType = getNormalizedMimeType(file);
+        if (mimeType === 'application/pdf') iconClass = 'iconoir-page text-red-500';
+        else if (mimeType.startsWith('image/')) iconClass = 'iconoir-media-image text-[#23AAC5]';
+        else if (mimeType === 'text/csv' || mimeType.includes('spreadsheet') || mimeType.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
         
         return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
           <i class="${iconClass} text-lg"></i>
