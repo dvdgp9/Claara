@@ -1,15 +1,13 @@
 /**
- * Gesto: Editor de Imágenes con IA (v2 - Nueva UX)
- * Layout: 3 columnas con imagen central
- * Genera y edita imágenes usando Nanobanana
- * Incluye edición iterativa de imágenes generadas
+ * Gesto: Editor de Imagenes con IA
+ * Flujo: intencion -> generar/editar -> resultado -> iteracion
  */
 (function() {
   'use strict';
 
   const GESTURE_TYPE = 'image-editor';
+  const MAX_GENERATE_REFERENCES = 4;
 
-  // === DOM References ===
   const descriptionField = document.getElementById('image-description');
   const generateBtn = document.getElementById('generate-image-btn');
   const downloadBtn = document.getElementById('download-image-btn');
@@ -19,22 +17,25 @@
   const newImageBtn = document.getElementById('new-image-btn');
   const historyList = document.getElementById('history-list');
   const summaryText = document.getElementById('summary-text');
+  const imageError = document.getElementById('image-error');
+  const loadingTitle = document.getElementById('loading-title');
+  const loadingDetail = document.getElementById('loading-detail');
+  const loadingMeta = document.getElementById('loading-meta');
+  const currentIntentInput = document.getElementById('current-intent');
 
-  // Mode toggles
   const modeGenerateBtn = document.getElementById('mode-generate');
   const modeEditBtn = document.getElementById('mode-edit');
   const currentModeInput = document.getElementById('current-mode');
-
   const currentProviderInput = document.getElementById('current-provider');
 
-  // UI Sections
   const imagePlaceholder = document.getElementById('image-placeholder');
   const editSourceSection = document.getElementById('edit-source-section');
   const imageResult = document.getElementById('image-result');
   const imageLoading = document.getElementById('image-loading');
   const imageCaption = document.getElementById('image-caption');
+  const generateReferencesSection = document.getElementById('generate-references-section');
+  const editQuickActions = document.getElementById('edit-quick-actions');
 
-  // Image elements
   const generatedImage = document.getElementById('generated-image');
   const sourceImageInput = document.getElementById('source-image-input');
   const sourceImagePreview = document.getElementById('source-image-preview');
@@ -44,156 +45,229 @@
   const targetImagePreview = document.getElementById('target-image-preview');
   const targetImagePlaceholder = document.getElementById('target-image-placeholder');
   const targetImageClear = document.getElementById('target-image-clear');
+  const addGenerateReferenceBtn = document.getElementById('add-generate-reference-btn');
+  const generateReferenceInput = document.getElementById('generate-reference-input');
+  const generateReferenceList = document.getElementById('generate-reference-list');
+  const intentCards = document.querySelectorAll('.intent-card');
+  const editQuickChips = document.querySelectorAll('.edit-quick-chip');
 
-  // Lightbox
   const lightbox = document.getElementById('image-lightbox');
   const lightboxImage = document.getElementById('lightbox-image');
   const lightboxClose = document.getElementById('lightbox-close');
 
-  // === State ===
   let sourceImageBase64 = null;
   let targetImageBase64 = null;
+  let generateReferenceImages = [];
   let currentImageBase64 = null;
   let lastPrompt = '';
   let lastInputData = {};
+  let loadingTicker = null;
+  let loadingTickerIndex = 0;
 
-  // === Prompt Maps ===
+  const intentConfig = {
+    'from-scratch': {
+      mode: 'generate',
+      placeholder: 'Describe la imagen que quieres crear...',
+      defaultDescription: '',
+      promptHint: '',
+      preset: {}
+    },
+    'edit-image': {
+      mode: 'edit',
+      placeholder: 'Describe los cambios que quieres hacer sobre la imagen base...',
+      defaultDescription: '',
+      promptHint: '',
+      preset: {}
+    },
+    'portrait-pro': {
+      mode: 'generate',
+      placeholder: 'Describe el retrato profesional (persona, ropa, fondo, actitud)...',
+      defaultDescription: 'Retrato profesional para perfil corporativo, natural y creible',
+      promptHint: 'Prioriza nitidez facial, mirada clara y acabado realista.',
+      preset: { style: 'headshot-pro', composition: 'closeup', lighting: 'studio', color: 'cool', format: '3:4' }
+    },
+    'corporate-image': {
+      mode: 'generate',
+      placeholder: 'Describe la escena corporativa (contexto, personas, mensaje)...',
+      defaultDescription: 'Escena corporativa moderna, limpia y profesional para comunicacion de marca',
+      promptHint: 'Busca composicion limpia con espacio util para copy.',
+      preset: { style: 'corporate', composition: 'negative-space', lighting: 'soft', color: 'corporate', format: '16:9' }
+    },
+    'product-mockup': {
+      mode: 'generate',
+      placeholder: 'Describe el producto o mockup (materiales, entorno, enfoque)...',
+      defaultDescription: 'Presentacion de producto premium en entorno limpio',
+      promptHint: 'Mantener detalle, textura y acabado comercial.',
+      preset: { style: 'luxury-product', composition: 'macro', lighting: 'studio', color: '', format: '4:3' }
+    },
+    'poster-logos': {
+      mode: 'generate',
+      placeholder: 'Describe el cartel y como integrar los logos subidos...',
+      defaultDescription: 'Cartel corporativo moderno integrando los logos de referencia',
+      promptHint: 'Sube logos e indica jerarquia, ubicacion y equilibrio visual.',
+      preset: { style: 'corporate', composition: 'wide', lighting: 'soft', color: 'corporate', format: '4:3' }
+    }
+  };
+
   const styleMap = {
     '': '',
-    'photographic': 'Hyper-realistic professional photography, shot on Sony A7R IV with 35mm G Master lens, 8k resolution, extreme detail',
-    'digital-art': 'High-end digital art illustration, intricate details, vibrant colors, clean vector lines, trending on ArtStation, 8k',
-    'corporate': 'Professional Silicon Valley corporate style, modern business aesthetic, clean and crisp',
-    'minimalist': 'Minimalist fine art photography, simple geometric balance, clean lines, vast negative space',
-    '3d-render': 'Ultra-realistic 3D octane render, Ray tracing, 8k, Unreal Engine 5 style',
-    'flat-design': 'Premium flat design illustration, modern corporate palette, clean shapes',
-    'isometric': 'Isometric 3D illustration, professional architectural visualization style',
-    'headshot-pro': 'Professional studio headshot, 85mm f/1.8 lens, shallow depth of field, sharp focus on eyes',
-    'luxury-product': 'Luxury high-end product photography, commercial advertising style, professional studio lighting'
+    'photographic': 'Hyper-realistic professional photography, shot on Sony A7R IV with 35mm G Master lens, 8k resolution, extreme detail.',
+    'digital-art': 'High-end digital art illustration, intricate details, vibrant colors, clean vector lines, premium finish.',
+    'corporate': 'Professional modern corporate aesthetic, clean, credible and brand-safe composition.',
+    'minimalist': 'Minimalist fine art style, clean lines, simple geometry and balanced negative space.',
+    '3d-render': 'Ultra-realistic 3D render with ray-traced lighting and physically accurate materials.',
+    'flat-design': 'Premium flat design illustration with clear hierarchy and polished geometry.',
+    'isometric': 'Isometric 3D composition with professional visual structure.',
+    'headshot-pro': 'Professional studio headshot, shallow depth of field and crisp facial detail.',
+    'luxury-product': 'Luxury product photography for commercial advertising with studio setup.'
   };
 
   const colorMap = {
     '': '',
-    'warm': 'Warm cinematic color grading, golden hour hues, soft oranges and ambers',
-    'cool': 'Cool professional color palette, crisp teals and blues, modern aesthetic',
-    'corporate': 'Ebonia corporate color scheme (#23AAC5 accent), professional blue-teal tones',
-    'monochrome': 'Fine art monochromatic scheme, rich tonal range',
-    'pastel': 'Soft sophisticated pastel tones, muted and gentle professional colors',
-    'bw': 'Classic black and white film photography, high dynamic range',
-    'vibrant': 'Vibrant and rich color saturation, bold commercial appeal'
+    'warm': 'Warm cinematic color palette with amber highlights and gentle contrast.',
+    'cool': 'Cool professional palette with balanced cyan-blue tones.',
+    'corporate': 'Corporate blue-teal palette aligned with brand communication.',
+    'monochrome': 'Monochrome palette with rich tonal separation.',
+    'pastel': 'Muted pastel tones with soft transitions.',
+    'bw': 'Black and white treatment with strong tonal dynamic range.',
+    'vibrant': 'Vibrant yet controlled saturation for commercial impact.'
   };
 
   const lightingMap = {
     '': '',
-    'natural': 'Natural diffused daylight, soft window light',
-    'studio': 'Classic three-point studio lighting setup, professional key and fill lights',
-    'dramatic': 'Cinematic dramatic lighting, high contrast, chiaroscuro effect',
-    'soft': 'Bright and airy soft diffused lighting, gentle illumination',
-    'backlight': 'Elegant rim lighting, subtle hair light, professional separation',
-    'golden': 'Golden hour sunset lighting, warm glow, long soft shadows',
-    'volumetric': 'Volumetric lighting with subtle light rays, atmospheric depth'
+    'natural': 'Natural soft daylight with realistic shadows.',
+    'studio': 'Studio lighting setup with clear key and fill balance.',
+    'dramatic': 'Dramatic cinematic lighting with controlled contrast.',
+    'soft': 'Soft diffused lighting and clean skin/material rendering.',
+    'backlight': 'Subtle rim and backlight for depth and separation.',
+    'golden': 'Golden hour warmth with gentle directional highlights.',
+    'volumetric': 'Volumetric lighting with atmospheric depth.'
   };
 
   const compositionMap = {
     '': '',
-    'bokeh': 'Shallow depth of field, exquisite soft bokeh background',
-    'closeup': 'Close-up portrait framing, detailed view',
-    'wide': 'Cinematic wide-angle shot, expansive professional scene',
-    'above': 'Bird\'s eye view, professional top-down perspective',
-    'below': 'Low angle heroic shot, dramatic upward perspective',
-    'macro': 'Extreme macro photography, hyper-detailed textures',
-    'negative-space': 'Fine art composition with vast negative space'
+    'bokeh': 'Shallow depth of field with elegant bokeh separation.',
+    'closeup': 'Close-up framing emphasizing subject detail.',
+    'wide': 'Wide composition with environmental context.',
+    'above': 'Top-down perspective with clear geometry.',
+    'below': 'Low-angle perspective for visual impact.',
+    'macro': 'Macro-level detail capture with texture emphasis.',
+    'negative-space': 'Composition with intentional negative space for overlays or copy.'
   };
 
   const formatMap = {
-    '1:1': 'Square format (1:1)',
-    '3:4': 'Portrait format (3:4)',
-    '4:3': 'Landscape format (4:3)',
-    '16:9': 'Widescreen format (16:9)',
-    '9:16': 'Vertical social media format (9:16)'
+    '1:1': 'Square format (1:1).',
+    '3:4': 'Portrait format (3:4).',
+    '4:3': 'Landscape format (4:3).',
+    '16:9': 'Widescreen format (16:9).',
+    '9:16': 'Vertical format (9:16).'
   };
 
-  // === Mode Toggle ===
-  function setMode(mode) {
+  function getCurrentIntent() {
+    return currentIntentInput?.value || 'from-scratch';
+  }
+
+  function setIntent(intentKey, hydratePrompt) {
+    const cfg = intentConfig[intentKey] || intentConfig['from-scratch'];
+    if (currentIntentInput) currentIntentInput.value = intentKey;
+
+    intentCards.forEach(card => {
+      card.classList.toggle('active', card.dataset.intent === intentKey);
+    });
+
+    setMode(cfg.mode, true);
+    applyPreset(cfg.preset || {});
+
+    if (descriptionField) {
+      descriptionField.placeholder = cfg.placeholder || descriptionField.placeholder;
+      if (hydratePrompt && !descriptionField.value.trim() && cfg.defaultDescription) {
+        descriptionField.value = cfg.defaultDescription;
+      }
+    }
+
+    if (intentKey !== 'poster-logos' && generateReferenceImages.length > 0 && cfg.mode !== 'generate') {
+      generateReferenceImages = [];
+      renderGenerateReferences();
+    }
+
+    updateSummary();
+  }
+
+  function applyPreset(preset) {
+    const fields = ['format', 'style', 'color', 'lighting', 'composition'];
+    fields.forEach(field => {
+      const value = preset[field] || '';
+      const selector = `input[name="${field}"][value="${value}"]`;
+      const radio = document.querySelector(selector);
+      if (radio) {
+        radio.checked = true;
+      }
+    });
+  }
+
+  function setMode(mode, fromIntent) {
     if (!currentModeInput) return;
     currentModeInput.value = mode;
+    clearError();
 
-    if (mode === 'generate') {
-      modeGenerateBtn?.classList.add('active');
-      modeEditBtn?.classList.remove('active');
-      if (descriptionField) {
-        descriptionField.placeholder = 'Describe la imagen que quieres crear...';
-      }
-      if (generateBtn) {
-        generateBtn.innerHTML = '<i class="iconoir-sparks"></i><span class="hidden sm:inline">Generar</span>';
-      }
-      // Show appropriate section
-      showGenerateUI();
-    } else {
-      modeEditBtn?.classList.add('active');
-      modeGenerateBtn?.classList.remove('active');
-      if (descriptionField) {
-        descriptionField.placeholder = 'Describe los cambios: "Añade gafas de sol", "Cambia el fondo a playa"...';
-      }
-      if (generateBtn) {
-        generateBtn.innerHTML = '<i class="iconoir-edit"></i><span class="hidden sm:inline">Editar</span>';
-      }
-      // Show edit UI
-      showEditUI();
+    const isGenerate = mode === 'generate';
+    modeGenerateBtn?.classList.toggle('active', isGenerate);
+    modeEditBtn?.classList.toggle('active', !isGenerate);
+
+    if (!fromIntent && isGenerate && getCurrentIntent() === 'edit-image') {
+      setIntent('from-scratch', false);
+      return;
     }
-  }
+    if (!fromIntent && !isGenerate && getCurrentIntent() !== 'edit-image') {
+      setIntent('edit-image', false);
+      return;
+    }
 
-  function showGenerateUI() {
-    imagePlaceholder?.classList.remove('hidden');
-    editSourceSection?.classList.add('hidden');
-    // Keep image result visible if there's an image
-    if (!currentImageBase64) {
+    if (descriptionField && !fromIntent) {
+      descriptionField.placeholder = isGenerate
+        ? 'Describe la imagen que quieres crear...'
+        : 'Describe los cambios: "Añade gafas de sol", "Cambia el fondo"...';
+    }
+
+    if (generateBtn) {
+      generateBtn.innerHTML = isGenerate
+        ? '<i class="iconoir-sparks"></i><span class="hidden sm:inline">Generar</span>'
+        : '<i class="iconoir-edit"></i><span class="hidden sm:inline">Editar</span>';
+    }
+
+    generateReferencesSection?.classList.toggle('hidden', !isGenerate);
+    editQuickActions?.classList.toggle('hidden', isGenerate);
+
+    if (isGenerate) {
+      imagePlaceholder?.classList.toggle('hidden', !!currentImageBase64);
+      editSourceSection?.classList.add('hidden');
+      if (!currentImageBase64) imageResult?.classList.add('hidden');
+    } else {
+      imagePlaceholder?.classList.add('hidden');
+      editSourceSection?.classList.remove('hidden');
       imageResult?.classList.add('hidden');
     }
+
+    updateSummary();
   }
 
-  function showEditUI() {
-    imagePlaceholder?.classList.add('hidden');
-    // If we have a source image, show preview, otherwise show upload
-    if (sourceImageBase64) {
-      editSourceSection?.classList.remove('hidden');
-      sourceImagePreview?.classList.remove('hidden');
-      sourceImagePlaceholder?.classList.add('hidden');
-      sourceImageClear?.classList.remove('hidden');
-    } else {
-      editSourceSection?.classList.remove('hidden');
-    }
-    imageResult?.classList.add('hidden');
-  }
-
-  modeGenerateBtn?.addEventListener('click', () => setMode('generate'));
-  modeEditBtn?.addEventListener('click', () => setMode('edit'));
-
-  if (currentProviderInput) currentProviderInput.value = 'nanobanana';
-
-  // === Image Upload Handler ===
   function setupSourceImageUpload() {
     if (!sourceImageInput) return;
-
     sourceImageInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecciona una imagen válida');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        sourceImageBase64 = ev.target.result.split(',')[1];
+      readImageAsBase64(file).then(result => {
+        sourceImageBase64 = result.base64;
         if (sourceImagePreview) {
-          sourceImagePreview.src = ev.target.result;
+          sourceImagePreview.src = result.dataUrl;
           sourceImagePreview.classList.remove('hidden');
         }
         sourceImagePlaceholder?.classList.add('hidden');
         sourceImageClear?.classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
+        clearError();
+      }).catch(() => {
+        showError('Selecciona una imagen valida para usar como base.');
+      });
     });
 
     sourceImageClear?.addEventListener('click', (e) => {
@@ -211,31 +285,25 @@
     }
     sourceImagePlaceholder?.classList.remove('hidden');
     sourceImageClear?.classList.add('hidden');
+    updateSummary();
   }
 
   function setupTargetImageUpload() {
     if (!targetImageInput) return;
-
     targetImageInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecciona una imagen válida');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        targetImageBase64 = ev.target.result.split(',')[1];
+      readImageAsBase64(file).then(result => {
+        targetImageBase64 = result.base64;
         if (targetImagePreview) {
-          targetImagePreview.src = ev.target.result;
+          targetImagePreview.src = result.dataUrl;
           targetImagePreview.classList.remove('hidden');
         }
         targetImagePlaceholder?.classList.add('hidden');
         targetImageClear?.classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
+      }).catch(() => {
+        showError('Selecciona una imagen de referencia valida.');
+      });
     });
 
     targetImageClear?.addEventListener('click', (e) => {
@@ -253,188 +321,302 @@
     }
     targetImagePlaceholder?.classList.remove('hidden');
     targetImageClear?.classList.add('hidden');
+    updateSummary();
   }
 
-  function setSourceImageFromBase64(base64) {
-    sourceImageBase64 = base64;
-    if (sourceImagePreview) {
-      sourceImagePreview.src = `data:image/png;base64,${base64}`;
-      sourceImagePreview.classList.remove('hidden');
+  function setupGenerateReferences() {
+    addGenerateReferenceBtn?.addEventListener('click', () => {
+      generateReferenceInput?.click();
+    });
+
+    generateReferenceInput?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+
+      const availableSlots = MAX_GENERATE_REFERENCES - generateReferenceImages.length;
+      if (availableSlots <= 0) {
+        showError('Ya tienes 4 referencias. Quita una para subir otra.');
+        return;
+      }
+
+      const accepted = files.slice(0, availableSlots);
+      for (const file of accepted) {
+        try {
+          const result = await readImageAsBase64(file);
+          generateReferenceImages.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            base64: result.base64,
+            dataUrl: result.dataUrl,
+            name: file.name || 'referencia'
+          });
+        } catch (_e) {
+          showError('Una referencia no es valida. Usa archivos de imagen.');
+        }
+      }
+      if (generateReferenceInput) generateReferenceInput.value = '';
+      renderGenerateReferences();
+      clearError();
+      updateSummary();
+    });
+  }
+
+  function renderGenerateReferences() {
+    if (!generateReferenceList) return;
+    if (generateReferenceImages.length === 0) {
+      generateReferenceList.innerHTML = '<div class="col-span-full text-xs text-slate-400">Sin referencias cargadas.</div>';
+      return;
     }
-    sourceImagePlaceholder?.classList.add('hidden');
-    sourceImageClear?.classList.remove('hidden');
+
+    generateReferenceList.innerHTML = generateReferenceImages.map((item, idx) => `
+      <div class="relative border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+        <img src="${item.dataUrl}" alt="Referencia ${idx + 1}" class="w-full h-20 object-cover" />
+        <button type="button" class="remove-generate-reference absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center" data-id="${item.id}">
+          <i class="iconoir-xmark text-[10px]"></i>
+        </button>
+        <div class="px-1.5 py-1 text-[10px] text-slate-500 truncate">${escapeHtml(item.name)}</div>
+      </div>
+    `).join('');
+
+    generateReferenceList.querySelectorAll('.remove-generate-reference').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        generateReferenceImages = generateReferenceImages.filter(item => item.id !== id);
+        renderGenerateReferences();
+        updateSummary();
+      });
+    });
   }
 
-  setupSourceImageUpload();
-  setupTargetImageUpload();
+  function setupQuickEditChips() {
+    editQuickChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const text = chip.dataset.text || '';
+        if (!descriptionField) return;
+        const current = descriptionField.value.trim();
+        descriptionField.value = current ? `${current}. ${text}` : text;
+        descriptionField.focus();
+      });
+    });
+  }
 
-  // === Update Summary ===
+  function readImageAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('invalid_type'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = String(ev.target.result || '');
+        const parts = dataUrl.split(',');
+        if (!parts[1]) {
+          reject(new Error('invalid_image'));
+          return;
+        }
+        resolve({ dataUrl, base64: parts[1] });
+      };
+      reader.onerror = () => reject(new Error('read_error'));
+      reader.readAsDataURL(file);
+    });
+  }
+
   function updateSummary() {
+    if (!summaryText) return;
+    const mode = currentModeInput?.value || 'generate';
+    const intent = getCurrentIntent();
+    const intentLabel = intentCards.length > 0
+      ? (Array.from(intentCards).find(card => card.dataset.intent === intent)?.querySelector('.text-xs')?.textContent || 'Crear desde cero')
+      : 'Crear desde cero';
+
     const format = document.querySelector('input[name="format"]:checked')?.value || '';
     const style = document.querySelector('input[name="style"]:checked')?.value || '';
     const color = document.querySelector('input[name="color"]:checked')?.value || '';
     const lighting = document.querySelector('input[name="lighting"]:checked')?.value || '';
     const composition = document.querySelector('input[name="composition"]:checked')?.value || '';
 
-    const parts = [];
+    const parts = [
+      mode === 'generate' ? `Generar (${intentLabel})` : `Editar (${intentLabel})`
+    ];
 
-    if (format) parts.push(`Formato: ${format}`);
+    if (format) parts.push(`formato ${format}`);
+    if (style) parts.push(`estilo ${style}`);
+    if (lighting) parts.push(`luz ${lighting}`);
+    if (color) parts.push(`color ${color}`);
+    if (composition) parts.push(`composicion ${composition}`);
 
-    const labels = {
-      style: { 'photographic': 'Estilo: Foto', 'digital-art': 'Estilo: Digital', 'corporate': 'Estilo: Corp', 'minimalist': 'Estilo: Min', '3d-render': 'Estilo: 3D', 'flat-design': 'Estilo: Flat', 'isometric': 'Estilo: Iso', 'headshot-pro': 'Estilo: Retrato', 'luxury-product': 'Estilo: Producto' },
-      color: { 'warm': 'Color: Cálido', 'cool': 'Color: Frío', 'corporate': 'Color: Corp', 'monochrome': 'Color: Mono', 'pastel': 'Color: Pastel', 'bw': 'Color: B/N', 'vibrant': 'Color: Vibr' },
-      lighting: { 'natural': 'Luz: Natural', 'studio': 'Luz: Estudio', 'dramatic': 'Luz: Drama', 'soft': 'Luz: Suave', 'backlight': 'Luz: Contra', 'golden': 'Luz: Dorada', 'volumetric': 'Luz: Volum' },
-      composition: { 'bokeh': 'Compos: Bokeh', 'closeup': 'Compos: Cerca', 'wide': 'Compos: Amplio', 'above': 'Compos: Cenital', 'below': 'Compos: Bajo', 'macro': 'Compos: Macro', 'negative-space': 'Compos: Neg' }
-    };
-
-    if (style && labels.style[style]) parts.push(labels.style[style]);
-    if (color && labels.color[color]) parts.push(labels.color[color]);
-    if (lighting && labels.lighting[lighting]) parts.push(labels.lighting[lighting]);
-    if (composition && labels.composition[composition]) parts.push(labels.composition[composition]);
-
-    if (summaryText) {
-      if (parts.length > 0) {
-        summaryText.textContent = parts.join(' · ');
-      } else {
-        summaryText.textContent = 'Decisión del modelo (IA)';
-      }
+    if (mode === 'generate' && generateReferenceImages.length > 0) {
+      parts.push(`${generateReferenceImages.length} referencia${generateReferenceImages.length > 1 ? 's' : ''}`);
     }
+    if (mode === 'edit' && sourceImageBase64) {
+      parts.push(targetImageBase64 ? 'con referencia objetivo' : 'con imagen base');
+    }
+
+    summaryText.textContent = parts.join(' · ');
   }
 
-  document.querySelectorAll('input[type="radio"]').forEach(radio => {
-    radio.addEventListener('change', updateSummary);
-  });
-
-  // === Build Prompt ===
   function buildPrompt(description, options) {
-    const { format, style, color, lighting, composition } = options;
-    const mode = currentModeInput?.value || 'generate';
-
-    let prompt = mode === 'edit'
-      ? `Keep the facial features and identity of the person in the input image exactly consistent. ${description}`
-      : `Create an ultra-realistic, high-resolution masterpiece image: ${description}`;
-
+    const intent = getCurrentIntent();
+    const cfg = intentConfig[intent] || intentConfig['from-scratch'];
     const specs = [];
-    if (formatMap[format]) specs.push(formatMap[format]);
-    if (style && styleMap[style]) specs.push(styleMap[style]);
-    if (color && colorMap[color]) specs.push(colorMap[color]);
-    if (lighting && lightingMap[lighting]) specs.push(lightingMap[lighting]);
-    if (composition && compositionMap[composition]) specs.push(compositionMap[composition]);
 
-    if (specs.length > 0) {
-      prompt += '\n\nTechnical Specifications and Style:\n- ' + specs.join('\n- ');
+    if (formatMap[options.format]) specs.push(formatMap[options.format]);
+    if (options.style && styleMap[options.style]) specs.push(styleMap[options.style]);
+    if (options.color && colorMap[options.color]) specs.push(colorMap[options.color]);
+    if (options.lighting && lightingMap[options.lighting]) specs.push(lightingMap[options.lighting]);
+    if (options.composition && compositionMap[options.composition]) specs.push(compositionMap[options.composition]);
+
+    let prompt = `Create a high-quality image based on this request in Spanish context: ${description}.`;
+    if (cfg.promptHint) {
+      prompt += `\nCreative direction: ${cfg.promptHint}`;
     }
-
-    prompt += '\n\nFinal Quality: 8k resolution, photorealistic, cinematic color grading, sharp focus, extreme attention to detail, high dynamic range (HDR).';
-    prompt += `\n\nInternal Seed: ${Math.floor(Math.random() * 1000000)}`;
-
+    if (generateReferenceImages.length > 0) {
+      prompt += `\nUse the reference images as visual guidance. Integrate logos/elements naturally when requested and preserve readability/proportions.`;
+    }
+    if (specs.length > 0) {
+      prompt += '\nTechnical and style constraints:\n- ' + specs.join('\n- ');
+    }
+    prompt += '\nOutput: one coherent, realistic image with clean composition and strong visual clarity.';
     return prompt;
   }
 
   function buildEditPrompt(description) {
     const userRequest = (description || '').trim();
-    const isLogoRequest = /\blogo\b/i.test(userRequest) || /\bemblema\b/i.test(userRequest);
-
-    let prompt = `Apply a precise, localized edit to the input image.\n`;
+    let prompt = 'Apply a precise, localized edit to the source image.\n';
     prompt += `Primary request: ${userRequest}\n\n`;
-    prompt += `Hard constraints:\n`;
-    prompt += `- Preserve identity, face, pose, camera angle, framing, and background unless explicitly requested otherwise.\n`;
-    prompt += `- Do not remove, replace, or alter existing logos, text, or graphics unless explicitly requested.\n`;
-    prompt += `- Keep garment texture, folds, shadows, and perspective consistent.\n`;
-    prompt += `- Match original lighting, color grading, and realism.\n`;
-    prompt += `- Output exactly one coherent edited image.\n`;
-
-    if (isLogoRequest) {
-      prompt += `\nLogo-specific constraints:\n`;
-      prompt += `- If there is already a logo on the shirt, keep it intact.\n`;
-      prompt += `- Add the new logo next to the existing one (side-by-side), not on top of it.\n`;
-      prompt += `- Keep both logos visible, readable, and naturally integrated with fabric perspective.\n`;
-      prompt += `- Maintain realistic print size, alignment, and occlusion.\n`;
-    }
-
+    prompt += 'Hard constraints:\n';
+    prompt += '- Preserve identity, pose, framing and perspective unless explicitly requested otherwise.\n';
+    prompt += '- Keep existing logos/text unless replacement is explicitly requested.\n';
+    prompt += '- Maintain texture, realistic lighting and material consistency.\n';
+    prompt += '- Return exactly one edited image.';
     return prompt;
   }
 
-  // === Generate Image ===
-  generateBtn?.addEventListener('click', async () => {
-    await generateImage();
-  });
-
-  // Enter to submit (Cmd/Ctrl + Enter)
-  descriptionField?.addEventListener('keydown', async (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      e.preventDefault();
-      await generateImage();
-    }
-  });
-
-  async function generateImage() {
-    const description = descriptionField?.value.trim();
-    const mode = currentModeInput?.value || 'generate';
-
-    if (!description) {
-      alert(mode === 'generate' ? 'Por favor, describe la imagen que quieres crear' : 'Por favor, describe los cambios que quieres hacer');
-      descriptionField?.focus();
-      return;
-    }
-
-    if (mode === 'edit' && !sourceImageBase64) {
-      alert('Por favor, sube una imagen fuente para editar');
-      return;
-    }
-
-    const options = {
-      format: document.querySelector('input[name="format"]:checked')?.value || '1:1',
+  function getCurrentOptions() {
+    return {
+      format: document.querySelector('input[name="format"]:checked')?.value || '',
       style: document.querySelector('input[name="style"]:checked')?.value || '',
       color: document.querySelector('input[name="color"]:checked')?.value || '',
       lighting: document.querySelector('input[name="lighting"]:checked')?.value || '',
       composition: document.querySelector('input[name="composition"]:checked')?.value || ''
     };
+  }
 
-    let prompt, inputData;
+  function showError(message) {
+    if (!imageError) return;
+    imageError.textContent = message;
+    imageError.classList.remove('hidden');
+  }
+
+  function clearError() {
+    if (!imageError) return;
+    imageError.textContent = '';
+    imageError.classList.add('hidden');
+  }
+
+  function startLoadingTicker() {
+    const steps = [
+      'Analizando instrucciones',
+      'Ajustando composicion',
+      'Refinando color e iluminacion',
+      'Preparando resultado final'
+    ];
+    loadingTickerIndex = 0;
+    if (loadingDetail) loadingDetail.textContent = steps[0];
+    loadingTicker = window.setInterval(() => {
+      loadingTickerIndex = (loadingTickerIndex + 1) % steps.length;
+      if (loadingDetail) loadingDetail.textContent = steps[loadingTickerIndex];
+    }, 1800);
+  }
+
+  function stopLoadingTicker() {
+    if (loadingTicker) {
+      clearInterval(loadingTicker);
+      loadingTicker = null;
+    }
+  }
+
+  async function generateImage() {
+    clearError();
+    const mode = currentModeInput?.value || 'generate';
+    const description = (descriptionField?.value || '').trim();
+
+    if (!description) {
+      showError(mode === 'generate'
+        ? 'Describe la imagen que quieres crear.'
+        : 'Describe los cambios que quieres aplicar en la imagen base.');
+      descriptionField?.focus();
+      return;
+    }
+    if (mode === 'edit' && !sourceImageBase64) {
+      showError('Sube una imagen base para usar el modo edicion.');
+      return;
+    }
+
+    const options = getCurrentOptions();
+    const intent = getCurrentIntent();
+    let prompt = '';
+    let inputData = {};
 
     if (mode === 'generate') {
       prompt = buildPrompt(description, options);
-      inputData = { mode: 'generate', description, provider: currentProviderInput?.value || 'nanobanana', ...options };
+      inputData = {
+        mode: 'generate',
+        intent,
+        description,
+        provider: currentProviderInput?.value || 'nanobanana',
+        reference_images: generateReferenceImages.map(item => item.base64),
+        ...options
+      };
     } else {
       prompt = buildEditPrompt(description);
-      inputData = { mode: 'edit', description, provider: currentProviderInput?.value || 'nanobanana', source_image: sourceImageBase64, target_image: targetImageBase64 || null };
+      inputData = {
+        mode: 'edit',
+        intent,
+        description,
+        provider: currentProviderInput?.value || 'nanobanana',
+        source_image: sourceImageBase64,
+        target_image: targetImageBase64 || null
+      };
     }
 
     lastPrompt = prompt;
     lastInputData = inputData;
-
     await sendRequest(prompt, inputData);
   }
 
-  // === Send Request ===
   async function sendRequest(prompt, inputData) {
-    // Hide all sections, show loading
     imagePlaceholder?.classList.add('hidden');
     editSourceSection?.classList.add('hidden');
     imageResult?.classList.add('hidden');
     imageLoading?.classList.remove('hidden');
+
     if (generateBtn) generateBtn.disabled = true;
+    if (loadingTitle) loadingTitle.textContent = inputData.mode === 'edit' ? 'Editando imagen...' : 'Generando imagen...';
+    if (loadingMeta) {
+      const refs = Array.isArray(inputData.reference_images) ? inputData.reference_images.length : 0;
+      loadingMeta.textContent = refs > 0 ? `Referencias activas: ${refs}` : '';
+    }
+    startLoadingTicker();
 
     try {
       const res = await fetch('/api/gestures/generate-image.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
-        body: JSON.stringify({ gesture_type: GESTURE_TYPE, prompt, input_data: inputData }),
-        credentials: 'include'
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN || '' },
+        credentials: 'include',
+        body: JSON.stringify({ gesture_type: GESTURE_TYPE, prompt, input_data: inputData })
       });
+      const data = await res.json().catch(() => ({}));
 
-      const data = await res.json();
+      stopLoadingTicker();
       imageLoading?.classList.add('hidden');
       if (generateBtn) generateBtn.disabled = false;
 
       if (!res.ok || !data.image) {
-        alert('Error al generar la imagen: ' + (data.error?.message || 'Error desconocido'));
-        // Restore UI
-        if (currentModeInput?.value === 'generate') {
-          imagePlaceholder?.classList.remove('hidden');
-        } else {
+        showError(data.error?.message || 'No hemos podido generar la imagen. Prueba ajustando el prompt.');
+        if (currentModeInput?.value === 'edit') {
           editSourceSection?.classList.remove('hidden');
+        } else {
+          imagePlaceholder?.classList.remove('hidden');
         }
         return;
       }
@@ -450,62 +632,42 @@
         imageCaption?.classList.add('hidden');
       }
 
-      loadHistory();
-
-    } catch (err) {
+      clearError();
+      await loadHistory();
+    } catch (_err) {
+      stopLoadingTicker();
       imageLoading?.classList.add('hidden');
       if (generateBtn) generateBtn.disabled = false;
-      console.error('Error:', err);
-      alert('Error de conexión al generar la imagen');
-      // Restore UI
-      if (currentModeInput?.value === 'generate') {
-        imagePlaceholder?.classList.remove('hidden');
-      } else {
+      showError('Error de conexion al generar la imagen.');
+      if (currentModeInput?.value === 'edit') {
         editSourceSection?.classList.remove('hidden');
+      } else {
+        imagePlaceholder?.classList.remove('hidden');
       }
     }
   }
 
-  // === Edit This Image (Iterative Editing) ===
-  editThisImageBtn?.addEventListener('click', () => {
+  function useCurrentImageAsEditBase() {
     if (!currentImageBase64) return;
-
-    // Set the generated image as source image
-    setSourceImageFromBase64(currentImageBase64);
-
-    // Switch to edit mode
-    setMode('edit');
-
-    // Clear description for new edit instructions
+    sourceImageBase64 = currentImageBase64;
+    if (sourceImagePreview) {
+      sourceImagePreview.src = `data:image/png;base64,${currentImageBase64}`;
+      sourceImagePreview.classList.remove('hidden');
+    }
+    sourceImagePlaceholder?.classList.add('hidden');
+    sourceImageClear?.classList.remove('hidden');
+    setIntent('edit-image', false);
     if (descriptionField) {
       descriptionField.value = '';
       descriptionField.focus();
     }
-  });
+  }
 
-  // === Download ===
-  downloadBtn?.addEventListener('click', () => {
-    if (!currentImageBase64) return;
-    const link = document.createElement('a');
-    link.href = `data:image/png;base64,${currentImageBase64}`;
-    link.download = `ebonia-image-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
-
-  // === Regenerate ===
-  regenerateBtn?.addEventListener('click', () => {
-    if (lastPrompt) sendRequest(lastPrompt, lastInputData);
-  });
-
-  // === Lightbox ===
   function openLightbox() {
-    if (currentImageBase64 && lightbox && lightboxImage) {
-      lightboxImage.src = `data:image/png;base64,${currentImageBase64}`;
-      lightbox.classList.remove('hidden');
-      lightbox.classList.add('flex');
-    }
+    if (!currentImageBase64 || !lightboxImage || !lightbox) return;
+    lightboxImage.src = `data:image/png;base64,${currentImageBase64}`;
+    lightbox.classList.remove('hidden');
+    lightbox.classList.add('flex');
   }
 
   function closeLightbox() {
@@ -513,86 +675,51 @@
     lightbox?.classList.remove('flex');
   }
 
-  generatedImage?.addEventListener('click', openLightbox);
-  fullscreenBtn?.addEventListener('click', openLightbox);
-  lightboxClose?.addEventListener('click', closeLightbox);
-
-  lightbox?.addEventListener('click', (e) => {
-    if (e.target === lightbox) closeLightbox();
-  });
-
-  // ESC to close lightbox
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && lightbox && !lightbox.classList.contains('hidden')) {
-      closeLightbox();
-    }
-  });
-
-  // === History ===
   async function loadHistory() {
     if (!historyList) return;
-
     try {
-      const res = await fetch(`/api/gestures/history.php?type=${GESTURE_TYPE}`, { credentials: 'include' });
-      const data = await res.json();
-
+      const res = await fetch(`/api/gestures/history.php?type=${GESTURE_TYPE}&limit=12`, { credentials: 'include' });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error al cargar</div>';
+        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error al cargar historial</div>';
         return;
       }
-
       renderHistory(data.items || []);
-    } catch (err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error de conexión</div>';
+    } catch (_err) {
+      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error de conexion</div>';
     }
   }
 
   function renderHistory(items) {
     if (!historyList) return;
-
     if (items.length === 0) {
       historyList.innerHTML = `
         <div class="p-6 text-center">
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-media-image text-xl text-slate-400"></i>
           </div>
-          <p class="text-sm text-slate-500">Aún no has generado imágenes</p>
-          <p class="text-xs text-slate-400 mt-1">Usa el formulario para empezar</p>
+          <p class="text-sm text-slate-500">Aun no has generado imagenes</p>
+          <p class="text-xs text-slate-400 mt-1">Empieza con una intencion arriba</p>
         </div>
       `;
       return;
     }
 
     historyList.innerHTML = items.map(item => {
+      const title = escapeHtml(item.title || 'Imagen generada');
       const timeAgo = formatTimeAgo(new Date(item.created_at));
-      const description = item.title || 'Imagen generada';
-      
-      // Determine provider from model name
-      let provider = 'qwen';
-      const modelName = (item.model || '').toLowerCase();
-      if (modelName.includes('gemini') || modelName.includes('nanobanana')) {
-        provider = 'nanobanana';
-      } else if (modelName.includes('flux')) {
-        provider = 'flux';
-      }
-      
-      // Provider badge colors
-      const providerColors = {
-        'qwen': 'bg-purple-100 text-purple-700',
-        'nanobanana': 'bg-blue-100 text-blue-700',
-        'flux': 'bg-emerald-100 text-emerald-700'
-      };
-      
-      const providerClass = providerColors[provider] || 'bg-slate-100 text-slate-600';
-      const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
+      const mode = item.mode === 'edit' ? 'Editar' : 'Generar';
+      const thumb = item.thumbnail_image
+        ? `<img src="data:image/png;base64,${item.thumbnail_image}" alt="Miniatura" class="w-12 h-12 rounded-lg object-cover shrink-0" />`
+        : `<div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center shrink-0"><i class="iconoir-media-image text-slate-400"></i></div>`;
 
       return `
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2" data-id="${item.id}">
-          <i class="iconoir-media-image text-amber-500 mt-0.5"></i>
+          ${thumb}
           <div class="flex-1 min-w-0 cursor-pointer history-item-main">
-            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-amber-700">${escapeHtml(description)}</p>
+            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-amber-700">${title}</p>
             <div class="flex items-center gap-2 mt-1">
-              <span class="text-[10px] px-1.5 py-0.5 rounded ${providerClass}">${providerLabel}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">${mode}</span>
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
@@ -603,18 +730,14 @@
       `;
     }).join('');
 
-    // Click to load
     historyList.querySelectorAll('.history-item-main').forEach(el => {
       const id = el.parentElement.dataset.id;
       el.addEventListener('click', () => loadExecution(id));
     });
-
-    // Delete
     historyList.querySelectorAll('.history-item-delete').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const id = btn.dataset.id;
-        deleteExecution(id);
+        deleteExecution(btn.dataset.id);
       });
     });
   }
@@ -622,136 +745,180 @@
   async function loadExecution(id) {
     try {
       const res = await fetch(`/api/gestures/get.php?id=${id}`, { credentials: 'include' });
-      const data = await res.json();
-
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.execution) {
-        alert('Error al cargar la imagen');
+        showError('No se ha podido cargar esta imagen.');
         return;
       }
 
       const exec = data.execution;
       const outputData = exec.output_data || {};
+      const inputData = exec.input_data || {};
 
       if (outputData.image) {
         currentImageBase64 = outputData.image;
         if (generatedImage) generatedImage.src = `data:image/png;base64,${outputData.image}`;
-        
-        // Hide other sections, show result
         imagePlaceholder?.classList.add('hidden');
         editSourceSection?.classList.add('hidden');
         imageResult?.classList.remove('hidden');
-
-        if (outputData.text && imageCaption) {
-          imageCaption.textContent = outputData.text;
-          imageCaption.classList.remove('hidden');
-        } else {
-          imageCaption?.classList.add('hidden');
-        }
       }
 
-      const inputData = exec.input_data || {};
-      if (inputData.description && descriptionField) descriptionField.value = inputData.description;
+      if (outputData.text && imageCaption) {
+        imageCaption.textContent = outputData.text;
+        imageCaption.classList.remove('hidden');
+      } else {
+        imageCaption?.classList.add('hidden');
+      }
 
-      // Restore options
+      if (descriptionField) descriptionField.value = inputData.description || '';
+
       ['format', 'style', 'color', 'lighting', 'composition'].forEach(field => {
-        if (inputData[field] !== undefined) {
-          const radio = document.querySelector(`input[name="${field}"][value="${inputData[field]}"]`);
-          if (radio) radio.checked = true;
-        }
+        const value = inputData[field] ?? '';
+        const radio = document.querySelector(`input[name="${field}"][value="${value}"]`);
+        if (radio) radio.checked = true;
       });
 
+      if (Array.isArray(inputData.reference_images)) {
+        generateReferenceImages = inputData.reference_images.slice(0, MAX_GENERATE_REFERENCES).map((base64, idx) => ({
+          id: `loaded-${id}-${idx}`,
+          base64,
+          dataUrl: `data:image/png;base64,${base64}`,
+          name: `ref-${idx + 1}`
+        }));
+      } else {
+        generateReferenceImages = [];
+      }
+      renderGenerateReferences();
+
+      const mode = inputData.mode === 'edit' ? 'edit' : 'generate';
+      const intent = inputData.intent && intentConfig[inputData.intent] ? inputData.intent : (mode === 'edit' ? 'edit-image' : 'from-scratch');
+      setIntent(intent, false);
+      setMode(mode, true);
+
       updateSummary();
+      clearError();
       lastInputData = inputData;
-
-      // Set mode to generate (since we're viewing a result)
-      setMode('generate');
-
-    } catch (err) {
-      alert('Error de conexión');
+    } catch (_err) {
+      showError('Error de conexion al cargar la imagen.');
     }
   }
 
   async function deleteExecution(id) {
-    if (!confirm('¿Eliminar esta imagen del historial?')) return;
-
+    if (!confirm('Eliminar esta imagen del historial?')) return;
     try {
       const res = await fetch('/api/gestures/delete.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
-        body: JSON.stringify({ id: Number(id) }),
-        credentials: 'include'
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN || '' },
+        credentials: 'include',
+        body: JSON.stringify({ id: Number(id) })
       });
-
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
-        alert('No se ha podido eliminar');
+        showError('No se ha podido eliminar la imagen.');
         return;
       }
-
-      loadHistory();
-    } catch (err) {
-      alert('Error de conexión al eliminar');
+      await loadHistory();
+    } catch (_err) {
+      showError('Error de conexion al eliminar.');
     }
   }
 
-  // === New Image ===
-  newImageBtn?.addEventListener('click', () => {
-    resetUI();
-  });
-
   function resetUI() {
-    // Clear state
     currentImageBase64 = null;
     sourceImageBase64 = null;
     targetImageBase64 = null;
+    generateReferenceImages = [];
     lastPrompt = '';
     lastInputData = {};
 
-    // Clear form
     if (descriptionField) descriptionField.value = '';
     clearSourceImage();
     clearTargetImage();
+    renderGenerateReferences();
 
-    // Reset all radios to defaults
-    document.querySelectorAll('input[name="format"][value=""]').forEach(r => r.checked = true);
-    document.querySelectorAll('input[name="style"][value=""]').forEach(r => r.checked = true);
-    document.querySelectorAll('input[name="color"][value=""]').forEach(r => r.checked = true);
-    document.querySelectorAll('input[name="lighting"][value=""]').forEach(r => r.checked = true);
-    document.querySelectorAll('input[name="composition"][value=""]').forEach(r => r.checked = true);
+    ['format', 'style', 'color', 'lighting', 'composition'].forEach(field => {
+      const defaultRadio = document.querySelector(`input[name="${field}"][value=""]`);
+      if (defaultRadio) defaultRadio.checked = true;
+    });
 
-    updateSummary();
-
-    // Set mode to generate
-    setMode('generate');
-
-    // Focus description
+    setIntent('from-scratch', false);
+    imageCaption?.classList.add('hidden');
+    imageResult?.classList.add('hidden');
+    imagePlaceholder?.classList.remove('hidden');
+    clearError();
     descriptionField?.focus();
   }
 
-  // === Utilities ===
   function formatTimeAgo(date) {
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-
     if (diffMins < 1) return 'ahora';
     if (diffMins < 60) return `hace ${diffMins} min`;
     if (diffHours < 24) return `hace ${diffHours}h`;
     if (diffDays === 1) return 'ayer';
-    if (diffDays < 7) return `hace ${diffDays} días`;
+    if (diffDays < 7) return `hace ${diffDays} dias`;
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   }
 
   function escapeHtml(text) {
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = text || '';
     return div.innerHTML;
   }
 
-  // === Initialize ===
+  generateBtn?.addEventListener('click', () => generateImage());
+  regenerateBtn?.addEventListener('click', () => {
+    if (lastPrompt && Object.keys(lastInputData).length > 0) {
+      sendRequest(lastPrompt, lastInputData);
+    }
+  });
+  editThisImageBtn?.addEventListener('click', useCurrentImageAsEditBase);
+  downloadBtn?.addEventListener('click', () => {
+    if (!currentImageBase64) return;
+    const link = document.createElement('a');
+    link.href = `data:image/png;base64,${currentImageBase64}`;
+    link.download = `ebonia-image-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+  fullscreenBtn?.addEventListener('click', openLightbox);
+  generatedImage?.addEventListener('click', openLightbox);
+  lightboxClose?.addEventListener('click', closeLightbox);
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      generateImage();
+    }
+    if (e.key === 'Escape' && lightbox && !lightbox.classList.contains('hidden')) {
+      closeLightbox();
+    }
+  });
+
+  modeGenerateBtn?.addEventListener('click', () => setMode('generate', false));
+  modeEditBtn?.addEventListener('click', () => setMode('edit', false));
+  intentCards.forEach(card => {
+    card.addEventListener('click', () => setIntent(card.dataset.intent || 'from-scratch', true));
+  });
+  newImageBtn?.addEventListener('click', resetUI);
+  document.querySelectorAll('input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', updateSummary);
+  });
+
+  if (currentProviderInput) currentProviderInput.value = 'nanobanana';
+  setupSourceImageUpload();
+  setupTargetImageUpload();
+  setupGenerateReferences();
+  setupQuickEditChips();
+  renderGenerateReferences();
+  setIntent('from-scratch', false);
   updateSummary();
   loadHistory();
-  setMode('generate');
 })();

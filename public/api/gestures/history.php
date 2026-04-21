@@ -39,6 +39,18 @@ if ($gestureType) {
     $items = $repo->listByUser($user['id'], $limit);
 }
 
+if ($gestureType === 'image-editor' && !empty($items)) {
+    foreach ($items as &$item) {
+        $full = $repo->findById((int)$item['id']);
+        $outputData = is_array($full['output_data'] ?? null) ? $full['output_data'] : [];
+        $inputData = is_array($item['input_data'] ?? null) ? $item['input_data'] : [];
+        $item['thumbnail_image'] = $outputData['image_thumbnail'] ?? null;
+        $item['mode'] = $inputData['mode'] ?? 'generate';
+        $item['intent'] = $inputData['intent'] ?? null;
+    }
+    unset($item);
+}
+
 Response::json([
     'success' => true,
     'items' => $items,    // Compatibilidad con gestos existentes

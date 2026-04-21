@@ -75,8 +75,36 @@ $headerDrawerId = 'gesture-history-drawer';
         <!-- Zona central: imagen + controles superiores/inferiores -->
         <div class="flex-1 flex flex-col overflow-hidden p-4 lg:p-6">
           
-          <!-- Controles superiores: Resumen + Prompt + Controles -->
+          <!-- Controles superiores: intención + prompt + acciones -->
           <div class="shrink-0 mb-4 space-y-3">
+            <!-- Selector de intención -->
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-2" id="intent-grid">
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all active" data-intent="from-scratch">
+                <div class="text-xs font-semibold text-slate-700">Crear desde cero</div>
+                <div class="text-[11px] text-slate-500 mt-1">Idea libre y estilo visual</div>
+              </button>
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="edit-image">
+                <div class="text-xs font-semibold text-slate-700">Editar una imagen</div>
+                <div class="text-[11px] text-slate-500 mt-1">Cambios precisos sobre base</div>
+              </button>
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="portrait-pro">
+                <div class="text-xs font-semibold text-slate-700">Retrato profesional</div>
+                <div class="text-[11px] text-slate-500 mt-1">Headshot limpio y usable</div>
+              </button>
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="corporate-image">
+                <div class="text-xs font-semibold text-slate-700">Imagen corporativa</div>
+                <div class="text-[11px] text-slate-500 mt-1">Comunicación de marca</div>
+              </button>
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="product-mockup">
+                <div class="text-xs font-semibold text-slate-700">Producto / mockup</div>
+                <div class="text-[11px] text-slate-500 mt-1">Presentación comercial</div>
+              </button>
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="poster-logos">
+                <div class="text-xs font-semibold text-slate-700">Cartel con logos</div>
+                <div class="text-[11px] text-slate-500 mt-1">Hasta 4 referencias visuales</div>
+              </button>
+            </div>
+
             <!-- Fila 1: Resumen de parámetros -->
             <div class="px-3 py-2 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
               <div class="flex items-center justify-between gap-2">
@@ -97,12 +125,42 @@ $headerDrawerId = 'gesture-history-drawer';
               <!-- Valores seleccionados en línea separada -->
               <div id="summary-text" class="mt-1.5 text-xs text-slate-500 leading-relaxed">Decisión del modelo (IA)</div>
             </div>
+
+            <div id="image-error" class="hidden px-3 py-2 text-sm bg-red-50 border border-red-200 text-red-700 rounded-xl"></div>
             
             <!-- Fila 2: Prompt principal -->
             <div class="flex-1 relative">
               <textarea id="image-description" rows="2" 
                 class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white/80 text-sm"
                 placeholder="Describe la imagen que quieres crear..."></textarea>
+            </div>
+
+            <!-- Referencias para modo generar -->
+            <div id="generate-references-section" class="rounded-xl border border-slate-200 bg-white px-3 py-3">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <div>
+                  <p class="text-xs font-semibold text-slate-700">Referencias visuales (modo generar)</p>
+                  <p class="text-[11px] text-slate-500">Útil para carteles, logos y estilo. Máximo 4 imágenes.</p>
+                </div>
+                <button type="button" id="add-generate-reference-btn" class="px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors">
+                  Añadir
+                </button>
+              </div>
+              <input type="file" id="generate-reference-input" accept="image/*" multiple class="hidden" />
+              <div id="generate-reference-list" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+            </div>
+
+            <!-- Acciones rápidas para modo edición -->
+            <div id="edit-quick-actions" class="hidden rounded-xl border border-slate-200 bg-white px-3 py-3">
+              <p class="text-xs font-semibold text-slate-700 mb-2">Acciones rápidas</p>
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Cambia el fondo por uno más profesional">Cambiar fondo</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Añade un logo de forma natural y proporcional">Añadir logo</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Quita el objeto del primer plano y rellena el fondo">Quitar objeto</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Mejora la iluminación y el contraste manteniendo realismo">Mejorar luz</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Cambia la paleta de color manteniendo composición">Cambiar color</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Extiende el encuadre con más espacio alrededor">Extender encuadre</button>
+              </div>
             </div>
             
             <!-- Fila 3: Modo y Botón -->
@@ -128,6 +186,7 @@ $headerDrawerId = 'gesture-history-drawer';
               
               <input type="hidden" id="current-mode" value="generate" />
               <input type="hidden" id="current-provider" value="nanobanana" />
+              <input type="hidden" id="current-intent" value="from-scratch" />
             </div>
           </div>
           
@@ -190,9 +249,9 @@ $headerDrawerId = 'gesture-history-drawer';
                   class="max-w-full max-h-[calc(100vh-320px)] object-contain rounded-xl shadow-2xl cursor-pointer hover:shadow-3xl transition-shadow" />
                 <!-- Overlay de acciones sobre la imagen -->
                 <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/50 backdrop-blur-md rounded-xl p-2">
-                  <button id="edit-this-image-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="Editar esta imagen">
+                  <button id="edit-this-image-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="Usar como base">
                     <i class="iconoir-edit"></i>
-                    <span class="hidden sm:inline">Editar</span>
+                    <span class="hidden sm:inline">Usar como base</span>
                   </button>
                   <button id="regenerate-image-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="Regenerar">
                     <i class="iconoir-refresh"></i>
@@ -213,10 +272,11 @@ $headerDrawerId = 'gesture-history-drawer';
                 <div class="relative w-16 h-16">
                   <div class="absolute inset-0 border-4 border-amber-500/30 rounded-full"></div>
                   <div class="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                  <div class="absolute inset-0 flex items-center justify-center text-2xl">🍌</div>
+                  <div class="absolute inset-0 flex items-center justify-center text-amber-600"><i class="iconoir-sparks text-xl"></i></div>
                 </div>
-                <span class="text-amber-700 font-medium">Generando imagen...</span>
-                <span class="text-amber-600 text-sm">Esto puede tardar unos segundos</span>
+                <span id="loading-title" class="text-amber-700 font-medium">Generando imagen...</span>
+                <span id="loading-detail" class="text-amber-600 text-sm">Esto puede tardar unos segundos</span>
+                <span id="loading-meta" class="text-amber-500 text-xs"></span>
               </div>
             </div>
           </div>
@@ -636,6 +696,12 @@ $headerDrawerId = 'gesture-history-drawer';
       background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%) !important;
       color: white !important;
       box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+    }
+
+    .intent-card.active {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
     
   </style>
