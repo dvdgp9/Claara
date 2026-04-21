@@ -662,10 +662,12 @@ function preprocessPdfHistoryForStreaming(array $history): array {
 
             $currentMessage = is_string($item['content'] ?? null) ? (string)$item['content'] : '';
             $history[$idx]['content'] = buildPdfFallbackPrompt($currentMessage, $pdfText, $fileName);
+            // Si pudimos extraer texto localmente, quitamos el adjunto PDF
+            // para evitar errores intermitentes del parser remoto.
+            unset($history[$idx]['file']);
         }
-
-        // Siempre quitar adjunto PDF del historial para que OpenRouter no intente parsearlo
-        unset($history[$idx]['file']);
+        // Si la extracción local falla, conservamos el PDF adjunto para que
+        // OpenRouter pueda intentar procesarlo con su parser nativo.
     }
 
     return $history;
