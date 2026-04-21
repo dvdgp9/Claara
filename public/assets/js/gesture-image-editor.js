@@ -57,6 +57,7 @@
   let targetImageBase64 = null;
   let generateReferenceImages = [];
   let currentImageBase64 = null;
+  let currentImageSrc = null;
   let lastPrompt = '';
   let lastInputData = {};
   let loadingTicker = null;
@@ -407,6 +408,45 @@
     });
   }
 
+  function extractImageFromText(text) {
+    if (typeof text !== 'string' || text === '') return null;
+    const dataUrlMatch = text.match(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/);
+    if (dataUrlMatch) return dataUrlMatch[0];
+    const urlMatch = text.match(/https?:\/\/\S+\.(?:png|jpg|jpeg|webp)(?:\?\S*)?/i);
+    return urlMatch ? urlMatch[0] : null;
+  }
+
+  function normalizeImageSource(rawImage) {
+    if (typeof rawImage !== 'string') return null;
+    const trimmed = rawImage.trim();
+    if (!trimmed) return null;
+
+    if (/^data:image\//i.test(trimmed)) return trimmed;
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+    const isLikelyBase64 = /^[A-Za-z0-9+/=\s]+$/.test(trimmed) && trimmed.length > 120;
+    if (isLikelyBase64) {
+      return `data:image/png;base64,${trimmed.replace(/\s+/g, '')}`;
+    }
+    return null;
+  }
+
+  function extractBase64FromSource(src) {
+    if (typeof src !== 'string') return null;
+    const match = src.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,(.+)$/);
+    return match ? match[1] : null;
+  }
+
+  function setCurrentImage(rawImage) {
+    const normalizedSrc = normalizeImageSource(rawImage);
+    if (!normalizedSrc) return false;
+
+    currentImageSrc = normalizedSrc;
+    currentImageBase64 = extractBase64FromSource(normalizedSrc);
+    if (generatedImage) generatedImage.src = normalizedSrc;
+    return true;
+  }
+
   function updateSummary() {
     if (!summaryText) return;
     const mode = currentModeInput?.value || 'generate';
@@ -606,8 +646,7 @@
         return;
       }
 
-      currentImageBase64 = data.image;
-      if (generatedImage) generatedImage.src = `data:image/png;base64,${data.image}`;
+      setCurrentImage(data.image);
       imageResult?.classList.remove('hidden');
 
       if (data.text && imageCaption) {
@@ -633,7 +672,10 @@
   }
 
   function useCurrentImageAsEditBase() {
-    if (!currentImageBase64) return;
+    if (!currentImageBase64) {
+      showError('Esta imagen no se puede usar como base de edicion porque no incluye base64 reutilizable.');
+      return;
+    }
     sourceImageBase64 = currentImageBase64;
     if (sourceImagePreview) {
       sourceImagePreview.src = `data:image/png;base64,${currentImageBase64}`;
@@ -649,8 +691,8 @@
   }
 
   function openLightbox() {
-    if (!currentImageBase64 || !lightboxImage || !lightbox) return;
-    lightboxImage.src = `data:image/png;base64,${currentImageBase64}`;
+    if (!currentImageSrc || !lightboxImage || !lightbox) return;
+    lightboxImage.src = currentImageSrc;
     lightbox.classList.remove('hidden');
     lightbox.classList.add('flex');
   }
@@ -738,12 +780,28 @@
       const outputData = exec.output_data || {};
       const inputData = exec.input_data || {};
 
-      if (outputData.image) {
-        currentImageBase64 = outputData.image;
-        if (generatedImage) generatedImage.src = `data:image/png;base64,${outputData.image}`;
+      const mode = inputData.mode === 'edit' ? 'edit' : 'generate';
+      const intent = inputData.intent && intentConfig[inputData.intent] ? inputData.intent : (mode === 'edit' ? 'edit-image' : 'from-scratch');
+      setIntent(intent, false);
+      setMode(mode, true);
+
+      const imageCandidate = outputData.image || outputData.image_url || extractImageFromText(outputData.text || exec.output_content || '');
+      if (setCurrentImage(imageCandidate)) {
         imagePlaceholder?.classList.add('hidden');
         editSourceSection?.classList.add('hidden');
         imageResult?.classList.remove('hidden');
+      } else {
+        currentImageSrc = null;
+        currentImageBase64 = null;
+        imageResult?.classList.add('hidden');
+        if (mode === 'edit') {
+          editSourceSection?.classList.remove('hidden');
+          imagePlaceholder?.classList.add('hidden');
+        } else {
+          imagePlaceholder?.classList.remove('hidden');
+          editSourceSection?.classList.add('hidden');
+        }
+        showError('Esta entrada no contiene una imagen recuperable del historial.');
       }
 
       if (outputData.text && imageCaption) {
@@ -773,13 +831,8 @@
       }
       renderGenerateReferences();
 
-      const mode = inputData.mode === 'edit' ? 'edit' : 'generate';
-      const intent = inputData.intent && intentConfig[inputData.intent] ? inputData.intent : (mode === 'edit' ? 'edit-image' : 'from-scratch');
-      setIntent(intent, false);
-      setMode(mode, true);
-
       updateSummary();
-      clearError();
+      if (currentImageSrc) clearError();
       lastInputData = inputData;
     } catch (_err) {
       showError('Error de conexion al cargar la imagen.');
@@ -807,6 +860,7 @@
   }
 
   function resetUI() {
+    currentImageSrc = null;
     currentImageBase64 = null;
     sourceImageBase64 = null;
     targetImageBase64 = null;
@@ -860,10 +914,11 @@
   });
   editThisImageBtn?.addEventListener('click', useCurrentImageAsEditBase);
   downloadBtn?.addEventListener('click', () => {
-    if (!currentImageBase64) return;
+    if (!currentImageSrc) return;
     const link = document.createElement('a');
-    link.href = `data:image/png;base64,${currentImageBase64}`;
-    link.download = `ebonia-image-${Date.now()}.png`;
+    link.href = currentImageSrc;
+    const extension = currentImageSrc.startsWith('data:image/jpeg') ? 'jpg' : (currentImageSrc.startsWith('data:image/webp') ? 'webp' : 'png');
+    link.download = `ebonia-image-${Date.now()}.${extension}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

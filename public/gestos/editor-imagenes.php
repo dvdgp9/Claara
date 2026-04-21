@@ -76,33 +76,48 @@ $headerDrawerId = 'gesture-history-drawer';
         <div class="flex-1 flex flex-col overflow-hidden p-4 lg:p-6">
           
           <!-- Controles superiores: intención + prompt + acciones -->
-          <div class="shrink-0 mb-4 space-y-3">
+          <div class="shrink-0 mb-4 space-y-3 rounded-2xl border border-slate-200/70 bg-white/85 p-3 lg:p-4 shadow-sm">
             <!-- Selector de intención -->
-            <div class="grid grid-cols-2 lg:grid-cols-2 gap-2" id="intent-grid">
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all active" data-intent="from-scratch">
-                <div class="text-xs font-semibold text-slate-700">Crear desde cero</div>
-                <div class="text-[11px] text-slate-500 mt-1">Idea libre y estilo visual</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2" id="intent-grid">
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all active min-h-[74px]" data-intent="from-scratch">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <i class="iconoir-sparks text-amber-500"></i>
+                  Crear desde cero
+                </div>
+                <div class="text-[11px] text-slate-500 mt-1 pl-6">Idea libre y estilo visual</div>
               </button>
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="edit-image">
-                <div class="text-xs font-semibold text-slate-700">Editar una imagen</div>
-                <div class="text-[11px] text-slate-500 mt-1">Cambios precisos sobre base</div>
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all min-h-[74px]" data-intent="edit-image">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <i class="iconoir-edit text-amber-500"></i>
+                  Editar una imagen
+                </div>
+                <div class="text-[11px] text-slate-500 mt-1 pl-6">Cambios precisos sobre base</div>
               </button>
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="corporate-image">
-                <div class="text-xs font-semibold text-slate-700">Imagen corporativa</div>
-                <div class="text-[11px] text-slate-500 mt-1">Comunicación de marca</div>
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all min-h-[74px]" data-intent="corporate-image">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <i class="iconoir-building text-amber-500"></i>
+                  Imagen corporativa
+                </div>
+                <div class="text-[11px] text-slate-500 mt-1 pl-6">Comunicación de marca</div>
               </button>
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="product-mockup">
-                <div class="text-xs font-semibold text-slate-700">Producto / mockup</div>
-                <div class="text-[11px] text-slate-500 mt-1">Presentación comercial</div>
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all min-h-[74px]" data-intent="product-mockup">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <i class="iconoir-box text-amber-500"></i>
+                  Producto / mockup
+                </div>
+                <div class="text-[11px] text-slate-500 mt-1 pl-6">Presentación comercial</div>
               </button>
-              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="poster-logos">
-                <div class="text-xs font-semibold text-slate-700">Cartel con logos</div>
-                <div class="text-[11px] text-slate-500 mt-1">Hasta 4 referencias visuales</div>
+              <button type="button" class="intent-card p-3 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all min-h-[74px]" data-intent="poster-logos">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <i class="iconoir-media-image text-amber-500"></i>
+                  Cartel con logos
+                </div>
+                <div class="text-[11px] text-slate-500 mt-1 pl-6">Hasta 4 referencias visuales</div>
               </button>
             </div>
 
             <!-- Fila 1: Resumen de parámetros -->
-            <div class="px-3 py-2 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
+            <div class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 text-xs text-slate-600 shrink-0">
                   <i class="iconoir-frame"></i>
@@ -119,20 +134,20 @@ $headerDrawerId = 'gesture-history-drawer';
                 </button>
               </div>
               <!-- Valores seleccionados en línea separada -->
-              <div id="summary-text" class="mt-1.5 text-xs text-slate-500 leading-relaxed">Decisión del modelo (IA)</div>
+              <div id="summary-text" class="mt-1.5 text-xs text-slate-600 leading-relaxed">Decisión del modelo (IA)</div>
             </div>
 
             <div id="image-error" class="hidden px-3 py-2 text-sm bg-red-50 border border-red-200 text-red-700 rounded-xl"></div>
             
             <!-- Fila 2: Prompt principal -->
             <div class="flex-1 relative">
-              <textarea id="image-description" rows="2" 
-                class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white/80 text-sm"
+              <textarea id="image-description" rows="3" 
+                class="w-full border-2 border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white text-sm"
                 placeholder="Describe la imagen que quieres crear..."></textarea>
             </div>
 
             <!-- Referencias para modo generar -->
-            <div id="generate-references-section" class="rounded-xl border border-slate-200 bg-white px-3 py-3">
+            <div id="generate-references-section" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
               <div class="flex items-center justify-between gap-2 mb-2">
                 <div>
                   <p class="text-xs font-semibold text-slate-700">Referencias visuales (modo generar)</p>
@@ -143,11 +158,11 @@ $headerDrawerId = 'gesture-history-drawer';
                 </button>
               </div>
               <input type="file" id="generate-reference-input" accept="image/*" multiple class="hidden" />
-              <div id="generate-reference-list" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+              <div id="generate-reference-list" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1"></div>
             </div>
 
             <!-- Acciones rápidas para modo edición -->
-            <div id="edit-quick-actions" class="hidden rounded-xl border border-slate-200 bg-white px-3 py-3">
+            <div id="edit-quick-actions" class="hidden rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
               <p class="text-xs font-semibold text-slate-700 mb-2">Acciones rápidas</p>
               <div class="flex flex-wrap gap-1.5">
                 <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" data-text="Cambia el fondo por uno más profesional">Cambiar fondo</button>
@@ -161,10 +176,6 @@ $headerDrawerId = 'gesture-history-drawer';
             
             <!-- Fila 3: Modo y Botón -->
             <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-              <div class="text-xs text-slate-500 px-1">
-                Elige una intención para cambiar el flujo. "Editar una imagen" abre la carga de imagen base.
-              </div>
-
               <button type="button" id="generate-image-btn" 
                 class="w-full sm:w-auto sm:ml-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 <i class="iconoir-sparks"></i>
@@ -671,6 +682,17 @@ $headerDrawerId = 'gesture-history-drawer';
       border-color: #f59e0b;
       background: rgba(245, 158, 11, 0.08);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .intent-card {
+      cursor: pointer;
+      transform: translateY(0);
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background-color .18s ease;
+    }
+
+    .intent-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px -22px rgba(2, 6, 23, .55);
     }
     
   </style>
