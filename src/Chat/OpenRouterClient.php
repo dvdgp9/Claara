@@ -26,6 +26,7 @@ class OpenRouterClient {
     private ?int $maxTokens;
     private ?array $lastImages = null; // Imágenes generadas en última respuesta
     private ?array $lastAnnotations = null; // Anotaciones/citas web de última respuesta
+    private ?string $pdfEngine = null; // null = dejar que OpenRouter auto-seleccione (native en Gemini, mistral-ocr en el resto)
     private string $baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
     public function __construct(
@@ -143,11 +144,13 @@ class OpenRouterClient {
         // Construir array de plugins
         $plugins = [];
         
-        // Si hay PDF, añadir plugin file-parser con engine pdf-text
-        if ($hasPdf) {
+        // Si hay PDF y se ha forzado un engine concreto, añadir plugin file-parser.
+        // Si no, omitimos el plugin para que OpenRouter use el mejor disponible
+        // (native en modelos que lo soporten como Gemini; mistral-ocr en otros).
+        if ($hasPdf && $this->pdfEngine !== null) {
             $plugins[] = [
                 'id' => 'file-parser',
-                'pdf' => [ 'engine' => 'pdf-text' ]
+                'pdf' => [ 'engine' => $this->pdfEngine ]
             ];
         }
         
@@ -243,6 +246,16 @@ class OpenRouterClient {
     public function getConfiguredModel(): string
     {
         return $this->model;
+    }
+
+    /**
+     * Forzar un engine específico para el plugin file-parser (PDFs).
+     * Engines válidos (2026): 'native', 'mistral-ocr', 'cloudflare-ai'.
+     * null = no enviar plugin explícito; OpenRouter elegirá según el modelo.
+     */
+    public function setPdfEngine(?string $engine): void
+    {
+        $this->pdfEngine = $engine;
     }
 
     /**
@@ -350,10 +363,10 @@ class OpenRouterClient {
         
         // Construir array de plugins
         $plugins = [];
-        if ($hasPdf) {
+        if ($hasPdf && $this->pdfEngine !== null) {
             $plugins[] = [
                 'id' => 'file-parser',
-                'pdf' => [ 'engine' => 'pdf-text' ]
+                'pdf' => [ 'engine' => $this->pdfEngine ]
             ];
         }
         

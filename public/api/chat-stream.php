@@ -361,56 +361,98 @@ try {
     echo "data: [DONE]\n\n";
     flush();
     } catch (\Exception $e) {
-     if ($file && ($file['mime_type'] ?? '') === 'application/pdf' && shouldFallbackPdfToLocalText($e)) {
-         $extractor = new ContentExtractor();
-         $pdfExtraction = $extractor->extractFromPdfLocally((string)($file['data'] ?? ''));
+        // Cascada de fallbacks cuando OpenRouter falla parseando un PDF.
+        $historyHasPdf = pdfHistoryContainsAttachment($history);
+        if ($historyHasPdf && shouldFallbackPdfToLocalText($e)) {
 
-         if (!empty($pdfExtraction['success']) && !empty($pdfExtraction['content'])) {
-             $fallbackMessage = buildPdfFallbackPrompt($message, (string)$pdfExtraction['content'], (string)($file['name'] ?? 'documento.pdf'));
-             $fallbackHistory = replaceLastUserPdfWithText($history, $fallbackMessage);
+            // 1) Intentar extracción local con pdftotext (si está disponible
+            //    en el servidor; en producción suele NO estarlo).
+            $localPdfHistory = replacePdfAttachmentsWithLocalText($history);
+            if ($localPdfHistory !== null) {
+                try {
+                    $client = new OpenRouterClient(null, $modelName, $systemPrompt);
+                    $fullText = '';
+                    $usedModel = $modelName;
 
-             try {
-                 $client = new OpenRouterClient(null, $modelName, $systemPrompt);
-                 $fullText = '';
-                 $usedModel = $modelName;
+                    $client->generateWithMessagesStreaming(
+                        $localPdfHistory,
+                        function($chunk) use (&$fullText) {
+                            $fullText .= $chunk;
+                            sendEvent('chunk', ['content' => $chunk]);
+                        },
+                        function($text, $model) use (&$usedModel) {
+                            $usedModel = $model;
+                        },
+                        $webSearch
+                    );
 
-                 $client->generateWithMessagesStreaming(
-                     $fallbackHistory,
-                     function($chunk) use (&$fullText) {
-                         $fullText .= $chunk;
-                         sendEvent('chunk', ['content' => $chunk]);
-                     },
-                     function($text, $model) use (&$usedModel) {
-                         $usedModel = $model;
-                     },
-                     $webSearch
-                 );
+                    $annotations = $client->getLastAnnotations();
+                    $assistantMsgId = $msgs->create($conversationId, null, 'assistant', $fullText, $usedModel, null, null, null, null);
+                    $convos->touch($conversationId);
 
-                 $annotations = $client->getLastAnnotations();
-                 $assistantMsgId = $msgs->create($conversationId, null, 'assistant', $fullText, $usedModel, null, null, null, null);
-                 $convos->touch($conversationId);
+                    sendEvent('meta', [
+                        'message_id' => $assistantMsgId,
+                        'model' => $usedModel,
+                        'context_truncated' => $contextTruncated
+                    ]);
 
-                 sendEvent('meta', [
-                     'message_id' => $assistantMsgId,
-                     'model' => $usedModel,
-                     'context_truncated' => $contextTruncated
-                 ]);
+                    if ($annotations && !empty($annotations)) {
+                        sendEvent('annotations', ['annotations' => $annotations]);
+                    }
 
-                 if ($annotations && !empty($annotations)) {
-                     sendEvent('annotations', ['annotations' => $annotations]);
-                 }
+                    echo "data: [DONE]\n\n";
+                    flush();
+                    exit;
+                } catch (\Exception $ignored) {
+                    // Cae al siguiente fallback.
+                }
+            }
 
-                 echo "data: [DONE]\n\n";
-                 flush();
-                 exit;
-             } catch (\Exception $fallbackException) {
-                 sendError($fallbackException->getMessage());
-             }
-         }
-     }
+            // 2) Reintentar en OpenRouter forzando el engine mistral-ocr,
+            //    que es el más robusto para PDFs con contenido mixto
+            //    (texto + imágenes, escaneados, encoding no estándar).
+            try {
+                $client = new OpenRouterClient(null, $modelName, $systemPrompt);
+                $client->setPdfEngine('mistral-ocr');
+                $fullText = '';
+                $usedModel = $modelName;
 
-    sendError($e->getMessage());
-}
+                $client->generateWithMessagesStreaming(
+                    $history,
+                    function($chunk) use (&$fullText) {
+                        $fullText .= $chunk;
+                        sendEvent('chunk', ['content' => $chunk]);
+                    },
+                    function($text, $model) use (&$usedModel) {
+                        $usedModel = $model;
+                    },
+                    $webSearch
+                );
+
+                $annotations = $client->getLastAnnotations();
+                $assistantMsgId = $msgs->create($conversationId, null, 'assistant', $fullText, $usedModel, null, null, null, null);
+                $convos->touch($conversationId);
+
+                sendEvent('meta', [
+                    'message_id' => $assistantMsgId,
+                    'model' => $usedModel,
+                    'context_truncated' => $contextTruncated
+                ]);
+
+                if ($annotations && !empty($annotations)) {
+                    sendEvent('annotations', ['annotations' => $annotations]);
+                }
+
+                echo "data: [DONE]\n\n";
+                flush();
+                exit;
+            } catch (\Exception $fallbackException) {
+                sendError('No se ha podido procesar el PDF. ' . $fallbackException->getMessage());
+            }
+        }
+
+        sendError($e->getMessage());
+    }
 
 /**
  * Procesar imágenes generadas (extraído de chat.php)
@@ -607,6 +649,57 @@ function buildPdfFallbackPrompt(string $message, string $pdfText, string $fileNa
     }
 
     return $prefix . "Analiza el contenido de este PDF:\n\n" . $pdfText;
+}
+
+/**
+ * Indica si el historial contiene algún mensaje de usuario con un PDF adjunto.
+ */
+function pdfHistoryContainsAttachment(array $history): bool {
+    foreach ($history as $item) {
+        if (($item['role'] ?? '') !== 'user') continue;
+        if (($item['file']['mime_type'] ?? '') === 'application/pdf') {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Intenta reemplazar cada PDF adjunto del historial por su texto extraído
+ * localmente (pdftotext). Devuelve el nuevo historial si al menos un PDF
+ * se pudo convertir, o null si no se pudo extraer ninguno (p. ej. porque
+ * pdftotext no está instalado en el servidor).
+ */
+function replacePdfAttachmentsWithLocalText(array $history): ?array {
+    $extractor = new ContentExtractor();
+    $replaced = false;
+
+    foreach ($history as $idx => $item) {
+        if (($item['role'] ?? '') !== 'user') continue;
+        if (($item['file']['mime_type'] ?? '') !== 'application/pdf') continue;
+
+        $pdfData = (string)($item['file']['data'] ?? '');
+        $fileName = (string)($item['file']['name'] ?? 'documento.pdf');
+        if ($pdfData === '') continue;
+
+        $extraction = $extractor->extractFromPdfLocally($pdfData);
+        if (empty($extraction['success']) || empty($extraction['content'])) {
+            continue;
+        }
+
+        $pdfText = (string)$extraction['content'];
+        $maxChars = 15000;
+        if (mb_strlen($pdfText) > $maxChars) {
+            $pdfText = mb_substr($pdfText, 0, $maxChars) . "\n\n[Contenido truncado para mantener contexto manejable]";
+        }
+
+        $currentMessage = is_string($item['content'] ?? null) ? (string)$item['content'] : '';
+        $history[$idx]['content'] = buildPdfFallbackPrompt($currentMessage, $pdfText, $fileName);
+        unset($history[$idx]['file']);
+        $replaced = true;
+    }
+
+    return $replaced ? $history : null;
 }
 
 function replaceLastUserPdfWithText(array $history, string $fallbackMessage): array {
