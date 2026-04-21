@@ -66,27 +66,41 @@ class GestureExecutionsRepo
      */
     public function listByUserAndType(int $userId, string $gestureType, int $limit = 20): array
     {
-        $sql = "SELECT id, title, model, content_type, business_line, is_favorite, input_data, created_at
-                FROM gesture_executions 
-                WHERE user_id = :user_id AND gesture_type = :gesture_type
-                ORDER BY created_at DESC
-                LIMIT :limit";
-        
+        // Para image-editor, input_data puede contener base64 de varios MB
+        // (source_image, target_image, reference_images). Evitamos traerlo y
+        // extraemos solo los campos necesarios vía JSON_EXTRACT para que el
+        // listado del historial sea ligero.
+        if ($gestureType === 'image-editor') {
+            $sql = "SELECT id, title, model, content_type, business_line, is_favorite, created_at,
+                           JSON_UNQUOTE(JSON_EXTRACT(input_data, '$.mode'))   AS mode,
+                           JSON_UNQUOTE(JSON_EXTRACT(input_data, '$.intent')) AS intent
+                    FROM gesture_executions
+                    WHERE user_id = :user_id AND gesture_type = :gesture_type
+                    ORDER BY created_at DESC
+                    LIMIT :limit";
+        } else {
+            $sql = "SELECT id, title, model, content_type, business_line, is_favorite, input_data, created_at
+                    FROM gesture_executions
+                    WHERE user_id = :user_id AND gesture_type = :gesture_type
+                    ORDER BY created_at DESC
+                    LIMIT :limit";
+        }
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue('user_id', $userId, PDO::PARAM_INT);
         $stmt->bindValue('gesture_type', $gestureType, PDO::PARAM_STR);
         $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
-        
+
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Decodificar input_data para cada fila
+
+        // Decodificar input_data para cada fila (solo cuando viene en la query)
         foreach ($rows as &$row) {
-            if (isset($row['input_data'])) {
+            if (array_key_exists('input_data', $row) && $row['input_data'] !== null) {
                 $row['input_data'] = json_decode($row['input_data'], true) ?? [];
             }
         }
-        
+
         return $rows;
     }
 

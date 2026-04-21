@@ -40,10 +40,11 @@ if ($gestureType) {
 }
 
 if ($gestureType === 'image-editor' && !empty($items)) {
+    // El repo ya devuelve mode/intent extraídos vía JSON_EXTRACT sin traer
+    // el blob base64 de input_data. Solo normalizamos valores por defecto.
     foreach ($items as &$item) {
-        $inputData = is_array($item['input_data'] ?? null) ? $item['input_data'] : [];
-        $item['mode'] = $inputData['mode'] ?? 'generate';
-        $item['intent'] = $inputData['intent'] ?? null;
+        $item['mode'] = $item['mode'] ?? 'generate';
+        $item['intent'] = $item['intent'] ?? null;
     }
     unset($item);
 }
