@@ -96,10 +96,16 @@ if (!$isSuperadmin) {
               <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Gestión de usuarios</h1>
               <p class="text-slate-600 text-sm lg:text-base mt-1">Crear, editar y gestionar cuentas de usuario</p>
             </div>
-            <button id="create-user-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
-              <i class="iconoir-plus-circle"></i>
-              <span>Nuevo usuario</span>
-            </button>
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <a href="/admin/departments.php" class="w-full sm:w-auto px-4 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                <i class="iconoir-community"></i>
+                <span>Departamentos</span>
+              </a>
+              <button id="create-user-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
+                <i class="iconoir-plus-circle"></i>
+                <span>Nuevo usuario</span>
+              </button>
+            </div>
           </div>
 
           <!-- Búsqueda y filtros -->

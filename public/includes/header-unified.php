@@ -159,6 +159,10 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
             <i class="iconoir-settings"></i>
             <span>Gestión de usuarios</span>
           </a>
+          <a href="/admin/departments.php" id="departments-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <i class="iconoir-community"></i>
+            <span>Departamentos</span>
+          </a>
           <a href="/admin/stats.php" id="stats-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
             <i class="iconoir-graph-up"></i>
             <span>Panel de control</span>
