@@ -40,14 +40,12 @@ foreach ($files as $file) {
     $sql = file_get_contents($file);
     echo "+ Applying: $base\n";
     try {
-        $pdo->beginTransaction();
         $pdo->exec($sql);
         $ins = $pdo->prepare('INSERT INTO schema_migrations (filename, executed_at) VALUES (?, NOW())');
         $ins->execute([$base]);
-        $pdo->commit();
+        $doneSet[$base] = true;
         echo "✔ Done: $base\n";
     } catch (Throwable $e) {
-        $pdo->rollBack();
         fwrite(STDERR, "! Failed on $base: " . $e->getMessage() . "\n");
         exit(1);
     }
