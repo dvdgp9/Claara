@@ -882,6 +882,235 @@ Actualmente los archivos solo se pueden adjuntar al chat mediante el botón de a
 
 ---
 
+## Feature: Lead Finder Gesture
+
+### Background and Motivation
+Nuevo gesture en inglés para convertir una intención simple del usuario en una búsqueda estructurada de leads. El usuario escribe una petición natural, por ejemplo `schools and high schools in Castellón`, iaiaPRO busca entidades relevantes mediante un proveedor externo, ordena los datos, permite revisión humana y exporta los resultados. En una fase posterior, los leads validados podrán alimentar un flujo de envío de emails.
+
+### Product Scope
+Nombre del gesture: `Lead Finder`.
+
+Tono de producto: cercano, claro y profesional. La interfaz debe evitar lenguaje técnico como “scraper” de cara al usuario; internamente puede existir una capa de provider/scraping.
+
+Inputs mínimos del MVP:
+- `Search request`: campo principal de lenguaje natural.
+- `Max results`: selector corto con valores razonables, por ejemplo 25, 50, 100.
+
+No añadir filtros avanzados en el primer corte. Si el usuario quiere buscar por ubicación, sector o tipo de entidad, debe poder escribirlo en el campo principal.
+
+Campos mínimos de salida:
+- Name
+- Website
+- Email
+- Phone
+- Address
+- Source URL
+- Confidence
+- Status: `Pending`, `Validated`, `Rejected`
+
+Export inicial:
+- CSV obligatorio.
+- XLSX deseable si el proyecto ya tiene dependencia simple o si se implementa en backend sin añadir peso innecesario.
+
+### Key Challenges and Analysis
+
+1. **Proveedor API pendiente**
+   - No se debe implementar scraping directo contra Google desde PHP.
+   - La integración real queda bloqueada hasta elegir proveedor: SerpAPI, Apify, Google Places, Tavily, Firecrawl, Brave Search API u otro.
+   - Antes de implementar el provider real, pedir al usuario que etiquete `@web` o proporcione documentación actualizada del proveedor elegido. Crear después un `.md` específico con notas de API.
+
+2. **Arquitectura desacoplada**
+   - Crear una interfaz interna tipo `LeadSearchProvider`.
+   - Implementar primero un `MockLeadSearchProvider` o `StaticLeadSearchProvider` para poder construir UX, historial, validación y export sin esperar proveedor.
+   - El provider real debe devolver datos normalizados en un formato común.
+
+3. **Calidad de datos**
+   - Hay que deduplicar por website, email, teléfono y nombre aproximado.
+   - Cada fila debe mostrar fuente y confidence para que el usuario pueda validar.
+   - No se debe ocultar incertidumbre. Si un email no está disponible, mostrar estado vacío claro.
+
+4. **UX principal**
+   - Mantener sidebar e historial como otros gestures.
+   - La zona principal debe ser más cuidada que un formulario estándar.
+   - Usar una composición de trabajo real, no landing page: prompt arriba, progreso en línea, tabla editable/revisable y acciones persistentes.
+   - Debe incluir estados completos: empty, loading, partial results, error, no results, completed.
+
+5. **Futuro email outreach**
+   - No enviar emails en el MVP.
+   - Preparar modelo de datos con validación humana explícita para evitar mezclar leads encontrados con leads aprobados.
+   - En fase futura habrá que contemplar consentimiento, bajas, límites de envío, reputación del dominio y logs.
+
+### UX Direction
+
+Aplicar criterios de `design-taste-frontend` adaptados a iaiaPRO:
+- Software UI, no marketing page.
+- Paleta neutral con un único acento. Evitar estética morada/azul “AI”.
+- Densidad media: tabla legible y rápida de escanear.
+- No usar hero sobredimensionado.
+- No usar tarjetas anidadas.
+- Layout recomendado: panel de búsqueda compacto arriba, debajo una banda de progreso/resultados, y tabla principal con acciones de validación.
+- Acciones por fila con iconos y labels claros: validate, reject, open source, edit.
+- Loading con skeletons de filas, no spinner genérico.
+- Empty state útil: ejemplos de búsquedas reales en botones discretos.
+- Error state inline con mensaje técnico mínimo y sugerencia accionable.
+
+### Proposed Data Model
+
+Tabla `lead_finder_runs`:
+- `id`
+- `user_id`
+- `query`
+- `max_results`
+- `provider`
+- `status`: `pending`, `processing`, `completed`, `failed`
+- `error_message`
+- `created_at`, `started_at`, `completed_at`
+
+Tabla `lead_finder_results`:
+- `id`
+- `run_id`
+- `name`
+- `website`
+- `email`
+- `phone`
+- `address`
+- `source_url`
+- `confidence`
+- `status`: `pending`, `validated`, `rejected`
+- `raw_data` JSON
+- `created_at`, `updated_at`
+
+Nota: evaluar si reutilizar `background_jobs` para proceso async. Recomendación: sí, usar job type `lead-finder` si la búsqueda puede tardar más de unos segundos.
+
+### API / Backend Shape
+
+Endpoints propuestos:
+- `POST /api/gestures/lead-finder/search.php`
+  - Crea run y job.
+  - Input: `query`, `max_results`.
+  - Output: `run_id`, `job_id`.
+- `GET /api/gestures/lead-finder/get.php?id=RUN_ID`
+  - Devuelve run + results.
+- `POST /api/gestures/lead-finder/update-result.php`
+  - Edita campos y status de una fila.
+- `POST /api/gestures/lead-finder/export.php`
+  - Exporta CSV/XLSX.
+- `GET /api/gestures/lead-finder/history.php`
+  - Lista búsquedas del usuario.
+- `DELETE /api/gestures/lead-finder/delete.php`
+  - Borra una búsqueda y sus resultados.
+
+Provider contract propuesto:
+- `search(string $query, int $maxResults): array`
+- cada resultado normalizado debe incluir `name`, `website`, `email`, `phone`, `address`, `source_url`, `confidence`, `raw_data`.
+
+### High-level Task Breakdown
+
+#### Task 1: Inspect existing gesture patterns
+- Revisar páginas y endpoints de gestures con historial, especialmente audio transcriber, SOP, social media o project analysis.
+- Identificar componentes/partials reutilizables para sidebar, historial, layout y delete/load behavior.
+- Success criteria: lista concreta de archivos a copiar/adaptar y convenciones confirmadas antes de crear código.
+
+#### Task 2: Database migration for Lead Finder
+- Crear migración para `lead_finder_runs` y `lead_finder_results`.
+- Incluir foreign keys con `ON DELETE CASCADE`.
+- Índices por `user_id`, `run_id`, `status`, `created_at`.
+- Success criteria: migración idempotente o segura para producción; documentar comando de ejecución.
+
+#### Task 3: Backend repos and provider interface
+- Crear repositorio para runs/results.
+- Crear `LeadSearchProvider` y provider mock inicial.
+- Añadir deduplicación básica.
+- Success criteria: se puede crear un run y guardar resultados mock normalizados desde PHP sin frontend.
+
+#### Task 4: Async job integration
+- Añadir job type `lead-finder` en `public/api/jobs/process.php`.
+- Actualizar progreso: `Preparing search`, `Collecting sources`, `Normalizing results`, `Saving leads`.
+- Success criteria: un job lead-finder pasa de pending a completed y deja resultados asociados al run.
+
+#### Task 5: API endpoints
+- Crear endpoints de search/get/history/update/export/delete.
+- Aplicar sesión, ownership y CSRF.
+- Success criteria: endpoints responden JSON consistente y bloquean acceso a runs de otros usuarios.
+
+#### Task 6: Main gesture UI
+- Crear `public/gestos/lead-finder.php`.
+- Mantener sidebar/historial igual que otros gestures.
+- Diseñar zona principal premium y funcional:
+  - single prompt input
+  - max results selector compacto
+  - examples como quick chips
+  - skeleton loading table
+  - results table editable
+  - validate/reject row actions
+  - export action
+- Success criteria: flujo completo usable con provider mock, responsive desktop/mobile, sin solapes ni texto cortado.
+
+#### Task 7: Register gesture in navigation
+- Añadir Lead Finder a lista de gestures disponibles.
+- Usar nombre visible `Lead Finder`.
+- Descripción breve: `Find and validate structured leads`.
+- Success criteria: aparece en el panel de gestures, historial y navegación coherente.
+
+#### Task 8: Export
+- Implementar CSV primero.
+- Evaluar XLSX según dependencias disponibles.
+- Success criteria: export contiene solo columnas útiles, respeta cambios/validaciones del usuario y descarga correctamente.
+
+#### Task 9: Provider real integration
+- Bloqueado hasta elegir proveedor.
+- Pedir al usuario documentación actualizada o usar `@web`.
+- Crear `docs/apis/<provider>_lead_finder.md`.
+- Implementar provider real detrás del contrato existente.
+- Success criteria: cambiar provider no requiere tocar UI ni estructura de datos.
+
+#### Task 10: Manual QA
+- Probar búsqueda mock.
+- Probar historial/load/delete.
+- Probar validación/rechazo/edición.
+- Probar export.
+- Probar responsive.
+- Success criteria: el usuario puede validar una búsqueda completa y exportarla sin intervención técnica.
+
+### Project Status Board: Lead Finder
+
+- [x] Task 1: Inspect existing gesture patterns.
+- [x] Task 2: Database migration for Lead Finder.
+- [ ] Task 3: Backend repos and provider interface.
+- [ ] Task 4: Async job integration.
+- [ ] Task 5: API endpoints.
+- [ ] Task 6: Main gesture UI.
+- [ ] Task 7: Register gesture in navigation.
+- [ ] Task 8: Export.
+- [ ] Task 9: Provider real integration.
+- [ ] Task 10: Manual QA.
+
+### Planner Notes
+
+MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar UX, historial, validación y exportación sin esperar decisión de API. Cuando el usuario elija proveedor, Task 9 sustituye solo la capa provider.
+
+### Executor Notes
+
+2026-05-13 Task 1 findings:
+- Base visual recomendada: `public/gestos/transcriptor-audio.php`, porque ya tiene acceso por feature, unified header, history sidebar, mobile drawer, async job polling, resume via `sessionStorage`, empty/loading/result sections y delete/load history.
+- Patrón de historial común: `public/api/gestures/history.php`, `get.php`, `delete.php` con `GestureExecutionsRepo`. Para Lead Finder no basta con `gesture_executions` como almacenamiento principal porque necesitamos editar/validar filas individuales; se puede guardar un resumen en `gesture_executions` opcionalmente, pero el source of truth debe ser `lead_finder_runs` + `lead_finder_results`.
+- Patrón de jobs: `BackgroundJobsRepo` + `public/api/jobs/process.php`. Lead Finder debe seguir el estilo de `audio-transcribe`: endpoint específico crea el job y el frontend dispara/pollear `/api/jobs/process.php` + `/api/jobs/status.php`.
+- Registro en catálogo: `public/gestos/index.php` añade una card manual protegida por `UserFeatureAccessRepo::hasGestureAccess($userId, 'lead-finder')`.
+- Permisos: añadir `gesture:lead-finder` en `UserFeatureAccessRepo::DEFAULT_NEW_USER_ACCESS` si debe estar disponible para nuevos usuarios; también habrá que añadirlo a `available_features` vía migración/seed.
+- API job genérica `public/api/jobs/create.php` solo permite `podcast`; no conviene depender de ella para Lead Finder en el MVP. Mejor crear endpoint propio `public/api/gestures/lead-finder/search.php` que valide input, cree run y cree job `lead-finder`.
+- JS recomendado: crear archivo propio `public/assets/js/gesture-lead-finder.js` en vez de meter toda la lógica inline. Reutilizar funciones equivalentes a `loadHistory`, `renderHistory`, `deleteFromHistory`, `pollJobStatus`, pero adaptadas a runs/results.
+- UX concern: varios gestures actuales tienen CSS inline. Para esta feature, mover CSS nuevo a `public/assets/css/styles.css` o a la hoja global existente, respetando la lección del proyecto de no añadir CSS inline.
+
+2026-05-13 Task 2 findings:
+- Añadida migración `docs/migrations/016_lead_finder.sql`.
+- Crea `lead_finder_runs` con ownership por usuario, vínculo opcional a `background_jobs`, estado del run y contadores de resultados.
+- Crea `lead_finder_results` con campos editables del lead, estado de validación, confidence y `raw_data` JSON.
+- Registra `gesture:lead-finder` en `available_features` con textos en inglés.
+- Da acceso inicial a superadmins existentes mediante `user_feature_access`.
+- No se ha ejecutado la migración todavía en local ni producción.
+
+---
+
 # Current Status / Progress Tracking
 
 - 2026-04-13 (Executor): Iniciada implementación de catálogo de modelos editable para superadmin.
@@ -895,6 +1124,9 @@ Actualmente los archivos solo se pueden adjuntar al chat mediante el botón de a
 - 2026-04-13 (Executor): `public/index.php` actualizado para cargar modelos dinámicamente y gestionar alta/baja desde frontend (botón ⚙ con prompts).
 - 2026-05-13 (Executor): Diagnóstico de transcripción larga atascada. El worker reseteaba jobs `processing` tras 15 minutos aunque `BACKGROUND_JOB_MAX_SECONDS` permite ejecuciones largas; además el frontend relanzaba `/api/jobs/process.php` cada 30 segundos mientras el job seguía activo. Ajustado el reset a una ventana dependiente del runtime, cambiado el frontend para despertar worker solo al inicio o si el job está `pending`, y añadidos snapshots de progreso antes de segmentar y antes de cada segmento.
 - 2026-05-13 (Executor): Segundo diagnóstico de transcripción larga. El job avanzaba a `Analyzing audio duration...` y quedaba bloqueado, señal de `ffprobe` sin timeout. Añadido runner con timeout para `ffprobe` y `ffmpeg`; si no puede obtener duración pero el archivo pesa >= 8MB, se intenta segmentar igualmente para evitar enviar audios largos completos a Gemini.
+- 2026-05-13 (Planner): Planificado nuevo gesture `Lead Finder` con UX premium, provider desacoplado, historial, validación de resultados y export. La integración real de API queda pendiente de elegir proveedor y revisar documentación actualizada.
+- 2026-05-13 (Executor): Lead Finder Task 1 completada. Inspeccionados patrones de gestures, historial, jobs, permisos y registro en catálogo. Próximo paso: migración de BD para `lead_finder_runs` y `lead_finder_results`.
+- 2026-05-13 (Executor): Lead Finder Task 2 completada. Creada migración `016_lead_finder.sql` para runs/results y registro del feature. Pendiente de ejecutar cuando el usuario lo valide.
 
 # Executor's Feedback or Assistance Requests
 
@@ -904,9 +1136,12 @@ Actualmente los archivos solo se pueden adjuntar al chat mediante el botón de a
   2. Recargar sesión de superadmin y comprobar que el selector carga desde API.
   3. Probar `add` y `remove` desde el botón de gestión en ambos selectores (empty/chat).
 - Solicitud al planner/usuario: confirmar si este MVP por prompts es suficiente o si quieres que en el siguiente paso lo convierta a modal completo con edición inline/reordenación.
+- Lead Finder: Task 1 completada. Solicitud al usuario/planner: validar que avancemos a Task 2, que crea migración de base de datos para runs/results. No se ha tocado todavía la BD ni código funcional.
+- Lead Finder: Task 2 completada. Solicitud al usuario/planner: validar migración antes de ejecutarla; siguiente paso de implementación sería Task 3, repositorio backend + provider mock.
 
 # Lessons
 
 - Para cambios de configuración editable por superadmin, conviene desacoplar la lista hardcodeada del frontend y moverla a una tabla + API admin, manteniendo un endpoint de solo lectura para UI (`/api/models/list.php`).
 - En jobs largos de audio, no usar una ventana fija corta de `resetStuckJobs()`. Debe ser mayor que `BACKGROUND_JOB_MAX_SECONDS`, porque si no se reinician jobs legítimos en mitad de la transcripción y pueden lanzarse workers duplicados desde el polling del frontend.
 - Los comandos externos (`ffprobe`, `ffmpeg`) deben ejecutarse con timeout explícito. `exec()` sin timeout puede dejar un job indefinidamente en la misma fase si un contenedor de audio bloquea el análisis.
+- `.gitignore` ignoraba `migrations/`, lo que también ocultaba SQL nuevos bajo `docs/migrations/`. Para nuevas migraciones versionadas, mantener la excepción `!docs/migrations/` y `!docs/migrations/*.sql`; si no, `git add .` no las sube.
