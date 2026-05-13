@@ -124,7 +124,7 @@ if (!$isSuperadmin) {
   <div class="min-h-screen flex h-screen">
     <?php 
     $activeTab = '';
-    $pageTitle = 'Gestión de usuarios';
+    $pageTitle = 'User Management';
     include __DIR__ . '/../includes/left-tabs.php'; 
     ?>
 
@@ -136,17 +136,17 @@ if (!$isSuperadmin) {
           <!-- Header -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8 mt-4 lg:mt-6">
             <div>
-              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Gestión de usuarios</h1>
-              <p class="text-slate-600 text-sm lg:text-base mt-1">Crear, editar y gestionar cuentas de usuario</p>
+              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">User Management</h1>
+              <p class="text-slate-600 text-sm lg:text-base mt-1">Create, edit, and manage user accounts</p>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <a href="/admin/departments.php" class="w-full sm:w-auto px-4 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
                 <i class="iconoir-community"></i>
-                <span>Departamentos</span>
+                <span>Departments</span>
               </a>
               <button id="create-user-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
                 <i class="iconoir-plus-circle"></i>
-                <span>Nuevo usuario</span>
+                <span>New user</span>
               </button>
             </div>
           </div>
@@ -156,12 +156,12 @@ if (!$isSuperadmin) {
       <div class="flex items-center gap-4">
         <div class="flex-1 relative">
           <i class="iconoir-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-          <input type="text" id="search-input" placeholder="Buscar por nombre, email..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors">
+          <input type="text" id="search-input" placeholder="Search by name, email..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors">
         </div>
         <select id="status-filter" class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors">
-          <option value="">Todos los estados</option>
-          <option value="active">Activos</option>
-          <option value="disabled">Deshabilitados</option>
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="disabled">Disabled</option>
         </select>
       </div>
     </div>
@@ -170,7 +170,7 @@ if (!$isSuperadmin) {
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div id="users-loading" class="text-center py-12">
         <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
-        <p class="text-sm text-slate-500 mt-3">Cargando usuarios...</p>
+        <p class="text-sm text-slate-500 mt-3">Loading users...</p>
       </div>
 
       <div id="users-container" class="hidden">
@@ -178,12 +178,12 @@ if (!$isSuperadmin) {
           <table class="w-full">
             <thead class="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Usuario</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Departamento</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Último acceso</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Department</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last access</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody id="users-list" class="divide-y divide-slate-200">
@@ -193,7 +193,7 @@ if (!$isSuperadmin) {
         </div>
         <div id="no-results" class="hidden text-center py-12">
           <i class="iconoir-search text-4xl text-slate-300"></i>
-          <p class="text-slate-500 mt-3">No se encontraron usuarios</p>
+          <p class="text-slate-500 mt-3">No users found</p>
         </div>
       </div>
     </div>
@@ -211,23 +211,23 @@ if (!$isSuperadmin) {
           <i class="iconoir-warning-triangle text-red-600 text-2xl"></i>
         </div>
         <div>
-          <h3 class="text-lg font-semibold text-slate-800">Eliminar usuario</h3>
-          <p class="text-sm text-slate-600 mt-0.5">Esta acción no se puede deshacer</p>
+          <h3 class="text-lg font-semibold text-slate-800">Delete user</h3>
+          <p class="text-sm text-slate-600 mt-0.5">This action cannot be undone</p>
         </div>
       </div>
 
       <p class="text-slate-700 mb-6">
-        ¿Estás seguro de que deseas eliminar al usuario <strong id="delete-user-name" class="text-slate-900"></strong>?
+        Are you sure you want to delete user <strong id="delete-user-name" class="text-slate-900"></strong>?
         <br><br>
-        Se eliminarán todas sus conversaciones, mensajes y datos asociados de forma permanente.
+        All their conversations, messages, and related data will be permanently deleted.
       </p>
 
       <div class="flex gap-3">
         <button id="confirm-delete-btn" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors text-sm">
-          Sí, eliminar usuario
+          Yes, delete user
         </button>
         <button id="cancel-delete-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
-          Cancelar
+          Cancel
         </button>
       </div>
     </div>
@@ -237,7 +237,7 @@ if (!$isSuperadmin) {
   <div id="user-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold text-slate-800" id="modal-title">Nuevo usuario</h3>
+        <h3 class="text-lg font-semibold text-slate-800" id="modal-title">New user</h3>
         <button id="close-modal-btn" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
           <i class="iconoir-xmark text-xl"></i>
         </button>
@@ -248,11 +248,11 @@ if (!$isSuperadmin) {
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-medium text-slate-700 block mb-2">Nombre *</label>
+            <label class="text-sm font-medium text-slate-700 block mb-2">First name *</label>
             <input type="text" id="user-first-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required>
           </div>
           <div>
-            <label class="text-sm font-medium text-slate-700 block mb-2">Apellidos *</label>
+            <label class="text-sm font-medium text-slate-700 block mb-2">Last name *</label>
             <input type="text" id="user-last-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required>
           </div>
         </div>
@@ -286,12 +286,12 @@ if (!$isSuperadmin) {
         <div class="flex items-center gap-4 pt-2 border-t border-slate-100">
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" id="user-superadmin" class="w-4 h-4 text-[#23AAC5] border-slate-300 rounded focus:ring-[#23AAC5]">
-            <span class="text-sm font-medium text-slate-700">Superadministrador</span>
+            <span class="text-sm font-medium text-slate-700">Superadmin</span>
           </label>
           
           <label class="flex items-center gap-2 cursor-pointer" id="status-toggle-container">
             <input type="checkbox" id="user-status" class="w-4 h-4 text-[#23AAC5] border-slate-300 rounded focus:ring-[#23AAC5]" checked>
-            <span class="text-sm font-medium text-slate-700">Cuenta activa</span>
+            <span class="text-sm font-medium text-slate-700">Active account</span>
           </label>
         </div>
 
@@ -299,10 +299,10 @@ if (!$isSuperadmin) {
 
         <div class="flex gap-3 pt-2">
           <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
-            <span id="submit-text">Crear usuario</span>
+            <span id="submit-text">Create user</span>
           </button>
           <button type="button" id="cancel-modal-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
-            Cancelar
+            Cancel
           </button>
         </div>
       </form>
@@ -316,7 +316,7 @@ if (!$isSuperadmin) {
         <div class="flex items-center gap-4">
           <div id="perm-user-avatar" class="h-12 w-12 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c] flex items-center justify-center text-white font-bold text-lg"></div>
           <div>
-            <h3 class="text-lg font-semibold text-slate-800" id="perm-user-name">Permisos de usuario</h3>
+            <h3 class="text-lg font-semibold text-slate-800" id="perm-user-name">User permissions</h3>
             <p id="perm-user-email" class="text-sm text-slate-500"></p>
           </div>
         </div>
@@ -327,16 +327,16 @@ if (!$isSuperadmin) {
 
       <div id="perm-superadmin-notice" class="hidden mb-6 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex-shrink-0">
         <i class="iconoir-info-circle mr-1"></i>
-        Los superadministradores tienen acceso a todas las funcionalidades automáticamente.
+        Superadmins automatically have access to all features.
       </div>
 
       <div class="flex-1 overflow-y-auto pr-2 space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Gestos -->
+          <!-- Gestures -->
           <div class="bg-slate-50 rounded-xl p-4">
             <div class="flex items-center justify-between mb-4">
               <h4 class="font-bold text-slate-800 flex items-center gap-2">
-                <i class="iconoir-magic-wand text-[#23AAC5]"></i> Gestos
+                <i class="iconoir-magic-wand text-[#23AAC5]"></i> Gestures
               </h4>
               <div class="flex gap-1">
                 <button onclick="toggleAllOfType('gesture', true)" class="text-[10px] px-1.5 py-0.5 bg-[#23AAC5]/10 text-[#23AAC5] rounded-md hover:bg-[#23AAC5]/20 font-medium">All</button>
@@ -346,11 +346,11 @@ if (!$isSuperadmin) {
             <div id="gestures-list" class="space-y-3"></div>
           </div>
 
-          <!-- Voces -->
+          <!-- Voices -->
           <div class="bg-slate-50 rounded-xl p-4">
             <div class="flex items-center justify-between mb-4">
               <h4 class="font-bold text-slate-800 flex items-center gap-2">
-                <i class="iconoir-voice-square text-violet-500"></i> Voces
+                <i class="iconoir-voice-square text-violet-500"></i> Voices
               </h4>
               <div class="flex gap-1">
                 <button onclick="toggleAllOfType('voice', true)" class="text-[10px] px-1.5 py-0.5 bg-violet-100 text-violet-600 rounded-md hover:bg-violet-200 font-medium">All</button>
@@ -374,7 +374,7 @@ if (!$isSuperadmin) {
 
       <div class="mt-6 pt-4 border-t border-slate-100 flex justify-end flex-shrink-0">
         <button id="close-perm-modal-btn" class="px-6 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors text-sm">
-          Cerrar
+          Close
         </button>
       </div>
     </div>
@@ -425,7 +425,7 @@ if (!$isSuperadmin) {
         const data = await api('/api/admin/features/list.php');
         allFeatures = data.features || { gesture: [], voice: [], feature: [] };
       } catch (err) {
-        console.error('Error al cargar catálogo de features:', err);
+        console.error('Error loading features catalog:', err);
       }
     }
 
@@ -438,7 +438,7 @@ if (!$isSuperadmin) {
         document.getElementById('users-loading').classList.add('hidden');
         document.getElementById('users-container').classList.remove('hidden');
       } catch (err) {
-        document.getElementById('users-loading').innerHTML = '<p class="text-sm text-red-600">Error al cargar usuarios</p>';
+        document.getElementById('users-loading').innerHTML = '<p class="text-sm text-red-600">Error loading users</p>';
       }
     }
 
@@ -449,7 +449,7 @@ if (!$isSuperadmin) {
         allDepartments = data.departments || [];
         renderDepartmentOptions();
       } catch (err) {
-        console.error('Error al cargar departamentos:', err);
+        console.error('Error loading departments:', err);
       }
     }
 
@@ -532,11 +532,11 @@ if (!$isSuperadmin) {
                 </button>
                 <button onclick="editUser(${u.id})" class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-[#23AAC5] hover:text-[#115c6c] hover:bg-[#23AAC5]/5 rounded-lg transition-colors">
                   <i class="iconoir-edit-pencil"></i>
-                  <span>Editar</span>
+                  <span>Edit</span>
                 </button>
                 <button onclick="confirmDeleteUser(${u.id}, '${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}')" class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
                   <i class="iconoir-trash"></i>
-                  <span>Eliminar</span>
+                  <span>Delete</span>
                 </button>
               </div>
             </td>
@@ -561,14 +561,14 @@ if (!$isSuperadmin) {
       document.getElementById('user-modal').classList.remove('hidden');
     });
 
-    // Editar usuario
+    // Edit usuario
     window.editUser = function(userId) {
       const user = allUsers.find(u => u.id === userId);
       if (!user) return;
       
       isEditMode = true;
-      document.getElementById('modal-title').textContent = 'Editar usuario';
-      document.getElementById('submit-text').textContent = 'Guardar cambios';
+      document.getElementById('modal-title').textContent = 'Edit user';
+      document.getElementById('submit-text').textContent = 'Save changes';
       document.getElementById('user-id').value = user.id;
       document.getElementById('user-first-name').value = user.first_name;
       document.getElementById('user-last-name').value = user.last_name;
@@ -578,14 +578,14 @@ if (!$isSuperadmin) {
       document.getElementById('user-status').checked = user.status === 'active';
       document.getElementById('user-password').value = '';
       document.getElementById('user-password').required = false;
-      document.getElementById('password-label').innerHTML = 'Nueva contraseña <span class="text-slate-400">(dejar vacío para mantener)</span>';
-      document.getElementById('password-hint').textContent = 'Solo completar si deseas cambiar la contraseña';
+      document.getElementById('password-label').innerHTML = 'New password <span class="text-slate-400">(leave blank to keep)</span>';
+      document.getElementById('password-hint').textContent = 'Fill only if you want to change the password';
       document.getElementById('status-toggle-container').classList.remove('hidden');
       document.getElementById('user-error').classList.add('hidden');
       document.getElementById('user-modal').classList.remove('hidden');
     };
 
-    // Cerrar modal
+    // Close modal
     [document.getElementById('close-modal-btn'), document.getElementById('cancel-modal-btn')].forEach(btn => {
       btn.addEventListener('click', () => {
         document.getElementById('user-modal').classList.add('hidden');
@@ -672,11 +672,11 @@ if (!$isSuperadmin) {
         errorEl.classList.remove('hidden');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = isEditMode ? 'Guardar cambios' : 'Crear usuario';
+        submitBtn.textContent = isEditMode ? 'Save changes' : 'Create user';
       }
     });
 
-    // Eliminar usuario
+    // Delete user
     let userToDelete = null;
     
     window.confirmDeleteUser = function(userId, userName) {
@@ -690,7 +690,7 @@ if (!$isSuperadmin) {
       userToDelete = null;
     });
 
-    // Cerrar modal al hacer clic fuera
+    // Close modal al hacer clic fuera
     document.getElementById('delete-modal').addEventListener('click', (e) => {
       if (e.target.id === 'delete-modal') {
         document.getElementById('delete-modal').classList.add('hidden');
@@ -715,10 +715,10 @@ if (!$isSuperadmin) {
         userToDelete = null;
         await loadUsers();
       } catch (err) {
-        alert('Error al eliminar usuario: ' + err.message);
+        alert('Error deleting user: ' + err.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Sí, eliminar usuario';
+        btn.textContent = 'Yes, delete user';
       }
     });
 

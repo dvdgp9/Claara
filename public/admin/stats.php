@@ -40,7 +40,7 @@ function dateCond($prefix = 'WHERE', $col = 'created_at', $alias = '') {
 }
 
 // === ESTADÍSTICAS GENERALES ===
-// Nota: Usuarios siempre mostramos total histórico
+// Nota: Usuarios siempre mostramos total all time
 // Usamos usage_log para estadísticas persistentes (no se borran cuando se eliminan mensajes)
 $generalStats = $pdo->query("
     SELECT 
@@ -210,14 +210,14 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
             <div class="flex gap-2 lg:gap-3">
               <!-- Filtro de rango -->
               <div class="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
-                <a href="?range=7" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === '7' ? 'bg-[#23AAC5] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">7 días</a>
-                <a href="?range=30" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === '30' ? 'bg-[#23AAC5] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">30 días</a>
-                <a href="?range=all" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === 'all' ? 'bg-[#23AAC5] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">Todo</a>
+                <a href="?range=7" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === '7' ? 'bg-[#23AAC5] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">7 days</a>
+                <a href="?range=30" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === '30' ? 'bg-[#23AAC5] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">30 days</a>
+                <a href="?range=all" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === 'all' ? 'bg-[#23AAC5] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">All</a>
               </div>
 
               <a href="/admin/users.php" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-all flex items-center gap-2 bg-white shadow-sm">
                 <i class="iconoir-group"></i>
-                <span>Gestión de usuarios</span>
+                <span>User management</span>
               </a>
             </div>
           </div>
@@ -243,7 +243,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800"><?= number_format($generalStats['active_users']) ?></div>
-            <div class="text-xs text-slate-500">Activos (Total)</div>
+            <div class="text-xs text-slate-500">Active (Total)</div>
           </div>
         </div>
       </div>
@@ -255,7 +255,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800"><?= number_format($generalStats['total_conversations']) ?></div>
-            <div class="text-xs text-slate-500">Conversaciones</div>
+            <div class="text-xs text-slate-500">Conversations</div>
           </div>
         </div>
       </div>
@@ -267,7 +267,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800"><?= number_format($generalStats['total_messages']) ?></div>
-            <div class="text-xs text-slate-500">Mensajes</div>
+            <div class="text-xs text-slate-500">Messages</div>
           </div>
         </div>
       </div>
@@ -291,7 +291,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800"><?= number_format($generalStats['total_images']) ?></div>
-            <div class="text-xs text-slate-500">Imágenes</div>
+            <div class="text-xs text-slate-500">Images</div>
           </div>
         </div>
       </div>
@@ -303,7 +303,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800"><?= number_format($generalStats['total_gestures']) ?></div>
-            <div class="text-xs text-slate-500">Gestos</div>
+            <div class="text-xs text-slate-500">Gestures</div>
           </div>
         </div>
       </div>
@@ -315,7 +315,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800"><?= number_format($generalStats['total_voices']) ?></div>
-            <div class="text-xs text-slate-500">Voces</div>
+            <div class="text-xs text-slate-500">Voices</div>
           </div>
         </div>
       </div>
@@ -326,7 +326,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
           <i class="iconoir-graph-up text-[#23AAC5]"></i>
-          Actividad (<?= $range === 'all' ? 'histórico' : ($range === '7' ? 'últimos 7 días' : 'últimos 30 días') ?>)
+          Activity (<?= $range === 'all' ? 'all time' : ($range === '7' ? 'last 7 days' : 'last 30 days') ?>)
         </h2>
         <div class="h-64">
           <canvas id="activityChart"></canvas>
@@ -341,7 +341,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
         </h2>
         <div class="space-y-3 max-h-64 overflow-y-auto">
           <?php if (empty($modelStats)): ?>
-            <p class="text-slate-500 text-sm">Sin datos de modelos aún</p>
+            <p class="text-slate-500 text-sm">No model data yet</p>
           <?php else: ?>
             <?php 
             $maxModel = max(array_column($modelStats, 'usage_count'));
@@ -364,14 +364,14 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <!-- Gestos más usados -->
+      <!-- Most used gestures -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
           <i class="iconoir-flash text-rose-500"></i>
-          Gestos más usados
+          Most used gestures
         </h2>
         <?php if (empty($gestureStats)): ?>
-          <p class="text-slate-500 text-sm">Sin ejecuciones de gestos aún</p>
+          <p class="text-slate-500 text-sm">No gesture executions yet</p>
         <?php else: ?>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -396,14 +396,14 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
         <?php endif; ?>
       </div>
 
-      <!-- Voces más usadas -->
+      <!-- Most used voices -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
           <i class="iconoir-microphone text-indigo-500"></i>
-          Voces más usadas
+          Most used voices
         </h2>
         <?php if (empty($voiceStats)): ?>
-          <p class="text-slate-500 text-sm">Sin ejecuciones de voces aún</p>
+          <p class="text-slate-500 text-sm">No voice executions yet</p>
         <?php else: ?>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -443,12 +443,12 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Usuario</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Conversaciones</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Mensajes</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Imágenes</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Gestos</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Voces</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Último acceso</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Conversations</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Messages</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Images</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Gestures</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Voices</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last access</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -495,7 +495,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
       data: {
         labels: <?= json_encode($chartLabels) ?>,
         datasets: [{
-          label: 'Mensajes',
+          label: 'Messages',
           data: <?= json_encode($chartData) ?>,
           borderColor: '#23AAC5',
           backgroundColor: 'rgba(35, 170, 197, 0.1)',

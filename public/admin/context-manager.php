@@ -233,7 +233,7 @@ if (!$isSuperadmin) {
               Upload document
             </button>
             <button type="button" id="cancel-upload" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
-              Cancelar
+              Cancel
             </button>
           </div>
         </div>
@@ -261,7 +261,7 @@ if (!$isSuperadmin) {
 
       <div class="grid grid-cols-2 gap-4 mb-4 flex-shrink-0">
         <div>
-          <label class="text-sm font-medium text-slate-700 block mb-2">Nombre del archivo</label>
+          <label class="text-sm font-medium text-slate-700 block mb-2">File name</label>
           <div class="flex">
             <input type="text" id="create-filename" class="flex-1 px-3 py-2 border border-slate-200 rounded-l-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="my_document">
             <span id="create-extension" class="px-3 py-2 bg-slate-100 border border-l-0 border-slate-200 rounded-r-lg text-slate-600 text-sm">.md</span>
@@ -274,7 +274,7 @@ if (!$isSuperadmin) {
       </div>
 
       <div class="flex-1 overflow-hidden flex flex-col min-h-0">
-        <label class="text-sm font-medium text-slate-700 block mb-2">Contenido</label>
+        <label class="text-sm font-medium text-slate-700 block mb-2">Content</label>
         <textarea id="create-content" class="flex-1 w-full px-4 py-3 bg-white border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none" placeholder="Paste or write document content here..." spellcheck="false"></textarea>
       </div>
 
@@ -292,7 +292,7 @@ if (!$isSuperadmin) {
           Create document
         </button>
         <button type="button" id="cancel-create" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
-          Cancelar
+          Cancel
         </button>
       </div>
     </div>
@@ -398,7 +398,7 @@ if (!$isSuperadmin) {
           Yes, delete
         </button>
         <button id="cancel-delete-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
-          Cancelar
+          Cancel
         </button>
       </div>
     </div>

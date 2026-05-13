@@ -18,9 +18,9 @@ if (empty($user['is_superadmin']) && !in_array('admin', $user['roles'] ?? [], tr
 
 $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = '';
-$pageTitle = 'Departamentos';
-$headerTitle = 'Departamentos';
-$headerSubtitle = 'Gestión de áreas internas';
+$pageTitle = 'Departments';
+$headerTitle = 'Departments';
+$headerSubtitle = 'Internal areas management';
 $headerIcon = 'iconoir-community';
 $headerBackUrl = '/admin/users.php';
 $headerBackText = 'Usuarios';
@@ -38,13 +38,13 @@ $headerBackText = 'Usuarios';
         <div class="max-w-6xl mx-auto p-4 lg:p-6">
           <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mt-4 lg:mt-6 mb-6">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-cyan-700 mb-2">Administración</p>
-              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Departamentos</h1>
-              <p class="text-slate-600 text-sm lg:text-base mt-1">Crea y mantiene las áreas que se asignan a los usuarios.</p>
+              <p class="text-xs font-semibold uppercase tracking-wider text-cyan-700 mb-2">Administration</p>
+              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Departments</h1>
+              <p class="text-slate-600 text-sm lg:text-base mt-1">Create and maintain areas assigned to users.</p>
             </div>
             <button id="new-department-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
               <i class="iconoir-plus-circle"></i>
-              <span>Nuevo departamento</span>
+              <span>New department</span>
             </button>
           </div>
 
@@ -53,14 +53,14 @@ $headerBackText = 'Usuarios';
               <div class="px-4 lg:px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h2 class="font-semibold text-slate-800">Listado</h2>
-                  <p id="departments-count" class="text-xs text-slate-500 mt-0.5">Cargando departamentos...</p>
+                  <p id="departments-count" class="text-xs text-slate-500 mt-0.5">Loading departments...</p>
                 </div>
                 <div class="flex items-center gap-2">
                   <div class="relative">
                     <i class="iconoir-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <input type="text" id="search-input" placeholder="Buscar..." class="w-full sm:w-56 pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors text-sm">
                   </div>
-                  <button id="refresh-departments-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" title="Actualizar">
+                  <button id="refresh-departments-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" title="Refresh">
                     <i class="iconoir-refresh"></i>
                   </button>
                 </div>
@@ -68,12 +68,12 @@ $headerBackText = 'Usuarios';
 
               <div id="departments-loading" class="text-center py-12">
                 <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
-                <p class="text-sm text-slate-500 mt-3">Cargando departamentos...</p>
+                <p class="text-sm text-slate-500 mt-3">Loading departments...</p>
               </div>
 
               <div id="departments-empty" class="hidden text-center py-12 px-4">
                 <i class="iconoir-empty-page text-4xl text-slate-300"></i>
-                <p class="text-slate-500 mt-3">Todavía no hay departamentos.</p>
+                <p class="text-slate-500 mt-3">There are no departments yet.</p>
               </div>
 
               <div id="departments-table-wrap" class="hidden overflow-x-auto">
@@ -95,11 +95,11 @@ $headerBackText = 'Usuarios';
               <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-700 flex items-center justify-center mb-4">
                 <i class="iconoir-info-circle text-xl"></i>
               </div>
-              <h2 class="font-semibold text-slate-800 mb-2">Uso en usuarios</h2>
-              <p class="text-sm text-slate-600 leading-relaxed">Estos departamentos aparecen en el selector de alta y edición de usuarios. Si eliminas uno, los usuarios asociados quedarán sin departamento por la relación de base de datos.</p>
+              <h2 class="font-semibold text-slate-800 mb-2">Usage in users</h2>
+              <p class="text-sm text-slate-600 leading-relaxed">These departments appear in the user create and edit selector. If you delete one, related users will be left without a department due to database relation.</p>
               <a href="/admin/users.php" class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-cyan-700 hover:text-cyan-900">
                 <i class="iconoir-arrow-right"></i>
-                Gestionar usuarios
+                Manage users
               </a>
             </aside>
           </div>
@@ -111,7 +111,7 @@ $headerBackText = 'Usuarios';
   <div id="department-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
       <div class="flex items-center justify-between mb-6">
-        <h3 id="modal-title" class="text-lg font-semibold text-slate-800">Nuevo departamento</h3>
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800">New department</h3>
         <button id="close-modal-btn" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
           <i class="iconoir-xmark text-xl"></i>
         </button>
@@ -120,14 +120,14 @@ $headerBackText = 'Usuarios';
       <form id="department-form" class="space-y-4">
         <input type="hidden" id="department-id">
         <div>
-          <label class="text-sm font-medium text-slate-700 block mb-2">Nombre *</label>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Name *</label>
           <input type="text" id="department-name" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="Operaciones" required>
-          <p class="text-xs text-slate-500 mt-1">El slug se genera automáticamente para mantenerlo consistente.</p>
+          <p class="text-xs text-slate-500 mt-1">Slug is generated automatically to keep consistency.</p>
         </div>
 
         <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
-          <button type="button" id="cancel-modal-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">Cancelar</button>
-          <button type="submit" id="save-department-btn" class="px-5 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors text-sm">Guardar departamento</button>
+          <button type="button" id="cancel-modal-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">Cancel</button>
+          <button type="submit" id="save-department-btn" class="px-5 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors text-sm">Save department</button>
         </div>
       </form>
     </div>
@@ -185,7 +185,7 @@ $headerBackText = 'Usuarios';
       const visibleDepartments = filteredDepartments();
 
       loading.classList.add('hidden');
-      count.textContent = `${departments.length} departamento${departments.length === 1 ? '' : 's'} configurado${departments.length === 1 ? '' : 's'}`;
+      count.textContent = `${departments.length} department${departments.length === 1 ? '' : 's'} configured`;
 
       if (visibleDepartments.length === 0) {
         empty.classList.remove('hidden');
@@ -213,10 +213,10 @@ $headerBackText = 'Usuarios';
           </td>
           <td class="px-5 py-4">
             <div class="flex items-center justify-end gap-1">
-              <button type="button" class="edit-department-btn p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" data-id="${escapeHtml(department.id)}" title="Editar">
+              <button type="button" class="edit-department-btn p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" data-id="${escapeHtml(department.id)}" title="Edit">
                 <i class="iconoir-edit-pencil"></i>
               </button>
-              <button type="button" class="delete-department-btn p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-id="${escapeHtml(department.id)}" title="Eliminar">
+              <button type="button" class="delete-department-btn p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-id="${escapeHtml(department.id)}" title="Delete">
                 <i class="iconoir-trash"></i>
               </button>
             </div>
@@ -236,7 +236,7 @@ $headerBackText = 'Usuarios';
 
     function openModal(department = null) {
       editingDepartment = department;
-      document.getElementById('modal-title').textContent = department ? 'Editar departamento' : 'Nuevo departamento';
+      document.getElementById('modal-title').textContent = department ? 'Edit department' : 'New department';
       document.getElementById('department-id').value = department?.id || '';
       document.getElementById('department-name').value = department?.name || '';
       document.getElementById('department-modal').classList.remove('hidden');
@@ -262,7 +262,7 @@ $headerBackText = 'Usuarios';
       const payload = { name: document.getElementById('department-name').value.trim() };
 
       if (!payload.name) {
-        showToast('Indica un nombre de departamento.', true);
+        showToast('Enter a department name.', true);
         return;
       }
 
@@ -286,10 +286,10 @@ $headerBackText = 'Usuarios';
         await loadDepartments();
         showToast('Departamento guardado');
       } catch (error) {
-        showToast(error.message || 'No se pudo guardar el departamento.', true);
+        showToast(error.message || 'Could not save department.', true);
       } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Guardar departamento';
+        saveBtn.textContent = 'Save department';
       }
     }
 
@@ -298,9 +298,9 @@ $headerBackText = 'Usuarios';
       if (!department) return;
       const users = Number(department.user_count || 0);
       const detail = users > 0
-        ? ` ${users} usuario${users === 1 ? '' : 's'} quedarán sin departamento.`
+        ? ` ${users} user${users === 1 ? '' : 's'} will be left without a department.`
         : '';
-      if (!window.confirm(`¿Eliminar "${department.name}"?${detail}`)) return;
+      if (!window.confirm(`Delete "${department.name}"?${detail}`)) return;
 
       try {
         await api('/api/admin/departments/delete.php', {
@@ -310,7 +310,7 @@ $headerBackText = 'Usuarios';
         await loadDepartments();
         showToast('Departamento eliminado');
       } catch (error) {
-        showToast(error.message || 'No se pudo eliminar el departamento.', true);
+        showToast(error.message || 'Could not delete department.', true);
       }
     }
 
@@ -341,7 +341,7 @@ $headerBackText = 'Usuarios';
 
       loadDepartments().catch(error => {
         document.getElementById('departments-loading').classList.add('hidden');
-        showToast(error.message || 'No se pudieron cargar los departamentos.', true);
+        showToast(error.message || 'Could not load departments.', true);
       });
     });
   </script>

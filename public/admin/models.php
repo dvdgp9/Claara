@@ -20,7 +20,7 @@ $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = '';
 $pageTitle = 'Modelos disponibles';
 $headerTitle = 'Modelos disponibles';
-$headerSubtitle = 'Catálogo visible para el selector del chat';
+$headerSubtitle = 'Catalog visible in the chat selector';
 $headerIcon = 'iconoir-settings';
 $headerBackUrl = '/';
 $headerBackText = 'Chat';
@@ -44,7 +44,7 @@ $headerBackText = 'Chat';
             </div>
             <button id="new-model-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
               <i class="iconoir-plus-circle"></i>
-              <span>Nuevo modelo</span>
+              <span>New model</span>
             </button>
           </div>
 
@@ -52,8 +52,8 @@ $headerBackText = 'Chat';
             <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div class="px-4 lg:px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
                 <div>
-                  <h2 class="font-semibold text-slate-800">Catálogo</h2>
-                  <p id="models-count" class="text-xs text-slate-500 mt-0.5">Cargando modelos...</p>
+                  <h2 class="font-semibold text-slate-800">Catalog</h2>
+                  <p id="models-count" class="text-xs text-slate-500 mt-0.5">Loading models...</p>
                 </div>
                 <button id="refresh-models-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" title="Actualizar">
                   <i class="iconoir-refresh"></i>
@@ -62,12 +62,12 @@ $headerBackText = 'Chat';
 
               <div id="models-loading" class="text-center py-12">
                 <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
-                <p class="text-sm text-slate-500 mt-3">Cargando modelos...</p>
+                <p class="text-sm text-slate-500 mt-3">Loading models...</p>
               </div>
 
               <div id="models-empty" class="hidden text-center py-12 px-4">
                 <i class="iconoir-empty-page text-4xl text-slate-300"></i>
-                <p class="text-slate-500 mt-3">Todavía no hay modelos en el catálogo.</p>
+                <p class="text-slate-500 mt-3">There are no models in the catalog yet.</p>
               </div>
 
               <div id="models-table-wrap" class="hidden overflow-x-auto">
@@ -90,8 +90,8 @@ $headerBackText = 'Chat';
               <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-700 flex items-center justify-center mb-4">
                 <i class="iconoir-info-circle text-xl"></i>
               </div>
-              <h2 class="font-semibold text-slate-800 mb-2">Cómo se usa</h2>
-              <p class="text-sm text-slate-600 leading-relaxed">Los modelos activos aparecen en el selector del chat para superadmin, ordenados por el campo Orden.</p>
+              <h2 class="font-semibold text-slate-800 mb-2">How it works</h2>
+              <p class="text-sm text-slate-600 leading-relaxed">Active models appear in the chat selector for superadmins, ordered by the Order field.</p>
               <div class="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3">
                 <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Ejemplo de clave</p>
                 <code class="text-xs text-slate-700 break-all">google/gemini-3-flash-preview</code>
@@ -106,7 +106,7 @@ $headerBackText = 'Chat';
   <div id="model-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6">
       <div class="flex items-center justify-between mb-6">
-        <h3 id="modal-title" class="text-lg font-semibold text-slate-800">Nuevo modelo</h3>
+        <h3 id="modal-title" class="text-lg font-semibold text-slate-800">New model</h3>
         <button id="close-modal-btn" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
           <i class="iconoir-xmark text-xl"></i>
         </button>
@@ -115,7 +115,7 @@ $headerBackText = 'Chat';
       <form id="model-form" class="space-y-4">
         <input type="hidden" id="model-id">
         <div>
-          <label class="text-sm font-medium text-slate-700 block mb-2">Nombre visible *</label>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Display name *</label>
           <input type="text" id="model-label" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="Gemini 3 Flash" required>
         </div>
         <div>
@@ -129,13 +129,13 @@ $headerBackText = 'Chat';
           </div>
           <label class="flex items-center gap-3 mt-0 sm:mt-8">
             <input type="checkbox" id="model-active" class="h-4 w-4 rounded border-slate-300 text-[#23AAC5] focus:ring-[#23AAC5]" checked>
-            <span class="text-sm font-medium text-slate-700">Activo en el chat</span>
+            <span class="text-sm font-medium text-slate-700">Active in chat</span>
           </label>
         </div>
 
         <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
-          <button type="button" id="cancel-modal-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">Cancelar</button>
-          <button type="submit" id="save-model-btn" class="px-5 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors text-sm">Guardar modelo</button>
+          <button type="button" id="cancel-modal-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">Cancel</button>
+          <button type="submit" id="save-model-btn" class="px-5 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors text-sm">Save model</button>
         </div>
       </form>
     </div>
@@ -206,15 +206,15 @@ $headerBackText = 'Chat';
           <td class="px-5 py-4 text-sm text-slate-600">${escapeHtml(model.sort_order)}</td>
           <td class="px-5 py-4">
             ${Number(model.is_active) === 1
-              ? '<span class="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Activo</span>'
-              : '<span class="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Oculto</span>'}
+              ? '<span class="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active</span>'
+              : '<span class="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Hidden</span>'}
           </td>
           <td class="px-5 py-4">
             <div class="flex items-center justify-end gap-1">
-              <button type="button" class="edit-model-btn p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" data-id="${escapeHtml(model.id)}" title="Editar">
+              <button type="button" class="edit-model-btn p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" data-id="${escapeHtml(model.id)}" title="Edit">
                 <i class="iconoir-edit-pencil"></i>
               </button>
-              <button type="button" class="delete-model-btn p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-id="${escapeHtml(model.id)}" title="Eliminar">
+              <button type="button" class="delete-model-btn p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-id="${escapeHtml(model.id)}" title="Delete">
                 <i class="iconoir-trash"></i>
               </button>
             </div>
@@ -234,7 +234,7 @@ $headerBackText = 'Chat';
 
     function openModal(model = null) {
       editingModel = model;
-      document.getElementById('modal-title').textContent = model ? 'Editar modelo' : 'Nuevo modelo';
+      document.getElementById('modal-title').textContent = model ? 'Edit model' : 'New model';
       document.getElementById('model-id').value = model?.id || '';
       document.getElementById('model-label').value = model?.label || '';
       document.getElementById('model-key').value = model?.model_key || '';
@@ -297,17 +297,17 @@ $headerBackText = 'Chat';
         await loadModels();
         showToast('Modelo guardado');
       } catch (error) {
-        showToast(error.message || 'No se pudo guardar el modelo.', true);
+        showToast(error.message || 'Could not save model.', true);
       } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Guardar modelo';
+        saveBtn.textContent = 'Save model';
       }
     }
 
     async function deleteModel(id) {
       const model = models.find(item => Number(item.id) === Number(id));
       if (!model) return;
-      if (!window.confirm(`¿Eliminar "${model.label}" del catálogo?`)) return;
+      if (!window.confirm(`Delete "${model.label}" from the catalog?`)) return;
 
       try {
         await api('/api/admin/models/delete.php', {
@@ -317,7 +317,7 @@ $headerBackText = 'Chat';
         await loadModels();
         showToast('Modelo eliminado');
       } catch (error) {
-        showToast(error.message || 'No se pudo eliminar el modelo.', true);
+        showToast(error.message || 'Could not delete model.', true);
       }
     }
 
