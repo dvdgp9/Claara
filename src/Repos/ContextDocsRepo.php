@@ -3,6 +3,7 @@ namespace Repos;
 
 use App\DB;
 use PDO;
+use Throwable;
 
 /**
  * Repository for managing context documents.
@@ -15,6 +16,7 @@ use PDO;
 class ContextDocsRepo
 {
     private PDO $pdo;
+    private static ?array $contextDocsColumns = null;
 
     /** Physical paths by target (relative to project root). */
     private const TARGET_PATHS = [
@@ -186,20 +188,46 @@ class ContextDocsRepo
      */
     public function getStatsByTarget(string $target): array
     {
-        $stmt = $this->pdo->prepare('
-            SELECT 
-                COUNT(*) as total_documents,
-                SUM(file_size) as total_size,
-                SUM(rag_chunk_count) as total_chunks,
-                SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_count,
-                SUM(CASE WHEN rag_status = "processed" THEN 1 ELSE 0 END) as rag_processed_count,
-                SUM(CASE WHEN rag_status = "pending" THEN 1 ELSE 0 END) as rag_pending_count,
-                SUM(CASE WHEN rag_status = "error" THEN 1 ELSE 0 END) as rag_error_count
-            FROM context_documents
-            WHERE target = ?
-        ');
-        $stmt->execute([$target]);
-        $row = $stmt->fetch();
+        $hasFileSize = $this->contextDocsHasColumn('file_size');
+        $hasStatus = $this->contextDocsHasColumn('status');
+        $hasRagChunkCount = $this->contextDocsHasColumn('rag_chunk_count');
+        $hasRagStatus = $this->contextDocsHasColumn('rag_status');
+
+        $selectParts = [
+            'COUNT(*) as total_documents',
+            $hasFileSize ? 'SUM(file_size) as total_size' : '0 as total_size',
+            $hasRagChunkCount ? 'SUM(rag_chunk_count) as total_chunks' : '0 as total_chunks',
+            $hasStatus ? 'SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_count' : 'COUNT(*) as active_count',
+            $hasRagStatus ? 'SUM(CASE WHEN rag_status = "processed" THEN 1 ELSE 0 END) as rag_processed_count' : '0 as rag_processed_count',
+            $hasRagStatus ? 'SUM(CASE WHEN rag_status = "pending" THEN 1 ELSE 0 END) as rag_pending_count' : '0 as rag_pending_count',
+            $hasRagStatus ? 'SUM(CASE WHEN rag_status = "error" THEN 1 ELSE 0 END) as rag_error_count' : '0 as rag_error_count',
+        ];
+
+        try {
+            $stmt = $this->pdo->prepare('
+                SELECT 
+                    ' . implode(",\n                    ", $selectParts) . '
+                FROM context_documents
+                WHERE target = ?
+            ');
+            $stmt->execute([$target]);
+            $row = $stmt->fetch();
+        } catch (Throwable $e) {
+            $stmt = $this->pdo->prepare('
+                SELECT 
+                    COUNT(*) as total_documents,
+                    0 as total_size,
+                    0 as total_chunks,
+                    COUNT(*) as active_count,
+                    0 as rag_processed_count,
+                    0 as rag_pending_count,
+                    0 as rag_error_count
+                FROM context_documents
+                WHERE target = ?
+            ');
+            $stmt->execute([$target]);
+            $row = $stmt->fetch();
+        }
         
         return [
             'total_documents' => (int)($row['total_documents'] ?? 0),
@@ -309,5 +337,24 @@ class ContextDocsRepo
     public static function isValidTarget(string $target): bool
     {
         return isset(self::TARGET_PATHS[$target]);
+    }
+
+    private function contextDocsHasColumn(string $column): bool
+    {
+        if (self::$contextDocsColumns === null) {
+            self::$contextDocsColumns = [];
+            try {
+                $rows = $this->pdo->query('SHOW COLUMNS FROM context_documents')->fetchAll();
+                foreach ($rows as $row) {
+                    if (!empty($row['Field'])) {
+                        self::$contextDocsColumns[$row['Field']] = true;
+                    }
+                }
+            } catch (Throwable $e) {
+                self::$contextDocsColumns = [];
+            }
+        }
+
+        return !empty(self::$contextDocsColumns[$column]);
     }
 }
