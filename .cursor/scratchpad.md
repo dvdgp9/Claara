@@ -894,6 +894,7 @@ Actualmente los archivos solo se pueden adjuntar al chat mediante el botón de a
   - `public/api/admin/models/delete.php` (baja)
 - 2026-04-13 (Executor): `public/index.php` actualizado para cargar modelos dinámicamente y gestionar alta/baja desde frontend (botón ⚙ con prompts).
 - 2026-05-13 (Executor): Diagnóstico de transcripción larga atascada. El worker reseteaba jobs `processing` tras 15 minutos aunque `BACKGROUND_JOB_MAX_SECONDS` permite ejecuciones largas; además el frontend relanzaba `/api/jobs/process.php` cada 30 segundos mientras el job seguía activo. Ajustado el reset a una ventana dependiente del runtime, cambiado el frontend para despertar worker solo al inicio o si el job está `pending`, y añadidos snapshots de progreso antes de segmentar y antes de cada segmento.
+- 2026-05-13 (Executor): Segundo diagnóstico de transcripción larga. El job avanzaba a `Analyzing audio duration...` y quedaba bloqueado, señal de `ffprobe` sin timeout. Añadido runner con timeout para `ffprobe` y `ffmpeg`; si no puede obtener duración pero el archivo pesa >= 8MB, se intenta segmentar igualmente para evitar enviar audios largos completos a Gemini.
 
 # Executor's Feedback or Assistance Requests
 
@@ -908,3 +909,4 @@ Actualmente los archivos solo se pueden adjuntar al chat mediante el botón de a
 
 - Para cambios de configuración editable por superadmin, conviene desacoplar la lista hardcodeada del frontend y moverla a una tabla + API admin, manteniendo un endpoint de solo lectura para UI (`/api/models/list.php`).
 - En jobs largos de audio, no usar una ventana fija corta de `resetStuckJobs()`. Debe ser mayor que `BACKGROUND_JOB_MAX_SECONDS`, porque si no se reinician jobs legítimos en mitad de la transcripción y pueden lanzarse workers duplicados desde el polling del frontend.
+- Los comandos externos (`ffprobe`, `ffmpeg`) deben ejecutarse con timeout explícito. `exec()` sin timeout puede dejar un job indefinidamente en la misma fase si un contenedor de audio bloquea el análisis.

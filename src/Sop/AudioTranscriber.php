@@ -15,6 +15,8 @@ class AudioTranscriber
     private int $segmentThresholdSeconds = 600; // 10 minutes
     private int $segmentSeconds = 180; // 3 minutes
     private int $minSegmentSeconds = 45;
+    private int $probeTimeoutSeconds = 20;
+    private int $segmentTimeoutSeconds = 600;
 
     public function __construct(?string $apiKey = null)
     {
@@ -83,12 +85,19 @@ class AudioTranscriber
         $segments = [];
         $segmentTmpDir = null;
 
-        if ($durationSeconds !== null && $durationSeconds >= $this->segmentThresholdSeconds) {
+        $shouldSegment = $durationSeconds !== null && $durationSeconds >= $this->segmentThresholdSeconds;
+        if ($durationSeconds === null && $fileSizeMB >= 8) {
+            $shouldSegment = true;
+        }
+
+        if ($shouldSegment) {
             $segmentTmpDir = dirname(__DIR__, 2) . '/storage/transcribe-segments/' . bin2hex(random_bytes(8));
             $this->notifyProgress($onProgress, [
                 'phase' => 'segmenting',
                 'segments_done' => 0,
-                'segments_total' => max(1, (int)ceil($durationSeconds / $this->segmentSeconds)),
+                'segments_total' => $durationSeconds !== null
+                    ? max(1, (int)ceil($durationSeconds / $this->segmentSeconds))
+                    : 0,
                 'segmented' => true,
                 'segment_seconds' => $this->segmentSeconds,
                 'partial_text' => '',
@@ -351,18 +360,16 @@ class AudioTranscriber
         }
 
         $cmd = sprintf(
-            '%s -v error -show_entries format=duration -of default=nokey=1:noprint_wrappers=1 %s 2>/dev/null',
+            '%s -v error -show_entries format=duration -of default=nokey=1:noprint_wrappers=1 %s',
             escapeshellarg($this->ffprobePath),
             escapeshellarg($filePath)
         );
-        $output = [];
-        $exitCode = 0;
-        exec($cmd, $output, $exitCode);
-        if ($exitCode !== 0 || empty($output)) {
+        $result = $this->runCommand($cmd, $this->probeTimeoutSeconds);
+        if ($result['exit_code'] !== 0 || trim($result['stdout']) === '') {
             return null;
         }
 
-        $duration = (float)trim($output[0]);
+        $duration = (float)trim(strtok($result['stdout'], "\n"));
         if ($duration <= 0) {
             return null;
         }
@@ -380,19 +387,21 @@ class AudioTranscriber
 
         $pattern = $segmentDir . '/segment_%03d.m4a';
         $cmd = sprintf(
-            '%s -hide_banner -loglevel error -y -i %s -vn -ac 1 -ar 16000 -c:a aac -b:a 48k -f segment -segment_time %d -reset_timestamps 1 %s 2>&1',
+            '%s -hide_banner -loglevel error -y -i %s -vn -ac 1 -ar 16000 -c:a aac -b:a 48k -f segment -segment_time %d -reset_timestamps 1 %s',
             escapeshellarg($this->ffmpegPath),
             escapeshellarg($sourcePath),
             $this->segmentSeconds,
             escapeshellarg($pattern)
         );
 
-        $output = [];
-        $exitCode = 0;
-        exec($cmd, $output, $exitCode);
-        if ($exitCode !== 0) {
+        $result = $this->runCommand($cmd, $this->segmentTimeoutSeconds);
+        if ($result['exit_code'] !== 0) {
             $this->cleanupDirectory($segmentDir);
-            return ['success' => false, 'error' => 'ffmpeg segmentation failed: ' . implode(' ', $output)];
+            $message = trim($result['stderr'] . ' ' . $result['stdout']);
+            if ($result['timed_out']) {
+                $message = 'ffmpeg segmentation timed out';
+            }
+            return ['success' => false, 'error' => 'ffmpeg segmentation failed: ' . $message];
         }
 
         $segmentFiles = glob($segmentDir . '/segment_*.m4a');
@@ -413,6 +422,74 @@ class AudioTranscriber
         }
 
         return ['success' => true, 'segments' => $segments];
+    }
+
+    private function runCommand(string $cmd, int $timeoutSeconds): array
+    {
+        if (!function_exists('proc_open')) {
+            return [
+                'exit_code' => 127,
+                'stdout' => '',
+                'stderr' => 'proc_open is disabled',
+                'timed_out' => false,
+            ];
+        }
+
+        $pipes = [];
+        $process = proc_open($cmd, [
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ], $pipes);
+
+        if (!is_resource($process)) {
+            return [
+                'exit_code' => 127,
+                'stdout' => '',
+                'stderr' => 'Could not start command',
+                'timed_out' => false,
+            ];
+        }
+
+        stream_set_blocking($pipes[1], false);
+        stream_set_blocking($pipes[2], false);
+
+        $stdout = '';
+        $stderr = '';
+        $deadline = time() + max(1, $timeoutSeconds);
+        $timedOut = false;
+
+        while (true) {
+            $status = proc_get_status($process);
+            $stdout .= stream_get_contents($pipes[1]) ?: '';
+            $stderr .= stream_get_contents($pipes[2]) ?: '';
+
+            if (!$status['running']) {
+                break;
+            }
+            if (time() >= $deadline) {
+                $timedOut = true;
+                proc_terminate($process, 9);
+                break;
+            }
+            usleep(100000);
+        }
+
+        $stdout .= stream_get_contents($pipes[1]) ?: '';
+        $stderr .= stream_get_contents($pipes[2]) ?: '';
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $exitCode = proc_close($process);
+        if ($timedOut) {
+            $exitCode = 124;
+        }
+
+        return [
+            'exit_code' => $exitCode,
+            'stdout' => $stdout,
+            'stderr' => $stderr,
+            'timed_out' => $timedOut,
+        ];
     }
 
     private function cleanupDirectory(string $dir): void
