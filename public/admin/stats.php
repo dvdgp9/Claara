@@ -143,6 +143,49 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .sidebar-rail {
+      background:
+        radial-gradient(120% 50% at 50% 0%, rgba(35,170,197,0.18), transparent 60%),
+        radial-gradient(90% 40% at 50% 100%, rgba(35,170,197,0.08), transparent 65%),
+        linear-gradient(180deg, #0f1b22 0%, #0a1418 100%);
+      position: relative;
+      isolation: isolate;
+    }
+    .sidebar-rail::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent 0%, rgba(35,170,197,0.28) 50%, transparent 100%);
+      pointer-events: none;
+    }
+    .tab-item {
+      position: relative;
+      color: rgba(255,255,255,0.6);
+      transition: background-color .2s ease, color .2s ease, transform .25s cubic-bezier(.16,1,.3,1);
+    }
+    .tab-item i { transition: transform .25s cubic-bezier(.16,1,.3,1); }
+    .tab-item:hover {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.95);
+    }
+    .tab-item.active {
+      background: rgba(35,170,197,0.18);
+      color: #ffffff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -12px rgba(35,170,197,0.55);
+    }
+    .tab-item.active::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 22px;
+      background: #23AAC5;
+      border-radius: 0 3px 3px 0;
+      box-shadow: 0 0 14px rgba(35,170,197,0.75);
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 overflow-hidden">
