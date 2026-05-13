@@ -1108,6 +1108,7 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - Registra `gesture:lead-finder` en `available_features` con textos en inglés.
 - Da acceso inicial a superadmins existentes mediante `user_feature_access`.
 - No se ha ejecutado la migración todavía en local ni producción.
+- 2026-05-14 fix: `users.id` es `BIGINT UNSIGNED`, por lo que `lead_finder_runs.user_id`, `lead_finder_runs.id` y `lead_finder_results.run_id` deben usar tipos compatibles. Corregida la migración tras error MySQL errno 150 en producción.
 
 ---
 
@@ -1145,3 +1146,4 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - En jobs largos de audio, no usar una ventana fija corta de `resetStuckJobs()`. Debe ser mayor que `BACKGROUND_JOB_MAX_SECONDS`, porque si no se reinician jobs legítimos en mitad de la transcripción y pueden lanzarse workers duplicados desde el polling del frontend.
 - Los comandos externos (`ffprobe`, `ffmpeg`) deben ejecutarse con timeout explícito. `exec()` sin timeout puede dejar un job indefinidamente en la misma fase si un contenedor de audio bloquea el análisis.
 - `.gitignore` ignoraba `migrations/`, lo que también ocultaba SQL nuevos bajo `docs/migrations/`. Para nuevas migraciones versionadas, mantener la excepción `!docs/migrations/` y `!docs/migrations/*.sql`; si no, `git add .` no las sube.
+- En migraciones con foreign keys, confirmar que los tipos coinciden exactamente con la tabla referenciada. `users.id` usa `BIGINT UNSIGNED`; usar `INT` en tablas nuevas provoca MySQL errno 150.

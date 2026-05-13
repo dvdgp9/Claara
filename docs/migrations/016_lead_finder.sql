@@ -3,8 +3,8 @@
 -- Description: Stores Lead Finder searches, editable lead results, and feature access registration.
 
 CREATE TABLE IF NOT EXISTS lead_finder_runs (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NOT NULL,
   job_id INT DEFAULT NULL,
   query TEXT NOT NULL,
   max_results INT NOT NULL DEFAULT 25,
@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS lead_finder_runs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS lead_finder_results (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  run_id INT NOT NULL,
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  run_id BIGINT UNSIGNED NOT NULL,
   name VARCHAR(255) NOT NULL,
   website VARCHAR(512) DEFAULT NULL,
   email VARCHAR(255) DEFAULT NULL,
