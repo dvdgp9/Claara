@@ -51,12 +51,12 @@ Session::start();
 $user = Session::user();
 
 if (!$user) {
-    Response::error('unauthorized', 'No autenticado', 401);
+    Response::error('unauthorized', 'Not authenticated', 401);
 }
 
 // Verificar método
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Solo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 // Validar CSRF

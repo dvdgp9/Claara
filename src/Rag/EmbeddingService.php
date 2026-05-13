@@ -77,7 +77,7 @@ class EmbeddingService
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey,
                 'HTTP-Referer: https://ebonia.app',
-                'X-Title: Ebonia RAG'
+                'X-Title: iaiaPRO RAG'
             ]
         ]);
 

@@ -24,13 +24,13 @@ Session::start();
 $user = Session::user();
 
 if (!$user) {
-    Response::error('unauthorized', 'No autenticado', 401);
+    Response::error('unauthorized', 'Not authenticated', 401);
 }
 
 Session::requireCsrf();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Solo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 $body = json_decode(file_get_contents('php://input'), true) ?? [];

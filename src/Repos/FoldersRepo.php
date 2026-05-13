@@ -48,7 +48,7 @@ class FoldersRepo {
         if ($parentId !== null) {
             $parent = $this->findByIdForUser($parentId, $userId);
             if (!$parent) {
-                throw new \Exception('Carpeta padre no encontrada o no pertenece al usuario');
+                throw new \Exception('Parent folder not found or not available to this user');
             }
         }
         
@@ -84,17 +84,17 @@ class FoldersRepo {
         // Validar que no se mueva a sí misma o a una subcarpeta propia (evitar ciclos)
         if ($newParentId !== null) {
             if ($newParentId === $folderId) {
-                throw new \Exception('Una carpeta no puede ser su propio padre');
+                throw new \Exception('A folder cannot be its own parent');
             }
             
             // Verificar que newParentId pertenece al usuario
             if (!$this->findByIdForUser($newParentId, $userId)) {
-                throw new \Exception('Carpeta destino no encontrada');
+                throw new \Exception('Destination folder not found');
             }
             
             // Verificar que no sea descendiente (evitar ciclos)
             if ($this->isDescendantOf($folderId, $newParentId)) {
-                throw new \Exception('No se puede mover una carpeta a una de sus subcarpetas');
+                throw new \Exception('A folder cannot be moved into one of its subfolders');
             }
         }
         

@@ -11,7 +11,7 @@ use Auth\RememberService;
 use Auth\RateLimiter;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 // Rate limiting: máx 5 intentos cada 15 minutos por IP
@@ -22,7 +22,7 @@ $rateLimiter = new RateLimiter(5, 900);
 if ($rateLimiter->isBlocked($clientIp)) {
     $remaining = $rateLimiter->getBlockedSeconds($clientIp);
     $minutes = ceil($remaining / 60);
-    Response::error('rate_limited', "Demasiados intentos fallidos. Intenta de nuevo en {$minutes} minutos.", 429);
+    Response::error('rate_limited', "Too many failed attempts. Try again in {$minutes} minutes.", 429);
 }
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -31,7 +31,7 @@ $password = (string)($input['password'] ?? '');
 $remember = !empty($input['remember']);
 
 if ($email === '' || $password === '') {
-    Response::error('validation_error', 'Email y password son obligatorios', 400);
+    Response::error('validation_error', 'Email and password are required', 400);
 }
 
 try {

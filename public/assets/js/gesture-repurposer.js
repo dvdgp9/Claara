@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateSelectedCount() {
     const count = selectedFormats.size;
-    selectedCount.textContent = `${count} formato${count !== 1 ? 's' : ''} seleccionado${count !== 1 ? 's' : ''}`;
-    generateBtnText.textContent = count > 1 ? `Generar ${count} formatos` : 'Transformar contenido';
+    selectedCount.textContent = `${count} format${count !== 1 ? 's' : ''} selected`;
+    generateBtnText.textContent = count > 1 ? `Generate ${count} formats` : 'Transform content';
   }
 
   // === PDF handling ===
@@ -103,13 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!file) return;
       
       if (file.type !== 'application/pdf') {
-        alert('Por favor, selecciona un archivo PDF');
+        alert('Please select a PDF file');
         sourcePdf.value = '';
         return;
       }
       
       if (file.size > 20 * 1024 * 1024) {
-        alert('El PDF es demasiado grande (máximo 20MB)');
+        alert('The PDF file is too large (maximum 20MB)');
         sourcePdf.value = '';
         return;
       }
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
       reader.onload = (ev) => {
         const base64 = ev.target.result.split(',')[1];
         pdfBase64 = base64;
-        pdfFilename.textContent = `Archivo: ${file.name}`;
+        pdfFilename.textContent = `File: ${file.name}`;
         pdfFilename.classList.remove('hidden');
       };
       reader.readAsDataURL(file);
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'url':
         const url = sourceUrl.value.trim();
         if (!url) {
-          showError('Por favor, introduce una URL');
+          showError('Please enter a URL');
           return;
         }
         inputData.url = url;
@@ -153,11 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'text':
         const text = sourceText.value.trim();
         if (!text) {
-          showError('Por favor, introduce el texto');
+          showError('Please enter text');
           return;
         }
         if (text.split(/\s+/).length < 20) {
-          showError('El texto es demasiado corto (mínimo 20 palabras)');
+          showError('The text is too short (minimum 20 words)');
           return;
         }
         inputData.text = text;
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
       case 'pdf':
         if (!pdfBase64) {
-          showError('Por favor, selecciona un archivo PDF');
+          showError('Please select a PDF file');
           return;
         }
         inputData.pdf_base64 = pdfBase64;
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const formatCount = formats.length;
-    showProgress(`Generando ${formatCount} formato${formatCount > 1 ? 's' : ''}...`, 'Extrayendo contenido y transformando');
+    showProgress(`Generating ${formatCount} format${formatCount > 1 ? 's' : ''}...`, 'Extracting and transforming content');
     hideError();
 
     try {
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (!data.success) {
-        const errorMsg = data.error?.message || data.message || 'Error desconocido';
+        const errorMsg = data.error?.message || data.message || 'Unknown error';
         throw new Error(errorMsg);
       }
 
@@ -231,8 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
     inputSection.classList.add('hidden');
     resultSection.classList.remove('hidden');
     
-    resultTitle.textContent = data.title || 'Contenido generado';
-    resultSource.textContent = `Fuente: ${data.source} · ${data.total_generated} formato${data.total_generated > 1 ? 's' : ''} generado${data.total_generated > 1 ? 's' : ''}`;
+    resultTitle.textContent = data.title || 'Generated content';
+    resultSource.textContent = `Source: ${data.source} · ${data.total_generated} format${data.total_generated > 1 ? 's' : ''} generated`;
     
     const formats = Object.keys(data.results);
     let activeFormat = formats[0];
@@ -281,9 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
           await navigator.clipboard.writeText(textToCopy);
-          btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+          btn.innerHTML = '<i class="iconoir-check"></i> Copied';
           setTimeout(() => {
-            btn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
+            btn.innerHTML = '<i class="iconoir-copy"></i> Copy';
           }, 2000);
         } catch (err) {
           console.error('Error copying:', err);
@@ -347,15 +347,15 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <div>
                 <h3 class="font-semibold text-slate-800">${config.name}</h3>
-                <p class="text-xs text-slate-500">Modelo: ${result.model || 'AI'}</p>
+                <p class="text-xs text-slate-500">Model: ${result.model || 'AI'}</p>
               </div>
             </div>
             <div class="flex items-center gap-2">
               <button class="copy-format-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5" data-format="${format}">
-                <i class="iconoir-copy"></i> Copiar
+                <i class="iconoir-copy"></i> Copy
               </button>
               <button class="download-format-btn px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-format="${format}">
-                <i class="iconoir-download"></i> Descargar
+                <i class="iconoir-download"></i> Download
               </button>
             </div>
           </div>
@@ -363,8 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         <div class="p-4">
           <div class="preview-toggle mb-4">
-            <button class="active" data-view="preview">Vista previa</button>
-            <button data-view="raw">Código</button>
+            <button class="active" data-view="preview">Preview</button>
+            <button data-view="raw">Code</button>
           </div>
           <div class="preview-view">${previewHtml}</div>
           <div class="raw-view hidden">
@@ -385,18 +385,18 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="instagram-preview">
         <div class="ig-header">
           <div class="ig-avatar">E</div>
-          <span class="ig-username">tu_marca</span>
+          <span class="ig-username">your_brand</span>
           <i class="iconoir-more-horiz ig-more"></i>
         </div>
         <div class="ig-image">
-          <span>${visual ? escapeHtml(visual) : '📷 Imagen sugerida'}</span>
+          <span>${visual ? escapeHtml(visual) : '📷 Suggested image'}</span>
         </div>
         <div class="ig-actions">
           <i class="iconoir-heart ig-action"></i>
           <i class="iconoir-chat-bubble ig-action"></i>
           <i class="iconoir-send ig-action"></i>
         </div>
-        <div class="ig-likes">1,234 Me gusta</div>
+        <div class="ig-likes">1,234 Likes</div>
         <div class="ig-caption">
           <span class="username">tu_marca</span>
           ${escapeHtml(caption).replace(/\n/g, '<br>')}
@@ -415,21 +415,21 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="fb-header">
           <div class="fb-avatar">E</div>
           <div class="fb-info">
-            <div class="fb-name">Tu Marca</div>
-            <div class="fb-meta">Ahora · <i class="iconoir-globe"></i></div>
+            <div class="fb-name">Your Brand</div>
+            <div class="fb-meta">Now · <i class="iconoir-globe"></i></div>
           </div>
         </div>
         <div class="fb-content">${escapeHtml(post).replace(/\n/g, '<br>')}</div>
         <div class="fb-reactions">
           <span>👍 ❤️ 42</span>
-          <span>12 comentarios · 5 compartidos</span>
+          <span>12 comments · 5 shares</span>
         </div>
         <div class="fb-actions">
-          <div class="fb-action"><i class="iconoir-thumbs-up"></i> Me gusta</div>
-          <div class="fb-action"><i class="iconoir-chat-bubble"></i> Comentar</div>
-          <div class="fb-action"><i class="iconoir-share-android"></i> Compartir</div>
+          <div class="fb-action"><i class="iconoir-thumbs-up"></i> Likes</div>
+          <div class="fb-action"><i class="iconoir-chat-bubble"></i> Comment</div>
+          <div class="fb-action"><i class="iconoir-share-android"></i> Share</div>
         </div>
-        ${suggestions ? `<div class="p-3 bg-amber-50 border-t border-amber-200 text-sm text-amber-800"><strong>💡 Sugerencias:</strong> ${escapeHtml(suggestions)}</div>` : ''}
+        ${suggestions ? `<div class="p-3 bg-amber-50 border-t border-amber-200 text-sm text-amber-800"><strong>💡 Suggestions:</strong> ${escapeHtml(suggestions)}</div>` : ''}
       </div>
     `;
   }
@@ -443,21 +443,21 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="li-header">
           <div class="li-avatar">E</div>
           <div class="li-info">
-            <div class="li-name">Tu Nombre</div>
-            <div class="li-title">CEO en Tu Empresa</div>
-            <div class="li-meta">Ahora · <i class="iconoir-globe"></i></div>
+            <div class="li-name">Your Name</div>
+            <div class="li-title">CEO at Your Company</div>
+            <div class="li-meta">Now · <i class="iconoir-globe"></i></div>
           </div>
         </div>
         <div class="li-content">${escapeHtml(post).replace(/\n/g, '<br>')}</div>
         ${hashtags ? `<div class="li-hashtags">${escapeHtml(hashtags)}</div>` : ''}
         <div class="li-engagement">
           <span>👍 💡 ❤️ 156</span>
-          <span>23 comentarios</span>
+          <span>23 comments</span>
         </div>
         <div class="li-actions">
-          <div class="li-action"><i class="iconoir-thumbs-up"></i> Recomendar</div>
-          <div class="li-action"><i class="iconoir-chat-bubble"></i> Comentar</div>
-          <div class="li-action"><i class="iconoir-redo"></i> Compartir</div>
+          <div class="li-action"><i class="iconoir-thumbs-up"></i> Recommend</div>
+          <div class="li-action"><i class="iconoir-chat-bubble"></i> Comment</div>
+          <div class="li-action"><i class="iconoir-redo"></i> Share</div>
         </div>
       </div>
     `;
@@ -480,8 +480,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="tweet-avatar">E</div>
               <div class="tweet-info">
                 <div class="tweet-author">
-                  <span class="tweet-name">Tu Marca</span>
-                  <span class="tweet-handle">@tu_marca · ahora</span>
+                  <span class="tweet-name">Your Brand</span>
+                  <span class="tweet-handle">@your_brand · now</span>
                 </div>
               </div>
             </div>
@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderNewsletterPreview(parsed) {
-    const subject = parsed.subject || 'Asunto del email';
+    const subject = parsed.subject || 'Email subject';
     const preheader = parsed.preheader || '';
     const body = parsed.body || parsed.raw || '';
     
@@ -514,11 +514,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="email-body">${renderMarkdown(body)}</div>
           <div class="email-cta">
-            <a href="#" class="email-btn">Leer más</a>
+            <a href="#" class="email-btn">Read more</a>
           </div>
           <div class="email-footer">
-            © 2025 Tu Empresa. Todos los derechos reservados.<br>
-            <a href="#">Cancelar suscripción</a>
+            © 2025 Your Company. All rights reserved.<br>
+            <a href="#">Unsubscribe</a>
           </div>
         </div>
       </div>
@@ -526,14 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderBlogPreview(parsed) {
-    const title = parsed.seo_title || 'Título del artículo';
+    const title = parsed.seo_title || 'Article title';
     const description = parsed.meta_description || '';
     const article = parsed.article || parsed.raw || '';
     
     return `
       <div class="blog-preview">
         <div class="blog-header">
-          <div class="blog-meta">ARTÍCULO · ${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+          <div class="blog-meta">ARTICLE · ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
           <h1 class="blog-title">${escapeHtml(title)}</h1>
           ${description ? `<p class="blog-description">${escapeHtml(description)}</p>` : ''}
         </div>
@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return `
       <div class="faq-preview">
         <div class="faq-header">
-          <h2 class="faq-title">Preguntas Frecuentes</h2>
+          <h2 class="faq-title">Frequently Asked Questions</h2>
         </div>
         ${faqItems.map(faq => `
           <div class="faq-item">
@@ -568,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderLandingPreview(parsed) {
     const html = parsed.html || '';
     if (!html) {
-      return `<div class="text-center text-slate-500 py-8">No se pudo extraer el HTML de la landing page</div>`;
+      return `<div class="text-center text-slate-500 py-8">Could not extract HTML from the landing page</div>`;
     }
     
     return `
@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="landing-dot yellow"></span>
             <span class="landing-dot green"></span>
           </div>
-          <div class="landing-url">https://tu-dominio.com/landing</div>
+          <div class="landing-url">https://your-domain.com/landing</div>
         </div>
         <iframe class="landing-iframe" srcdoc="${escapeHtml(html)}"></iframe>
       </div>
@@ -678,9 +678,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       try {
         await navigator.clipboard.writeText(allContent.trim());
-        copyAllBtn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+        copyAllBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
         setTimeout(() => {
-          copyAllBtn.innerHTML = '<i class="iconoir-copy"></i> Copiar todo';
+          copyAllBtn.innerHTML = '<i class="iconoir-copy"></i> Copy all';
         }, 2000);
       } catch (err) {
         console.error('Error copying:', err);
@@ -733,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
       historyList.innerHTML = `
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-archive text-2xl mb-2 block"></i>
-          Sin transformaciones todavía
+          No transformations yet
         </div>
       `;
       return;
@@ -747,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formatCount = formats.length;
       const firstFormat = formats[0];
       const config = formatConfig[firstFormat] || { icon: 'iconoir-sparks' };
-      const date = new Date(item.created_at).toLocaleDateString('es-ES', {
+      const date = new Date(item.created_at).toLocaleDateString('en-US', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -761,10 +761,10 @@ document.addEventListener('DOMContentLoaded', () => {
               <i class="${config.icon} text-indigo-600 text-sm"></i>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Sin título')}</p>
-              <p class="text-xs text-slate-500 mt-0.5">${formatCount > 1 ? `${formatCount} formatos · ` : ''}${date}</p>
+              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Untitled')}</p>
+              <p class="text-xs text-slate-500 mt-0.5">${formatCount > 1 ? `${formatCount} formats · ` : ''}${date}</p>
             </div>
-            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Eliminar">
+            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Delete">
               <i class="iconoir-trash text-slate-400 hover:text-red-500 text-sm"></i>
             </button>
           </div>
@@ -809,7 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: item.title,
             results: outputData.results,
             formats: outputData.formats,
-            source: outputData.original_title || 'Historial',
+            source: outputData.original_title || 'History',
             total_generated: outputData.total_generated || Object.keys(outputData.results).length
           };
           showResults(currentResults);
@@ -828,7 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             },
             formats: [format],
-            source: outputData?.original_title || 'Historial',
+            source: outputData?.original_title || 'History',
             total_generated: 1
           };
           showResults(currentResults);
@@ -846,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function deleteHistoryItem(id) {
-    if (!confirm('¿Eliminar esta transformación del historial?')) return;
+    if (!confirm('Delete this transformation from history?')) return;
     
     try {
       const response = await fetch('/api/gestures/delete.php', {

@@ -18,11 +18,11 @@ if (!$isSuperadmin) {
     exit;
 }
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gestor de Contexto — Ebonia</title>
+  <title>Context Manager — iaiaPRO</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -47,7 +47,7 @@ if (!$isSuperadmin) {
   <div class="min-h-screen flex h-screen">
     <?php 
     $activeTab = '';
-    $pageTitle = 'Gestor de Contexto';
+    $pageTitle = 'Context Manager';
     include __DIR__ . '/../includes/left-tabs.php'; 
     ?>
 
@@ -59,8 +59,8 @@ if (!$isSuperadmin) {
           <!-- Header -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8 mt-4 lg:mt-6">
             <div>
-              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Gestor de Contexto</h1>
-              <p class="text-slate-600 text-sm lg:text-base mt-1">Administrar documentos de contexto y RAG</p>
+              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Context Manager</h1>
+              <p class="text-slate-600 text-sm lg:text-base mt-1">Manage context and AI index documents</p>
             </div>
           </div>
 
@@ -71,10 +71,10 @@ if (!$isSuperadmin) {
                 <i class="iconoir-scale mr-2"></i>Lex (Legal)
               </button>
               <button data-target="eboniato" class="tab-btn flex-1 px-6 py-4 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors border-b-2 border-transparent">
-                <i class="iconoir-chat-bubble-question mr-2"></i>Eboniato (FAQ)
+                <i class="iconoir-chat-bubble-question mr-2"></i>Nana (Quick Answers)
               </button>
               <button data-target="ebonia" class="tab-btn flex-1 px-6 py-4 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors border-b-2 border-transparent">
-                <i class="iconoir-message-text mr-2"></i>Ebonia (Chat)
+                <i class="iconoir-message-text mr-2"></i>iaiaPRO (Chat)
               </button>
             </div>
           </div>
@@ -85,31 +85,31 @@ if (!$isSuperadmin) {
             <div id="stats-bar" class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center gap-6">
               <div class="flex items-center gap-2">
                 <i class="iconoir-folder text-slate-400"></i>
-                <span class="text-sm text-slate-600">Documentos: <strong id="stat-docs" class="text-slate-800">0</strong></span>
+                <span class="text-sm text-slate-600">Documents: <strong id="stat-docs" class="text-slate-800">0</strong></span>
               </div>
               <div class="flex items-center gap-2">
                 <i class="iconoir-data-transfer-both text-slate-400"></i>
-                <span class="text-sm text-slate-600">Tamaño: <strong id="stat-size" class="text-slate-800">0 KB</strong></span>
+                <span class="text-sm text-slate-600">Size: <strong id="stat-size" class="text-slate-800">0 KB</strong></span>
               </div>
               <div id="stat-chunks-container" class="flex items-center gap-2">
                 <i class="iconoir-cube text-slate-400"></i>
-                <span class="text-sm text-slate-600">Chunks RAG: <strong id="stat-chunks" class="text-slate-800">0</strong></span>
+                <span class="text-sm text-slate-600">Indexed chunks: <strong id="stat-chunks" class="text-slate-800">0</strong></span>
               </div>
               <div class="flex-1"></div>
               <button id="create-btn" class="px-4 py-2 border border-[#23AAC5] text-[#23AAC5] rounded-lg font-medium hover:bg-[#23AAC5]/10 transition-all flex items-center gap-2 text-sm">
                 <i class="iconoir-edit-pencil"></i>
-                <span>Crear documento</span>
+                <span>Create document</span>
               </button>
               <button id="upload-btn" class="px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center gap-2 shadow-md text-sm">
                 <i class="iconoir-upload"></i>
-                <span>Subir archivo</span>
+                <span>Upload file</span>
               </button>
             </div>
 
             <!-- Loading -->
             <div id="docs-loading" class="text-center py-12">
               <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
-              <p class="text-sm text-slate-500 mt-3">Cargando documentos...</p>
+              <p class="text-sm text-slate-500 mt-3">Loading documents...</p>
             </div>
 
             <!-- Documents List -->
@@ -118,13 +118,13 @@ if (!$isSuperadmin) {
                 <table class="w-full">
                   <thead class="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Documento</th>
-                      <th id="col-type" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden">Tipo</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tamaño</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
-                      <th id="col-rag" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">RAG</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Fecha</th>
-                      <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Document</th>
+                      <th id="col-type" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden">Type</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Size</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                      <th id="col-rag" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Index</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                      <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="docs-list" class="divide-y divide-slate-200">
@@ -133,8 +133,8 @@ if (!$isSuperadmin) {
               </div>
               <div id="no-docs" class="hidden text-center py-12">
                 <i class="iconoir-folder-warning text-4xl text-slate-300"></i>
-                <p class="text-slate-500 mt-3">No hay documentos en este target</p>
-                <p class="text-slate-400 text-sm mt-1">Sube el primer documento para comenzar</p>
+                <p class="text-slate-500 mt-3">No documents in this target yet</p>
+                <p class="text-slate-400 text-sm mt-1">Upload your first document to get started</p>
               </div>
             </div>
           </div>
@@ -147,7 +147,7 @@ if (!$isSuperadmin) {
   <div id="upload-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
       <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold text-slate-800">Subir documento</h3>
+        <h3 class="text-lg font-semibold text-slate-800">Upload document</h3>
         <button id="close-upload-modal" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
           <i class="iconoir-xmark text-xl"></i>
         </button>
@@ -159,18 +159,18 @@ if (!$isSuperadmin) {
             <label class="text-sm font-medium text-slate-700 block mb-2">Target</label>
             <select id="upload-target" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-700" disabled>
               <option value="lex">Lex (Legal)</option>
-              <option value="eboniato">Eboniato (FAQ)</option>
-              <option value="ebonia">Ebonia (Chat)</option>
+              <option value="eboniato">Nana (Quick Answers)</option>
+              <option value="ebonia">iaiaPRO (Chat)</option>
             </select>
           </div>
 
           <div>
-            <label class="text-sm font-medium text-slate-700 block mb-2">Archivo</label>
+            <label class="text-sm font-medium text-slate-700 block mb-2">File</label>
             <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#23AAC5] transition-colors cursor-pointer" id="drop-zone">
               <input type="file" id="file-input" class="hidden" accept=".pdf,.txt,.md">
               <i class="iconoir-upload text-3xl text-slate-400 mb-2"></i>
-              <p class="text-sm text-slate-600">Arrastra un archivo aquí o <span class="text-[#23AAC5] font-medium">haz clic para seleccionar</span></p>
-              <p id="allowed-formats" class="text-xs text-slate-400 mt-1">Formatos permitidos: .pdf, .txt, .md</p>
+              <p class="text-sm text-slate-600">Drag a file here or <span class="text-[#23AAC5] font-medium">click to select</span></p>
+              <p id="allowed-formats" class="text-xs text-slate-400 mt-1">Allowed formats: .pdf, .txt, .md</p>
             </div>
             <p id="selected-file" class="hidden text-sm text-[#23AAC5] mt-2 flex items-center gap-2">
               <i class="iconoir-check-circle"></i>
@@ -179,15 +179,15 @@ if (!$isSuperadmin) {
           </div>
 
           <div>
-            <label class="text-sm font-medium text-slate-700 block mb-2">Descripción (opcional)</label>
-            <textarea id="upload-description" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none" placeholder="Descripción del documento..."></textarea>
+            <label class="text-sm font-medium text-slate-700 block mb-2">Description (optional)</label>
+            <textarea id="upload-description" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none" placeholder="Document description..."></textarea>
           </div>
 
           <div id="upload-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
 
           <div class="flex gap-3 pt-2">
             <button type="submit" id="upload-submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
-              Subir documento
+              Upload document
             </button>
             <button type="button" id="cancel-upload" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
               Cancelar
@@ -207,8 +207,8 @@ if (!$isSuperadmin) {
             <i class="iconoir-page-plus text-xl"></i>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-slate-800">Crear documento</h3>
-            <p class="text-xs text-slate-500">Nuevo documento de contexto para <span id="create-target-name" class="font-medium">Lex</span></p>
+            <h3 class="text-lg font-semibold text-slate-800">Create document</h3>
+            <p class="text-xs text-slate-500">New context document for <span id="create-target-name" class="font-medium">Lex</span></p>
           </div>
         </div>
         <button id="close-create-modal" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
@@ -220,25 +220,25 @@ if (!$isSuperadmin) {
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Nombre del archivo</label>
           <div class="flex">
-            <input type="text" id="create-filename" class="flex-1 px-3 py-2 border border-slate-200 rounded-l-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="mi_documento">
+            <input type="text" id="create-filename" class="flex-1 px-3 py-2 border border-slate-200 rounded-l-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="my_document">
             <span id="create-extension" class="px-3 py-2 bg-slate-100 border border-l-0 border-slate-200 rounded-r-lg text-slate-600 text-sm">.md</span>
           </div>
         </div>
         <div>
-          <label class="text-sm font-medium text-slate-700 block mb-2">Descripción (opcional)</label>
-          <input type="text" id="create-description" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="Breve descripción...">
+          <label class="text-sm font-medium text-slate-700 block mb-2">Description (optional)</label>
+          <input type="text" id="create-description" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="Short description...">
         </div>
       </div>
 
       <div class="flex-1 overflow-hidden flex flex-col min-h-0">
         <label class="text-sm font-medium text-slate-700 block mb-2">Contenido</label>
-        <textarea id="create-content" class="flex-1 w-full px-4 py-3 bg-white border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none" placeholder="Pega o escribe el contenido del documento aquí..." spellcheck="false"></textarea>
+        <textarea id="create-content" class="flex-1 w-full px-4 py-3 bg-white border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none" placeholder="Paste or write document content here..." spellcheck="false"></textarea>
       </div>
 
       <div class="flex items-center gap-4 pt-3 text-xs text-slate-500 flex-shrink-0">
-        <span id="create-char-count">0 caracteres</span>
+        <span id="create-char-count">0 characters</span>
         <span>•</span>
-        <span id="create-line-count">0 líneas</span>
+        <span id="create-line-count">0 lines</span>
       </div>
 
       <div id="create-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3 flex-shrink-0"></div>
@@ -246,7 +246,7 @@ if (!$isSuperadmin) {
       <div class="flex gap-3 pt-4 border-t border-slate-100 mt-4 flex-shrink-0">
         <button type="button" id="create-submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
           <i class="iconoir-plus mr-1"></i>
-          Crear documento
+          Create document
         </button>
         <button type="button" id="cancel-create" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
           Cancelar
@@ -265,8 +265,8 @@ if (!$isSuperadmin) {
             <i id="edit-doc-icon" class="iconoir-page text-xl"></i>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-slate-800" id="edit-modal-title">Ver documento</h3>
-            <p class="text-xs text-slate-500" id="edit-doc-name">documento.md</p>
+            <h3 class="text-lg font-semibold text-slate-800" id="edit-modal-title">View document</h3>
+            <p class="text-xs text-slate-500" id="edit-doc-name">document.md</p>
           </div>
         </div>
         <button id="close-edit-modal" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
@@ -283,35 +283,35 @@ if (!$isSuperadmin) {
         <div class="h-4 w-px bg-slate-300"></div>
         <div class="flex items-center gap-2">
           <i class="iconoir-file-not-found text-slate-400"></i>
-          <span class="text-slate-600">Tamaño: <strong class="text-slate-800" id="edit-doc-size">0 KB</strong></span>
+          <span class="text-slate-600">Size: <strong class="text-slate-800" id="edit-doc-size">0 KB</strong></span>
         </div>
         <div class="h-4 w-px bg-slate-300"></div>
         <div class="flex items-center gap-2">
           <i class="iconoir-calendar text-slate-400"></i>
-          <span class="text-slate-600">Creado: <strong class="text-slate-800" id="edit-doc-date">-</strong></span>
+          <span class="text-slate-600">Created: <strong class="text-slate-800" id="edit-doc-date">-</strong></span>
         </div>
         <div class="flex-1"></div>
         <div class="flex items-center gap-2 text-xs">
-          <span class="text-slate-500" id="edit-char-count">0 caracteres</span>
+          <span class="text-slate-500" id="edit-char-count">0 characters</span>
           <span class="text-slate-300">•</span>
-          <span class="text-slate-500" id="edit-line-count">0 líneas</span>
+          <span class="text-slate-500" id="edit-line-count">0 lines</span>
         </div>
       </div>
 
       <!-- Content editor -->
       <div class="flex-1 overflow-hidden flex flex-col min-h-0 bg-slate-50 rounded-lg border border-slate-200">
-        <textarea id="edit-content" class="flex-1 w-full px-4 py-3 bg-white font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none border-0" placeholder="Contenido del documento..." spellcheck="false"></textarea>
+        <textarea id="edit-content" class="flex-1 w-full px-4 py-3 bg-white font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none border-0" placeholder="Document content..." spellcheck="false"></textarea>
       </div>
 
       <!-- Notices -->
       <div id="edit-readonly-notice" class="hidden mt-3 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-2 flex-shrink-0">
         <i class="iconoir-info-circle"></i>
-        <span>Los archivos PDF no se pueden editar inline. Descarga el archivo para modificarlo.</span>
+        <span>PDF files cannot be edited inline. Download the file to modify it.</span>
       </div>
 
       <div id="edit-rag-notice" class="hidden mt-3 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center gap-2 flex-shrink-0">
         <i class="iconoir-info-circle"></i>
-        <span>Al guardar cambios en un documento de Lex, deberás <strong>reprocesar el RAG</strong> para actualizar los vectores.</span>
+        <span>After saving changes to a Lex document, you must <strong>reprocess the AI index</strong> to refresh vectors.</span>
       </div>
 
       <div id="edit-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3 flex-shrink-0"></div>
@@ -320,10 +320,10 @@ if (!$isSuperadmin) {
       <div class="flex gap-3 pt-4 border-t border-slate-100 mt-4 flex-shrink-0">
         <button type="button" id="save-content-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
           <i class="iconoir-floppy-disk mr-1"></i>
-          Guardar cambios
+          Save changes
         </button>
         <button type="button" id="close-edit-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
-          Cerrar
+          Close
         </button>
       </div>
     </div>
@@ -337,22 +337,22 @@ if (!$isSuperadmin) {
           <i class="iconoir-warning-triangle text-red-600 text-2xl"></i>
         </div>
         <div>
-          <h3 class="text-lg font-semibold text-slate-800">Eliminar documento</h3>
-          <p class="text-sm text-slate-600 mt-0.5">Esta acción no se puede deshacer</p>
+          <h3 class="text-lg font-semibold text-slate-800">Delete document</h3>
+          <p class="text-sm text-slate-600 mt-0.5">This action cannot be undone</p>
         </div>
       </div>
 
       <p class="text-slate-700 mb-2">
-        ¿Estás seguro de que deseas eliminar <strong id="delete-doc-name" class="text-slate-900"></strong>?
+        Are you sure you want to delete <strong id="delete-doc-name" class="text-slate-900"></strong>?
       </p>
       <p id="delete-rag-warning" class="text-sm text-amber-600 mb-6 hidden">
         <i class="iconoir-warning-circle mr-1"></i>
-        También se eliminarán los vectores asociados en Qdrant.
+        Associated vectors in Qdrant will also be deleted.
       </p>
 
       <div class="flex gap-3">
         <button id="confirm-delete-btn" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors text-sm">
-          Sí, eliminar
+          Yes, delete
         </button>
         <button id="cancel-delete-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
           Cancelar
@@ -364,7 +364,7 @@ if (!$isSuperadmin) {
   <!-- Toast -->
   <div id="toast" class="hidden fixed bottom-6 right-6 bg-slate-800 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 z-[100]">
     <i id="toast-icon" class="iconoir-check-circle text-green-400"></i>
-    <span id="toast-message" class="text-sm font-medium">Operación completada</span>
+    <span id="toast-message" class="text-sm font-medium">Operation completed</span>
   </div>
 
   <script>
@@ -373,7 +373,7 @@ if (!$isSuperadmin) {
     let documents = [];
     let selectedDoc = null;
 
-    // Formatos permitidos por target
+    // Allowed formats by target
     const allowedExtensions = {
       lex: ['pdf', 'txt', 'md'],
       eboniato: ['md'],
@@ -451,7 +451,7 @@ if (!$isSuperadmin) {
         document.getElementById('stat-size').textContent = formatBytes(stats.total_size || 0);
         document.getElementById('stat-chunks').textContent = stats.total_chunks || 0;
         
-        // Show/hide RAG and Type columns
+        // Show/hide index and type columns
         const isLex = currentTarget === 'lex';
         document.getElementById('col-rag').classList.toggle('hidden', !isLex);
         document.getElementById('col-type').classList.toggle('hidden', !isLex);
@@ -459,7 +459,7 @@ if (!$isSuperadmin) {
         
         renderDocuments();
       } catch (err) {
-        showToast('Error al cargar documentos: ' + err.message, true);
+        showToast('Error loading documents: ' + err.message, true);
       } finally {
         document.getElementById('docs-loading').classList.add('hidden');
         document.getElementById('docs-container').classList.remove('hidden');
@@ -501,17 +501,17 @@ if (!$isSuperadmin) {
         
         let editBtn;
         if (isPdf) {
-          editBtn = `<button onclick="window.open('/api/admin/context/view.php?id=${doc.id}&raw=1', '_blank')" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-eye"></i>Ver</button>`;
+          editBtn = `<button onclick="window.open('/api/admin/context/view.php?id=${doc.id}&raw=1', '_blank')" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-eye"></i>View</button>`;
         } else if (canEdit) {
-          editBtn = `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#23AAC5] hover:bg-[#23AAC5]/5 rounded transition-colors"><i class="iconoir-edit-pencil"></i>Editar</button>`;
+          editBtn = `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#23AAC5] hover:bg-[#23AAC5]/5 rounded transition-colors"><i class="iconoir-edit-pencil"></i>Edit</button>`;
         } else {
-          editBtn = `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-eye"></i>Ver</button>`;
+          editBtn = `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-eye"></i>View</button>`;
         }
 
         const processBtn = isLex && doc.rag_status !== 'processed' 
-          ? `<button onclick="processRag(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 rounded transition-colors"><i class="iconoir-refresh"></i>Procesar</button>`
+          ? `<button onclick="processRag(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 rounded transition-colors"><i class="iconoir-refresh"></i>Process</button>`
           : isLex && doc.rag_status === 'processed'
-          ? `<button onclick="processRag(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-refresh"></i>Reprocesar</button>`
+          ? `<button onclick="processRag(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-refresh"></i>Reprocess</button>`
           : '';
 
         return `
@@ -536,7 +536,7 @@ if (!$isSuperadmin) {
               <div class="flex items-center justify-end gap-1">
                 ${editBtn}
                 ${processBtn}
-                <button onclick="confirmDelete(${doc.id}, '${escapeHtml(doc.filename)}')" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded transition-colors"><i class="iconoir-trash"></i>Eliminar</button>
+                <button onclick="confirmDelete(${doc.id}, '${escapeHtml(doc.filename)}')" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded transition-colors"><i class="iconoir-trash"></i>Delete</button>
               </div>
             </td>
           </tr>
@@ -544,15 +544,15 @@ if (!$isSuperadmin) {
       }).join('');
     }
 
-    // Get RAG status HTML
+    // Get index status HTML
     function getRagStatusHtml(doc) {
       const status = doc.rag_status || 'not_applicable';
       const chunks = doc.rag_chunk_count || 0;
       
       const configs = {
         not_applicable: { class: 'bg-slate-100 text-slate-500', icon: 'iconoir-minus', text: 'N/A' },
-        pending: { class: 'bg-amber-100 text-amber-700', icon: 'iconoir-clock', text: 'Pendiente' },
-        processing: { class: 'bg-blue-100 text-blue-700', icon: 'iconoir-refresh animate-spin', text: 'Procesando' },
+        pending: { class: 'bg-amber-100 text-amber-700', icon: 'iconoir-clock', text: 'Pending' },
+        processing: { class: 'bg-blue-100 text-blue-700', icon: 'iconoir-refresh animate-spin', text: 'Processing' },
         processed: { class: 'bg-emerald-100 text-emerald-700', icon: 'iconoir-check', text: `${chunks} chunks` },
         error: { class: 'bg-red-100 text-red-700', icon: 'iconoir-warning-triangle', text: 'Error' }
       };
@@ -568,19 +568,19 @@ if (!$isSuperadmin) {
           class: 'bg-orange-100 text-orange-700', 
           icon: 'iconoir-page', 
           text: 'Original',
-          tooltip: 'Documento original PDF para procesar'
+          tooltip: 'Original PDF document for processing'
         },
         txt: { 
           class: 'bg-blue-100 text-blue-700', 
           icon: 'iconoir-notes', 
-          text: 'Extraído',
-          tooltip: 'Texto extraído del PDF original'
+          text: 'Extracted',
+          tooltip: 'Text extracted from the original PDF'
         },
         md: { 
           class: 'bg-purple-100 text-purple-700', 
           icon: 'iconoir-page-edit', 
           text: 'Manual',
-          tooltip: 'Documento creado manualmente'
+          tooltip: 'Manually created document'
         }
       };
       
@@ -598,7 +598,7 @@ if (!$isSuperadmin) {
         
         // Update allowed formats
         const formats = allowedExtensions[currentTarget] || [];
-        document.getElementById('allowed-formats').textContent = 'Formatos permitidos: ' + formats.map(f => '.' + f).join(', ');
+        document.getElementById('allowed-formats').textContent = 'Allowed formats: ' + formats.map(f => '.' + f).join(', ');
         document.getElementById('file-input').accept = formats.map(f => '.' + f).join(',');
       });
     });
@@ -661,7 +661,7 @@ if (!$isSuperadmin) {
 
       const file = fileInput.files[0];
       if (!file) {
-        errorEl.textContent = 'Selecciona un archivo';
+        errorEl.textContent = 'Select a file';
         errorEl.classList.remove('hidden');
         return;
       }
@@ -673,7 +673,7 @@ if (!$isSuperadmin) {
 
       const submitBtn = document.getElementById('upload-submit');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Subiendo...';
+      submitBtn.textContent = 'Uploading...';
 
       try {
         const result = await api('/api/admin/context/upload.php', {
@@ -682,10 +682,10 @@ if (!$isSuperadmin) {
         });
 
         document.getElementById('upload-modal').classList.add('hidden');
-        showToast('Documento subido correctamente');
+        showToast('Document uploaded successfully');
         
-        if (result.needs_rag_processing) {
-          showToast('Documento subido. Recuerda procesarlo para RAG.', false);
+        if (result.needs_index_processing || result.needs_rag_processing) {
+          showToast('Document uploaded. Remember to process it for indexing.', false);
         }
         
         await loadDocuments();
@@ -694,12 +694,12 @@ if (!$isSuperadmin) {
         errorEl.classList.remove('hidden');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Subir documento';
+        submitBtn.textContent = 'Upload document';
       }
     });
 
     // Create document modal
-    const targetNames = { lex: 'Lex', eboniato: 'Eboniato', ebonia: 'Ebonia' };
+    const targetNames = { lex: 'Lex', eboniato: 'Nana', ebonia: 'iaiaPRO' };
     const createContent = document.getElementById('create-content');
 
     document.getElementById('create-btn').addEventListener('click', () => {
@@ -727,8 +727,8 @@ if (!$isSuperadmin) {
     function updateCreateCharCount(text) {
       const chars = text.length;
       const lines = text.split('\n').length;
-      document.getElementById('create-char-count').textContent = `${chars.toLocaleString()} caracteres`;
-      document.getElementById('create-line-count').textContent = `${lines.toLocaleString()} líneas`;
+      document.getElementById('create-char-count').textContent = `${chars.toLocaleString()} characters`;
+      document.getElementById('create-line-count').textContent = `${lines.toLocaleString()} lines`;
     }
 
     createContent.addEventListener('input', (e) => {
@@ -744,13 +744,13 @@ if (!$isSuperadmin) {
       const description = document.getElementById('create-description').value.trim();
 
       if (!filename) {
-        errorEl.textContent = 'El nombre del archivo es obligatorio';
+        errorEl.textContent = 'File name is required';
         errorEl.classList.remove('hidden');
         return;
       }
 
       if (!content) {
-        errorEl.textContent = 'El contenido no puede estar vacío';
+        errorEl.textContent = 'Content cannot be empty';
         errorEl.classList.remove('hidden');
         return;
       }
@@ -760,7 +760,7 @@ if (!$isSuperadmin) {
 
       const submitBtn = document.getElementById('create-submit');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="iconoir-refresh animate-spin mr-1"></i>Creando...';
+      submitBtn.innerHTML = '<i class="iconoir-refresh animate-spin mr-1"></i>Creating...';
 
       try {
         // Create file as blob and upload
@@ -778,14 +778,14 @@ if (!$isSuperadmin) {
         });
 
         document.getElementById('create-modal').classList.add('hidden');
-        showToast('Documento creado correctamente');
+        showToast('Document created successfully');
         await loadDocuments();
       } catch (err) {
         errorEl.textContent = err.message;
         errorEl.classList.remove('hidden');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="iconoir-plus mr-1"></i>Crear documento';
+        submitBtn.innerHTML = '<i class="iconoir-plus mr-1"></i>Create document';
       }
     });
 
@@ -800,10 +800,10 @@ if (!$isSuperadmin) {
       const isPdf = ext === 'pdf';
       
       // Update header info
-      document.getElementById('edit-modal-title').textContent = canEdit ? 'Editar documento' : (isPdf ? 'Ver documento PDF' : 'Ver documento');
-      document.getElementById('edit-doc-name').textContent = doc.filename || 'documento';
+      document.getElementById('edit-modal-title').textContent = canEdit ? 'Edit document' : (isPdf ? 'View PDF document' : 'View document');
+      document.getElementById('edit-doc-name').textContent = doc.filename || 'document';
       
-      // Icon según tipo
+      // Icon by file type
       const iconClass = isPdf ? 'iconoir-page' : ext === 'md' ? 'iconoir-page-edit' : 'iconoir-notes';
       document.getElementById('edit-doc-icon').className = iconClass + ' text-xl';
       
@@ -855,7 +855,7 @@ if (!$isSuperadmin) {
           updateCharCount(content);
         }
       } catch (err) {
-        contentArea.value = 'Error al cargar contenido: ' + err.message;
+        contentArea.value = 'Error loading content: ' + err.message;
         updateCharCount('');
       }
       
@@ -866,8 +866,8 @@ if (!$isSuperadmin) {
     function updateCharCount(text) {
       const chars = text.length;
       const lines = text.split('\n').length;
-      document.getElementById('edit-char-count').textContent = `${chars.toLocaleString()} caracteres`;
-      document.getElementById('edit-line-count').textContent = `${lines.toLocaleString()} líneas`;
+      document.getElementById('edit-char-count').textContent = `${chars.toLocaleString()} characters`;
+      document.getElementById('edit-line-count').textContent = `${lines.toLocaleString()} lines`;
     }
 
     // Update count on input
@@ -891,7 +891,7 @@ if (!$isSuperadmin) {
       const content = document.getElementById('edit-content').value;
       const btn = document.getElementById('save-content-btn');
       btn.disabled = true;
-      btn.textContent = 'Guardando...';
+      btn.textContent = 'Saving...';
 
       try {
         await api('/api/admin/context/update.php', {
@@ -900,30 +900,30 @@ if (!$isSuperadmin) {
         });
 
         document.getElementById('edit-modal').classList.add('hidden');
-        showToast('Documento guardado correctamente');
+        showToast('Document saved successfully');
         await loadDocuments();
       } catch (err) {
         errorEl.textContent = err.message;
         errorEl.classList.remove('hidden');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Guardar cambios';
+        btn.textContent = 'Save changes';
       }
     });
 
-    // Process RAG
+    // Process index
     window.processRag = async function(docId) {
       const doc = documents.find(d => d.id === docId);
       if (!doc) return;
 
-      showToast('Procesando documento... esto puede tardar unos segundos');
+      showToast('Processing document... this may take a few seconds');
 
       try {
         await api(`/api/admin/context/process-rag.php?id=${docId}`, { method: 'POST' });
-        showToast('Documento procesado correctamente');
+        showToast('Document processed successfully');
         await loadDocuments();
       } catch (err) {
-        showToast('Error al procesar: ' + err.message, true);
+        showToast('Error processing: ' + err.message, true);
         await loadDocuments(); // Reload to show error status
       }
     };
@@ -950,19 +950,19 @@ if (!$isSuperadmin) {
 
       const btn = document.getElementById('confirm-delete-btn');
       btn.disabled = true;
-      btn.textContent = 'Eliminando...';
+      btn.textContent = 'Deleting...';
 
       try {
         await api(`/api/admin/context/delete.php?id=${docToDelete}`, { method: 'DELETE' });
         document.getElementById('delete-modal').classList.add('hidden');
-        showToast('Documento eliminado');
+        showToast('Document deleted');
         docToDelete = null;
         await loadDocuments();
       } catch (err) {
-        showToast('Error al eliminar: ' + err.message, true);
+        showToast('Error deleting: ' + err.message, true);
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Sí, eliminar';
+        btn.textContent = 'Yes, delete';
       }
     });
 

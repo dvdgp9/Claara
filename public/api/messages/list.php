@@ -12,18 +12,18 @@ use Repos\MessagesRepo;
 use Repos\ChatFilesRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    Response::error('method_not_allowed', 'Sólo GET', 405);
+    Response::error('method_not_allowed', 'GET only', 405);
 }
 
 $user = AuthService::requireAuth();
 $conversationId = isset($_GET['conversation_id']) ? (int)$_GET['conversation_id'] : 0;
 if ($conversationId <= 0) {
-    Response::error('validation_error', 'conversation_id es obligatorio', 400);
+    Response::error('validation_error', 'conversation_id is required', 400);
 }
 
 $convos = new ConversationsRepo();
 if (!$convos->findByIdForUser($conversationId, (int)$user['id'])) {
-    Response::error('not_found', 'Conversación no encontrada', 404);
+    Response::error('not_found', 'Conversation not found', 404);
 }
 
 $msgs = new MessagesRepo();

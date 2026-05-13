@@ -11,12 +11,11 @@ $userId = $user ? (int)$user['id'] : 0;
 $accessRepo = new UserFeatureAccessRepo();
 
 /**
- * Partial: Barra lateral izquierda con tabs de navegación
- * Incluye menús hover expandibles para acceso rápido
+ * Partial: left navigation rail with hover menus
  * 
  * Variables esperadas:
- * - $activeTab (opcional): Tab activa ('conversations', 'voices', 'gestures'), default 'conversations'
- * - $useTabsJs (opcional): Si true, usa data-tab para manejo JS interno (index.php). Default false.
+ * - $activeTab (optional): active tab ('conversations', 'voices', 'gestures'), default 'conversations'
+ * - $useTabsJs (optional): if true, use data-tab for internal JS handling (index.php). Default false.
  */
 $activeTab = $activeTab ?? 'conversations';
 $useTabsJs = $useTabsJs ?? false;
@@ -26,191 +25,121 @@ $tabs = [
         'icon' => 'iconoir-chat-bubble',
         'label' => 'Chat',
         'href' => '/',
-        'title' => 'Conversaciones',
-        'hoverTitle' => 'Conversaciones recientes',
+        'title' => 'Conversations',
+        'hoverTitle' => 'Recent conversations',
         'hoverIcon' => 'iconoir-chat-bubble',
-        'newLabel' => 'Nueva conversación',
+        'newLabel' => 'New conversation',
         'newHref' => '/'
     ],
     'voices' => [
         'icon' => 'iconoir-voice-square',
-        'label' => 'Voces',
+        'label' => 'Voices',
         'href' => '/voices/',
-        'title' => 'Voces especializadas',
-        'hoverTitle' => 'Voces disponibles',
+        'title' => 'Specialized voices',
+        'hoverTitle' => 'Available voices',
         'hoverIcon' => 'iconoir-voice-square',
-        'newLabel' => 'Ver todas',
+        'newLabel' => 'View all',
         'newHref' => '/voices/'
     ],
     'gestures' => [
         'icon' => 'iconoir-magic-wand',
-        'label' => 'Gestos',
+        'label' => 'Gestures',
         'href' => '/gestos/',
-        'title' => 'Flujos automatizados',
-        'hoverTitle' => 'Gestos disponibles',
+        'title' => 'Automated workflows',
+        'hoverTitle' => 'Available gestures',
         'hoverIcon' => 'iconoir-magic-wand',
-        'newLabel' => 'Ver todos',
+        'newLabel' => 'View all',
         'newHref' => '/gestos/'
-    ],
-    'apps' => [
-        'icon' => 'iconoir-view-grid',
-        'label' => 'Apps',
-        'href' => '/aplicaciones/',
-        'title' => 'Aplicaciones Ebone',
-        'hoverTitle' => 'Aplicaciones',
-        'hoverIcon' => 'iconoir-view-grid',
-        'newLabel' => 'Ver todas',
-        'newHref' => '/aplicaciones/'
     ]
 ];
 
-// Gestos disponibles para el submenú
+// Gestures available in the hover menu
 $gesturesList = [
     [
         'type' => 'podcast-from-article',
-        'name' => 'Podcast desde artículo',
+        'name' => 'Article to Podcast',
         'icon' => 'iconoir-podcast',
         'href' => '/gestos/podcast-articulo.php',
-        'description' => 'Convierte texto en audio'
+        'description' => 'Turn text into audio'
     ],
     [
         'type' => 'write-article',
-        'name' => 'Escribir artículo',
+        'name' => 'Write Content',
         'icon' => 'iconoir-edit-pencil',
         'href' => '/gestos/escribir-articulo.php',
-        'description' => 'Genera contenido escrito'
+        'description' => 'Generate written content'
     ],
     [
         'type' => 'social-media',
-        'name' => 'Redes sociales',
+        'name' => 'Social Media',
         'icon' => 'iconoir-share-android',
         'href' => '/gestos/redes-sociales.php',
-        'description' => 'Crea posts para redes'
+        'description' => 'Create social posts'
     ],
     [
         'type' => 'image-editor',
-        'name' => 'Editor de imágenes',
+        'name' => 'Image Studio',
         'icon' => 'iconoir-media-image',
         'href' => '/gestos/editor-imagenes.php',
-        'description' => 'Genera imágenes con IA'
+        'description' => 'Generate AI images'
     ],
     [
         'type' => 'content-repurposer',
-        'name' => 'Transformador',
+        'name' => 'Content Repurposer',
         'icon' => 'iconoir-refresh-double',
         'href' => '/gestos/transformador-contenido.php',
-        'description' => 'Adapta contenido a formatos'
+        'description' => 'Adapt content to formats'
     ],
     [
         'type' => 'sop-generator',
-        'name' => 'Generador SOPs',
+        'name' => 'SOP Generator',
         'icon' => 'iconoir-clipboard-check',
         'href' => '/gestos/sop-generator.php',
-        'description' => 'Crea procedimientos'
+        'description' => 'Create procedures'
     ],
     [
         'type' => 'audio-transcriber',
-        'name' => 'Transcriptor de audio',
+        'name' => 'Audio Transcriber',
         'icon' => 'iconoir-microphone',
         'href' => '/gestos/transcriptor-audio.php',
-        'description' => 'Convierte audio en texto'
+        'description' => 'Turn audio into text'
     ],
     [
         'type' => 'course-creator',
-        'name' => 'Creador de cursos',
+        'name' => 'Course Creator',
         'icon' => 'iconoir-graduation-cap',
         'href' => '/gestos/creador-cursos.php',
-        'description' => 'Genera material formativo'
+        'description' => 'Generate training material'
     ],
     [
         'type' => 'project-admin',
-        'name' => 'Análisis Eco Proy.',
+        'name' => 'Project Analysis',
         'icon' => 'iconoir-folder-settings',
         'href' => '/gestos/admin-proyectos.php',
-        'description' => 'Analiza pliegos de concursos'
+        'description' => 'Analyze project documents'
     ]
 ];
 
-// Voces disponibles
+// Available voices
 $voicesList = [
     [
         'id' => 'lex',
         'name' => 'Lex',
         'icon' => 'iconoir-book-stack',
         'href' => '/voices/lex.php',
-        'description' => 'Abogado experto'
-    ]
-];
-
-// Apps disponibles (catálogo real)
-$appsList = [
-    [
-        'id' => 'campus',
-        'name' => 'Campus',
-        'icon' => 'iconoir-book',
-        'href' => 'https://campus.ebone.es',
-        'description' => 'Formación online'
-    ],
-    [
-        'id' => 'firmas',
-        'name' => 'Firmas',
-        'icon' => 'iconoir-mail',
-        'href' => 'https://firmas.ebone.es',
-        'description' => 'Firmas de correo'
-    ],
-    [
-        'id' => 'happy',
-        'name' => 'Happy',
-        'icon' => 'iconoir-emoji',
-        'href' => 'https://happy.ebone.es',
-        'description' => 'Encuestas'
-    ],
-    [
-        'id' => 'loop',
-        'name' => 'Loop',
-        'icon' => 'iconoir-calendar',
-        'href' => 'https://loop.ebone.es',
-        'description' => 'RRSS y Blogs'
-    ],
-    [
-        'id' => 'passwords',
-        'name' => 'Passwords',
-        'icon' => 'iconoir-lock',
-        'href' => 'https://passwords.ebone.es/gestionar',
-        'description' => 'Gestor seguro'
-    ],
-    [
-        'id' => 'prisma',
-        'name' => 'Prisma',
-        'icon' => 'iconoir-folder',
-        'href' => 'https://prisma.wthefox.com/solicitud.php?empresa=Ebone',
-        'description' => 'Cambios y mejoras'
-    ],
-    [
-        'id' => 'puri',
-        'name' => 'Puri',
-        'icon' => 'iconoir-check-circle',
-        'href' => 'https://puri.ebone.es',
-        'description' => 'Control asistencia'
-    ],
-    [
-        'id' => 'resq',
-        'name' => 'RESQ',
-        'icon' => 'iconoir-swimming',
-        'href' => 'https://resq.ebone.es',
-        'description' => 'Seguridad acuática'
+        'description' => 'Legal assistant'
     ]
 ];
 ?>
-<!-- CSS del hover menu -->
+<!-- Hover menu CSS -->
 <link rel="stylesheet" href="/assets/css/sidebar-hover.css">
 
-<!-- Barra de tabs lateral izquierda - Solo desktop -->
-<aside class="hidden lg:flex w-[70px] gradient-brand flex-col items-center py-6 gap-2 shrink-0">
+<!-- Left navigation rail - desktop only -->
+<aside class="hidden lg:flex w-[70px] sidebar-rail flex-col items-center py-5 gap-1.5 shrink-0">
   <?php foreach ($tabs as $tabId => $tab): ?>
     <?php 
       $isActive = ($activeTab === $tabId);
-      $baseClasses = 'tab-item w-full py-4 flex flex-col items-center gap-1.5 relative z-10';
+      $baseClasses = 'tab-item w-[calc(100%-12px)] mx-1.5 py-3 rounded-2xl flex flex-col items-center gap-1.5 relative z-10';
       $stateClasses = $isActive 
         ? 'active text-white' 
         : 'text-white/60 hover:text-white/80';
@@ -233,7 +162,7 @@ $appsList = [
         </a>
       <?php endif; ?>
       
-      <!-- Panel Hover -->
+      <!-- Hover panel -->
       <div class="sidebar-hover-panel">
         <div class="hover-panel-header">
           <div class="hover-panel-title">
@@ -244,7 +173,7 @@ $appsList = [
         
         <div class="hover-panel-content">
           <?php if ($tabId === 'conversations'): ?>
-            <!-- Cargado dinámicamente via JS -->
+            <!-- Loaded dynamically via JS -->
             <div class="hover-panel-loading">
               <i class="iconoir-refresh"></i>
             </div>
@@ -276,18 +205,6 @@ $appsList = [
                 </a>
               <?php endif; ?>
             <?php endforeach; ?>
-          <?php elseif ($tabId === 'apps'): ?>
-            <?php foreach ($appsList as $app): ?>
-              <a href="<?php echo $app['href']; ?>" target="_blank" class="hover-panel-item">
-                <div class="hover-panel-item-icon">
-                  <i class="<?php echo $app['icon']; ?>"></i>
-                </div>
-                <div class="hover-panel-item-info">
-                  <div class="hover-panel-item-title"><?php echo htmlspecialchars($app['name']); ?></div>
-                  <div class="hover-panel-item-meta"><?php echo htmlspecialchars($app['description']); ?></div>
-                </div>
-              </a>
-            <?php endforeach; ?>
           <?php endif; ?>
         </div>
         
@@ -303,17 +220,20 @@ $appsList = [
   
   <!-- Spacer -->
   <div class="flex-1"></div>
-  
-  <!-- Tab Mi cuenta (sin hover menu) -->
-  <?php 
+
+  <!-- Divider -->
+  <div class="w-8 h-px bg-white/10 my-2"></div>
+
+  <!-- Account tab (no hover menu) -->
+  <?php
     $isAccountActive = ($activeTab === 'account');
-    $accountClasses = $isAccountActive ? 'text-white' : 'text-white/60 hover:text-white/80';
+    $accountStateClasses = $isAccountActive ? 'active text-white' : 'text-white/60 hover:text-white/90';
   ?>
-  <a href="/account.php" class="tab-item w-full py-4 flex flex-col items-center gap-1.5 <?php echo $accountClasses; ?>" title="Mi cuenta">
+  <a href="/account.php" class="tab-item w-[calc(100%-12px)] mx-1.5 py-3 rounded-2xl flex flex-col items-center gap-1.5 <?php echo $accountStateClasses; ?>" title="My account">
     <i class="iconoir-user text-2xl"></i>
-    <span class="text-[10px] font-medium">Cuenta</span>
+    <span class="text-[10px] font-medium">Account</span>
   </a>
 </aside>
 
-<!-- JS del hover menu -->
+<!-- Hover menu JS -->
 <script src="/assets/js/sidebar-hover.js"></script>

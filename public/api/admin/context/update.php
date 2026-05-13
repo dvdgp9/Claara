@@ -2,13 +2,13 @@
 /**
  * PUT /api/admin/context/update.php
  * 
- * Actualiza el contenido o metadatos de un documento.
- * Requiere superadmin.
+ * Updates document content or metadata.
+ * Requires superadmin.
  * 
  * Body JSON:
- * - id: ID del documento
- * - content: (opcional) nuevo contenido del archivo (solo md/txt)
- * - description: (opcional) nueva descripción
+ * - id: document ID
+ * - content: (optional) new file content (md/txt only)
+ * - description: (optional) new description
  */
 require_once __DIR__ . '/../../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../../src/Auth/AdminGuard.php';
@@ -20,7 +20,7 @@ use Auth\AdminGuard;
 use Repos\ContextDocsRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
-    Response::error('method_not_allowed', 'Sólo PUT', 405);
+    Response::error('method_not_allowed', 'PUT only', 405);
 }
 
 AdminGuard::requireSuperadmin();
@@ -30,14 +30,14 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
 $id = (int)($input['id'] ?? 0);
 if ($id <= 0) {
-    Response::error('invalid_id', 'ID de documento inválido', 400);
+    Response::error('invalid_id', 'Invalid document ID', 400);
 }
 
 $repo = new ContextDocsRepo();
 $doc = $repo->getById($id);
 
 if (!$doc) {
-    Response::error('not_found', 'Documento no encontrado', 404);
+    Response::error('not_found', 'Document not found', 404);
 }
 
 $updated = false;
@@ -48,20 +48,20 @@ if (isset($input['content'])) {
     $ext = strtolower($doc['file_extension']);
     
     if (!in_array($ext, ['md', 'txt'])) {
-        Response::error('cannot_edit', 'Solo se pueden editar archivos .md y .txt', 400);
+        Response::error('cannot_edit', 'Only .md and .txt files can be edited', 400);
     }
     
     $targetPath = ContextDocsRepo::getTargetPath($doc['target']);
     $filePath = $targetPath . '/' . $doc['filename'];
     
     if (!file_exists($filePath)) {
-        Response::error('file_not_found', 'El archivo físico no existe', 404);
+        Response::error('file_not_found', 'Physical file does not exist', 404);
     }
     
     // Escribir nuevo contenido
     $result = file_put_contents($filePath, $input['content']);
     if ($result === false) {
-        Response::error('write_error', 'Error al escribir el archivo', 500);
+        Response::error('write_error', 'Error writing file', 500);
     }
     
     // Actualizar tamaño en BD
@@ -71,7 +71,7 @@ if (isset($input['content'])) {
     $contentUpdated = true;
     $updated = true;
     
-    // Si es Lex, marcar RAG como pendiente de reprocesar
+    // If Lex, mark index as pending reprocessing
     if ($doc['target'] === 'lex' && $doc['rag_status'] === 'processed') {
         $repo->updateRagStatus($id, 'pending');
     }
@@ -84,7 +84,7 @@ if (array_key_exists('description', $input)) {
 }
 
 if (!$updated) {
-    Response::error('no_changes', 'No se proporcionaron cambios para aplicar', 400);
+    Response::error('no_changes', 'No changes were provided', 400);
 }
 
 // Obtener documento actualizado
@@ -92,7 +92,8 @@ $doc = $repo->getById($id);
 
 Response::json([
     'success' => true,
-    'message' => $contentUpdated ? 'Contenido actualizado correctamente' : 'Metadatos actualizados correctamente',
+    'message' => $contentUpdated ? 'Content updated successfully' : 'Metadata updated successfully',
     'document' => $doc,
-    'needs_rag_reprocessing' => $contentUpdated && $doc['target'] === 'lex'
+    'needs_rag_reprocessing' => $contentUpdated && $doc['target'] === 'lex',
+    'needs_index_reprocessing' => $contentUpdated && $doc['target'] === 'lex'
 ]);

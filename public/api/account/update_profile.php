@@ -9,7 +9,7 @@ use Auth\AuthService;
 use Repos\UsersRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 Session::requireCsrf();
@@ -20,7 +20,7 @@ $firstName = trim($input['first_name'] ?? '');
 $lastName = trim($input['last_name'] ?? '');
 
 if ($firstName === '' || $lastName === '') {
-    Response::error('validation_error', 'Nombre y apellidos son obligatorios', 400);
+    Response::error('validation_error', 'First name and last name are required', 400);
 }
 
 $repo = new UsersRepo();

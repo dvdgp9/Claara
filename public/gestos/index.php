@@ -16,15 +16,14 @@ $activeTab = 'gestures';
 $userId = (int)$user['id'];
 $accessRepo = new UserFeatureAccessRepo();
 
-// Configuración del header unificado
 $headerBackUrl = '/';
-$headerBackText = 'Inicio';
-$headerTitle = 'Gestos';
-$headerSubtitle = 'Flujos automatizados';
+$headerBackText = 'Home';
+$headerTitle = 'Gestures';
+$headerSubtitle = 'Automated workflows';
 $headerIcon = 'iconoir-magic-wand';
 $headerIconColor = 'from-cyan-500 to-teal-600';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
@@ -43,9 +42,9 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
             <div class="w-14 h-14 lg:w-20 lg:h-20 rounded-2xl lg:rounded-3xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center mx-auto mb-4 lg:mb-6 shadow-xl animate-float">
               <i class="iconoir-magic-wand text-2xl lg:text-4xl text-white"></i>
             </div>
-            <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 mb-2 lg:mb-3">Gestos</h1>
+            <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 mb-2 lg:mb-3">Gestures</h1>
             <p class="text-sm lg:text-base text-slate-600 max-w-2xl mx-auto px-4 lg:px-0">
-              Flujos de trabajo automatizados para tareas comunes. Cada gesto te guía paso a paso para generar contenido de calidad.
+              Guided workflows for common tasks. Each gesture gives you the right structure to produce high-quality work faster.
             </p>
           </div>
 
@@ -60,19 +59,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-page-edit text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Escribir contenido</h3>
-                  <p class="text-sm text-slate-500">Artículos y blogs</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Write content</h3>
+                  <p class="text-sm text-slate-500">Articles and blogs</p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Activo</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Active</span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Genera artículos informativos, posts de blog o notas de prensa. Configura el tono, extensión y estilo que necesites.
+                Generate informative articles, blog posts, or press notes. Set the tone, length, and style you need.
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-cyan-600 font-medium">
-                  <span>Usar gesto</span>
+                  <span>Use gesture</span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -87,19 +86,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-send-diagonal text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Redes Sociales</h3>
-                  <p class="text-sm text-slate-500">Publicaciones para RRSS</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Social media</h3>
+                  <p class="text-sm text-slate-500">Posts for social channels</p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Activo</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Active</span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Construye publicaciones con decisiones editoriales guiadas. Selecciona intención, canal y estilo. Genera variantes con un clic.
+                Build posts with guided editorial decisions. Choose intent, channel, and style, then generate variants in one step.
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-violet-600 font-medium">
-                  <span>Usar gesto</span>
+                  <span>Use gesture</span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -114,19 +113,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-podcast text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Generar podcast</h3>
-                  <p class="text-sm text-slate-500">Con Iris y Bruno</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Generate podcast</h3>
+                  <p class="text-sm text-slate-500">With Iris and Bruno</p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Nuevo</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Convierte cualquier artículo web o documento en un podcast con dos presentadores.
+                Turn any web article or document into a podcast with two hosts.
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-rose-600 font-medium">
-                  <span>Usar gesto</span>
+                  <span>Use gesture</span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -141,19 +140,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-media-image text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Editor de imágenes <span class="text-base">🍌</span></h3>
-                  <p class="text-sm text-slate-500">Con Nanobanana</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Image editor <span class="text-base">🍌</span></h3>
+                  <p class="text-sm text-slate-500">With Nanobanana</p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Nuevo</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Genera imágenes corporativas con IA. Controla estilo, iluminación, composición y paleta de colores.
+                Generate brand-ready images with AI. Control style, lighting, composition, and color palette.
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-amber-600 font-medium">
-                  <span>Usar gesto</span>
+                  <span>Use gesture</span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -168,19 +167,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-refresh-double text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Transformador</h3>
-                  <p class="text-sm text-slate-500">Adapta contenido</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Content transformer</h3>
+                  <p class="text-sm text-slate-500">Adapt content</p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Nuevo</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Convierte cualquier contenido en posts para redes, blogs, landing pages, newsletters o FAQs.
+                Convert any source content into social posts, blogs, landing pages, newsletters, or FAQs.
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-indigo-600 font-medium">
-                  <span>Usar gesto</span>
+                  <span>Use gesture</span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -195,19 +194,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-clipboard-check text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Generador de procesos</h3>
-                  <p class="text-sm text-slate-500">Procedimientos operativos</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Process generator</h3>
+                  <p class="text-sm text-slate-500">Operating procedures</p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Nuevo</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Transforma texto, audio o imágenes en procedimientos estructurados con diagramas de flujo y documentos descargables.
+                Turn text, audio, or images into structured procedures with flowcharts and downloadable documents.
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-emerald-600 font-medium">
-                  <span>Usar gesto</span>
+                  <span>Use gesture</span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -222,19 +221,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-microphone text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Transcriptor de audio</h3>
-                  <p class="text-sm text-slate-500">Audio a texto</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Audio transcriber</h3>
+                  <p class="text-sm text-slate-500">Audio to text</p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Activo</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Active</span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Convierte grabaciones de voz, entrevistas o reuniones en texto. Soporta MP3, WAV, M4A y más.
+                Convert voice recordings, interviews, or meetings into text. Supports MP3, WAV, M4A, and more.
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-purple-600 font-medium">
-                  <span>Usar gesto</span>
+                  <span>Use gesture</span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -249,19 +248,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-graduation-cap text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Creador de cursos</h3>
-                  <p class="text-sm text-slate-500">Material formativo</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Course creator</h3>
+                  <p class="text-sm text-slate-500">Training material</p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Nuevo</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Genera material de curso completo desde un PDF: temario, fichas, quizzes, flashcards, podcasts y exámenes.
+                Generate full course material from a PDF: syllabus, handouts, quizzes, flashcards, podcasts, and exams.
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-emerald-600 font-medium">
-                  <span>Usar gesto</span>
+                  <span>Use gesture</span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -276,19 +275,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-folder-settings text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Análisis Eco Proy.</h3>
-                  <p class="text-sm text-slate-500">Análisis de pliegos</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1">Project analysis</h3>
+                  <p class="text-sm text-slate-500">Tender document review</p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Nuevo</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Sube pliegos de concursos públicos y extrae automáticamente gastos no personales, horas de trabajo y otra información clave.
+                Upload tender documents and extract non-staff costs, work hours, and other key information automatically.
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-emerald-600 font-medium">
-                  <span>Usar gesto</span>
+                  <span>Use gesture</span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -302,20 +301,20 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-search-window text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-500 mb-1">Analizar documento</h3>
-                  <p class="text-sm text-slate-400">Extracción de información</p>
+                  <h3 class="text-lg font-bold text-slate-500 mb-1">Analyze document</h3>
+                  <p class="text-sm text-slate-400">Information extraction</p>
                 </div>
                 <span class="px-2 py-1 text-xs bg-slate-100 text-slate-400 rounded-full">Soon</span>
               </div>
               
               <p class="text-sm text-slate-400 mb-4">
-                Sube un documento y obtén resúmenes, puntos clave o respuestas a preguntas específicas sobre el contenido.
+                Upload a document and get summaries, key points, or answers to specific questions about the content.
               </p>
               
               <div class="flex items-center justify-between text-xs text-slate-300 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-1">
                   <i class="iconoir-clock"></i>
-                  <span>Próximamente</span>
+                  <span>Coming soon</span>
                 </div>
               </div>
             </div>
@@ -327,20 +326,20 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-mail text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-500 mb-1">Generar email</h3>
-                  <p class="text-sm text-slate-400">Comunicación profesional</p>
+                  <h3 class="text-lg font-bold text-slate-500 mb-1">Generate email</h3>
+                  <p class="text-sm text-slate-400">Professional communication</p>
                 </div>
                 <span class="px-2 py-1 text-xs bg-slate-100 text-slate-400 rounded-full">Soon</span>
               </div>
               
               <p class="text-sm text-slate-400 mb-4">
-                Crea emails profesionales a partir de una idea o contexto. Ajusta el tono para comunicación interna o externa.
+                Create professional emails from an idea or context. Adjust the tone for internal or external communication.
               </p>
               
               <div class="flex items-center justify-between text-xs text-slate-300 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-1">
                   <i class="iconoir-clock"></i>
-                  <span>Próximamente</span>
+                  <span>Coming soon</span>
                 </div>
               </div>
             </div>
@@ -354,30 +353,30 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                 <i class="iconoir-info-circle text-2xl text-cyan-600"></i>
               </div>
               <div>
-                <h3 class="font-semibold text-slate-800 mb-2">¿Qué son los gestos?</h3>
+                <h3 class="font-semibold text-slate-800 mb-2">What are gestures?</h3>
                 <p class="text-sm text-slate-600 mb-3">
-                  Los gestos son flujos de trabajo guiados que te ayudan a completar tareas complejas paso a paso. A diferencia del chat libre, cada gesto está optimizado para un objetivo específico y te pide solo la información necesaria.
+                  Gestures are guided workflows that help you complete complex tasks step by step. Unlike open chat, each gesture is optimized for a specific goal and asks only for the information it needs.
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div class="flex items-start gap-2">
                     <i class="iconoir-check text-cyan-600 mt-0.5"></i>
                     <div>
-                      <div class="font-medium text-sm text-slate-700">Guiado paso a paso</div>
-                      <div class="text-xs text-slate-500">Sin complicaciones</div>
+                      <div class="font-medium text-sm text-slate-700">Step-by-step guidance</div>
+                      <div class="text-xs text-slate-500">No extra friction</div>
                     </div>
                   </div>
                   <div class="flex items-start gap-2">
                     <i class="iconoir-check text-cyan-600 mt-0.5"></i>
                     <div>
-                      <div class="font-medium text-sm text-slate-700">Resultados consistentes</div>
-                      <div class="text-xs text-slate-500">Calidad garantizada</div>
+                      <div class="font-medium text-sm text-slate-700">Consistent results</div>
+                      <div class="text-xs text-slate-500">Reliable quality</div>
                     </div>
                   </div>
                   <div class="flex items-start gap-2">
                     <i class="iconoir-check text-cyan-600 mt-0.5"></i>
                     <div>
-                      <div class="font-medium text-sm text-slate-700">Historial guardado</div>
-                      <div class="text-xs text-slate-500">Reutiliza y edita</div>
+                      <div class="font-medium text-sm text-slate-700">Saved history</div>
+                      <div class="text-xs text-slate-500">Reuse and edit</div>
                     </div>
                   </div>
                 </div>

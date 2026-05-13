@@ -57,7 +57,7 @@
 
   function updateSelectedCount() {
     const count = selectedActions.size;
-    selectedCount.textContent = `${count} análisis seleccionado${count !== 1 ? 's' : ''}`;
+    selectedCount.textContent = `${count} analysis selected${count !== 1 ? 's' : ''}`;
   }
 
   // === File Upload ===
@@ -85,12 +85,12 @@
   async function handleFiles(files) {
     for (const file of files) {
       if (file.type !== 'application/pdf') {
-        showError('Solo se permiten archivos PDF');
+        showError('Only PDF files are allowed');
         continue;
       }
       
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        showError(`${file.name} es demasiado grande (máximo 40MB)`);
+        showError(`${file.name} is too large (maximum 40MB)`);
         continue;
       }
       
@@ -105,7 +105,7 @@
         renderFilesList();
         updateAnalyzeButton();
       } catch (err) {
-        showError(`Error al procesar ${file.name}`);
+        showError(`Error processing ${file.name}`);
       }
     }
   }
@@ -173,14 +173,14 @@
 
   async function analyzeDocuments() {
     if (uploadedFiles.length === 0) {
-      showError('Por favor, sube al menos un documento');
+      showError('Please upload at least one document');
       return;
     }
 
     const actions = Array.from(selectedActions);
     const instructions = additionalInstructions.value.trim();
 
-    showProgress('Analizando documentos...', `Procesando ${uploadedFiles.length} archivo${uploadedFiles.length > 1 ? 's' : ''}`);
+    showProgress('Analyzing documents...', `Processing ${uploadedFiles.length} file${uploadedFiles.length > 1 ? 's' : ''}`);
     hideError();
 
     try {
@@ -247,7 +247,7 @@
     inputSection.classList.add('hidden');
     resultSection.classList.remove('hidden');
     
-    resultTitle.textContent = data.title || 'Análisis completado';
+    resultTitle.textContent = data.title || 'Analysis completed';
     const fileNames = data.files?.map(f => f.name).join(', ') || 'Pliego';
     resultSource.textContent = `Archivos: ${fileNames}`;
     
@@ -297,7 +297,7 @@
             </div>
             <div>
               <h3 class="font-semibold text-slate-800">Conteo de horas</h3>
-              <p class="text-xs text-slate-500">Horas de servicio, formación, coordinación, etc.</p>
+              <p class="text-xs text-slate-500">Service hours, training, coordination, etc.</p>
             </div>
           </div>
         </div>
@@ -460,7 +460,7 @@
     
     try {
       await navigator.clipboard.writeText(textToCopy.trim());
-      copyResultBtn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+      copyResultBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
       setTimeout(() => {
         copyResultBtn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
       }, 2000);
@@ -508,14 +508,14 @@
       historyList.innerHTML = `
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-archive text-2xl mb-2 block"></i>
-          Sin análisis todavía
+          No analyses yet
         </div>
       `;
       return;
     }
 
     historyList.innerHTML = items.map(item => {
-      const date = new Date(item.created_at).toLocaleDateString('es-ES', {
+      const date = new Date(item.created_at).toLocaleDateString('en-US', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -529,10 +529,10 @@
               <i class="iconoir-folder-settings text-emerald-600 text-sm"></i>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Análisis')}</p>
+              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Analysis')}</p>
               <p class="text-xs text-slate-500 mt-0.5">${date}</p>
             </div>
-            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Eliminar">
+            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Delete">
               <i class="iconoir-trash text-slate-400 hover:text-red-500 text-sm"></i>
             </button>
           </div>
@@ -590,7 +590,7 @@
   };
 
   async function deleteHistoryItem(id) {
-    if (!confirm('¿Eliminar este análisis del historial?')) return;
+    if (!confirm('Delete this analysis from history?')) return;
     
     try {
       const response = await fetch('/api/gestures/delete.php', {

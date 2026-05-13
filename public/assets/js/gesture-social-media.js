@@ -25,51 +25,51 @@
 
   // === Mapas de valores ===
   const businessLineMap = {
-    'ebone': 'Grupo Ebone',
-    'ebone-servicios': 'Ebone Servicios',
-    'cubofit': 'CUBOFIT',
-    'uniges': 'UNIGES-3',
-    'cide': 'CIDE',
-    'teia': 'Teià (El CIM)'
+    'brand': 'Brand',
+    'service': 'Service',
+    'product': 'Product',
+    'team': 'Team',
+    'campaign': 'Campaign',
+    'community': 'Community'
   };
 
   const intentionMap = {
-    'informar': 'Informar',
-    'reforzar-marca': 'Reforzar marca',
-    'conectar': 'Conectar emocionalmente',
-    'activar': 'Activar interés',
-    'aportar-valor': 'Aportar valor / explicar'
+    'informar': 'Inform',
+    'reforzar-marca': 'Reinforce brand',
+    'conectar': 'Emotional connection',
+    'activar': 'Activate interest',
+    'aportar-valor': 'Deliver value / explain'
   };
 
   const channelMap = {
     'instagram': 'Instagram',
     'facebook': 'Facebook',
     'linkedin': 'LinkedIn',
-    'transversal': 'Texto transversal'
+    'transversal': 'Cross-channel text'
   };
 
   const narrativeMap = {
-    '': 'Automático',
-    'personas': 'Personas / equipo',
-    'proyecto': 'Proyecto / acción',
-    'detalle': 'Detalle diferencial',
-    'impacto': 'Impacto en usuarios',
-    'vision': 'Visión / propósito'
+    '': 'Automatic',
+    'personas': 'People / team',
+    'proyecto': 'Project / action',
+    'detalle': 'Differentiating detail',
+    'impacto': 'User impact',
+    'vision': 'Vision / purpose'
   };
 
   const lengthMap = {
-    '': 'Automático',
-    'corto': 'Corto (impacto rápido)',
-    'medio': 'Medio (equilibrado)',
-    'largo': 'Largo (desarrollo completo)'
+    '': 'Automatic',
+    'corto': 'Short (quick impact)',
+    'medio': 'Medium (balanced)',
+    'largo': 'Long (full development)'
   };
 
   const closingMap = {
-    '': 'Automático',
-    'informativo': 'Informativo',
-    'inspirador': 'Inspirador',
-    'cta-suave': 'CTA suave',
-    'cta-claro': 'CTA claro'
+    '': 'Automatic',
+    'informativo': 'Informative',
+    'inspirador': 'Inspirational',
+    'cta-suave': 'Soft CTA',
+    'cta-claro': 'Clear CTA'
   };
 
   // Estado para regenerar y variantes
@@ -91,12 +91,12 @@
   async function generatePost() {
     const context = document.getElementById('post-context').value.trim();
     if (!context) {
-      alert('Por favor, indica de qué va la publicación');
+      alert('Please describe what the post is about');
       return;
     }
 
     const intention = document.querySelector('input[name="intention"]:checked')?.value || 'informar';
-    const businessLine = document.querySelector('input[name="business-line"]:checked')?.value || 'ebone';
+    const businessLine = document.querySelector('input[name="business-line"]:checked')?.value || 'brand';
     const channel = document.querySelector('input[name="channel"]:checked')?.value || 'instagram';
     const narrative = document.querySelector('input[name="narrative"]:checked')?.value || '';
     const length = document.querySelector('input[name="length"]:checked')?.value || '';
@@ -137,132 +137,118 @@
         return data.posts;
       }
     } catch (err) {
-      console.warn('No se pudieron obtener publicaciones recientes:', err);
+      console.warn('Could not fetch recent posts:', err);
     }
     return [];
   }
 
-  // === Construir prompt ===
+  // === Build prompt ===
   function buildPrompt(data, businessName, recentPosts = []) {
     const { context, intention, channel, narrative, length, closing } = data;
 
-    // Instrucciones según intención
+    // Instructions by intent
     const intentionInstructions = {
-      'informar': 'El objetivo es INFORMAR: transmitir un hecho, novedad o actualización de forma clara y directa.',
-      'reforzar-marca': 'El objetivo es REFORZAR MARCA: mostrar los valores, identidad y diferenciación de la marca.',
-      'conectar': 'El objetivo es CONECTAR EMOCIONALMENTE: generar cercanía, empatía o identificación con la audiencia.',
-      'activar': 'El objetivo es ACTIVAR INTERÉS: despertar curiosidad o motivar a la audiencia a saber más o actuar.',
-      'aportar-valor': 'El objetivo es APORTAR VALOR: educar, explicar o compartir conocimiento útil para la audiencia.'
+      'informar': 'Goal: INFORM. Communicate a fact, update, or announcement clearly and directly.',
+      'reforzar-marca': 'Goal: REINFORCE BRAND. Highlight values, identity, and differentiation.',
+      'conectar': 'Goal: CONNECT EMOTIONALLY. Build closeness, empathy, and audience identification.',
+      'activar': 'Goal: ACTIVATE INTEREST. Spark curiosity and motivate the audience to learn more or act.',
+      'aportar-valor': 'Goal: DELIVER VALUE. Educate, explain, or share useful knowledge.'
     };
 
-    // Instrucciones según canal
+    // Instructions by channel
     const channelInstructions = {
-      'instagram': `Para INSTAGRAM:
-- Tono visual, cercano y dinámico
-- Apertura potente que enganche en los primeros segundos
-- Emojis con moderación para dar ritmo visual
-- Saltos de línea para facilitar lectura móvil
-- Máximo 2200 caracteres (ideal: 150-300 para feed, puede ser más largo para carrusel)`,
-      'facebook': `Para FACEBOOK:
-- Tono conversacional y accesible
-- Puede ser más extenso que Instagram
-- Invita a la interacción (comentarios, compartir)
-- Funciona bien con preguntas o reflexiones`,
-      'linkedin': `Para LINKEDIN:
-- Tono profesional pero humano
-- Aporta valor o perspectiva sectorial
-- Puede incluir datos o logros
-- Estructura con párrafos cortos
-- Evita emojis excesivos (1-2 máximo si procede)`,
-      'transversal': `Texto TRANSVERSAL (adaptable):
-- Estilo neutro que funcione en múltiples canales
-- Ni muy informal ni muy corporativo
-- Sin emojis ni elementos específicos de un canal
-- Longitud media, adaptable`
+      'instagram': `For INSTAGRAM:
+- Visual, close, and dynamic tone
+- Strong opening that hooks immediately
+- Emojis in moderation for rhythm
+- Line breaks for mobile readability
+- Max 2200 characters (ideal: 150-300 for feed, can be longer for carousel)`,
+      'facebook': `For FACEBOOK:
+- Conversational and accessible tone
+- Can be longer than Instagram
+- Invite interaction (comments, shares)
+- Questions or reflections work well`,
+      'linkedin': `For LINKEDIN:
+- Professional but human tone
+- Provide value or sector perspective
+- May include data or achievements
+- Use short paragraphs
+- Avoid excessive emojis (1-2 max when appropriate)`,
+      'transversal': `CROSS-CHANNEL text (adaptable):
+- Neutral style that works across channels
+- Neither too informal nor too corporate
+- No channel-specific emojis or elements
+- Medium, adaptable length`
     };
 
-    // Enfoque narrativo
+    // Narrative focus
     let narrativeInstruction = '';
     if (narrative) {
       const narrativeTexts = {
-        'personas': 'Enfoque desde las PERSONAS o el equipo: cuenta la historia poniendo el foco en quienes lo hacen posible.',
-        'proyecto': 'Enfoque desde el PROYECTO o la acción: centra el mensaje en lo que se está haciendo o se ha logrado.',
-        'detalle': 'Enfoque desde el DETALLE DIFERENCIAL: destaca lo que hace único o especial este hecho.',
-        'impacto': 'Enfoque desde el IMPACTO: cuenta cómo esto afecta positivamente a usuarios, ciudadanía o comunidad.',
-        'vision': 'Enfoque desde la VISIÓN: conecta con el propósito mayor o los valores de la organización.'
+        'personas': 'PEOPLE-LED FOCUS: tell the story by highlighting the people or team who make it possible.',
+        'proyecto': 'PROJECT-LED FOCUS: center the message on what is being done or achieved.',
+        'detalle': 'DETAIL-LED FOCUS: highlight what makes this unique or special.',
+        'impacto': 'IMPACT-LED FOCUS: explain how this positively affects users, citizens, or community.',
+        'vision': 'VISION-LED FOCUS: connect the message with broader purpose and organizational values.'
       };
       narrativeInstruction = `\n${narrativeTexts[narrative]}`;
     } else {
-      narrativeInstruction = '\nDeduce el mejor enfoque narrativo según el contexto y la intención.';
+      narrativeInstruction = '\nInfer the best narrative focus based on context and intent.';
     }
 
-    // Longitud
+    // Length
     let lengthInstruction = '';
     if (length) {
       const lengthTexts = {
-        'corto': 'LONGITUD CORTA: texto breve, impacto rápido, 1-3 frases.',
-        'medio': 'LONGITUD MEDIA: desarrollo equilibrado, 3-5 frases o párrafos cortos.',
-        'largo': 'LONGITUD LARGA: desarrollo completo, permite contexto y detalles.'
+        'corto': 'SHORT LENGTH: brief copy, quick impact, 1-3 sentences.',
+        'medio': 'MEDIUM LENGTH: balanced development, 3-5 sentences or short paragraphs.',
+        'largo': 'LONG LENGTH: full development, allows context and details.'
       };
       lengthInstruction = `\n${lengthTexts[length]}`;
     } else {
-      lengthInstruction = '\nDecide la longitud óptima según el contenido y el canal.';
+      lengthInstruction = '\nChoose the optimal length based on content and channel.';
     }
 
-    // Cierre
+    // Closing
     let closingInstruction = '';
     if (closing) {
       const closingTexts = {
-        'informativo': 'CIERRE INFORMATIVO: termina aportando un dato adicional o una conclusión factual.',
-        'inspirador': 'CIERRE INSPIRADOR: termina con una reflexión o mensaje que motive.',
-        'cta-suave': 'CIERRE CTA SUAVE: invita sutilmente a una acción (ej: "Descubre más en...", "¿Qué opinas?").',
-        'cta-claro': 'CIERRE CTA CLARO: llamada a la acción directa y explícita.'
+        'informativo': 'INFORMATIVE CLOSING: end with an extra data point or factual conclusion.',
+        'inspirador': 'INSPIRATIONAL CLOSING: end with a motivating reflection or message.',
+        'cta-suave': 'SOFT CTA CLOSING: subtly invite action (e.g., "Learn more at...", "What do you think?").',
+        'cta-claro': 'CLEAR CTA CLOSING: direct and explicit call to action.'
       };
       closingInstruction = `\n${closingTexts[closing]}`;
     } else {
-      closingInstruction = '\nElige el tipo de cierre más adecuado según intención y canal.';
+      closingInstruction = '\nChoose the most suitable closing style based on intent and channel.';
     }
 
-    // Instrucciones por línea de negocio
+    // Instructions by brand/context.
     const businessInstructions = {
-      'ebone': `ESTILO GRUPO EBONE:
-- Tono institucional pero cercano
-- Profesionalidad sin frialdad
-- Valores: compromiso, experiencia, cercanía con administraciones y ciudadanía
-- Habla en primera persona del plural (nosotros)`,
-      'ebone-servicios': `ESTILO EBONE SERVICIOS:
-- Tono institucional pero cercano
-- Profesionalidad sin frialdad
-- Valores: compromiso, experiencia, cercanía con administraciones y ciudadanía
-- Habla en primera persona del plural (nosotros)`,
-      'cubofit': `ESTILO CUBOFIT:
-- Tono energético, moderno y motivador
-- Lenguaje dinámico y positivo
-- Valores: fitness, bienestar, innovación, accesibilidad
-- Puede usar más emojis y expresiones cercanas
-- Conecta con el estilo de vida activo`,
-      'uniges': `ESTILO UNIGES-3:
-- Tono técnico pero accesible
-- Profesional y orientado a resultados
-- Valores: gestión deportiva, eficiencia, servicio público
-- Balance entre institucional y cercano
-- Conecta con la comunidad deportiva y municipal`,
-      'cide': `ESTILO CIDE (Cátedra de Innovación Deportiva):
-- Tono académico pero accesible
-- Autoridad en innovación y gestión deportiva
-- Valores: conocimiento, investigación, transferencia, vanguardia
-- Conecta con profesionales del sector, universidades y entidades deportivas
-- Puede incluir datos, tendencias o reflexiones del sector`,
-      'teia': `ESTILO TEIÀ - EL CIM (Polideportivo Municipal):
-- IMPORTANTE: Escribe SIEMPRE en CATALÁN
-- Tono cercano y comunitario
-- Valores: salud, actividad física, comunidad local, servicio público
-- Contenidos típicos: eventos deportivos, consejos de salud/ejercicio, actividades ofertadas, horarios
-- Conecta con los vecinos y usuarios del polideportivo
-- Usa un lenguaje inclusivo y motivador`
+      'brand': `BRAND STYLE:
+- Professional, close, and clear
+- Confident without sounding cold
+- Use first-person plural when appropriate`,
+      'service': `SERVICE STYLE:
+- Practical, helpful, and trustworthy
+- Focus on customer value and clarity
+- Avoid vague claims`,
+      'product': `PRODUCT STYLE:
+- Energetic, modern, and specific
+- Highlight benefits, use cases, and differentiation
+- Keep the message concrete`,
+      'team': `TEAM STYLE:
+- Human, collaborative, and operational
+- Highlight people, process, and impact`,
+      'campaign': `CAMPAIGN STYLE:
+- Direct, memorable, and action-oriented
+- Keep the main message easy to repeat`,
+      'community': `COMMUNITY STYLE:
+- Warm, accessible, and inclusive
+- Connect the message to shared value and participation`
     };
 
-    return `Eres el community manager de ${businessName}. Construye una publicación para redes sociales.
+    return `You are the community manager for ${businessName}. Create a social media post.
 
 CONTEXTO DE LA PUBLICACIÓN:
 "${context}"
@@ -276,30 +262,30 @@ ${narrativeInstruction}
 ${lengthInstruction}
 ${closingInstruction}
 
-FORMATO DE RESPUESTA:
-Devuelve la publicación en el siguiente formato exacto:
+RESPONSE FORMAT:
+Return the post in the following exact format:
 
----PUBLICACION---
-[Aquí el texto de la publicación, listo para copiar y pegar]
+---POST---
+[Paste-ready post text here]
 
 ---HASHTAGS---
-[Hashtags relevantes separados por espacios, entre 5-10]
+[Relevant hashtags separated by spaces, between 5-10]
 
 ---FIN---
 ${recentPosts.length > 0 ? `
-PUBLICACIONES ANTERIORES DE ESTA MARCA (para evitar repetirte):
+PREVIOUS POSTS FROM THIS BRAND (to avoid repetition):
 ${recentPosts.map((post, i) => `${i + 1}. "${post.substring(0, 200)}${post.length > 200 ? '...' : ''}"`).join('\n')}
 
-Ten en cuenta estas publicaciones para:
-- NO repetir frases, estructuras o aperturas similares
-- Variar el estilo y enfoque
-- Aportar frescura y originalidad` : ''}
+Use these posts to:
+- NOT repeat similar phrases, structures, or openings
+- Vary style and approach
+- Keep freshness and originality` : ''}
 
-IMPORTANTE:
-- El texto debe estar listo para publicar, sin explicaciones ni comentarios.
-- No inventes datos, fechas, nombres ni cifras que no estén en el contexto.
-- Los hashtags deben ser relevantes: algunos de marca, algunos del sector, algunos de posicionamiento.
-- Si faltan datos concretos, redacta de forma que no queden huecos evidentes.`;
+IMPORTANT:
+- The text must be publish-ready, with no explanations or comments.
+- Do not invent data, dates, names, or figures not present in context.
+- Hashtags must be relevant: some brand, some sector, some positioning.
+- If concrete details are missing, write so no obvious gaps remain.`;
   }
 
   // === Enviar prompt a la API ===
@@ -333,7 +319,7 @@ IMPORTANTE:
       variantBtns.forEach(btn => btn.disabled = false);
 
       if (!res.ok) {
-        alert('Error al generar la publicación: ' + (data.error?.message || 'Error desconocido'));
+        alert('Error generating the post: ' + (data.error?.message || 'Unknown error'));
         return;
       }
 
@@ -366,7 +352,7 @@ IMPORTANTE:
       postLoading.classList.add('hidden');
       generatePostBtn.disabled = false;
       variantBtns.forEach(btn => btn.disabled = false);
-      alert('Error de conexión al generar la publicación');
+      alert('Connection error while generating the post');
     }
   }
 
@@ -376,7 +362,7 @@ IMPORTANTE:
     let hashtags = '';
 
     // Intentar extraer partes estructuradas
-    const postMatch = content.match(/---PUBLICACION---\s*([\s\S]*?)\s*---HASHTAGS---/);
+    const postMatch = content.match(/---POST---\s*([\s\S]*?)\s*---HASHTAGS---/);
     const hashtagsMatch = content.match(/---HASHTAGS---\s*([\s\S]*?)\s*---FIN---/);
 
     if (postMatch && postMatch[1]) {
@@ -396,7 +382,7 @@ IMPORTANTE:
     }
 
     // Si aún no hay estructura, limpiar marcadores
-    post = post.replace(/---PUBLICACION---|---HASHTAGS---|---FIN---/g, '').trim();
+    post = post.replace(/---POST---|---HASHTAGS---|---FIN---/g, '').trim();
 
     return { post, hashtags };
   }
@@ -404,12 +390,12 @@ IMPORTANTE:
   // === Renderizar resumen editorial ===
   function renderEditorialSummary(data) {
     const items = [
-      { label: 'Intención', value: intentionMap[data.intention] || data.intention },
-      { label: 'Línea', value: businessLineMap[data.businessLine] || data.businessLine },
-      { label: 'Canal', value: channelMap[data.channel] || data.channel },
-      { label: 'Enfoque', value: narrativeMap[data.narrative] || 'Automático' },
-      { label: 'Longitud', value: lengthMap[data.length] || 'Automático' },
-      { label: 'Cierre', value: closingMap[data.closing] || 'Automático' }
+      { label: 'Intent', value: intentionMap[data.intention] || data.intention },
+      { label: 'Line', value: businessLineMap[data.businessLine] || data.businessLine },
+      { label: 'Channel', value: channelMap[data.channel] || data.channel },
+      { label: 'Focus', value: narrativeMap[data.narrative] || 'Automatic' },
+      { label: 'Length', value: lengthMap[data.length] || 'Automatic' },
+      { label: 'Closing', value: closingMap[data.closing] || 'Automatic' }
     ];
 
     editorialSummary.innerHTML = items.map(item => 
@@ -423,7 +409,7 @@ IMPORTANTE:
       const text = postContent.textContent;
       navigator.clipboard.writeText(text).then(() => {
         const originalText = copyPostBtn.innerHTML;
-        copyPostBtn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+        copyPostBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
         setTimeout(() => {
           copyPostBtn.innerHTML = originalText;
         }, 2000);
@@ -437,7 +423,7 @@ IMPORTANTE:
       const text = hashtagsContent.textContent;
       navigator.clipboard.writeText(text).then(() => {
         const originalText = copyHashtagsBtn.innerHTML;
-        copyHashtagsBtn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+        copyHashtagsBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
         setTimeout(() => {
           copyHashtagsBtn.innerHTML = originalText;
         }, 2000);
@@ -461,25 +447,25 @@ IMPORTANTE:
 
       const variant = btn.dataset.variant;
       const variantInstructions = {
-        'cercano': 'Reescribe esta publicación con un tono MÁS CERCANO y personal, como si hablaras directamente a un amigo. Mantén el mismo mensaje.',
-        'institucional': 'Reescribe esta publicación con un tono MÁS INSTITUCIONAL y formal, más corporativo pero sin perder calidez. Mantén el mismo mensaje.',
-        'corto': 'Reescribe esta publicación MÁS CORTA, condensando el mensaje sin perder lo esencial. Máximo 2-3 frases.',
-        'directo': 'Reescribe esta publicación MÁS DIRECTA, yendo al grano desde el inicio. Sin rodeos ni introducciones.',
-        'emocional': 'Reescribe esta publicación con un tono MÁS EMOCIONAL, que conecte con los sentimientos de la audiencia. Mantén el mismo mensaje.'
+        'cercano': 'Rewrite this post with a MORE CONVERSATIONAL and personal tone, as if speaking directly to a friend. Keep the same message.',
+        'institucional': 'Rewrite this post with a MORE FORMAL and institutional tone, more corporate but still warm. Keep the same message.',
+        'corto': 'Rewrite this post SHORTER, condensing the message without losing the core point. Maximum 2-3 sentences.',
+        'directo': 'Rewrite this post MORE DIRECTLY, getting to the point from the start. No detours or long introductions.',
+        'emocional': 'Rewrite this post with a MORE EMOTIONAL tone that connects with the audience’s feelings. Keep the same message.'
       };
 
       const variantPrompt = `${variantInstructions[variant]}
 
-PUBLICACIÓN ORIGINAL:
+ORIGINAL POST:
 "${lastGeneratedContent}"
 
-HASHTAGS ORIGINALES (si existen):
+ORIGINAL HASHTAGS (if any):
 "${lastHashtags}"
 
-CONTEXTO ORIGINAL:
+ORIGINAL CONTEXT:
 "${lastInputData.context}"
 
-Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcadores. Mantén los hashtags al final si los había.`;
+Return ONLY the rewritten post text, with no explanations or markers. Keep hashtags at the end if they existed.`;
 
       // Actualizar input_data para variante
       const variantInputData = { ...lastInputData, variant };
@@ -516,13 +502,13 @@ Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcad
       const data = await res.json();
 
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error al cargar</div>';
+        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Could not load</div>';
         return;
       }
 
       renderHistory(data.items || []);
     } catch (err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error de conexión</div>';
+      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Connection error</div>';
     }
   }
 
@@ -533,8 +519,8 @@ Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcad
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-send-diagonal text-xl text-slate-400"></i>
           </div>
-          <p class="text-sm text-slate-500">Aún no has creado publicaciones</p>
-          <p class="text-xs text-slate-400 mt-1">Usa el formulario para empezar</p>
+          <p class="text-sm text-slate-500">You have not created posts yet</p>
+          <p class="text-xs text-slate-400 mt-1">Use the form to get started</p>
         </div>
       `;
       return;
@@ -548,12 +534,12 @@ Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcad
     };
 
     const businessColors = {
-      'ebone': 'bg-blue-100 text-blue-700',
-      'ebone-servicios': 'bg-blue-100 text-blue-700',
-      'cubofit': 'bg-orange-100 text-orange-700',
-      'uniges': 'bg-purple-100 text-purple-700',
-      'cide': 'bg-emerald-100 text-emerald-700',
-      'teia': 'bg-amber-100 text-amber-700'
+      'brand': 'bg-blue-100 text-blue-700',
+      'service': 'bg-blue-100 text-blue-700',
+      'product': 'bg-orange-100 text-orange-700',
+      'team': 'bg-purple-100 text-purple-700',
+      'campaign': 'bg-emerald-100 text-emerald-700',
+      'community': 'bg-amber-100 text-amber-700'
     };
 
     historyList.innerHTML = items.map(item => {
@@ -573,7 +559,7 @@ Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcad
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Eliminar">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -603,7 +589,7 @@ Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcad
       const data = await res.json();
 
       if (!res.ok || !data.execution) {
-        alert('Error al cargar la publicación');
+        alert('Error loading the post');
         return;
       }
 
@@ -634,7 +620,7 @@ Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcad
       postResult.classList.remove('hidden');
 
     } catch (err) {
-      alert('Error de conexión');
+      alert('Connection error');
     }
   }
 
@@ -667,7 +653,7 @@ Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcad
   }
 
   async function deleteExecution(id) {
-    if (!confirm('¿Eliminar esta publicación del historial?')) return;
+    if (!confirm('Delete this post from history?')) return;
 
     try {
       const res = await fetch('/api/gestures/delete.php', {
@@ -682,13 +668,13 @@ Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcad
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        alert('No se ha podido eliminar el elemento');
+        alert('Could not delete the item');
         return;
       }
 
       loadHistory();
     } catch (err) {
-      alert('Error de conexión al eliminar');
+      alert('Connection error while deleting');
     }
   }
 
@@ -713,12 +699,12 @@ Devuelve SOLO el texto reescrito de la publicación, sin explicaciones ni marcad
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'ahora';
-    if (diffMins < 60) return `hace ${diffMins} min`;
-    if (diffHours < 24) return `hace ${diffHours}h`;
-    if (diffDays === 1) return 'ayer';
-    if (diffDays < 7) return `hace ${diffDays} días`;
-    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    if (diffMins < 1) return 'now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   }
 
   function escapeHtml(text) {

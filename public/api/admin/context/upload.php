@@ -2,13 +2,13 @@
 /**
  * POST /api/admin/context/upload.php
  * 
- * Sube un nuevo documento de contexto.
- * Requiere superadmin.
+ * Uploads a new context document.
+ * Requires superadmin.
  * 
  * Espera multipart/form-data con:
  * - target: 'lex' | 'eboniato' | 'ebonia'
- * - file: archivo a subir
- * - description: (opcional) descripción del documento
+ * - file: file to upload
+ * - description: (optional) document description
  */
 require_once __DIR__ . '/../../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../../src/Auth/AdminGuard.php';
@@ -20,7 +20,7 @@ use Auth\AdminGuard;
 use Repos\ContextDocsRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 $user = AdminGuard::requireSuperadmin();
@@ -29,22 +29,22 @@ Session::requireCsrf();
 // Validar target
 $target = $_POST['target'] ?? '';
 if (!ContextDocsRepo::isValidTarget($target)) {
-    Response::error('invalid_target', 'Target inválido. Valores permitidos: ' . implode(', ', ContextDocsRepo::getValidTargets()), 400);
+    Response::error('invalid_target', 'Invalid target. Allowed values: ' . implode(', ', ContextDocsRepo::getValidTargets()), 400);
 }
 
 // Validar archivo
 if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
     $errorMessages = [
-        UPLOAD_ERR_INI_SIZE => 'El archivo excede el tamaño máximo permitido por el servidor',
-        UPLOAD_ERR_FORM_SIZE => 'El archivo excede el tamaño máximo permitido',
-        UPLOAD_ERR_PARTIAL => 'El archivo se subió parcialmente',
-        UPLOAD_ERR_NO_FILE => 'No se subió ningún archivo',
-        UPLOAD_ERR_NO_TMP_DIR => 'Falta carpeta temporal',
-        UPLOAD_ERR_CANT_WRITE => 'Error al escribir el archivo',
-        UPLOAD_ERR_EXTENSION => 'Extensión PHP bloqueó la subida',
+        UPLOAD_ERR_INI_SIZE => 'File exceeds server upload limit',
+        UPLOAD_ERR_FORM_SIZE => 'File exceeds maximum allowed size',
+        UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+        UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+        UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+        UPLOAD_ERR_CANT_WRITE => 'Error writing file',
+        UPLOAD_ERR_EXTENSION => 'PHP extension blocked the upload',
     ];
     $errorCode = $_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE;
-    $errorMsg = $errorMessages[$errorCode] ?? 'Error desconocido al subir archivo';
+    $errorMsg = $errorMessages[$errorCode] ?? 'Unknown upload error';
     Response::error('upload_error', $errorMsg, 400);
 }
 
@@ -57,13 +57,13 @@ $fileSize = $file['size'];
 $extension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
 if (!ContextDocsRepo::isExtensionAllowed($target, $extension)) {
     $allowed = implode(', ', ContextDocsRepo::getAllowedExtensions($target));
-    Response::error('invalid_extension', "Extensión '{$extension}' no permitida para {$target}. Permitidas: {$allowed}", 400);
+    Response::error('invalid_extension', "Extension '{$extension}' is not allowed for {$target}. Allowed: {$allowed}", 400);
 }
 
 // Validar tamaño (máximo 30MB)
 $maxSize = 30 * 1024 * 1024;
 if ($fileSize > $maxSize) {
-    Response::error('file_too_large', 'El archivo excede el tamaño máximo de 30MB', 400);
+    Response::error('file_too_large', 'File exceeds the 30MB maximum size', 400);
 }
 
 // Validar MIME type para mayor seguridad
@@ -81,7 +81,7 @@ $validMimes = $allowedMimes[$extension] ?? [];
 if (!empty($validMimes) && !in_array($detectedMime, $validMimes)) {
     // Permitir algunos casos edge para markdown
     if ($extension !== 'md') {
-        Response::error('invalid_mime', "Tipo MIME '{$detectedMime}' no válido para extensión '{$extension}'", 400);
+        Response::error('invalid_mime', "MIME type '{$detectedMime}' is not valid for extension '{$extension}'", 400);
     }
 }
 
@@ -92,14 +92,14 @@ $sanitizedFilename = $repo->generateUniqueFilename($target, $originalFilename);
 // Obtener ruta destino
 $targetPath = ContextDocsRepo::getTargetPath($target);
 if (!$targetPath || !is_dir($targetPath)) {
-    Response::error('target_path_error', 'No se pudo acceder al directorio de destino', 500);
+    Response::error('target_path_error', 'Could not access target directory', 500);
 }
 
 $destPath = $targetPath . '/' . $sanitizedFilename;
 
 // Mover archivo
 if (!move_uploaded_file($tmpPath, $destPath)) {
-    Response::error('move_error', 'Error al guardar el archivo', 500);
+    Response::error('move_error', 'Error saving file', 500);
 }
 
 // Crear registro en BD
@@ -119,14 +119,15 @@ try {
     
     Response::json([
         'success' => true,
-        'message' => 'Documento subido correctamente',
+        'message' => 'Document uploaded successfully',
         'document' => $doc,
-        'needs_rag_processing' => $target === 'lex'
+        'needs_rag_processing' => $target === 'lex',
+        'needs_index_processing' => $target === 'lex'
     ]);
 } catch (\Exception $e) {
     // Si falla la BD, eliminar el archivo
     if (file_exists($destPath)) {
         unlink($destPath);
     }
-    Response::error('db_error', 'Error al registrar el documento: ' . $e->getMessage(), 500);
+    Response::error('db_error', 'Error registering document: ' . $e->getMessage(), 500);
 }

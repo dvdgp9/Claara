@@ -32,13 +32,13 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'Todos los gestos';
-$headerTitle = 'Creador de cursos';
+$headerBackText = 'All gestures';
+$headerTitle = 'Course creator';
 $headerIcon = 'iconoir-graduation-cap';
 $headerIconColor = 'from-emerald-500 to-teal-600';
 $headerDrawerId = 'course-history-drawer';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <style>
@@ -184,7 +184,7 @@ $headerDrawerId = 'course-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-emerald-500"></i>
-            Historial
+            History
           </h2>
         </div>
       </div>
@@ -192,7 +192,7 @@ $headerDrawerId = 'course-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Cargando...
+          Loading...
         </div>
       </div>
     </aside>
@@ -200,7 +200,7 @@ $headerDrawerId = 'course-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'course-history-drawer';
-    $drawerTitle = 'Historial';
+    $drawerTitle = 'History';
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-emerald-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -219,10 +219,10 @@ $headerDrawerId = 'course-history-drawer';
               <i class="iconoir-graduation-cap text-3xl"></i>
             </div>
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 mb-2">
-              Creador de Cursos
+              Course Creator
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Sube un PDF o pega texto de un manual. Genera un índice pedagógico editable y desarrolla el contenido completo de cada módulo.
+              Upload a PDF or paste handbook text. Generate an editable learning outline and build the full content for each module.
             </p>
           </div>
 
@@ -243,7 +243,7 @@ $headerDrawerId = 'course-history-drawer';
                     <i class="iconoir-page mr-1"></i> PDF
                   </button>
                   <button type="button" data-tab="text" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    <i class="iconoir-text mr-1"></i> Texto
+                    <i class="iconoir-text mr-1"></i> Text
                   </button>
                 </div>
 
@@ -251,8 +251,8 @@ $headerDrawerId = 'course-history-drawer';
                 <div id="tab-pdf" class="tab-content">
                   <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-all">
                     <i class="iconoir-upload text-3xl text-slate-400 mb-2"></i>
-                    <span class="text-sm text-slate-500">Arrastra un PDF o haz clic para seleccionar</span>
-                    <span class="text-xs text-slate-400 mt-1">Manual, temario, teoría... (máx. 20MB)</span>
+                    <span class="text-sm text-slate-500">Drag a PDF or click to select</span>
+                    <span class="text-xs text-slate-400 mt-1">Handbook, syllabus, theory... (max 20MB)</span>
                     <input type="file" id="source-pdf" accept=".pdf" class="hidden" />
                   </label>
                   <p id="pdf-filename" class="text-sm text-emerald-600 mt-2 hidden flex items-center gap-2">
@@ -265,8 +265,8 @@ $headerDrawerId = 'course-history-drawer';
                 <div id="tab-text" class="tab-content hidden">
                   <textarea id="source-text" rows="8"
                             class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
-                            placeholder="Pega aquí el contenido del manual, teoría o material que quieres convertir en curso..."></textarea>
-                  <p class="text-xs text-slate-500 mt-2">Mínimo 100 palabras para generar material de calidad</p>
+                            placeholder="Paste the handbook, theory, or source material you want to turn into a course..."></textarea>
+                  <p class="text-xs text-slate-500 mt-2">Minimum 100 words to generate quality content</p>
                 </div>
               </div>
 
@@ -276,7 +276,7 @@ $headerDrawerId = 'course-history-drawer';
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-2">
                     <i class="iconoir-clock text-emerald-500 mr-1"></i>
-                    Duración
+                    Duration
                   </label>
                   <div class="grid grid-cols-2 gap-2">
                     <label class="cursor-pointer">
@@ -310,25 +310,25 @@ $headerDrawerId = 'course-history-drawer';
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-2">
                     <i class="iconoir-learning text-emerald-500 mr-1"></i>
-                    Nivel
+                    Level
                   </label>
                   <div class="space-y-2">
                     <label class="cursor-pointer block">
                       <input type="radio" name="level" value="basico" class="hidden peer" />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🌱 Básico</span>
+                        <span class="text-sm font-medium">🌱 Basic</span>
                       </div>
                     </label>
                     <label class="cursor-pointer block">
                       <input type="radio" name="level" value="intermedio" class="hidden peer" checked />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🌿 Intermedio</span>
+                        <span class="text-sm font-medium">🌿 Intermediate</span>
                       </div>
                     </label>
                     <label class="cursor-pointer block">
                       <input type="radio" name="level" value="avanzado" class="hidden peer" />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🌳 Avanzado</span>
+                        <span class="text-sm font-medium">🌳 Advanced</span>
                       </div>
                     </label>
                   </div>
@@ -338,13 +338,13 @@ $headerDrawerId = 'course-history-drawer';
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-2">
                     <i class="iconoir-community text-emerald-500 mr-1"></i>
-                    Modalidad
+                    Format
                   </label>
                   <div class="space-y-2">
                     <label class="cursor-pointer block">
                       <input type="radio" name="course_format" value="presencial" class="hidden peer" />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🏫 Presencial</span>
+                        <span class="text-sm font-medium">🏫 On-site</span>
                       </div>
                     </label>
                     <label class="cursor-pointer block">
@@ -356,7 +356,7 @@ $headerDrawerId = 'course-history-drawer';
                     <label class="cursor-pointer block">
                       <input type="radio" name="course_format" value="hibrido" class="hidden peer" />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🔄 Híbrido</span>
+                        <span class="text-sm font-medium">🔄 Hybrid</span>
                       </div>
                     </label>
                   </div>
@@ -366,12 +366,12 @@ $headerDrawerId = 'course-history-drawer';
               <!-- Botón generar índice -->
               <button type="submit" id="generate-btn" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 <i class="iconoir-list"></i>
-                <span id="generate-btn-text">Generar índice del curso</span>
+                <span id="generate-btn-text">Generate course outline</span>
               </button>
               
               <p class="text-xs text-slate-500 text-center">
                 <i class="iconoir-info-circle mr-1"></i>
-                Paso 1 de 2: Generamos un índice que podrás editar antes de desarrollar el contenido
+                Step 1 of 2: Generate an outline you can edit before building the content
               </p>
               
               <!-- Progress -->
@@ -381,8 +381,8 @@ $headerDrawerId = 'course-history-drawer';
                     <i class="iconoir-refresh animate-spin text-emerald-600"></i>
                   </div>
                   <div>
-                    <p id="progress-text" class="text-sm font-medium text-emerald-700">Procesando...</p>
-                    <p id="progress-detail" class="text-xs text-emerald-500">Esto puede tardar unos minutos según la cantidad de formatos</p>
+                    <p id="progress-text" class="text-sm font-medium text-emerald-700">Processing...</p>
+                    <p id="progress-detail" class="text-xs text-emerald-500">This may take a few minutes depending on selected formats</p>
                   </div>
                 </div>
               </div>
@@ -408,8 +408,8 @@ $headerDrawerId = 'course-history-drawer';
                   <i class="iconoir-list text-emerald-600 text-xl"></i>
                 </div>
                 <div>
-                  <h2 class="text-lg font-bold text-slate-800">Índice del curso</h2>
-                  <p class="text-xs text-slate-500">Paso 2 de 2: Revisa y edita el índice, luego desarrolla los módulos</p>
+                  <h2 class="text-lg font-bold text-slate-800">Course outline</h2>
+                  <p class="text-xs text-slate-500">Step 2 of 2: Review and edit the outline, then generate the modules</p>
                 </div>
               </div>
             </div>
@@ -425,12 +425,12 @@ $headerDrawerId = 'course-history-drawer';
             <!-- Result Header -->
             <div class="flex items-center justify-between mb-4">
               <div>
-                <h2 id="result-title" class="text-xl font-bold text-slate-800">Curso desarrollado</h2>
+                <h2 id="result-title" class="text-xl font-bold text-slate-800">Course generated</h2>
                 <p id="result-source" class="text-sm text-slate-500"></p>
               </div>
               <button type="button" id="new-course-btn" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg transition-colors">
                 <i class="iconoir-plus"></i>
-                <span>Nuevo curso</span>
+                <span>New course</span>
               </button>
             </div>
             

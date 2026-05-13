@@ -1,25 +1,25 @@
 <?php
 /**
- * Header unificado para todas las páginas
+ * Shared header for all pages
  * 
- * Variables opcionales:
- * - $headerBackUrl: URL de navegación hacia atrás (default: null = sin botón atrás)
- * - $headerBackText: Texto del botón atrás (default: 'Atrás')
- * - $headerTitle: Título principal de la página
- * - $headerSubtitle: Subtítulo opcional
- * - $headerIcon: Clase del icono (default: null)
- * - $headerIconColor: Clases de color del gradiente del icono (default: 'from-cyan-500 to-teal-600')
- * - $headerIconText: Texto del icono en lugar de icono (para voces como "L")
- * - $headerCustomButtons: HTML personalizado para botones adicionales antes del perfil
- * - $headerShowConvTitle: Si true, muestra el título de conversación dinámico (para chat)
- * - $headerShowSearch: Si true, muestra botón de búsqueda (default: false para gestos/voces)
- * - $headerShowFaq: Si true, muestra botón de FAQ (default: false para gestos/voces)
- * - $headerDrawerId: ID del drawer móvil a abrir con hamburger (default: null = sin hamburger)
- * - $headerShowLogo: Si true, muestra logo en móvil (default: false)
+ * Optional variables:
+ * - $headerBackUrl: back navigation URL
+ * - $headerBackText: back button text
+ * - $headerTitle: page title
+ * - $headerSubtitle: optional subtitle
+ * - $headerIcon: icon class
+ * - $headerIconColor: icon gradient classes
+ * - $headerIconText: text instead of icon
+ * - $headerCustomButtons: custom HTML before profile actions
+ * - $headerShowConvTitle: if true, shows the dynamic conversation title
+ * - $headerShowSearch: if true, shows the search button
+ * - $headerShowFaq: if true, shows the Nana quick answers button
+ * - $headerDrawerId: mobile drawer ID opened by hamburger
+ * - $headerShowLogo: if true, shows the logo on mobile
  */
 
 $headerBackUrl = $headerBackUrl ?? null;
-$headerBackText = $headerBackText ?? 'Atrás';
+$headerBackText = $headerBackText ?? 'Back';
 $headerTitle = $headerTitle ?? ($pageTitle ?? '');
 $headerSubtitle = $headerSubtitle ?? null;
 $headerIcon = $headerIcon ?? null;
@@ -32,21 +32,21 @@ $headerShowFaq = $headerShowFaq ?? false;
 $headerDrawerId = $headerDrawerId ?? null;
 $headerShowLogo = $headerShowLogo ?? false;
 
-// Determinar el estilo del header según el contexto
+// Determine header style from context.
 $headerStyle = 'h-14 lg:h-[60px] px-4 lg:px-6 border-b border-slate-200';
-if (isset($activeTab) && in_array($activeTab, ['gestures', 'voices', 'apps'])) {
+if (isset($activeTab) && in_array($activeTab, ['gestures', 'voices'])) {
     $headerStyle .= '/50 glass-strong';
 } else {
     $headerStyle .= ' bg-white/95 backdrop-blur-sm';
 }
-// Siempre sticky para mantener el header fijo durante scroll
+// Keep the header sticky while scrolling.
 $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky top-0 z-30';
 ?>
 <header class="<?php echo $headerStyle; ?>">
-  <!-- Navegación y título -->
+  <!-- Navigation and title -->
   <div class="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
     <?php if ($headerDrawerId): ?>
-      <!-- Hamburger button (solo móvil) -->
+      <!-- Hamburger button (mobile only) -->
       <button onclick="openMobileDrawer('<?php echo htmlspecialchars($headerDrawerId); ?>')" 
               class="lg:hidden p-2 -ml-2 text-slate-600 hover:text-[#23AAC5] hover:bg-slate-50 rounded-lg transition-colors tap-highlight-none">
         <i class="iconoir-menu text-xl"></i>
@@ -54,19 +54,19 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
     <?php endif; ?>
     
     <?php if ($headerShowLogo): ?>
-      <!-- Logo (móvil) -->
-      <img src="/assets/images/logo.png" alt="Ebonia" class="h-7 lg:hidden">
+      <!-- Logo (mobile) -->
+      <img src="/assets/images/logo.png" alt="iaiaPRO" class="h-7 lg:hidden">
     <?php endif; ?>
     
     <?php if ($headerShowConvTitle): ?>
-      <!-- Título conversación dinámico (para chat) -->
+      <!-- Dynamic conversation title (chat) -->
       <div id="conv-title" class="hidden flex items-center gap-2 min-w-0">
         <i class="iconoir-chat-bubble text-[#23AAC5] hidden lg:block"></i>
         <span class="text-sm font-medium leading-tight text-slate-700 truncate max-w-[60vw] lg:max-w-md"></span>
       </div>
     <?php else: ?>
       <?php if ($headerBackUrl): ?>
-        <!-- Botón de navegación atrás (solo desktop) -->
+        <!-- Back navigation (desktop only) -->
         <a href="<?php echo htmlspecialchars($headerBackUrl); ?>" class="hidden lg:flex items-center gap-2 text-slate-600 hover:text-cyan-600 transition-smooth">
           <i class="iconoir-arrow-left text-lg"></i>
           <span class="text-sm font-medium"><?php echo htmlspecialchars($headerBackText); ?></span>
@@ -75,7 +75,7 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
       <?php endif; ?>
       
       <?php if ($headerTitle): ?>
-        <!-- Título de la página con icono -->
+        <!-- Page title with icon -->
         <div class="flex items-center gap-2">
           <?php if ($headerIcon || $headerIconText): ?>
             <div class="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-gradient-to-br <?php echo htmlspecialchars($headerIconColor); ?> flex items-center justify-center text-white shadow-md">
@@ -97,24 +97,24 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
     <?php endif; ?>
   </div>
   
-  <!-- Acciones derecha -->
+  <!-- Right actions -->
   <div class="flex items-center gap-1 lg:gap-3">
     <?php if ($headerShowSearch): ?>
-      <!-- Búsqueda (solo desktop) -->
-      <button class="hidden lg:flex p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" title="Buscar (próximamente)">
+      <!-- Search (desktop only) -->
+      <button class="hidden lg:flex p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" title="Search (coming soon)">
         <i class="iconoir-search text-xl"></i>
       </button>
     <?php endif; ?>
     
     <?php if ($headerShowFaq): ?>
-      <!-- FAQ / Dudas rápidas (solo desktop) -->
-      <button id="faq-btn" class="hidden lg:flex p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-colors" title="Dudas rápidas">
+      <!-- Nana quick answers (desktop only) -->
+      <button id="faq-btn" class="hidden lg:flex p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-colors" title="Ask Nana">
         <i class="iconoir-help-circle text-xl"></i>
       </button>
     <?php endif; ?>
     
     <?php if ($headerCustomButtons): ?>
-      <!-- Botones personalizados -->
+      <!-- Custom buttons -->
       <?php echo $headerCustomButtons; ?>
     <?php endif; ?>
     
@@ -141,7 +141,7 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
               if (isset($user)) {
                 echo htmlspecialchars(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
               } else {
-                echo 'Cargando...';
+              echo 'Loading...';
               }
             ?>
           </div>
@@ -151,37 +151,37 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
         </div>
         <a href="/account.php" class="lg:hidden w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
           <i class="iconoir-user"></i>
-          <span>Mi cuenta</span>
+          <span>My account</span>
         </a>
         
         <?php if (isset($user) && in_array('admin', $user['roles'] ?? [], true)): ?>
           <a href="/admin/users.php" id="admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
             <i class="iconoir-settings"></i>
-            <span>Gestión de usuarios</span>
+            <span>User management</span>
           </a>
           <a href="/admin/departments.php" id="departments-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
             <i class="iconoir-community"></i>
-            <span>Departamentos</span>
+            <span>Departments</span>
           </a>
           <a href="/admin/stats.php" id="stats-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
             <i class="iconoir-graph-up"></i>
-            <span>Panel de control</span>
+            <span>Dashboard</span>
           </a>
           <a href="/admin/context-manager.php" id="context-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
             <i class="iconoir-folder"></i>
-            <span>Gestor de contexto</span>
+            <span>Context manager</span>
           </a>
           <?php if (!empty($user['is_superadmin'])): ?>
             <a href="/admin/models.php" id="models-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
               <i class="iconoir-settings"></i>
-              <span>Modelos del chat</span>
+              <span>Chat models</span>
             </a>
           <?php endif; ?>
         <?php endif; ?>
         
         <button id="logout-btn" class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 border-t border-slate-100">
           <i class="iconoir-log-out"></i>
-          <span>Cerrar sesión</span>
+          <span>Log out</span>
         </button>
       </div>
     </div>
@@ -189,7 +189,7 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
 </header>
 
 <script>
-// Lógica simple para dropdown de perfil
+// Simple profile dropdown logic.
 document.addEventListener('DOMContentLoaded', () => {
   const profileBtn = document.getElementById('profile-btn');
   const profileDropdown = document.getElementById('profile-dropdown');
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '/login.php';
       } catch (error) {
         console.error('Logout error:', error);
-        // Fallback en caso de error
+        // Fallback in case of error.
         window.location.href = '/logout.php';
       }
     });

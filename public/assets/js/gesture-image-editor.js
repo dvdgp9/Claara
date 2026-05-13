@@ -67,21 +67,21 @@
   const intentConfig = {
     'from-scratch': {
       mode: 'generate',
-      placeholder: 'Describe la imagen que quieres crear...',
+      placeholder: 'Describe the image you want to create...',
       defaultDescription: '',
       promptHint: '',
       preset: {}
     },
     'edit-image': {
       mode: 'edit',
-      placeholder: 'Describe los cambios que quieres hacer sobre la imagen base...',
+      placeholder: 'Describe the changes you want to make to the base image...',
       defaultDescription: '',
       promptHint: '',
       preset: {}
     },
     'corporate-image': {
       mode: 'generate',
-      placeholder: 'Describe la escena corporativa (contexto, personas, mensaje)...',
+      placeholder: 'Describe the corporate scene (context, people, message)...',
       defaultDescription: 'Escena corporativa moderna, limpia y profesional para comunicacion de marca',
       promptHint: 'Busca composicion limpia con espacio util para copy.',
       preset: { style: 'corporate', composition: 'negative-space', lighting: 'soft', color: 'corporate', format: '16:9' }
@@ -97,7 +97,7 @@
       mode: 'generate',
       placeholder: 'Describe el cartel y como integrar los logos subidos...',
       defaultDescription: 'Cartel corporativo moderno integrando los logos de referencia',
-      promptHint: 'Sube logos e indica jerarquia, ubicacion y equilibrio visual.',
+      promptHint: 'Upload logos and define hierarchy, placement, and visual balance.',
       preset: { style: 'corporate', composition: 'wide', lighting: 'soft', color: 'corporate', format: '4:3' }
     }
   };
@@ -223,14 +223,14 @@
 
     if (descriptionField && !fromIntent) {
       descriptionField.placeholder = isGenerate
-        ? 'Describe la imagen que quieres crear...'
-        : 'Describe los cambios: "Añade gafas de sol", "Cambia el fondo"...';
+        ? 'Describe the image you want to create...'
+        : 'Describe the changes: "Add sunglasses", "Change the background"...';
     }
 
     if (generateBtn) {
       generateBtn.innerHTML = isGenerate
-        ? '<i class="iconoir-sparks"></i><span class="hidden sm:inline">Generar</span>'
-        : '<i class="iconoir-edit"></i><span class="hidden sm:inline">Editar</span>';
+        ? '<i class="iconoir-sparks"></i><span class="hidden sm:inline">Generate</span>'
+        : '<i class="iconoir-edit"></i><span class="hidden sm:inline">Edit</span>';
     }
 
     generateReferencesSection?.classList.toggle('hidden', !isGenerate);
@@ -264,7 +264,7 @@
         sourceImageClear?.classList.remove('hidden');
         clearError();
       }).catch(() => {
-        showError('Selecciona una imagen valida para usar como base.');
+        showError('Select a valid image to use as a base.');
       });
     });
 
@@ -300,7 +300,7 @@
         targetImagePlaceholder?.classList.add('hidden');
         targetImageClear?.classList.remove('hidden');
       }).catch(() => {
-        showError('Selecciona una imagen de referencia valida.');
+        showError('Select a valid reference image.');
       });
     });
 
@@ -353,7 +353,7 @@
             name: file.name || 'referencia'
           });
         } catch (_e) {
-          showError('Una referencia no es valida. Usa archivos de imagen.');
+          showError('One reference is invalid. Use image files.');
         }
       }
       if (generateReferenceInput) generateReferenceInput.value = '';
@@ -370,12 +370,12 @@
     if (generateReferenceCount) {
       const n = generateReferenceImages.length;
       generateReferenceCount.textContent = n === 0
-        ? '(opcional · máx 4)'
+        ? '(optional · max 4)'
         : `(${n}/4)`;
     }
 
     if (generateReferenceImages.length === 0) {
-      generateReferenceList.innerHTML = '<div class="col-span-full text-[11px] text-slate-400 pt-1">Sin referencias cargadas. Útil para cartel con logos, paletas o estilo.</div>';
+      generateReferenceList.innerHTML = '<div class="col-span-full text-[11px] text-slate-400 pt-1">No references uploaded. Useful for posters with logos, palettes, or style.</div>';
       return;
     }
 
@@ -496,7 +496,7 @@
     }
 
     summaryText.textContent = parts.length === 0
-      ? 'Parámetros automáticos'
+      ? 'Automatic settings'
       : parts.join(' · ');
   }
 
@@ -588,13 +588,13 @@
 
     if (!description) {
       showError(mode === 'generate'
-        ? 'Describe la imagen que quieres crear.'
-        : 'Describe los cambios que quieres aplicar en la imagen base.');
+        ? 'Describe the image you want to create.'
+        : 'Describe the changes you want to apply to the base image.');
       descriptionField?.focus();
       return;
     }
     if (mode === 'edit' && !sourceImageBase64) {
-      showError('Sube una imagen base para usar el modo edicion.');
+      showError('Upload a base image to use edit mode.');
       return;
     }
 
@@ -637,7 +637,7 @@
     imageLoading?.classList.remove('hidden');
 
     if (generateBtn) generateBtn.disabled = true;
-    if (loadingTitle) loadingTitle.textContent = inputData.mode === 'edit' ? 'Editando imagen...' : 'Generando imagen...';
+    if (loadingTitle) loadingTitle.textContent = inputData.mode === 'edit' ? 'Editing image...' : 'Generating image...';
     if (loadingMeta) {
       const refs = Array.isArray(inputData.reference_images) ? inputData.reference_images.length : 0;
       loadingMeta.textContent = refs > 0 ? `Referencias activas: ${refs}` : '';
@@ -658,7 +658,7 @@
       if (generateBtn) generateBtn.disabled = false;
 
       if (!res.ok || !data.image) {
-        showError(data.error?.message || 'No hemos podido generar la imagen. Prueba ajustando el prompt.');
+        showError(data.error?.message || 'We could not generate the image. Try adjusting the prompt.');
         if (currentModeInput?.value === 'edit') {
           editSourceSection?.classList.remove('hidden');
         } else {
@@ -683,7 +683,7 @@
       stopLoadingTicker();
       imageLoading?.classList.add('hidden');
       if (generateBtn) generateBtn.disabled = false;
-      showError('Error de conexion al generar la imagen.');
+      showError('Connection error while generating the image.');
       if (currentModeInput?.value === 'edit') {
         editSourceSection?.classList.remove('hidden');
       } else {
@@ -694,7 +694,7 @@
 
   function useCurrentImageAsEditBase() {
     if (!currentImageBase64) {
-      showError('Esta imagen no se puede usar como base de edicion porque no incluye base64 reutilizable.');
+      showError('This image cannot be used as an edit base because it does not include reusable base64.');
       return;
     }
     sourceImageBase64 = currentImageBase64;
@@ -729,12 +729,12 @@
       const res = await fetch(`/api/gestures/history.php?type=${GESTURE_TYPE}&limit=12`, { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error al cargar historial</div>';
+        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Could not load history</div>';
         return;
       }
       renderHistory(data.items || []);
     } catch (_err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error de conexion</div>';
+      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Connection error</div>';
     }
   }
 
@@ -746,7 +746,7 @@
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-media-image text-xl text-slate-400"></i>
           </div>
-          <p class="text-sm text-slate-500">Aun no has generado imagenes</p>
+          <p class="text-sm text-slate-500">You have not generated images yet</p>
           <p class="text-xs text-slate-400 mt-1">Empieza con una intencion arriba</p>
         </div>
       `;
@@ -756,7 +756,7 @@
     historyList.innerHTML = items.map(item => {
       const title = escapeHtml(item.title || 'Imagen generada');
       const timeAgo = formatTimeAgo(new Date(item.created_at));
-      const mode = item.mode === 'edit' ? 'Editar' : 'Generar';
+      const mode = item.mode === 'edit' ? 'Edit' : 'Generate';
       return `
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2" data-id="${item.id}">
           <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
@@ -769,7 +769,7 @@
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" data-id="${item.id}" title="Eliminar">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" data-id="${item.id}" title="Delete">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -793,7 +793,7 @@
       const res = await fetch(`/api/gestures/get.php?id=${id}`, { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.execution) {
-        showError('No se ha podido cargar esta imagen.');
+        showError('Could not load this image.');
         return;
       }
 
@@ -822,7 +822,7 @@
           imagePlaceholder?.classList.remove('hidden');
           editSourceSection?.classList.add('hidden');
         }
-        showError('Esta entrada no contiene una imagen recuperable del historial.');
+        showError('This entry does not contain a recoverable image from history.');
       }
 
       if (outputData.text && imageCaption) {
@@ -856,12 +856,12 @@
       if (currentImageSrc) clearError();
       lastInputData = inputData;
     } catch (_err) {
-      showError('Error de conexion al cargar la imagen.');
+      showError('Connection error al cargar la imagen.');
     }
   }
 
   async function deleteExecution(id) {
-    if (!confirm('Eliminar esta imagen del historial?')) return;
+    if (!confirm('Delete this image from history?')) return;
     try {
       const res = await fetch('/api/gestures/delete.php', {
         method: 'POST',
@@ -871,12 +871,12 @@
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
-        showError('No se ha podido eliminar la imagen.');
+        showError('Could not delete the image.');
         return;
       }
       await loadHistory();
     } catch (_err) {
-      showError('Error de conexion al eliminar.');
+      showError('Connection error al eliminar.');
     }
   }
 
@@ -913,10 +913,10 @@
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return 'ahora';
+    if (diffMins < 1) return 'now';
     if (diffMins < 60) return `hace ${diffMins} min`;
     if (diffHours < 24) return `hace ${diffHours}h`;
-    if (diffDays === 1) return 'ayer';
+    if (diffDays === 1) return 'yesterday';
     if (diffDays < 7) return `hace ${diffDays} dias`;
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   }

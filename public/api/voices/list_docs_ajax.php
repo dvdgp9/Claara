@@ -14,17 +14,17 @@ use Voices\VoiceContextBuilder;
 Session::start();
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Sesión no válida', 401);
+    Response::error('unauthorized', 'Invalid session', 401);
 }
 
 $voiceId = $_GET['voice_id'] ?? '';
 if (!$voiceId) {
-    Response::error('missing_voice', 'Se requiere voice_id', 400);
+    Response::error('missing_voice', 'voice_id is required', 400);
 }
 
 $builder = new VoiceContextBuilder($voiceId);
 if (!$builder->voiceExists()) {
-    Response::error('invalid_voice', 'Voz no encontrada', 404);
+    Response::error('invalid_voice', 'Voice not found', 404);
 }
 
 $docs = $builder->listDocuments();

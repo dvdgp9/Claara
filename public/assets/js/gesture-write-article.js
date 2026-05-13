@@ -55,9 +55,9 @@
 
   // === Mapa de líneas de negocio ===
   const businessLineMap = {
-    'ebone': 'Grupo Ebone',
-    'cubofit': 'CUBOFIT',
-    'uniges': 'UNIGES-3'
+    'brand': 'Brand',
+    'product': 'Product',
+    'team': 'Team'
   };
 
   // Estado para regenerar
@@ -77,7 +77,7 @@
   // === Generar contenido según tipo ===
   async function generateContent() {
     const contentType = document.querySelector('input[name="content-type"]:checked')?.value || 'informativo';
-    const businessLine = document.querySelector('input[name="business-line"]:checked')?.value || 'ebone';
+    const businessLine = document.querySelector('input[name="business-line"]:checked')?.value || 'brand';
     const businessName = businessLineMap[businessLine];
     
     let prompt = '';
@@ -86,7 +86,7 @@
     // === ARTÍCULO INFORMATIVO ===
     if (contentType === 'informativo') {
       const topic = document.getElementById('info-topic').value.trim();
-      if (!topic) { alert('Por favor, indica el tema del artículo'); return; }
+      if (!topic) { alert('Please enter the article topic'); return; }
       
       const category = document.getElementById('info-category').value;
       const length = document.getElementById('info-length').value;
@@ -95,73 +95,73 @@
       inputData = { topic, category, length, details };
       
       const categoryMap = {
-        'general': 'general/actualidad',
-        'deportes': 'deportes y actividad física',
-        'cultura': 'cultura y ocio',
-        'salud': 'salud y bienestar',
-        'empresa': 'noticias corporativas'
+        'general': 'general/current affairs',
+        'deportes': 'sports and physical activity',
+        'cultura': 'culture and leisure',
+        'salud': 'health and wellness',
+        'empresa': 'corporate news'
       };
       
-      prompt = `Escribe un artículo informativo para ${businessName}.
+      prompt = `Write an informative article for ${businessName}.
 
-TEMA: ${topic}
-CATEGORÍA: ${categoryMap[category]}
-EXTENSIÓN: Aproximadamente ${length} palabras
+TOPIC: ${topic}
+CATEGORY: ${categoryMap[category]}
+LENGTH: Approximately ${length} words
 
-FORMATO:
-- Título atractivo (con #)
-- Entradilla o lead (primer párrafo que resuma la noticia)
-- Desarrollo con subtítulos (##) si es necesario
-- Tono objetivo e informativo
-- Sin llamadas a la acción comerciales
-${details ? `\nINSTRUCCIONES ADICIONALES: ${details}` : ''}
+FORMAT:
+- Compelling headline (with #)
+- Lead paragraph that summarizes the news
+- Body with subtitles (##) when needed
+- Objective and informative tone
+- No commercial calls to action
+${details ? `\nADDITIONAL INSTRUCTIONS: ${details}` : ''}
 
-Notas importantes:
-- No inventes nombres, cargos, fechas, cifras ni datos de contacto.
-- Si por contexto consideras oportuno añadir un correo de contacto, utiliza siempre marketing@ebone.es.
+Important notes:
+- Do not invent names, roles, dates, figures, or contact data.
+- If a contact email is needed, use a generic placeholder such as contact@example.com unless the user provided a real one.
 
-Escribe SOLO el artículo, sin comentarios ni explicaciones.`;
+Write ONLY the article, with no comments or explanations.`;
     }
     
     // === POST DE BLOG ===
     else if (contentType === 'blog') {
       const topic = document.getElementById('blog-topic').value.trim();
-      if (!topic) { alert('Por favor, indica el tema del post'); return; }
+      if (!topic) { alert('Please enter the post topic'); return; }
       
       const keywords = document.getElementById('blog-keywords').value.trim();
       const details = document.getElementById('blog-details').value.trim();
       
       inputData = { topic, keywords, details };
       
-      prompt = `Escribe un post de blog optimizado para SEO para ${businessName}.
+      prompt = `Write an SEO-optimized blog post for ${businessName}.
 
-TEMA: ${topic}
-${keywords ? `PALABRAS CLAVE: ${keywords}` : ''}
+TOPIC: ${topic}
+${keywords ? `KEYWORDS: ${keywords}` : ''}
 
-REQUISITOS SEO OBLIGATORIOS:
-- Extensión: 600-1000 palabras
-- Título H1 atractivo que incluya la palabra clave principal
-- Meta descripción sugerida (máx 155 caracteres) al inicio entre corchetes [META: ...]
-- Introducción enganchante que incluya la palabra clave en las primeras 100 palabras
-- Estructura con H2 y H3 para facilitar la lectura
-- Párrafos cortos (máx 3-4 líneas)
-- Al menos una lista con viñetas o numerada
-- Conclusión con llamada a la acción (CTA)
-- Tono cercano pero profesional
-${details ? `\nINSTRUCCIONES ADICIONALES: ${details}` : ''}
+MANDATORY SEO REQUIREMENTS:
+- Length: 600-1000 words
+- Strong H1 title including the main keyword
+- Suggested meta description (max 155 characters) at the beginning in brackets [META: ...]
+- Engaging introduction including the keyword within the first 100 words
+- H2/H3 structure for readability
+- Short paragraphs (max 3-4 lines)
+- At least one bulleted or numbered list
+- Conclusion with a call to action (CTA)
+- Close but professional tone
+${details ? `\nADDITIONAL INSTRUCTIONS: ${details}` : ''}
 
-Notas importantes:
-- No inventes nombres, cargos, fechas, cifras ni datos de contacto.
-- Si decides incluir un correo de contacto, utiliza siempre marketing@ebone.es.
+Important notes:
+- Do not invent names, roles, dates, figures, or contact data.
+- If a contact email is needed, use a generic placeholder such as contact@example.com unless the user provided a real one.
 
-Escribe SOLO el post, sin comentarios ni explicaciones.`;
+Write ONLY the post, with no comments or explanations.`;
     }
     
     // === NOTA DE PRENSA ===
     else if (contentType === 'nota-prensa') {
       const pressType = document.querySelector('input[name="press-type"]:checked')?.value || 'lanzamiento';
       const what = document.getElementById('press-what').value.trim();
-      if (!what) { alert('Por favor, indica qué ocurre (el hecho principal)'); return; }
+      if (!what) { alert('Please enter what happened (the main fact)'); return; }
       
       const who = document.getElementById('press-who').value.trim();
       const when = document.getElementById('press-when').value.trim();
@@ -174,42 +174,42 @@ Escribe SOLO el post, sin comentarios ni explicaciones.`;
       inputData = { pressType, what, who, when, where, why, purpose, quoteAuthor, quoteText };
       
       const pressTypeMap = {
-        'lanzamiento': 'lanzamiento de proyecto o servicio',
-        'evento': 'evento',
-        'nombramiento': 'nombramiento o incorporación',
-        'convenio': 'convenio o colaboración institucional',
-        'premio': 'premio, éxito o reconocimiento'
+        'lanzamiento': 'project or service launch',
+        'evento': 'event',
+        'nombramiento': 'appointment or onboarding',
+        'convenio': 'institutional partnership or collaboration',
+        'premio': 'award, achievement, or recognition'
       };
       
-      let dataSection = `QUÉ OCURRE: ${what}`;
-      if (who) dataSection += `\nQUIÉN: ${who}`;
-      if (when) dataSection += `\nCUÁNDO: ${when}`;
-      if (where) dataSection += `\nDÓNDE: ${where}`;
-      if (why) dataSection += `\nPOR QUÉ: ${why}`;
-      if (purpose) dataSection += `\nINFORMACIÓN ADICIONAL (ya confirmada, sin suposiciones): ${purpose}`;
-      if (quoteText) dataSection += `\nDECLARACIÓN${quoteAuthor ? ` (${quoteAuthor})` : ''}: "${quoteText}"`;
+      let dataSection = `WHAT HAPPENED: ${what}`;
+      if (who) dataSection += `\nWHO: ${who}`;
+      if (when) dataSection += `\nWHEN: ${when}`;
+      if (where) dataSection += `\nWHERE: ${where}`;
+      if (why) dataSection += `\nWHY: ${why}`;
+      if (purpose) dataSection += `\nADDITIONAL INFORMATION (confirmed, no assumptions): ${purpose}`;
+      if (quoteText) dataSection += `\nSTATEMENT${quoteAuthor ? ` (${quoteAuthor})` : ''}: "${quoteText}"`;
       
-      prompt = `Escribe una nota de prensa profesional para ${businessName}.
+      prompt = `Write a professional press release for ${businessName}.
 
-TIPO DE ANUNCIO: ${pressTypeMap[pressType]}
+ANNOUNCEMENT TYPE: ${pressTypeMap[pressType]}
 
-DATOS:
+DATA:
 ${dataSection}
 
-FORMATO NOTA DE PRENSA:
-- Titular impactante (con #)
-- Subtítulo o bajada que amplíe la información
-- Ubicación y fecha al inicio del cuerpo: "[Ciudad], [fecha] –"
-- Primer párrafo: responder a las 5W (qué, quién, cuándo, dónde, por qué) de forma concisa
-- Desarrollo: ampliar información en orden de importancia decreciente (pirámide invertida)
-- Si hay declaración, incluirla entrecomillada con atribución
-- Cierre: información de contexto sobre ${businessName}
-- "###" al final (marca estándar de fin de nota de prensa)
-- Sección "Para más información:" con placeholder de contacto
+PRESS RELEASE FORMAT:
+- Impactful headline (with #)
+- Subtitle/deck that expands the key information
+- Location and date at the start of the body: "[City], [date] –"
+- First paragraph: answer the 5Ws (what, who, when, where, why) concisely
+- Body: expand details in decreasing order of importance (inverted pyramid)
+- If there is a statement, include it in quotes with attribution
+- Closing: background context about ${businessName}
+- "###" at the end (standard press release end marker)
+- "For more information:" section with a contact placeholder
 
-Si faltan datos, adapta la nota con la información disponible **sin inventar nunca** fechas, nombres, cargos, lugares, cifras u otros datos sensibles. Si algo no está en los datos, no lo supongas.
+If data is missing, adapt using available information **without ever inventing** dates, names, roles, places, figures, or other sensitive data. If something is not provided, do not assume it.
 
-Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
+Write ONLY the press release, with no comments or explanations.`;
     }
     
     // Guardar datos para regenerar
@@ -250,7 +250,7 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
       generateArticleBtn.disabled = false;
       
       if (!res.ok) {
-        alert('Error al generar el contenido: ' + (data.error?.message || 'Error desconocido'));
+        alert('Error generating content: ' + (data.error?.message || 'Unknown error'));
         return;
       }
       
@@ -267,7 +267,7 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
     } catch (err) {
       articleLoading.classList.add('hidden');
       generateArticleBtn.disabled = false;
-      alert('Error de conexión al generar el contenido');
+      alert('Connection error while generating content');
     }
   }
 
@@ -277,7 +277,7 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
       const text = articleContent.innerText;
       navigator.clipboard.writeText(text).then(() => {
         const originalText = copyArticleBtn.innerHTML;
-        copyArticleBtn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+        copyArticleBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
         setTimeout(() => {
           copyArticleBtn.innerHTML = originalText;
         }, 2000);
@@ -324,13 +324,13 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
       const data = await res.json();
       
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error al cargar</div>';
+        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Could not load</div>';
         return;
       }
       
       renderHistory(data.items || []);
     } catch (err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error de conexión</div>';
+      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Connection error</div>';
     }
   }
   
@@ -341,7 +341,7 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-page-edit text-xl text-slate-400"></i>
           </div>
-          <p class="text-sm text-slate-500">Aún no has generado contenido</p>
+          <p class="text-sm text-slate-500">You have not generated content yet</p>
           <p class="text-xs text-slate-400 mt-1">Usa el formulario para empezar</p>
         </div>
       `;
@@ -355,9 +355,9 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
     };
     
     const businessColors = {
-      'ebone': 'bg-blue-100 text-blue-700',
-      'cubofit': 'bg-orange-100 text-orange-700',
-      'uniges': 'bg-purple-100 text-purple-700'
+      'brand': 'bg-blue-100 text-blue-700',
+      'product': 'bg-orange-100 text-orange-700',
+      'team': 'bg-purple-100 text-purple-700'
     };
     
     historyList.innerHTML = items.map(item => {
@@ -376,7 +376,7 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Eliminar">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -406,7 +406,7 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
       const data = await res.json();
       
       if (!res.ok || !data.execution) {
-        alert('Error al cargar el contenido');
+        alert('Error loading content');
         return;
       }
       
@@ -425,12 +425,12 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
       articleResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
       
     } catch (err) {
-      alert('Error de conexión');
+      alert('Connection error');
     }
   }
 
   async function deleteExecution(id) {
-    if (!confirm('¿Eliminar este contenido del historial?')) return;
+    if (!confirm('Delete this content from history?')) return;
     
     try {
       const res = await fetch('/api/gestures/delete.php', {
@@ -445,14 +445,14 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
       
       const data = await res.json();
       if (!res.ok || !data.success) {
-        alert('No se ha podido eliminar el elemento');
+        alert('Could not delete the item');
         return;
       }
       
       // Recargar historial tras borrar
       loadHistory();
     } catch (err) {
-      alert('Error de conexión al eliminar');
+      alert('Connection error while deleting');
     }
   }
   
@@ -479,12 +479,12 @@ Escribe SOLO la nota de prensa, sin comentarios ni explicaciones.`;
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
     
-    if (diffMins < 1) return 'ahora';
-    if (diffMins < 60) return `hace ${diffMins} min`;
-    if (diffHours < 24) return `hace ${diffHours}h`;
-    if (diffDays === 1) return 'ayer';
-    if (diffDays < 7) return `hace ${diffDays} días`;
-    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    if (diffMins < 1) return 'now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   }
   
   function escapeHtml(text) {

@@ -125,7 +125,7 @@ foreach ($targets as $target) {
             
             if ($target === 'lex' && $qdrant) {
                 $documentId = pathinfo($filename, PATHINFO_FILENAME);
-                $ragChunkCount = $qdrant->countPointsByFilter('lex_convenios', [
+                $ragChunkCount = $qdrant->countPointsByFilter('lex_knowledge_base', [
                     'must' => [
                         ['key' => 'document_id', 'match' => ['value' => $documentId]]
                     ]

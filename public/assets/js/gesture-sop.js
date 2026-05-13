@@ -381,8 +381,8 @@
       }, 1000);
       
     } catch (error) {
-      console.error('Error al acceder al micrófono:', error);
-      alert('No se pudo acceder al micrófono. Asegúrate de dar permiso.');
+      console.error('Error accessing microphone:', error);
+      alert('Could not access the microphone. Please grant permission.');
     }
   }
 
@@ -444,7 +444,7 @@
     
     // Validar tamaño
     if (file.size > 25 * 1024 * 1024) {
-      alert('El archivo de audio es demasiado grande. Máximo 25MB.');
+      alert('Audio file is too large. Maximum 25MB.');
       return;
     }
     
@@ -482,7 +482,7 @@
       
       // Validar tamaño
       if (file.size > 30 * 1024 * 1024) {
-        alert(`La imagen ${file.name} es demasiado grande. Máximo 30MB por imagen.`);
+        alert(`Image ${file.name} is too large. Maximum 30MB per image.`);
         continue;
       }
       
@@ -535,13 +535,13 @@
     
     // Validar tipo
     if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
-      alert('Solo se aceptan archivos PDF.');
+      alert('Only PDF files are allowed.');
       return;
     }
     
     // Validar tamaño
     if (file.size > 20 * 1024 * 1024) {
-      alert('El PDF es demasiado grande. Máximo 20MB.');
+      alert('The PDF is too large. Maximum 20MB.');
       return;
     }
     
@@ -602,7 +602,7 @@
       const hasContent = state.text.trim() || state.url.trim() || state.audioFile || state.images.length > 0 || state.pdfFile;
       
       if (!hasContent) {
-        alert('Añade al menos una fuente de contenido (texto, URL, audio, imágenes o PDF).');
+        alert('Add at least one content source (text, URL, audio, images, or PDF).');
         return;
       }
       
@@ -630,14 +630,14 @@
       
       if (state.pdfBase64) {
         payload.pdf_base64 = state.pdfBase64;
-        updateProcessingStatus('Extrayendo contenido del PDF...', 10);
+        updateProcessingStatus('Extracting PDF content...', 10);
       }
       
       if (state.audioBase64) {
         payload.audio_base64 = state.audioBase64;
         payload.audio_mime = state.audioFile.type || 'audio/mpeg';
         payload.audio_filename = state.audioFile.name;
-        updateProcessingStatus('Transcribiendo audio (esto puede tardar unos segundos)...', 20);
+        updateProcessingStatus('Transcribing audio (this may take a few seconds)...', 20);
       }
       
       if (state.images.length > 0) {
@@ -645,10 +645,10 @@
           base64: img.base64,
           mime_type: img.mime_type
         }));
-        updateProcessingStatus('Analizando imágenes...', 30);
+        updateProcessingStatus('Analyzing images...', 30);
       }
       
-      updateProcessingStatus('Generando procedimiento estructurado...', 50);
+      updateProcessingStatus('Generating structured procedure...', 50);
       
       const response = await fetch('/api/gestures/sop.php', {
         method: 'POST',
@@ -675,7 +675,7 @@
       
     } catch (error) {
       console.error('Error:', error);
-      alert('Error generando SOP: ' + error.message);
+      alert('Error generating SOP: ' + error.message);
     } finally {
       state.isProcessing = false;
       hideProcessing();
@@ -715,7 +715,7 @@
     if (data.formats.mermaid) {
       renderMermaid(data.formats.mermaid);
     } else {
-      elements.mermaidContainer.innerHTML = '<p class="text-slate-400 text-center py-8">No se pudo generar el diagrama de flujo</p>';
+      elements.mermaidContainer.innerHTML = '<p class="text-slate-400 text-center py-8">Could not generate the flowchart</p>';
     }
     
     // Configurar descargas
@@ -745,10 +745,10 @@
       const { svg } = await mermaid.render(id, code);
       elements.mermaidContainer.innerHTML = svg;
     } catch (error) {
-      console.error('Error renderizando Mermaid:', error);
+      console.error('Error rendering Mermaid:', error);
       elements.mermaidContainer.innerHTML = `
         <div class="text-center py-8">
-          <p class="text-slate-400 mb-4">No se pudo renderizar el diagrama</p>
+          <p class="text-slate-400 mb-4">Could not render the diagram</p>
           <pre class="text-left text-xs bg-slate-100 p-4 rounded-lg overflow-auto max-h-60">${escapeHtml(code)}</pre>
         </div>
       `;
@@ -937,7 +937,7 @@
 
   function showCopyFeedback(btn) {
     const originalHtml = btn.innerHTML;
-    btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+    btn.innerHTML = '<i class="iconoir-check"></i> Copied';
     btn.classList.add('text-emerald-600');
     setTimeout(() => {
       btn.innerHTML = originalHtml;
@@ -954,7 +954,7 @@
         renderHistory(data.history);
       }
     } catch (error) {
-      console.error('Error cargando historial:', error);
+      console.error('Error loading history:', error);
     }
   }
 
@@ -965,8 +965,8 @@
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-clipboard-check text-xl text-emerald-400"></i>
           </div>
-          <p class="text-sm text-slate-500">Sin SOPs generados aún</p>
-          <p class="text-xs text-slate-400 mt-1">Usa el formulario para empezar</p>
+          <p class="text-sm text-slate-500">No SOPs generated yet</p>
+          <p class="text-xs text-slate-400 mt-1">Use the form to get started</p>
         </div>
       `;
       return;
@@ -976,15 +976,15 @@
       <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2" data-id="${item.id}">
         <i class="iconoir-clipboard-check text-emerald-500 mt-0.5"></i>
         <div class="flex-1 min-w-0 cursor-pointer history-item-main">
-          <p class="text-sm font-medium text-slate-700 truncate group-hover:text-emerald-600">${escapeHtml(item.title || 'SOP sin título')}</p>
+          <p class="text-sm font-medium text-slate-700 truncate group-hover:text-emerald-600">${escapeHtml(item.title || 'Untitled SOP')}</p>
           <div class="flex items-center gap-2 mt-1">
             <span class="text-[10px] text-slate-400">${formatDate(item.created_at)}</span>
           </div>
         </div>
-        <button class="history-item-edit opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-emerald-500 p-1 rounded" title="Editar título">
+        <button class="history-item-edit opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-emerald-500 p-1 rounded" title="Edit title">
           <i class="iconoir-edit-pencil"></i>
         </button>
-        <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Eliminar">
+        <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
           <i class="iconoir-trash"></i>
         </button>
       </div>
@@ -1002,8 +1002,8 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const titleEl = btn.parentElement.querySelector('.history-item-main p');
-        const currentTitle = titleEl?.textContent || 'SOP sin título';
-        const nextTitle = prompt('Nuevo título del proceso', currentTitle);
+        const currentTitle = titleEl?.textContent || 'Untitled SOP';
+        const nextTitle = prompt('New process title', currentTitle);
         if (nextTitle !== null) {
           updateHistoryTitle(id, nextTitle.trim());
         }
@@ -1038,16 +1038,16 @@
       if (response.ok) {
         loadHistory();
       } else {
-        alert('No se pudo actualizar el título');
+        alert('Could not update the title');
       }
     } catch (error) {
-      console.error('Error actualizando título:', error);
-      alert('Error al actualizar el título');
+      console.error('Error updating title:', error);
+      alert('Error updating the title');
     }
   }
   
   async function deleteHistoryItem(id) {
-    if (!confirm('¿Eliminar este SOP del historial?')) return;
+    if (!confirm('Delete this SOP from history?')) return;
     
     try {
       const csrfToken = (typeof window !== 'undefined' && window.CSRF_TOKEN) ? window.CSRF_TOKEN : '';
@@ -1065,8 +1065,8 @@
         loadHistory();
       }
     } catch (error) {
-      console.error('Error eliminando:', error);
-      alert('Error al eliminar');
+      console.error('Error deleting:', error);
+      alert('Error deleting');
     }
   }
 
@@ -1093,7 +1093,7 @@
         displayResult(result);
       }
     } catch (error) {
-      console.error('Error cargando item:', error);
+      console.error('Error loading item:', error);
     }
   }
 
@@ -1109,12 +1109,12 @@
     const now = new Date();
     const diff = now - date;
     
-    if (diff < 60000) return 'Hace un momento';
-    if (diff < 3600000) return `Hace ${Math.floor(diff / 60000)} min`;
-    if (diff < 86400000) return `Hace ${Math.floor(diff / 3600000)} horas`;
-    if (diff < 604800000) return `Hace ${Math.floor(diff / 86400000)} días`;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)} days ago`;
     
-    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   }
 
   // Iniciar

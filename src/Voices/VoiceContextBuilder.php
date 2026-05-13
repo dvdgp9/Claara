@@ -6,9 +6,9 @@ use Rag\EmbeddingService;
 use Rag\LexRetriever;
 
 /**
- * Construye el contexto especializado para cada voz
- * Lee archivos de docs/context/voices/{voice_id}/ para cargar el conocimiento específico
- * Para voces con RAG habilitado, usa búsqueda semántica en lugar de cargar todo el contexto
+ * Builds specialized context for each Voice.
+ * Reads docs/context/voices/{voice_id}/ for specific knowledge.
+ * For index-enabled Voices, uses semantic search instead of loading all context.
  */
 class VoiceContextBuilder
 {
@@ -16,29 +16,29 @@ class VoiceContextBuilder
     private string $contextPath;
     private ?LexRetriever $retriever = null;
     
-    // Definición de voces disponibles
+    // Available Voice definitions.
     private static array $voices = [
         'lex' => [
             'name' => 'Lex',
-            'role' => 'Asistente Legal del Grupo Ebone',
-            'description' => 'Experto en convenios colectivos, normativas laborales y documentación legal interna.',
-            'personality' => 'Profesional, preciso y claro. Cita fuentes cuando sea posible.',
+            'role' => 'Legal Assistant',
+            'description' => 'Expert in collective agreements, labor rules, and legal reference documents.',
+            'personality' => 'Professional, precise, and clear. Cite sources whenever possible.',
             'folder' => 'lex',
-            'rag_enabled' => true,  // Usa RAG para esta voz
-            'rag_collection' => 'lex_convenios'
+            'rag_enabled' => true,
+            'rag_collection' => 'lex_knowledge_base'
         ],
         'cubo' => [
-            'name' => 'Cubo',
-            'role' => 'Asistente de CUBOFIT',
-            'description' => 'Especialista en productos fitness, equipamiento deportivo y especificaciones técnicas.',
-            'personality' => 'Entusiasta, técnico y orientado al cliente.',
+            'name' => 'Operations',
+            'role' => 'Operations Assistant',
+            'description' => 'Specialist in operational knowledge, procedures, and service details.',
+            'personality' => 'Practical, clear, and solution-oriented.',
             'folder' => 'cubo'
         ],
         'uniges' => [
-            'name' => 'Uniges',
-            'role' => 'Asistente de UNIGES-3',
-            'description' => 'Experto en gestión de instalaciones deportivas y servicios municipales.',
-            'personality' => 'Profesional, eficiente y orientado a soluciones.',
+            'name' => 'Knowledge',
+            'role' => 'Knowledge Assistant',
+            'description' => 'Specialist in internal knowledge and documentation.',
+            'personality' => 'Professional, efficient, and precise.',
             'folder' => 'uniges'
         ]
     ];
@@ -50,7 +50,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Verifica si la voz existe
+     * Checks whether the Voice exists.
      */
     public function voiceExists(): bool
     {
@@ -58,7 +58,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Obtiene la información de la voz
+     * Gets Voice information.
      */
     public function getVoiceInfo(): ?array
     {
@@ -66,7 +66,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Construye el system prompt completo para la voz
+     * Builds the full system prompt for the Voice.
      */
     public function buildSystemPrompt(): ?string
     {
@@ -76,25 +76,25 @@ class VoiceContextBuilder
 
         $voice = self::$voices[$this->voiceId];
         
-        // System prompt base
-        $prompt = "# Identidad\n";
-        $prompt .= "Eres **{$voice['name']}**, {$voice['role']}.\n\n";
-        $prompt .= "## Descripción\n{$voice['description']}\n\n";
-        $prompt .= "## Personalidad\n{$voice['personality']}\n\n";
+        // Base system prompt.
+        $prompt = "# Identity\n";
+        $prompt .= "You are **{$voice['name']}**, {$voice['role']}.\n\n";
+        $prompt .= "## Description\n{$voice['description']}\n\n";
+        $prompt .= "## Personality\n{$voice['personality']}\n\n";
         
-        // Instrucciones generales
-        $prompt .= "## Instrucciones\n";
-        $prompt .= "- Responde siempre en español\n";
-        $prompt .= "- Sé conciso pero completo\n";
-        $prompt .= "- Cuando cites documentos, indica la fuente\n";
-        $prompt .= "- Si no tienes información sobre algo, indícalo claramente\n";
-        $prompt .= "- Mantén un tono profesional y accesible\n\n";
+        // General instructions.
+        $prompt .= "## Instructions\n";
+        $prompt .= "- Respond in English by default, unless the user asks for another language.\n";
+        $prompt .= "- Be concise but complete.\n";
+        $prompt .= "- When citing documents, name the source.\n";
+        $prompt .= "- If you do not have enough information, say so clearly.\n";
+        $prompt .= "- Keep a professional, accessible tone.\n\n";
 
         // Cargar documentos de contexto específicos
         $contextDocs = $this->loadContextDocuments();
         if ($contextDocs) {
-            $prompt .= "## Documentación de referencia\n";
-            $prompt .= "A continuación tienes la documentación que debes usar para responder consultas:\n\n";
+            $prompt .= "## Reference Documents\n";
+            $prompt .= "Use the following documentation to answer questions:\n\n";
             $prompt .= $contextDocs;
         }
 
@@ -102,7 +102,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Carga todos los documentos .md de la carpeta de contexto de la voz
+     * Loads all .md documents from the Voice context folder.
      */
     private function loadContextDocuments(): string
     {
@@ -118,7 +118,7 @@ class VoiceContextBuilder
             $fileContent = file_get_contents($file);
             
             if ($fileContent) {
-                $content .= "### Documento: " . ucfirst(str_replace('_', ' ', $filename)) . "\n";
+                $content .= "### Document: " . ucfirst(str_replace('_', ' ', $filename)) . "\n";
                 $content .= $fileContent . "\n\n";
             }
         }
@@ -127,13 +127,13 @@ class VoiceContextBuilder
     }
 
     /**
-     * Lista los documentos disponibles para esta voz (incluyendo convenios RAG)
+     * Lists available documents for this Voice, including indexed documents.
      */
     public function listDocuments(): array
     {
         $docs = [];
         
-        // 1. Documentos estáticos (.md)
+        // 1. Static documents (.md)
         if (is_dir($this->contextPath)) {
             $files = glob($this->contextPath . '/*.md');
             foreach ($files as $file) {
@@ -148,8 +148,8 @@ class VoiceContextBuilder
             }
         }
 
-        // 2. Documentos RAG (convenios en PDF/TXT/MD dentro de la subcarpeta convenios)
-        $ragPath = $this->contextPath . '/convenios';
+        // 2. Indexed documents (PDF/TXT/MD inside the knowledge-base subfolder).
+        $ragPath = $this->contextPath . '/knowledge-base';
         if (is_dir($ragPath)) {
             $files = glob($ragPath . '/*.{pdf,txt,md}', GLOB_BRACE);
             foreach ($files as $file) {
@@ -157,9 +157,9 @@ class VoiceContextBuilder
                 if ($filename === 'README.md') continue;
                 
                 $docs[] = [
-                    'id' => 'rag_' . md5($filename),
+                    'id' => 'indexed_' . md5($filename),
                     'name' => $filename,
-                    'type' => 'rag',
+                    'type' => 'indexed',
                     'path' => $file,
                     'size' => filesize($file)
                 ];
@@ -170,7 +170,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Obtiene todas las voces disponibles
+     * Gets all available Voices.
      */
     public static function getAllVoices(): array
     {
@@ -178,7 +178,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Verifica si la voz tiene RAG habilitado
+     * Checks whether the Voice has semantic index retrieval enabled.
      */
     public function hasRagEnabled(): bool
     {
@@ -187,7 +187,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Inicializa el retriever RAG para esta voz
+     * Initializes the semantic retriever for this Voice.
      */
     public function initRetriever(string $openaiKey, string $qdrantHost = 'localhost', int $qdrantPort = 6333): void
     {
@@ -204,7 +204,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Obtiene el retriever RAG
+     * Gets the semantic retriever.
      */
     public function getRetriever(): ?LexRetriever
     {
@@ -212,8 +212,8 @@ class VoiceContextBuilder
     }
 
     /**
-     * Construye el system prompt con contexto RAG
-     * Usa búsqueda semántica para encontrar los chunks relevantes
+     * Builds the system prompt with indexed context.
+     * Uses semantic search to find relevant chunks.
      */
     public function buildSystemPromptWithRag(string $userQuery, int $topK = 15): ?string
     {
@@ -223,52 +223,52 @@ class VoiceContextBuilder
 
         $voice = self::$voices[$this->voiceId];
         
-        // Obtener lista de todos los documentos para que la IA sepa qué tiene
+        // Get the list of all documents so the assistant knows what is available.
         $allDocs = $this->listDocuments();
         $docListText = "";
         foreach ($allDocs as $doc) {
             $docListText .= "- " . $doc['name'] . "\n";
         }
 
-        // System prompt base
-        $prompt = "# Identidad\n";
-        $prompt .= "Eres **{$voice['name']}**, {$voice['role']}.\n\n";
-        $prompt .= "## Descripción\n{$voice['description']}\n\n";
-        $prompt .= "## Personalidad\n{$voice['personality']}\n\n";
+        // Base system prompt.
+        $prompt = "# Identity\n";
+        $prompt .= "You are **{$voice['name']}**, {$voice['role']}.\n\n";
+        $prompt .= "## Description\n{$voice['description']}\n\n";
+        $prompt .= "## Personality\n{$voice['personality']}\n\n";
         
-        $prompt .= "## Documentación Disponible\n";
-        $prompt .= "Tienes acceso a los siguientes documentos y convenios colectivos:\n";
+        $prompt .= "## Available Documentation\n";
+        $prompt .= "You have access to the following documents and collective agreements:\n";
         $prompt .= $docListText . "\n";
 
-        // Instrucciones generales
-        $prompt .= "## Instrucciones\n";
-        $prompt .= "- Responde siempre en español\n";
-        $prompt .= "- Sé conciso pero completo\n";
-        $prompt .= "- **IMPORTANTE**: Cita siempre el nombre del documento exacto del que extraes la información.\n";
-        $prompt .= "- Si el usuario te pregunta qué documentos o convenios tienes, proporciónale la lista de arriba.\n";
-        $prompt .= "- Si no tienes información suficiente en los fragmentos recuperados, indícalo claramente.\n";
-        $prompt .= "- Mantén un tono profesional y accesible\n";
-        $prompt .= "- No inventes información que no esté en la documentación proporcionada\n\n";
+        // General instructions.
+        $prompt .= "## Instructions\n";
+        $prompt .= "- Respond in English by default, unless the user asks for another language.\n";
+        $prompt .= "- Be concise but complete.\n";
+        $prompt .= "- **IMPORTANT**: Always cite the exact document name used as the source.\n";
+        $prompt .= "- If the user asks what documents or agreements you have, provide the list above.\n";
+        $prompt .= "- If the retrieved fragments are not sufficient, say so clearly.\n";
+        $prompt .= "- Keep a professional, accessible tone.\n";
+        $prompt .= "- Do not invent information that is not in the provided documentation.\n\n";
 
-        // Obtener contexto relevante via RAG
+        // Get relevant context through semantic index.
         if ($this->retriever && $this->retriever->isReady()) {
-            // Detectar si el usuario menciona un convenio específico para filtrar
+            // Detect whether the user mentioned a specific agreement to filter by.
             $documentFilter = $this->detectMentionedDocument($userQuery, $allDocs);
             
             $chunks = $this->retriever->retrieve($userQuery, $topK, $documentFilter);
             $ragContext = $this->retriever->formatForPrompt($chunks);
             $prompt .= $ragContext;
             
-            // Si se filtró por documento, indicarlo
+            // If filtered by document, state it.
             if ($documentFilter) {
-                $prompt .= "\n*Búsqueda filtrada al documento: {$documentFilter}*\n";
+                $prompt .= "\n*Search filtered to document: {$documentFilter}*\n";
             }
         } else {
-            // Fallback a documentos estáticos si RAG no está disponible
+            // Fallback to static documents if semantic index is not available.
             $contextDocs = $this->loadContextDocuments();
             if ($contextDocs) {
-                $prompt .= "## Documentación de referencia\n";
-                $prompt .= "A continuación tienes la documentación que debes usar para responder consultas:\n\n";
+                $prompt .= "## Reference Documents\n";
+                $prompt .= "Use the following documentation to answer questions:\n\n";
                 $prompt .= $contextDocs;
             }
         }
@@ -277,7 +277,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Verifica si el RAG está listo (colección existe y tiene datos)
+     * Checks whether the semantic retriever is ready.
      */
     public function isRagReady(): bool
     {
@@ -285,7 +285,7 @@ class VoiceContextBuilder
     }
 
     /**
-     * Obtiene estadísticas del RAG
+     * Gets semantic index statistics.
      */
     public function getRagStats(): array
     {
@@ -299,14 +299,14 @@ class VoiceContextBuilder
     }
 
     /**
-     * Detecta si el usuario menciona un convenio específico para filtrar búsqueda
-     * @return string|null document_id si se detecta, null si no
+     * Detects whether the user mentions a specific source document.
+     * @return string|null document_id when detected, null otherwise
      */
     private function detectMentionedDocument(string $query, array $documents): ?string
     {
         $queryLower = mb_strtolower($query);
         
-        // Palabras clave de sectores para matching
+        // Sector keywords for matching legacy document labels if a compatible corpus is added later.
         $sectorKeywords = [
             'agencia de viajes' => 'CC29',
             'agencias de viajes' => 'CC29',

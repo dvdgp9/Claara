@@ -1,7 +1,7 @@
 {
-  "name": "Ebonia",
-  "short_name": "Ebonia",
-  "description": "Asistente IA inteligente para el Grupo Ebone",
+  "name": "iaiaPRO",
+  "short_name": "iaiaPRO",
+  "description": "A friendly, professional AI workspace for teams",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -18,11 +18,11 @@ if (!$isSuperadmin) {
     exit;
 }
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gestión de usuarios — Ebonia</title>
+  <title>User Management — iaiaPRO</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -220,16 +220,16 @@ if (!$isSuperadmin) {
         </div>
 
         <div>
-          <label class="text-sm font-medium text-slate-700 block mb-2">Departamento</label>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Department</label>
           <select id="user-department" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors">
-            <option value="">Sin asignar</option>
+            <option value="">Unassigned</option>
             <!-- Se llena dinámicamente -->
           </select>
         </div>
 
         <div id="password-section">
           <label class="text-sm font-medium text-slate-700 block mb-2">
-            <span id="password-label">Contraseña *</span>
+            <span id="password-label">Password *</span>
           </label>
           <div class="relative">
             <input type="password" id="user-password" class="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" minlength="8">
@@ -237,7 +237,7 @@ if (!$isSuperadmin) {
               <i class="iconoir-eye text-lg" id="toggle-password-icon"></i>
             </button>
           </div>
-          <p class="text-xs text-slate-500 mt-1" id="password-hint">Mínimo 8 caracteres</p>
+          <p class="text-xs text-slate-500 mt-1" id="password-hint">Minimum 8 characters</p>
         </div>
 
         <div class="flex items-center gap-4 pt-2 border-t border-slate-100">
@@ -505,13 +505,13 @@ if (!$isSuperadmin) {
     // Abrir modal crear
     document.getElementById('create-user-btn').addEventListener('click', () => {
       isEditMode = false;
-      document.getElementById('modal-title').textContent = 'Nuevo usuario';
-      document.getElementById('submit-text').textContent = 'Crear usuario';
+      document.getElementById('modal-title').textContent = 'New user';
+      document.getElementById('submit-text').textContent = 'Create user';
       document.getElementById('user-form').reset();
       document.getElementById('user-id').value = '';
       document.getElementById('user-status').checked = true;
-      document.getElementById('password-label').innerHTML = 'Contraseña *';
-      document.getElementById('password-hint').textContent = 'Mínimo 8 caracteres';
+      document.getElementById('password-label').innerHTML = 'Password *';
+      document.getElementById('password-hint').textContent = 'Minimum 8 characters';
       document.getElementById('user-password').required = true;
       document.getElementById('status-toggle-container').classList.add('hidden');
       document.getElementById('user-error').classList.add('hidden');

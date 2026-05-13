@@ -2,9 +2,9 @@
 /**
  * GET /api/admin/context/sync.php
  * 
- * Sincroniza los documentos existentes en el filesystem con la BD.
- * Útil para inicializar la tabla con documentos que ya existían.
- * Requiere superadmin.
+ * Syncs existing filesystem documents with the DB.
+ * Useful to initialize the table with pre-existing documents.
+ * Requires superadmin.
  */
 require_once __DIR__ . '/../../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../../src/Auth/AdminGuard.php';
@@ -21,7 +21,7 @@ use Repos\UsersRepo;
 use Rag\QdrantClient;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    Response::error('method_not_allowed', 'Solo GET', 405);
+    Response::error('method_not_allowed', 'GET only', 405);
 }
 
 AdminGuard::requireSuperadmin();
@@ -38,7 +38,7 @@ foreach ($users as $u) {
 }
 
 if (!$adminUser) {
-    Response::error('no_admin', 'No se encontró usuario superadmin', 500);
+    Response::error('no_admin', 'No superadmin user found', 500);
 }
 
 $repo = new ContextDocsRepo();
@@ -73,7 +73,7 @@ foreach ($targets as $target) {
         $results['details'][] = [
             'target' => $target,
             'status' => 'skipped',
-            'message' => 'Directorio no existe'
+            'message' => 'Directory does not exist'
         ];
         continue;
     }
@@ -105,13 +105,13 @@ foreach ($targets as $target) {
         }
         
         try {
-            // Determinar estado RAG para Lex
+            // Determine index status for Lex
             $ragStatus = 'not_applicable';
             $ragChunkCount = 0;
             
             if ($target === 'lex' && $qdrant) {
                 $documentId = pathinfo($filename, PATHINFO_FILENAME);
-                $ragChunkCount = $qdrant->countPointsByFilter('lex_convenios', [
+                $ragChunkCount = $qdrant->countPointsByFilter('lex_knowledge_base', [
                     'must' => [
                         ['key' => 'document_id', 'match' => ['value' => $documentId]]
                     ]
@@ -135,7 +135,7 @@ foreach ($targets as $target) {
                 'created_by' => $adminUser['id'],
             ]);
             
-            // Actualizar estado RAG
+            // Update index status
             if ($target === 'lex') {
                 $repo->updateRagStatus($docId, $ragStatus, $ragChunkCount);
             }
@@ -161,6 +161,6 @@ foreach ($targets as $target) {
 
 Response::json([
     'success' => true,
-    'message' => "Sincronizados: {$results['synced']}, Saltados: {$results['skipped']}, Errores: {$results['errors']}",
+    'message' => "Synced: {$results['synced']}, Skipped: {$results['skipped']}, Errors: {$results['errors']}",
     'results' => $results
 ]);

@@ -9,11 +9,11 @@ if ($user) {
     exit;
 }
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ebonia — Login</title>
+  <title>iaiaPRO — Login</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -52,13 +52,12 @@ if ($user) {
   <!-- Lado izquierdo - Gradiente -->
   <div class="hidden lg:flex lg:w-1/2 gradient-bg items-center justify-center p-12 relative">
     <div class="absolute top-12 left-12">
-      <!-- Logo Grupo Ebone (blanco) - aquí irá tu logo -->
-      <img src="/assets/images/grupo-ebone-white.png" alt="Grupo Ebone" class="h-16" />
+      <img src="/assets/images/logo.png" alt="iaiaPRO" class="h-16 brightness-0 invert" />
     </div>
     
     <div class="text-white text-center max-w-md">
       <h2 class="text-4xl font-bold leading-tight">
-        El latido inteligente de un grupo que respira unido.
+        Friendly AI assistance for focused, everyday work.
       </h2>
     </div>
   </div>
@@ -66,18 +65,17 @@ if ($user) {
   <!-- Lado derecho - Formulario -->
   <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
     <div class="w-full max-w-md">
-      <!-- Logo Ebonia -->
       <div class="text-center mb-8">
-        <img src="/assets/images/logo.png" alt="Ebonia" class="h-24 mx-auto" />
+        <img src="/assets/images/logo.png" alt="iaiaPRO" class="h-24 mx-auto" />
       </div>
       
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">LOGIN</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Log in</h1>
       </div>
 
       <form id="login-form" class="space-y-6">
         <div>
-          <label class="block text-sm font-medium text-gray-900 mb-2">Nombre de usuario:</label>
+          <label class="block text-sm font-medium text-gray-900 mb-2">Username or email</label>
           <input 
             id="email" 
             type="text" 
@@ -88,7 +86,7 @@ if ($user) {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-900 mb-2">Contraseña</label>
+          <label class="block text-sm font-medium text-gray-900 mb-2">Password</label>
           <input 
             id="password" 
             type="password" 
@@ -106,7 +104,7 @@ if ($user) {
             checked
           />
           <label for="remember" class="ml-2 text-sm text-gray-700">
-            Recordar por 30 días
+            Remember me for 30 days
           </label>
         </div>
 
@@ -115,7 +113,7 @@ if ($user) {
           id="submit-btn"
           class="w-full btn-gradient text-white font-semibold py-3 rounded-full hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg"
         >
-          Entrar ahora
+          Log in
         </button>
 
         <p id="error" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2 hidden text-center"></p>
@@ -147,7 +145,7 @@ if ($user) {
       e.preventDefault();
       errorEl.classList.add('hidden');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Entrando...';
+      submitBtn.textContent = 'Logging in...';
       
       try {
         await api('/api/auth/login.php', { 
@@ -164,11 +162,11 @@ if ($user) {
         errorEl.classList.remove('hidden');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Entrar ahora';
+        submitBtn.textContent = 'Log in';
       }
     });
 
-    // Focus en el primer campo al cargar
+    // Focus the first field on load.
     email.focus();
   </script>
 </body>

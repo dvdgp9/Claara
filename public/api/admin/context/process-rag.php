@@ -2,9 +2,9 @@
 /**
  * POST /api/admin/context/process-rag.php?id=X
  * 
- * Procesa un documento de Lex para RAG (chunking, embeddings, Qdrant).
- * Solo válido para documentos del target 'lex'.
- * Requiere superadmin.
+ * Processes a Lex document for AI indexing (chunking, embeddings, Qdrant).
+ * Only valid for target 'lex' documents.
+ * Requires superadmin.
  */
 require_once __DIR__ . '/../../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../../src/Auth/AdminGuard.php';
@@ -20,7 +20,7 @@ use Repos\ContextDocsRepo;
 use Rag\RagProcessor;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 AdminGuard::requireSuperadmin();
@@ -28,19 +28,19 @@ Session::requireCsrf();
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
-    Response::error('invalid_id', 'ID de documento inválido', 400);
+    Response::error('invalid_id', 'Invalid document ID', 400);
 }
 
 $repo = new ContextDocsRepo();
 $doc = $repo->getById($id);
 
 if (!$doc) {
-    Response::error('not_found', 'Documento no encontrado', 404);
+    Response::error('not_found', 'Document not found', 404);
 }
 
 // Solo permitido para target 'lex'
 if ($doc['target'] !== 'lex') {
-    Response::error('invalid_target', 'El procesamiento RAG solo está disponible para documentos de Lex', 400);
+    Response::error('invalid_target', 'Index processing is only available for Lex documents', 400);
 }
 
 // Obtener ruta física
@@ -48,19 +48,19 @@ $targetPath = ContextDocsRepo::getTargetPath($doc['target']);
 $filePath = $targetPath . '/' . $doc['filename'];
 
 if (!file_exists($filePath)) {
-    Response::error('file_not_found', 'El archivo físico no existe', 404);
+    Response::error('file_not_found', 'Physical file does not exist', 404);
 }
 
-// Inicializar procesador RAG
+// Initialize index processor
 try {
     $processor = new RagProcessor();
 } catch (\Exception $e) {
-    Response::error('rag_init_error', 'Error al inicializar procesador RAG: ' . $e->getMessage(), 500);
+    Response::error('rag_init_error', 'Error initializing index processor: ' . $e->getMessage(), 500);
 }
 
 // Verificar que Qdrant está disponible
 if (!$processor->isQdrantHealthy()) {
-    Response::error('qdrant_unavailable', 'Qdrant no está disponible. Verifica que el servicio está corriendo.', 503);
+    Response::error('qdrant_unavailable', 'Qdrant is unavailable. Verify the service is running.', 503);
 }
 
 // Marcar como procesando
@@ -79,7 +79,7 @@ try {
     
     Response::json([
         'success' => true,
-        'message' => 'Documento procesado correctamente',
+        'message' => 'Document processed successfully',
         'document' => $doc,
         'processing_result' => [
             'chunks_created' => $result['chunks_processed'],
@@ -92,5 +92,5 @@ try {
     // Marcar como error
     $repo->updateRagStatus($id, 'error', null, $e->getMessage());
     
-    Response::error('processing_error', 'Error al procesar documento: ' . $e->getMessage(), 500);
+    Response::error('processing_error', 'Error processing document: ' . $e->getMessage(), 500);
 }

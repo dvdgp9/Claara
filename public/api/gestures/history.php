@@ -13,7 +13,7 @@ use Gestures\GestureExecutionsRepo;
 Session::start();
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Sesión no válida', 401);
+    Response::error('unauthorized', 'Invalid session', 401);
 }
 
 $id = $_GET['id'] ?? null;

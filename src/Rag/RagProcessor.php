@@ -22,7 +22,7 @@ class RagProcessor
     public function __construct(
         ?QdrantClient $qdrant = null,
         ?EmbeddingService $embeddings = null,
-        string $collection = 'lex_convenios'
+        string $collection = 'lex_knowledge_base'
     ) {
         $this->collection = $collection;
         

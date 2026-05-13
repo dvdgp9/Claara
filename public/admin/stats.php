@@ -126,11 +126,11 @@ $voiceStats = $pdo->query("
 $chartLabels = array_map(fn($d) => date('d/m', strtotime($d['date'])), $dailyStats);
 $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Panel de Control — Ebonia</title>
+  <title>Dashboard — iaiaPRO</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -149,7 +149,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
   <div class="min-h-screen flex h-screen">
     <?php 
     $activeTab = 'admin';
-    $pageTitle = 'Panel de Control';
+    $pageTitle = 'Dashboard';
     include __DIR__ . '/../includes/left-tabs.php'; 
     ?>
 
@@ -161,8 +161,8 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
           <!-- Header -->
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 lg:mb-8 mt-4 lg:mt-6">
             <div>
-              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Panel de Control</h1>
-              <p class="text-slate-600 text-sm lg:text-base mt-1">Estadísticas de uso de Ebonia</p>
+              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Dashboard</h1>
+              <p class="text-slate-600 text-sm lg:text-base mt-1">iaiaPRO usage statistics</p>
             </div>
             <div class="flex gap-2 lg:gap-3">
               <!-- Filtro de rango -->

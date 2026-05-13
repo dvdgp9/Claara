@@ -32,13 +32,13 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'Todos los gestos';
-$headerTitle = 'Podcast desde artículo';
+$headerBackText = 'All gestures';
+$headerTitle = 'Podcast from article';
 $headerIcon = 'iconoir-podcast';
 $headerIconColor = 'from-red-500 to-orange-500';
 $headerDrawerId = 'podcast-history-drawer';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <style>
@@ -77,7 +77,7 @@ $headerDrawerId = 'podcast-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-orange-500"></i>
-            Historial
+            History
           </h2>
         </div>
       </div>
@@ -85,7 +85,7 @@ $headerDrawerId = 'podcast-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Cargando...
+          Loading...
         </div>
       </div>
     </aside>
@@ -93,7 +93,7 @@ $headerDrawerId = 'podcast-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'podcast-history-drawer';
-    $drawerTitle = 'Historial';
+    $drawerTitle = 'History';
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-orange-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -110,10 +110,10 @@ $headerDrawerId = 'podcast-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600 mb-2">
-              Convierte texto en audio
+              Turn text into audio
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Transforma cualquier artículo, documento o texto en un podcast dinámico presentado por dos nuestros geniales Iris y Bruno. Ideal para consumir contenido mientras haces otras cosas.
+              Transform any article, document, or text into a dynamic podcast hosted by Iris and Bruno. Great for consuming content while you do other tasks.
             </p>
           </div>
 
@@ -125,7 +125,7 @@ $headerDrawerId = 'podcast-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-3">
                   <i class="iconoir-link text-orange-500 mr-1"></i>
-                  Fuente del artículo
+                  Article source
                 </label>
                 
                 <!-- Tabs -->
@@ -134,7 +134,7 @@ $headerDrawerId = 'podcast-history-drawer';
                     <i class="iconoir-link mr-1"></i> URL
                   </button>
                   <button type="button" data-tab="text" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    <i class="iconoir-text mr-1"></i> Texto
+                    <i class="iconoir-text mr-1"></i> Text
                   </button>
                   <button type="button" data-tab="pdf" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
                     <i class="iconoir-page mr-1"></i> PDF
@@ -145,23 +145,23 @@ $headerDrawerId = 'podcast-history-drawer';
                 <div id="tab-url" class="tab-content">
                   <input type="url" id="article-url" 
                          class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                         placeholder="https://ejemplo.com/articulo-interesante" />
-                  <p class="text-xs text-slate-500 mt-2">Pega la URL de cualquier artículo web</p>
+                         placeholder="https://example.com/interesting-article" />
+                  <p class="text-xs text-slate-500 mt-2">Paste the URL of any web article</p>
                 </div>
 
                 <!-- Text Input -->
                 <div id="tab-text" class="tab-content hidden">
                   <textarea id="article-text" rows="6"
                             class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all resize-none"
-                            placeholder="Pega aquí el texto del artículo..."></textarea>
-                  <p class="text-xs text-slate-500 mt-2">Copia y pega directamente el contenido del artículo</p>
+                            placeholder="Paste the article text here..."></textarea>
+                  <p class="text-xs text-slate-500 mt-2">Copy and paste the article content directly</p>
                 </div>
 
                 <!-- PDF Input -->
                 <div id="tab-pdf" class="tab-content hidden">
                   <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-all">
                     <i class="iconoir-upload text-2xl text-slate-400 mb-2"></i>
-                    <span class="text-sm text-slate-500">Arrastra un PDF o haz clic para seleccionar</span>
+                    <span class="text-sm text-slate-500">Drag a PDF or click to select</span>
                     <input type="file" id="article-pdf" accept=".pdf" class="hidden" />
                   </label>
                   <p id="pdf-filename" class="text-xs text-slate-500 mt-2 hidden"></p>
@@ -171,7 +171,7 @@ $headerDrawerId = 'podcast-history-drawer';
               <!-- Botón generar -->
               <button type="submit" id="generate-btn" class="w-full py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 <i class="iconoir-sparks"></i>
-                <span>Generar Podcast</span>
+                <span>Generate Podcast</span>
               </button>
               
               <!-- Progress -->
@@ -186,13 +186,13 @@ $headerDrawerId = 'podcast-history-drawer';
                       <div class="w-1 h-6 bg-orange-500 rounded-full wave-bar"></div>
                     </div>
                     <div>
-                      <p id="progress-text" class="text-sm font-medium text-orange-700">Procesando...</p>
-                      <p id="progress-detail" class="text-xs text-orange-500">Esto puede tardar hasta 5 minutos</p>
+                      <p id="progress-text" class="text-sm font-medium text-orange-700">Processing...</p>
+                      <p id="progress-detail" class="text-xs text-orange-500">This can take up to 5 minutes</p>
                     </div>
                   </div>
-                  <button type="button" id="cancel-btn" class="px-3 py-1.5 text-xs bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-300 rounded-lg transition-colors flex items-center gap-1.5" title="Cancelar generación">
+                  <button type="button" id="cancel-btn" class="px-3 py-1.5 text-xs bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-300 rounded-lg transition-colors flex items-center gap-1.5" title="Cancel generation">
                     <i class="iconoir-xmark text-sm"></i>
-                    <span>Cancelar</span>
+                    <span>Cancel</span>
                   </button>
                 </div>
               </div>
@@ -217,11 +217,11 @@ $headerDrawerId = 'podcast-history-drawer';
             <div class="flex items-center justify-between mb-2">
               <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                 <i class="iconoir-check-circle text-green-500"></i>
-                Podcast generado
+                Generated podcast
               </h2>
               <button type="button" onclick="resetUI()" class="text-sm font-medium text-orange-600 hover:text-orange-700 flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 rounded-lg transition-colors">
                 <i class="iconoir-plus"></i>
-                <span>Nuevo podcast</span>
+                <span>New podcast</span>
               </button>
             </div>
             
@@ -232,7 +232,7 @@ $headerDrawerId = 'podcast-history-drawer';
                   <i class="iconoir-podcast text-3xl"></i>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <h3 id="podcast-title" class="font-bold text-xl truncate tracking-tight">Podcast generado</h3>
+                  <h3 id="podcast-title" class="font-bold text-xl truncate tracking-tight">Generated podcast</h3>
                   <p id="podcast-summary" class="text-sm text-white/80 line-clamp-2 mt-1 font-medium leading-relaxed"></p>
                 </div>
               </div>
@@ -242,10 +242,10 @@ $headerDrawerId = 'podcast-history-drawer';
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2 text-xs text-white/60">
                   <i class="iconoir-voice-square"></i>
-                  <span>Presentado por Iris y Bruno</span>
+                  <span>Hosted by Iris and Bruno</span>
                 </div>
                 <button id="download-btn" class="px-5 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl transition-all flex items-center gap-2 font-semibold text-sm shadow-sm border border-white/10">
-                  <i class="iconoir-download"></i> Descargar
+                  <i class="iconoir-download"></i> Download
                 </button>
               </div>
             </div>
@@ -257,7 +257,7 @@ $headerDrawerId = 'podcast-history-drawer';
                   <div class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
                     <i class="iconoir-page text-orange-600"></i>
                   </div>
-                  <span class="font-bold text-slate-700">Transcripción y Guion</span>
+                  <span class="font-bold text-slate-700">Transcript and script</span>
                 </div>
                 <i class="iconoir-nav-arrow-down text-slate-400 group-hover:text-orange-500 transition-transform duration-300"></i>
               </summary>

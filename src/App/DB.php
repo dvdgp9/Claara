@@ -25,7 +25,7 @@ class DB {
             self::$pdo = $pdo;
             return $pdo;
         } catch (PDOException $e) {
-            Response::error('db_connection_failed', 'No se pudo conectar a la base de datos', 500);
+            Response::error('db_connection_failed', 'Could not connect to the database', 500);
         }
     }
 }

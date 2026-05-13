@@ -13,12 +13,12 @@ use Voices\VoiceExecutionsRepo;
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Sesión no válida', 401);
+    Response::error('unauthorized', 'Invalid session', 401);
 }
 
 $voiceId = $_GET['voice_id'] ?? '';
 if (!$voiceId) {
-    Response::error('missing_voice', 'Se requiere voice_id', 400);
+    Response::error('missing_voice', 'voice_id is required', 400);
 }
 
 $repo = new VoiceExecutionsRepo();

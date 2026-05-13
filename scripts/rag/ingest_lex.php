@@ -1,7 +1,7 @@
 <?php
 /**
- * Script de ingesta para RAG de Lex
- * Procesa PDFs de convenios laborales y los indexa en Qdrant
+ * Lex RAG ingestion script.
+ * Processes documents and indexes them in Qdrant.
  * 
  * Uso: php scripts/rag/ingest_lex.php [--reset]
  *   --reset  Elimina la colección existente y la recrea
@@ -16,13 +16,13 @@ use Rag\QdrantClient;
 use Rag\EmbeddingService;
 
 // Configuración
-define('COLLECTION_NAME', 'lex_convenios');
+define('COLLECTION_NAME', 'lex_knowledge_base');
 define('VECTOR_SIZE', 4096);  // qwen/qwen3-embedding-8b
 define('CHUNK_SIZE', 500);    // tokens aproximados por chunk
 define('CHUNK_OVERLAP', 50);  // tokens de overlap entre chunks
 define('BATCH_SIZE', 10);     // chunks por batch de embeddings
 
-$conveniosPath = __DIR__ . '/../../docs/context/voices/lex/convenios';
+$knowledgeBasePath = __DIR__ . '/../../docs/context/voices/lex/knowledge-base';
 
 // Parsear argumentos
 $reset = in_array('--reset', $argv);
@@ -65,14 +65,14 @@ if (!$qdrant->collectionExists(COLLECTION_NAME)) {
 
 // Buscar archivos a procesar
 $files = array_merge(
-    glob($conveniosPath . '/*.pdf'),
-    glob($conveniosPath . '/*.txt'),
-    glob($conveniosPath . '/*.md')
+    glob($knowledgeBasePath . '/*.pdf'),
+    glob($knowledgeBasePath . '/*.txt'),
+    glob($knowledgeBasePath . '/*.md')
 );
 
 if (empty($files)) {
-    die("\nNo se encontraron archivos en: {$conveniosPath}\n" .
-        "Coloca los PDFs de convenios en esa carpeta y vuelve a ejecutar.\n");
+    die("\nNo files found in: {$knowledgeBasePath}\n" .
+        "Add PDFs, TXT, or Markdown files to that folder and run the script again.\n");
 }
 
 echo "\nArchivos encontrados: " . count($files) . "\n";

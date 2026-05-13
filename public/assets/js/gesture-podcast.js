@@ -82,7 +82,7 @@
       if (!file) return;
       
       if (file.type !== 'application/pdf') {
-        alert('Por favor, selecciona un archivo PDF');
+        alert('Please select a PDF file');
         return;
       }
       
@@ -113,7 +113,7 @@
       case 'url':
         const url = articleUrl.value.trim();
         if (!url) {
-          alert('Por favor, introduce una URL');
+          alert('Please enter a URL');
           return;
         }
         inputData.url = url;
@@ -122,7 +122,7 @@
       case 'text':
         const text = articleText.value.trim();
         if (!text) {
-          alert('Por favor, introduce el texto del artículo');
+          alert('Please enter the article text');
           return;
         }
         inputData.text = text;
@@ -130,7 +130,7 @@
         
       case 'pdf':
         if (!pdfBase64) {
-          alert('Por favor, selecciona un archivo PDF');
+          alert('Please select a PDF file');
           return;
         }
         inputData.pdf_base64 = pdfBase64;
@@ -138,10 +138,10 @@
     }
 
     showProgress();
-    updateProgress('Creando tarea...', 'Preparando generación del podcast');
+    updateProgress('Creating task...', 'Preparing podcast generation');
 
     try {
-      // Crear job en background
+      // Create background job
       const csrfToken = getCsrfToken();
       const response = await fetch('/api/jobs/create.php', {
         method: 'POST',
@@ -160,7 +160,7 @@
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error?.message || data.message || 'Error al crear la tarea');
+        throw new Error(data.error?.message || data.message || 'Error creating task');
       }
 
       currentJobId = data.job_id;
@@ -169,11 +169,11 @@
       } catch (_) {}
       pollStartTime = Date.now();
       
-      // Mostrar mensaje de que puede navegar
-      updateProgress('Procesando...', 'Estamos creando tu podcast, danos unos minutos.');
+      // Show message so user can navigate while processing
+      updateProgress('Processing...', 'We are creating your podcast. Please wait a few minutes.');
       showNavigationHint();
       
-      // Disparar procesamiento (trigger) y empezar polling
+      // Trigger processing and start polling
       triggerProcessing();
       startPolling();
 
@@ -183,15 +183,15 @@
     }
   }
 
-  // Disparar el procesamiento del job (sin esperar respuesta)
+  // Trigger job processing without waiting for response
   function triggerProcessing() {
     fetch('/api/jobs/process.php', {
       method: 'POST',
       credentials: 'include'
-    }).catch(() => {}); // Ignorar errores, el cron también procesará
+    }).catch(() => {}); // Ignore errors, background processing will retry.
   }
 
-  // Iniciar polling del estado del job
+  // Start polling job status
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
     
@@ -204,46 +204,46 @@
         });
         
         if (!res.ok) {
-          throw new Error('Error consultando estado');
+          throw new Error('Error checking status');
         }
         
         const data = await res.json();
         const job = data.job;
         
         if (job.status === 'processing' || job.status === 'pending') {
-          // Actualizar progreso
+          // Update progress
           updateProgress(
-            job.progress_text || 'Procesando...',
-            job.status === 'pending' ? 'Estamos creando tu podcast, danos unos minutos.' : 'Estamos creando tu podcast, danos unos minutos.'
+            job.progress_text || 'Processing...',
+            job.status === 'pending' ? 'We are creating your podcast. Please wait a few minutes.' : 'We are creating your podcast. Please wait a few minutes.'
           );
           
-          // Ajustar intervalo de polling (más lento después de 30s)
+          // Slow down polling interval after 30s
           const elapsed = Date.now() - pollStartTime;
           if (elapsed > 30000 && pollTimer) {
             clearInterval(pollTimer);
             pollTimer = setInterval(poll, POLL_INTERVAL_LONG);
           }
           
-          // Timeout después de 15 minutos
+          // Timeout after 15 minutes
           if (elapsed > POLL_TIMEOUT) {
             stopPolling();
-            showError('La generación está tardando demasiado. Revisa el historial en unos minutos.');
+            showError('Generation is taking too long. Check history again in a few minutes.');
           }
           
         } else if (job.status === 'completed') {
-          // ¡Éxito!
+          // Success
           stopPolling();
           await handleJobCompleted(job.output_data);
           
         } else if (job.status === 'failed') {
-          // Error
+          // Failed
           stopPolling();
-          showError(job.error_message || 'Error al generar el podcast');
+          showError(job.error_message || 'Error generating podcast');
         }
         
       } catch (err) {
         console.error('Error polling:', err);
-        // No parar el polling por errores de red temporales
+        // Keep polling on temporary network errors.
       }
     };
     
@@ -264,11 +264,11 @@
     hideNavigationHint();
   }
 
-  // Cancelar job en progreso
+  // Cancel active job
   async function cancelJob() {
     if (!currentJobId) return;
     
-    if (!confirm('¿Estás seguro de que quieres cancelar la generación del podcast?')) {
+    if (!confirm('Are you sure you want to cancel podcast generation?')) {
       return;
     }
 
@@ -288,50 +288,50 @@
 
       if (res.ok && data.success) {
         stopPolling();
-        showToast('Generación cancelada', 'info');
+        showToast('Generation canceled', 'info');
         resetUI();
       } else {
-        showToast('Error al cancelar: ' + (data.error?.message || 'Error desconocido'), 'error');
+        showToast('Error canceling: ' + (data.error?.message || 'Unknown error'), 'error');
       }
     } catch (err) {
       console.error('Error cancelando job:', err);
-      showToast('Error de conexión al cancelar', 'error');
+      showToast('Connection error while canceling', 'error');
     }
   }
 
-  // Manejar job completado
+  // Handle completed job
   async function handleJobCompleted(outputData) {
     if (!outputData) {
-      showError('No se recibieron datos del podcast');
+      showError('No podcast data was received');
       return;
     }
     
     const audioUrl = outputData.audio_url;
     if (!audioUrl) {
-      showError('No se recibió URL del audio');
+      showError('No audio URL was received');
       return;
     }
     
     lastAudioUrl = audioUrl;
     lastTitle = outputData.title || 'Podcast';
 
-    // Update UI inmediata
+    // Update UI immediately
     audioPlayer.src = audioUrl;
-    podcastTitle.textContent = outputData.title || 'Podcast generado';
+    podcastTitle.textContent = outputData.title || 'Generated podcast';
     podcastSummary.textContent = outputData.summary || '';
     podcastScript.innerHTML = mdToHtml(formatScript(outputData.script_display || outputData.script));
 
     showResult();
     loadHistory();
     
-    // Notificación toast
-    showToast('🎙️ ¡Tu podcast está listo!', 'success');
+    // Toast notification
+    showToast('Your podcast is ready!', 'success');
 
-    // Fetch blob para descarga en background (no bloquea la UI)
+    // Fetch blob for background download prep (non-blocking UI)
     if (downloadBtn) {
       downloadBtn.disabled = true;
       downloadBtn.classList.add('opacity-50', 'cursor-wait');
-      downloadBtn.innerHTML = '<i class="iconoir-refresh animate-spin text-xs"></i> Preparando...';
+      downloadBtn.innerHTML = '<i class="iconoir-refresh animate-spin text-xs"></i> Preparing...';
     }
 
     try {
@@ -340,20 +340,20 @@
       if (downloadBtn) {
         downloadBtn.disabled = false;
         downloadBtn.classList.remove('opacity-50', 'cursor-wait');
-        downloadBtn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+        downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
       }
     } catch (e) {
-      console.error('Error al precargar blob tras generación:', e);
+      console.error('Error preloading blob after generation:', e);
       lastAudioBlob = null;
       if (downloadBtn) {
         downloadBtn.disabled = false;
         downloadBtn.classList.remove('opacity-50', 'cursor-wait');
-        downloadBtn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+        downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
       }
     }
   }
 
-  // Mostrar hint de que puede navegar
+  // Show hint that user can navigate away
   function showNavigationHint() {
     let hint = document.getElementById('navigation-hint');
     if (!hint) {
@@ -362,7 +362,7 @@
       hint.className = 'mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-700 flex items-center gap-2';
       hint.innerHTML = `
         <i class="iconoir-info-circle"></i>
-        <span>Puedes navegar por otras secciones y volver en unos minutos.</span>
+        <span>You can navigate to other sections and return in a few minutes.</span>
       `;
       if (progressPanel) {
         progressPanel.appendChild(hint);
@@ -432,7 +432,7 @@
     if (errorPanel) errorPanel.classList.add('hidden');
     if (generateBtn) {
       generateBtn.disabled = true;
-      generateBtn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Generando...';
+      generateBtn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Generating...';
     }
   }
 
@@ -448,7 +448,7 @@
     if (podcastResult) podcastResult.classList.remove('hidden');
     if (generateBtn) {
       generateBtn.disabled = false;
-      generateBtn.innerHTML = '<i class="iconoir-sparks"></i> <span>Generar Podcast</span>';
+      generateBtn.innerHTML = '<i class="iconoir-sparks"></i> <span>Generate Podcast</span>';
     }
   }
 
@@ -459,7 +459,7 @@
     if (errorMessage) errorMessage.textContent = message;
     if (generateBtn) {
       generateBtn.disabled = false;
-      generateBtn.innerHTML = '<i class="iconoir-sparks"></i> <span>Generar Podcast</span>';
+      generateBtn.innerHTML = '<i class="iconoir-sparks"></i> <span>Generate Podcast</span>';
     }
   }
 
@@ -470,7 +470,7 @@
     if (podcastResult) podcastResult.classList.add('hidden');
     if (generateBtn) {
       generateBtn.disabled = false;
-      generateBtn.innerHTML = '<i class="iconoir-sparks"></i> <span>Generar Podcast</span>';
+      generateBtn.innerHTML = '<i class="iconoir-sparks"></i> <span>Generate Podcast</span>';
     }
 
     articleUrl.value = '';
@@ -484,19 +484,18 @@
     lastAudioUrl = '';
     lastTitle = '';
 
-    // Si hay un job activo en servidor, reanudar visualización/progreso
-    // Esto cubre el caso de volver desde "crear otro podcast" mientras sigue generando
+    // If there is an active server job, resume progress visualization.
     try {
       const savedId = sessionStorage.getItem('podcast_job_id');
       if (savedId) {
-        // Mostrar panel y reanudar polling vía API
+        // Show panel and resume polling via API.
         showProgress();
-        updateProgress('Procesando...', 'Recuperando estado del podcast en proceso...');
+        updateProgress('Processing...', 'Recovering active podcast status...');
         checkActiveJobs();
         return;
       }
     } catch (_) {}
-    // Si no hay info local, igualmente consultar al servidor
+    // If no local state, still check server state.
     checkActiveJobs();
   }
 
@@ -514,10 +513,10 @@
     const executionId = urlParams.get('id');
     
     if (executionId) {
-      // Cargar el contenido automáticamente
+      // Auto-load selected execution content.
       loadExecution(executionId);
       
-      // Limpiar el parámetro de la URL sin recargar (opcional, para mejor UX)
+      // Remove query parameter without reload.
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     }
@@ -529,24 +528,24 @@
       const data = await res.json();
       
       if (data.success && data.jobs && data.jobs.length > 0) {
-        // Buscar job de podcast activo
+        // Find active podcast job.
         const podcastJob = data.jobs.find(j => j.job_type === 'podcast');
         if (podcastJob) {
-          // Reanudar polling para este job
+          // Resume polling for this job.
           currentJobId = podcastJob.id;
-          pollStartTime = Date.now() - 30000; // Asumir que ya lleva tiempo
+          pollStartTime = Date.now() - 30000; // Assume it has already been running.
           showProgress();
           updateProgress(
-            podcastJob.progress_text || 'Procesando...',
-            'Recuperando estado del podcast en proceso...'
+            podcastJob.progress_text || 'Processing...',
+            'Recovering active podcast status...'
           );
           showNavigationHint();
           startPolling();
         }
       }
     } catch (err) {
-      // Silencioso si falla
-      console.log('No se pudo verificar jobs activos');
+      // Silent fail.
+      console.log('Could not verify active jobs');
     }
   }
 
@@ -558,13 +557,13 @@
       const data = await res.json();
 
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error al cargar</div>';
+        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Could not load</div>';
         return;
       }
 
       renderHistory(data.items || []);
     } catch (err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error de conexión</div>';
+      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Connection error</div>';
     }
   }
 
@@ -575,8 +574,8 @@
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-podcast text-xl text-orange-400"></i>
           </div>
-          <p class="text-sm text-slate-500">Aún no has creado podcasts</p>
-          <p class="text-xs text-slate-400 mt-1">Usa el formulario para empezar</p>
+          <p class="text-sm text-slate-500">You have not created podcasts yet</p>
+          <p class="text-xs text-slate-400 mt-1">Use the form to get started</p>
         </div>
       `;
       return;
@@ -597,7 +596,7 @@
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Eliminar">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -627,19 +626,19 @@
       const data = await res.json();
 
       if (!res.ok || !data.execution) {
-        alert('Error al cargar el podcast');
+        alert('Could not load the podcast');
         return;
       }
 
       const exec = data.execution;
       const outputData = exec.output_data || {};
 
-      // Mostrar resultado
+      // Show result
       podcastTitle.textContent = exec.title || 'Podcast';
       podcastSummary.textContent = outputData.summary || '';
       podcastScript.innerHTML = mdToHtml(formatScript(outputData.script_display || outputData.script || ''));
       
-      // Resaltar en historial
+      // Highlight in history
       document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
       const activeItem = document.querySelector(`.history-item[data-id="${id}"]`);
       if (activeItem) activeItem.classList.add('active');
@@ -650,14 +649,14 @@
         lastAudioUrl = outputData.audio_url;
         lastTitle = exec.title || 'Podcast';
         
-        // Mostrar resultado inmediatamente mientras el audio carga en background
+        // Show result immediately while audio loads in background.
         showResult();
 
-        // Fetch blob para descarga en background (no bloquea la UI)
+        // Fetch blob for background download prep (non-blocking UI).
         if (downloadBtn) {
           downloadBtn.disabled = true;
           downloadBtn.classList.add('opacity-50', 'cursor-wait');
-          downloadBtn.innerHTML = '<i class="iconoir-refresh animate-spin text-xs"></i> Preparando...';
+          downloadBtn.innerHTML = '<i class="iconoir-refresh animate-spin text-xs"></i> Preparing...';
         }
 
         fetch(outputData.audio_url, { credentials: 'include' })
@@ -667,28 +666,28 @@
             if (downloadBtn) {
               downloadBtn.disabled = false;
               downloadBtn.classList.remove('opacity-50', 'cursor-wait');
-              downloadBtn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+              downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
             }
           })
           .catch(e => {
-            console.error('Error al precargar blob:', e);
+            console.error('Error preloading blob:', e);
             lastAudioBlob = null;
             if (downloadBtn) {
               downloadBtn.disabled = false;
               downloadBtn.classList.remove('opacity-50', 'cursor-wait');
-              downloadBtn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+              downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
             }
           });
       } else {
         showResult();
       }
     } catch (err) {
-      alert('Error al cargar el podcast');
+      alert('Could not load the podcast');
     }
   }
 
   async function deleteExecution(id) {
-    if (!confirm('¿Eliminar este podcast del historial?')) return;
+    if (!confirm('Delete this podcast from history?')) return;
 
     try {
       const csrfToken = getCsrfToken();
@@ -706,14 +705,14 @@
         loadHistory();
       }
     } catch (err) {
-      alert('Error al eliminar');
+      alert('Error deleting');
     }
   }
 
   // === Utility functions ===
   function formatScript(script) {
     if (!script) return '';
-    // Añadir separación entre intervenciones de los presentadores (admite nombres actuales y anteriores)
+    // Add spacing between speaker turns.
     return stripAudioTags(script).replace(/\n(Ana:|Carlos:|Iris:|Bruno:)/g, '\n\n$1');
   }
 

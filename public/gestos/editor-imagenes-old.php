@@ -24,13 +24,13 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'Todos los gestos';
-$headerTitle = 'Editor de imágenes';
+$headerBackText = 'All gestures';
+$headerTitle = 'Image editor';
 $headerIcon = 'iconoir-media-image';
 $headerIconColor = 'from-amber-500 to-orange-600';
 $headerDrawerId = 'gesture-history-drawer';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
@@ -42,7 +42,7 @@ $headerDrawerId = 'gesture-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-amber-500"></i>
-            Historial
+            History
           </h2>
           <button id="new-image-btn" class="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Nueva imagen">
             <i class="iconoir-plus text-lg"></i>
@@ -53,7 +53,7 @@ $headerDrawerId = 'gesture-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Cargando...
+          Loading...
         </div>
       </div>
     </aside>
@@ -61,7 +61,7 @@ $headerDrawerId = 'gesture-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'gesture-history-drawer';
-    $drawerTitle = 'Historial';
+    $drawerTitle = 'History';
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-amber-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -81,10 +81,10 @@ $headerDrawerId = 'gesture-history-drawer';
             </div>
             <div>
               <h1 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                Editor de imágenes
+                Image editor
                 <span class="text-lg">🍌</span>
               </h1>
-              <p class="text-sm text-slate-600">Genera imágenes con Nanobanana</p>
+              <p class="text-sm text-slate-600">Generate images with Nanobanana</p>
             </div>
           </div>
     
@@ -94,8 +94,8 @@ $headerDrawerId = 'gesture-history-drawer';
             <!-- Título y Toggle de Modo -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
               <div>
-                <h1 class="text-2xl font-bold text-slate-800">Editor de Imágenes</h1>
-                <p class="text-slate-500">Genera o edita imágenes con inteligencia artificial</p>
+                <h1 class="text-2xl font-bold text-slate-800">Image editor</h1>
+                <p class="text-slate-500">Generate or edit images with AI</p>
               </div>
               
               <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -125,11 +125,11 @@ $headerDrawerId = 'gesture-history-drawer';
                 <div class="flex bg-white p-1.5 rounded-xl border-2 border-slate-200 shadow-sm">
                   <button type="button" id="mode-generate" class="mode-toggle-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 active">
                     <i class="iconoir-sparks mr-1.5"></i>
-                    Generar
+                    Generate
                   </button>
                   <button type="button" id="mode-edit" class="mode-toggle-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200">
                     <i class="iconoir-edit mr-1.5"></i>
-                    Editar
+                    Edit
                   </button>
                   <input type="hidden" name="mode" id="current-mode" value="generate" />
                 </div>
@@ -141,20 +141,20 @@ $headerDrawerId = 'gesture-history-drawer';
               <div class="p-4 bg-purple-50/50 border border-purple-200/50 rounded-xl">
                 <p class="text-sm text-purple-700 mb-3 flex items-center gap-2">
                   <i class="iconoir-info-circle"></i>
-                  <span><strong>Modo edición:</strong> Sube una imagen fuente para editarla. Opcionalmente, añade una imagen objetivo para fusionar elementos.</span>
+                  <span><strong>Edit mode:</strong> Upload a source image to edit. Optionally add a target image to blend elements.</span>
                 </p>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <!-- Imagen Fuente -->
                   <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-2">Imagen fuente <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">Source image <span class="text-red-500">*</span></label>
                     <div id="source-image-dropzone" class="relative border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
                       <input type="file" id="source-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                       <div id="source-image-placeholder" class="flex flex-col items-center gap-2">
                         <i class="iconoir-upload text-2xl text-slate-400"></i>
-                        <span class="text-xs text-slate-500">Arrastra o haz clic</span>
+                        <span class="text-xs text-slate-500">Drag or click</span>
                       </div>
-                      <img id="source-image-preview" src="" alt="Fuente" class="hidden max-h-24 rounded-lg object-contain" />
+                      <img id="source-image-preview" src="" alt="Source" class="hidden max-h-24 rounded-lg object-contain" />
                       <button type="button" id="source-image-clear" class="hidden absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full text-xs hover:bg-red-600">
                         <i class="iconoir-xmark"></i>
                       </button>
@@ -163,14 +163,14 @@ $headerDrawerId = 'gesture-history-drawer';
                   
                   <!-- Imagen Objetivo (opcional) -->
                   <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-2">Imagen objetivo <span class="text-slate-400">(opcional)</span></label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">Target image <span class="text-slate-400">(optional)</span></label>
                     <div id="target-image-dropzone" class="relative border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer min-h-[120px] flex flex-col items-center justify-center">
                       <input type="file" id="target-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                       <div id="target-image-placeholder" class="flex flex-col items-center gap-2">
                         <i class="iconoir-upload text-2xl text-slate-400"></i>
-                        <span class="text-xs text-slate-500">Arrastra o haz clic</span>
+                        <span class="text-xs text-slate-500">Drag or click</span>
                       </div>
-                      <img id="target-image-preview" src="" alt="Objetivo" class="hidden max-h-24 rounded-lg object-contain" />
+                      <img id="target-image-preview" src="" alt="Target" class="hidden max-h-24 rounded-lg object-contain" />
                       <button type="button" id="target-image-clear" class="hidden absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full text-xs hover:bg-red-600">
                         <i class="iconoir-xmark"></i>
                       </button>
@@ -182,8 +182,8 @@ $headerDrawerId = 'gesture-history-drawer';
             
             <!-- Campo principal: Descripción -->
             <div>
-              <label id="description-label" class="block text-sm font-semibold text-slate-700 mb-2">¿Qué imagen quieres crear?</label>
-              <textarea id="image-description" rows="3" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white/80" placeholder="Describe la imagen que necesitas. Sé específico: objetos, escena, ambiente, colores..."></textarea>
+              <label id="description-label" class="block text-sm font-semibold text-slate-700 mb-2">What image do you want to create?</label>
+              <textarea id="image-description" rows="3" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white/80" placeholder="Describe the image you need. Be specific: objects, scene, atmosphere, colors..."></textarea>
             </div>
 
             <!-- Selectores en tabs horizontales (solo para modo generar) -->
@@ -193,11 +193,11 @@ $headerDrawerId = 'gesture-history-drawer';
               <div class="flex border-b border-slate-200/50 bg-slate-50/50 overflow-x-auto">
                 <button type="button" data-tab="format" class="option-tab active flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
                   <i class="iconoir-frame"></i>
-                  <span>Formato</span>
+                  <span>Format</span>
                 </button>
                 <button type="button" data-tab="style" class="option-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
                   <i class="iconoir-design-pencil"></i>
-                  <span>Estilo</span>
+                  <span>Style</span>
                 </button>
                 <button type="button" data-tab="color" class="option-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
                   <i class="iconoir-color-filter"></i>
@@ -205,11 +205,11 @@ $headerDrawerId = 'gesture-history-drawer';
                 </button>
                 <button type="button" data-tab="lighting" class="option-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
                   <i class="iconoir-sun-light"></i>
-                  <span>Luz</span>
+                  <span>Light</span>
                 </button>
                 <button type="button" data-tab="composition" class="option-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-slate-600 hover:text-amber-600 border-b-2 border-transparent transition-all flex items-center gap-2">
                   <i class="iconoir-frame-select"></i>
-                  <span>Composición</span>
+                  <span>Composition</span>
                 </button>
               </div>
 
@@ -273,14 +273,14 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="style" value="" class="hidden peer" checked />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-prohibition text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Ninguno</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">None</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="photographic" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-camera text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Fotográfico</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Photographic</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
@@ -294,14 +294,14 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="style" value="corporate" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-building text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Corporativo</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Corporate</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="style" value="minimalist" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-minus text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Minimalista</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Minimalist</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
@@ -322,7 +322,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="style" value="isometric" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-cube text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Isométrico</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Isometric</span>
                       </div>
                     </label>
 
@@ -331,7 +331,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="style" value="headshot-pro" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-user text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Retrato Pro</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Pro Portrait</span>
                       </div>
                     </label>
 
@@ -339,7 +339,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="style" value="silicon-valley" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-bright-crown text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Corporativo Pro</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Pro Corporate</span>
                       </div>
                     </label>
 
@@ -347,7 +347,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="style" value="luxury-product" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-diamond text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Producto Lujo</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Luxury Product</span>
                       </div>
                     </label>
                   </div>
@@ -360,35 +360,35 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="color" value="" class="hidden peer" checked />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-prohibition text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Ninguno</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">None</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="warm" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500"></div>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Cálidos</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Warm</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="cool" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500"></div>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Fríos</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Cool</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="corporate" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c]"></div>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Corporativo</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Corporate</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="monochrome" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-slate-300 to-slate-600"></div>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Monocromo</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Monochrome</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
@@ -409,7 +409,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="color" value="vibrant" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-red-500 via-yellow-500 to-green-500"></div>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Vibrante</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Vibrant</span>
                       </div>
                     </label>
                   </div>
@@ -422,7 +422,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="lighting" value="" class="hidden peer" checked />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-prohibition text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Ninguno</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">None</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
@@ -436,42 +436,42 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="lighting" value="studio" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-flash text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Estudio</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Studio</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="dramatic" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-half-moon text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Dramática</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Dramatic</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="soft" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-cloud text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Suave</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Soft</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="backlight" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-lens text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Contraluz</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Backlight</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="golden" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-sunrise text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Hora dorada</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Golden hour</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="lighting" value="volumetric" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-sparks text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Volumétrica</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Volumetric</span>
                       </div>
                     </label>
                   </div>
@@ -484,7 +484,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="composition" value="" class="hidden peer" checked />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-prohibition text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Ninguno</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">None</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
@@ -498,28 +498,28 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="composition" value="closeup" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-zoom-in text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Primer plano</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Close-up</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="wide" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-zoom-out text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Plano general</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Wide shot</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="above" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-arrow-down text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Cenital</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Top-down</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="composition" value="below" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-arrow-up text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Contrapicado</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Low angle</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
@@ -533,7 +533,7 @@ $headerDrawerId = 'gesture-history-drawer';
                       <input type="radio" name="composition" value="negative-space" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
                         <i class="iconoir-square text-lg shrink-0"></i>
-                        <span class="text-[10px] sm:text-xs font-medium truncate">Espacio negativo</span>
+                        <span class="text-[10px] sm:text-xs font-medium truncate">Negative space</span>
                       </div>
                     </label>
                   </div>
@@ -546,16 +546,16 @@ $headerDrawerId = 'gesture-history-drawer';
             <div id="selection-summary" class="p-3 bg-amber-50/50 border border-amber-200/50 rounded-xl text-sm text-amber-800">
               <div class="flex items-center gap-2 mb-1">
                 <i class="iconoir-info-circle"></i>
-                <span class="font-medium">Configuración actual</span>
+                <span class="font-medium">Current settings</span>
               </div>
-              <p id="summary-text" class="text-xs text-amber-700">Formato 1:1 • Sin estilo específico</p>
+              <p id="summary-text" class="text-xs text-amber-700">Format 1:1 • No specific style</p>
             </div>
             
             <!-- Botón generar -->
             <div class="flex justify-end pt-2 border-t border-slate-200/50">
               <button type="submit" id="generate-image-btn" class="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2">
                 <i class="iconoir-sparks"></i>
-                <span>Generar imagen</span>
+                <span>Generate image</span>
               </button>
             </div>
           </form>
@@ -563,13 +563,13 @@ $headerDrawerId = 'gesture-history-drawer';
           <!-- Resultado (oculto inicialmente) -->
           <div id="image-result" class="hidden mt-8 glass-strong rounded-2xl border border-slate-200/50 p-6 shadow-sm">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold text-slate-800">Imagen generada</h2>
+              <h2 class="text-lg font-semibold text-slate-800">Generated image</h2>
               <div class="flex gap-2">
                 <button id="download-image-btn" class="px-3 py-1.5 text-sm text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-smooth flex items-center gap-1.5">
-                  <i class="iconoir-download"></i> Descargar
+                  <i class="iconoir-download"></i> Download
                 </button>
                 <button id="regenerate-image-btn" class="px-3 py-1.5 text-sm text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-smooth flex items-center gap-1.5">
-                  <i class="iconoir-refresh"></i> Regenerar
+                  <i class="iconoir-refresh"></i> Regenerate
                 </button>
               </div>
             </div>
@@ -587,8 +587,8 @@ $headerDrawerId = 'gesture-history-drawer';
                 <div class="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
                 <div class="absolute inset-0 flex items-center justify-center text-2xl">🍌</div>
               </div>
-              <span class="text-amber-700 font-medium">Generando imagen con Nanobanana...</span>
-              <span class="text-amber-600 text-sm">Esto puede tardar unos segundos</span>
+              <span class="text-amber-700 font-medium">Generating image with Nanobanana...</span>
+              <span class="text-amber-600 text-sm">This may take a few seconds</span>
             </div>
           </div>
         </div><!-- /max-w-4xl -->
@@ -601,7 +601,7 @@ $headerDrawerId = 'gesture-history-drawer';
     <button id="lightbox-close" class="absolute top-4 right-4 text-white/80 hover:text-white p-2">
       <i class="iconoir-xmark text-2xl"></i>
     </button>
-    <img id="lightbox-image" src="" alt="Imagen ampliada" class="max-w-full max-h-full object-contain rounded-lg" />
+    <img id="lightbox-image" src="" alt="Enlarged image" class="max-w-full max-h-full object-contain rounded-lg" />
   </div>
 
   <script>window.CSRF_TOKEN = '<?php echo htmlspecialchars($csrfToken); ?>';</script>

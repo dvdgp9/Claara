@@ -1,6 +1,6 @@
 /**
- * Voice: Lex - Asistente Legal de Ebone
- * Maneja el chat especializado con contexto legal
+ * Voice: Lex - Legal Assistant
+ * Handles the specialized legal-context chat.
  */
 
 (function() {
@@ -42,7 +42,7 @@
     if (!md) return '';
     let s = escapeHtml(md);
     
-    // Blockquotes (antes de otros elementos)
+    // Blockquotes before other elements.
     s = s.replace(/^&gt;\s*(.+)$/gm, '<blockquote>$1</blockquote>');
     
     // Headers
@@ -57,7 +57,7 @@
     // Code
     s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
     
-    // Lists (detectar bloques de listas)
+    // Lists
     const lines = s.split('\n');
     let inList = false;
     let result = [];
@@ -86,7 +86,7 @@
     
     s = result.join('\n');
     
-    // Line breaks (pero no dentro de listas)
+    // Line breaks, but not inside lists.
     s = s.replace(/\n(?!<\/?(ul|li|h[1-3]|blockquote)>)/g, '<br>');
     
     return s;
@@ -95,10 +95,10 @@
   function timeAgo(date) {
     const now = new Date();
     const diff = Math.floor((now - new Date(date)) / 1000);
-    if (diff < 60) return 'ahora';
-    if (diff < 3600) return `hace ${Math.floor(diff/60)} min`;
-    if (diff < 86400) return `hace ${Math.floor(diff/3600)}h`;
-    return new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    if (diff < 60) return 'now';
+    if (diff < 3600) return `${Math.floor(diff/60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+    return new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   }
 
   // ===== DOCUMENTS =====
@@ -110,7 +110,7 @@
       });
       
       if (!res.ok) {
-        docsList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Error al cargar</div>';
+        docsList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Error loading</div>';
         return;
       }
       
@@ -118,7 +118,7 @@
       const docs = data.documents || [];
       
       if (docs.length === 0) {
-        docsList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Sin documentos</div>';
+        docsList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No documents</div>';
         return;
       }
       
@@ -149,14 +149,14 @@
       
     } catch (e) {
       console.error('Error loading documents:', e);
-      docsList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Error al cargar</div>';
+      docsList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Error loading</div>';
     }
   }
   
   async function openDocViewer(docId) {
     docViewerModal?.classList.remove('hidden');
-    docViewerTitle.textContent = 'Cargando...';
-    docViewerContent.innerHTML = '<div class="text-center text-slate-400 py-8"><i class="iconoir-refresh animate-spin text-2xl mb-2"></i><p>Cargando documento...</p></div>';
+    docViewerTitle.textContent = 'Loading...';
+    docViewerContent.innerHTML = '<div class="text-center text-slate-400 py-8"><i class="iconoir-refresh animate-spin text-2xl mb-2"></i><p>Loading document...</p></div>';
     
     try {
       const res = await fetch(`/api/voices/doc.php?voice_id=${VOICE_ID}&doc_id=${encodeURIComponent(docId)}`, {
@@ -165,28 +165,28 @@
       });
       
       if (!res.ok) {
-        docViewerContent.innerHTML = '<div class="text-center text-red-600 py-8"><i class="iconoir-warning-circle text-2xl mb-2"></i><p>Error al cargar el documento</p></div>';
+        docViewerContent.innerHTML = '<div class="text-center text-red-600 py-8"><i class="iconoir-warning-circle text-2xl mb-2"></i><p>Error loading document</p></div>';
         return;
       }
       
       const data = await res.json();
       docViewerTitle.textContent = data.document.name;
       
-      // Si es archivo binario (PDF), mostrar mensaje con opción de descarga
+      // If this is a binary file (PDF), show a message with download/open option.
       if (data.document.isBinary) {
         const downloadUrl = `/api/voices/doc.php?voice_id=${VOICE_ID}&doc_id=${encodeURIComponent(docId)}&download=1`;
         docViewerContent.innerHTML = `
           <div class="text-center py-12 px-6">
             <i class="iconoir-page text-6xl text-gray-400 mb-4"></i>
-            <h3 class="text-xl font-semibold mb-2">Archivo PDF</h3>
+            <h3 class="text-xl font-semibold mb-2">PDF file</h3>
             <p class="text-gray-600 mb-4">${data.document.message}</p>
             <a href="${downloadUrl}" target="_blank" 
                class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium mb-4">
               <i class="iconoir-download"></i>
-              <span>Abrir PDF en nueva ventana</span>
+              <span>Open PDF in a new window</span>
             </a>
             <div class="flex flex-col gap-2 max-w-md mx-auto mt-6">
-              <p class="text-sm text-gray-500">💡 Puedes preguntarle a Lex sobre el contenido de este convenio y él te responderá con la información indexada.</p>
+              <p class="text-sm text-gray-500">You can ask Lex about this document and it will answer using the indexed information.</p>
             </div>
           </div>
         `;
@@ -198,7 +198,7 @@
       
     } catch (e) {
       console.error('Error loading document:', e);
-      docViewerContent.innerHTML = '<div class="text-center text-red-600 py-8"><i class="iconoir-warning-circle text-2xl mb-2"></i><p>Error de conexión</p></div>';
+      docViewerContent.innerHTML = '<div class="text-center text-red-600 py-8"><i class="iconoir-warning-circle text-2xl mb-2"></i><p>Connection error</p></div>';
     }
   }
   
@@ -215,7 +215,7 @@
       
       const data = await res.json();
       if (data.success) {
-        window.LEX_DOCS = data.documents; // Guardar en caché para búsqueda
+        window.LEX_DOCS = data.documents; // Cache for search.
         renderDocs(data.documents);
       }
     } catch (e) {
@@ -227,7 +227,7 @@
     if (!docsList) return;
     
     if (docs.length === 0) {
-      docsList.innerHTML = '<div class="text-center text-slate-400 py-8 text-sm">No se encontraron documentos</div>';
+      docsList.innerHTML = '<div class="text-center text-slate-400 py-8 text-sm">No documents found</div>';
       return;
     }
 
@@ -239,7 +239,7 @@
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-slate-700 truncate group-hover:text-rose-600 transition-smooth">${doc.name}</div>
-            <div class="text-[10px] text-slate-400 uppercase tracking-wider">${doc.type === 'rag' ? 'Convenio' : 'Referencia'}</div>
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider">${doc.type === 'rag' ? 'Agreement' : 'Reference'}</div>
           </div>
         </div>
       </button>
@@ -261,7 +261,7 @@
   }
 
   // ===== INIT =====
-  // Exponer visor de documentos para llamadas externas (p. ej., drawer móvil)
+  // Expose document viewer for external calls, such as the mobile drawer.
   window.lexOpenDocViewer = openDocViewer;
 
   async function init() {
@@ -295,7 +295,7 @@
       });
       
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Sin historial</div>';
+        historyList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No history</div>';
         return;
       }
       
@@ -303,7 +303,7 @@
       const items = data.items || [];
       
       if (items.length === 0) {
-        historyList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Sin consultas anteriores</div>';
+        historyList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No previous queries</div>';
         return;
       }
       
@@ -314,7 +314,7 @@
             <p class="text-sm font-medium text-slate-700 truncate group-hover:text-rose-600">${escapeHtml(item.title)}</p>
             <span class="text-xs text-slate-400">${timeAgo(item.created_at)}</span>
           </div>
-          <button class="history-delete opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 rounded transition-smooth" title="Eliminar">
+          <button class="history-delete opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 rounded transition-smooth" title="Delete">
             <i class="iconoir-trash text-sm"></i>
           </button>
         </div>
@@ -340,7 +340,7 @@
       
     } catch (e) {
       console.error('Error loading history:', e);
-      historyList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Error al cargar</div>';
+      historyList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Error loading</div>';
     }
   }
 
@@ -374,7 +374,7 @@
   }
 
   async function deleteExecution(id) {
-    if (!confirm('¿Eliminar esta consulta del historial?')) return;
+    if (!confirm('Delete this query from history?')) return;
     
     try {
       const res = await fetch('/api/voices/delete.php', {
@@ -463,7 +463,7 @@
         body: JSON.stringify({
           voice_id: VOICE_ID,
           message: text,
-          history: messageHistory.slice(0, -1), // Sin el mensaje actual
+          history: messageHistory.slice(0, -1), // Without the current message.
           execution_id: currentExecutionId
         }),
         credentials: 'include'
@@ -473,7 +473,7 @@
       
       if (!res.ok) {
         const err = await res.json();
-        appendMessage('assistant', 'Error: ' + (err.error?.message || 'No se pudo procesar la consulta'));
+        appendMessage('assistant', 'Error: ' + (err.error?.message || 'Could not process the query'));
         return;
       }
       
@@ -485,7 +485,7 @@
       }
       
       // Add response
-      const reply = data.reply || data.message?.content || 'Sin respuesta';
+      const reply = data.reply || data.message?.content || 'No response';
       messageHistory.push({ role: 'assistant', content: reply });
       appendMessage('assistant', reply);
       
@@ -494,7 +494,7 @@
       
     } catch (e) {
       typingIndicator?.classList.add('hidden');
-      appendMessage('assistant', 'Error de conexión. Por favor, inténtalo de nuevo.');
+      appendMessage('assistant', 'Connection error. Please try again.');
     }
   }
 

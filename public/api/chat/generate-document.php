@@ -129,12 +129,12 @@ function extractTitleFromMarkdown(string $markdown): ?string {
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Sesión no válida', 401);
+    Response::error('unauthorized', 'Invalid session', 401);
 }
 
 // Validar método
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Solo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 // Parsear input

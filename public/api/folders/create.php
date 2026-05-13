@@ -9,7 +9,7 @@ use Auth\AuthService;
 use Repos\FoldersRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 $user = AuthService::requireAuth();
@@ -21,11 +21,11 @@ $parentId = isset($input['parent_id']) ? (int)$input['parent_id'] : null;
 $sortOrder = isset($input['sort_order']) ? (int)$input['sort_order'] : 0;
 
 if ($name === '') {
-    Response::error('validation_error', 'El nombre es obligatorio', 400);
+    Response::error('validation_error', 'Name is required', 400);
 }
 
 if (mb_strlen($name) > 150) {
-    Response::error('validation_error', 'El nombre no puede exceder 150 caracteres', 400);
+    Response::error('validation_error', 'Name cannot exceed 150 characters', 400);
 }
 
 $repo = new FoldersRepo();

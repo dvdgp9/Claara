@@ -9,7 +9,7 @@ use Auth\AuthService;
 use Repos\FoldersRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 $user = AuthService::requireAuth();
@@ -19,13 +19,13 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $id = (int)($input['id'] ?? 0);
 
 if ($id <= 0) {
-    Response::error('validation_error', 'ID de carpeta inválido', 400);
+    Response::error('validation_error', 'Invalid folder ID', 400);
 }
 
 $repo = new FoldersRepo();
 
 if (!$repo->delete((int)$user['id'], $id)) {
-    Response::error('not_found', 'Carpeta no encontrada', 404);
+    Response::error('not_found', 'Folder not found', 404);
 }
 
 Response::json(['ok' => true]);

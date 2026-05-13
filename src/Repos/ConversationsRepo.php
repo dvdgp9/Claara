@@ -53,7 +53,7 @@ class ConversationsRepo {
     public function create(int $userId, ?string $title = null): int
     {
         $now = date('Y-m-d H:i:s');
-        $title = $title && trim($title) !== '' ? trim($title) : 'Nueva conversación';
+        $title = $title && trim($title) !== '' ? trim($title) : 'New conversation';
         $stmt = $this->pdo->prepare('INSERT INTO conversations (user_id, title, status, created_at, updated_at) VALUES (?,?,"active",?,?)');
         $stmt->execute([$userId, $title, $now, $now]);
         return (int)$this->pdo->lastInsertId();
@@ -97,11 +97,11 @@ class ConversationsRepo {
 
     public function autoTitle(int $conversationId, string $firstMessage): void
     {
-        // Solo si el título es el genérico "Nueva conversación"
+        // Only if the title is the generic default.
         $conv = $this->pdo->prepare('SELECT title FROM conversations WHERE id = ? LIMIT 1');
         $conv->execute([$conversationId]);
         $row = $conv->fetch();
-        if (!$row || $row['title'] !== 'Nueva conversación') {
+        if (!$row || !in_array($row['title'], ['New conversation', 'Nueva conversación'], true)) {
             return;
         }
         // Tomar primeras 60 caracteres del mensaje
@@ -145,7 +145,7 @@ class ConversationsRepo {
             require_once __DIR__ . '/FoldersRepo.php';
             $foldersRepo = new FoldersRepo($this->pdo);
             if (!$foldersRepo->findByIdForUser($folderId, $userId)) {
-                throw new \Exception('Carpeta no encontrada');
+                throw new \Exception('Folder not found');
             }
         }
         

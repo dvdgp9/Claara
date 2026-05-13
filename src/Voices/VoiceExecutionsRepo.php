@@ -29,7 +29,7 @@ class VoiceExecutionsRepo
         $stmt->execute([
             'user_id' => $data['user_id'],
             'voice_id' => $data['voice_id'],
-            'title' => $data['title'] ?? 'Nueva consulta',
+            'title' => $data['title'] ?? 'New query',
             'input_data' => json_encode($data['input_data'] ?? []),
             'output_content' => $data['output_content'] ?? '',
             'model' => $data['model'] ?? null

@@ -19,101 +19,101 @@ $hasImageGenAccess = $accessRepo->hasImageGenerationAccess($userId);
 $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = 'conversations';
 $useTabsJs = true;
-$userName = htmlspecialchars($user['first_name'] ?? 'Usuario');
+$userName = htmlspecialchars($user['first_name'] ?? 'there');
 
-// Configuración del header unificado
+// Shared header configuration
 $headerShowConvTitle = true;
 $headerShowSearch = true;
 $headerShowFaq = true;
 $headerDrawerId = 'conversations-drawer';
 $headerShowLogo = true;
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
     <?php include __DIR__ . '/includes/left-tabs.php'; ?>
 
-    <!-- Sidebar conversaciones (solo desktop) -->
+    <!-- Conversations sidebar (desktop only) -->
     <aside id="conversations-sidebar" class="hidden lg:flex w-80 bg-white border-r border-slate-200 flex-col shadow-sm">
       <div class="p-5 border-b border-slate-200">
         <div class="flex items-center gap-3 mb-6">
-          <img src="/assets/images/logo.png" alt="Ebonia" class="h-9">
+          <img src="/assets/images/logo.png" alt="iaiaPRO" class="h-9">
         </div>
         <button id="new-conv-btn" class="w-full py-2.5 px-4 rounded-lg gradient-brand-btn text-white font-medium shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2">
-          <span class="text-lg">+</span> Nueva conversación
+          <span class="text-lg">+</span> New conversation
         </button>
       </div>
       <div class="flex-1 overflow-y-auto p-3">
-        <!-- Sección Carpetas -->
+        <!-- Folders -->
         <div class="mb-4">
           <div class="flex items-center justify-between mb-2 px-2">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Carpetas</div>
-            <button id="new-folder-btn" class="p-1 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors" title="Nueva carpeta">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Folders</div>
+            <button id="new-folder-btn" class="p-1 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors" title="New folder">
               <i class="iconoir-folder-plus text-sm"></i>
             </button>
           </div>
           <ul id="folder-list" class="space-y-1">
-            <!-- Opción "Todas" siempre visible -->
+            <!-- "All" is always visible -->
             <li>
               <button data-folder-id="-1" class="folder-item w-full text-left p-2 rounded-lg transition-all duration-200 flex items-center gap-2 hover:bg-slate-50 group">
                 <i class="iconoir-folder text-[#23AAC5]"></i>
-                <span class="flex-1 text-sm text-slate-700">Todas</span>
+                <span class="flex-1 text-sm text-slate-700">All</span>
                 <span class="text-xs text-slate-400" id="all-count">0</span>
               </button>
             </li>
-            <!-- Opción "Sin carpeta" -->
+            <!-- "No folder" -->
             <li>
               <button data-folder-id="0" class="folder-item w-full text-left p-2 rounded-lg transition-all duration-200 flex items-center gap-2 hover:bg-slate-50 group">
                 <i class="iconoir-folder text-[#23AAC5]"></i>
-                <span class="flex-1 text-sm text-slate-700">Sin carpeta</span>
+                <span class="flex-1 text-sm text-slate-700">No folder</span>
                 <span class="text-xs text-slate-400" id="root-count">0</span>
               </button>
             </li>
-            <!-- Carpetas dinámicas se insertarán aquí -->
+            <!-- Dynamic folders are inserted here -->
           </ul>
         </div>
         
-        <!-- Sección Conversaciones -->
+        <!-- Conversations -->
         <div>
           <div class="flex items-center justify-between mb-2 px-2">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Conversaciones</div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Conversations</div>
             <select id="sort-select" class="text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:border-[#23AAC5]">
-              <option value="updated_at">Recientes</option>
-              <option value="favorite">Favoritos</option>
-              <option value="created_at">Creación</option>
-              <option value="title">Alfabético</option>
+              <option value="updated_at">Recent</option>
+              <option value="favorite">Favorites</option>
+              <option value="created_at">Created</option>
+              <option value="title">Alphabetical</option>
             </select>
           </div>
           <ul id="conv-list" class="space-y-1">
-            <li class="text-slate-400 text-sm px-3 py-2">(vacío)</li>
+            <li class="text-slate-400 text-sm px-3 py-2">(empty)</li>
           </ul>
         </div>
       </div>
     </aside>
 
-    <!-- Mobile Drawer para conversaciones -->
+    <!-- Mobile drawer for conversations -->
     <?php 
     $drawerId = 'conversations-drawer';
-    $drawerTitle = 'Conversaciones';
+    $drawerTitle = 'Conversations';
     $drawerIcon = 'iconoir-chat-bubble';
     $drawerIconColor = 'text-[#23AAC5]';
     $drawerShowNewButton = true;
     $drawerNewButtonId = 'mobile-new-conv-btn';
-    $drawerNewButtonText = 'Nueva conversación';
+    $drawerNewButtonText = 'New conversation';
     include __DIR__ . '/includes/mobile-drawer.php'; 
     ?>
 
     <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <?php include __DIR__ . '/includes/header-unified.php'; ?>
       
-      <!-- Área de mensajes con scroll, padding para footer+bottom-nav en móvil -->
+      <!-- Scrollable messages area, with mobile padding for footer + bottom nav -->
       <section class="flex-1 overflow-auto bg-mesh relative pb-[140px] lg:pb-0" id="messages-container">
         <div id="context-warning" class="hidden mx-6 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
           <i class="iconoir-info-circle text-amber-600 text-lg mt-0.5"></i>
           <div class="flex-1 text-sm">
-            <div class="font-medium text-amber-900">Conversación muy larga</div>
-            <div class="text-amber-700 mt-0.5">Para optimizar el rendimiento, solo se envían los mensajes más recientes al asistente. El historial completo permanece guardado.</div>
+            <div class="font-medium text-amber-900">Long conversation</div>
+            <div class="text-amber-700 mt-0.5">To keep performance stable, only the most recent messages are sent to the assistant. The full history remains saved.</div>
           </div>
         </div>
         <div id="empty-state" class="absolute inset-0 overflow-auto p-6 pb-36 lg:pb-6">
@@ -124,122 +124,122 @@ $headerShowLogo = true;
               <!-- Status indicator -->
               <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-slate-200/50 shadow-sm mb-6">
                 <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                <span class="text-sm text-slate-600">Lista para ayudarte</span>
+                <span class="text-sm text-slate-600">Ready to help</span>
               </div>
               
               <h2 class="text-3xl font-bold text-slate-900 mb-3">
-                Hola, <span class="text-transparent bg-clip-text gradient-brand"><?php echo $userName; ?></span> 👋
+                Hi, <span class="text-transparent bg-clip-text gradient-brand"><?php echo $userName; ?></span>
               </h2>
-              <p class="text-base text-slate-500 mb-8 max-w-lg mx-auto">¿En qué puedo ayudarte hoy? Escribe tu pregunta o elige una opción de abajo.</p>
+              <p class="text-base text-slate-500 mb-8 max-w-lg mx-auto">What can I help you with today? Ask a question or choose an option below.</p>
               
-              <!-- Input principal con diseño moderno -->
+              <!-- Main input -->
               <div class="bg-white rounded-3xl p-4 lg:p-5 border border-slate-200 shadow-lg max-w-2xl mx-auto">
                 <form id="chat-form-empty" class="w-full">
-                  <!-- Preview de archivos adjuntos en estado vacío (múltiples) -->
+                  <!-- Attached files preview in empty state (multiple) -->
                   <div id="files-preview-empty" class="hidden mb-3 space-y-2">
                     <div id="files-list-empty" class="space-y-1"></div>
                     <button type="button" id="clear-all-files-empty" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1">
-                      <i class="iconoir-xmark"></i> Quitar todos
+                      <i class="iconoir-xmark"></i> Remove all
                     </button>
                   </div>
                   
                   <input type="file" id="file-input-empty" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" multiple />
                   
-                  <!-- Fila superior: textarea + botón enviar -->
+                  <!-- Top row: textarea + submit button -->
                   <div class="flex items-start gap-3 mb-3">
-                    <textarea id="chat-input-empty" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Pregúntame lo que quieras" style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
-                    <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-xl transition-smooth shrink-0" title="Enviar">
+                    <textarea id="chat-input-empty" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Ask me anything" style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
+                    <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-xl transition-smooth shrink-0" title="Send">
                       <i class="iconoir-arrow-up text-xl"></i>
                     </button>
                   </div>
                   
                   <div class="flex items-center justify-between px-1">
-                    <!-- Fila inferior: botones de acción -->
+                    <!-- Bottom row: action buttons -->
                     <div class="flex items-center gap-1">
-                      <button type="button" id="attach-btn-empty" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Adjuntar archivo (PDF, imagen, CSV o Excel)">
+                      <button type="button" id="attach-btn-empty" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Attach file (PDF, image, CSV, or Excel)">
                         <i class="iconoir-attachment text-lg"></i>
                       </button>
-                      <button type="button" id="image-mode-btn-empty" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generar imagen con nanobanana 🍌">
+                      <button type="button" id="image-mode-btn-empty" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generate image">
                         <i class="iconoir-media-image text-lg"></i>
                       </button>
-                      <button type="button" id="web-search-btn-empty" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="Buscar en internet">
+                      <button type="button" id="web-search-btn-empty" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="Search the web">
                         <i class="iconoir-globe text-lg"></i>
                       </button>
                       <?php if ($user['is_superadmin']): ?>
-                      <select id="model-select-empty" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Seleccionar modelo (Solo Superadmin)">
-                        <option value="google/gemini-3-flash-preview">Cargando modelos...</option>
+                      <select id="model-select-empty" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Select model (Superadmin only)">
+                        <option value="google/gemini-3-flash-preview">Loading models...</option>
                       </select>
-                      <button type="button" id="manage-models-btn-empty" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-smooth" title="Gestionar modelos (Solo Superadmin)">
+                      <button type="button" id="manage-models-btn-empty" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-smooth" title="Manage models (Superadmin only)">
                         <i class="iconoir-settings text-lg"></i>
                       </button>
                       <?php endif; ?>
                     </div>
-                    <span id="shortcut-hint-empty" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter para enviar</span>
+                    <span id="shortcut-hint-empty" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter to send</span>
                   </div>
                   <div id="image-mode-files-warning-empty" class="hidden mt-2 px-1 text-xs text-amber-600 flex items-center gap-1.5">
                     <i class="iconoir-warning-triangle"></i>
-                    <span>En modo imagen no se pueden adjuntar, arrastrar ni pegar archivos.</span>
+                    <span>Files cannot be attached, dragged, or pasted in image mode.</span>
                   </div>
                 </form>
               </div>
             </div>
 
-            <!-- Divisor con "o" -->
+            <!-- "Or" divider -->
             <div class="flex items-center gap-4 max-w-2xl mx-auto mb-8">
               <div class="flex-1 h-px bg-slate-200"></div>
-              <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">O elige una opción</span>
+              <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Or choose an option</span>
               <div class="flex-1 h-px bg-slate-200"></div>
             </div>
 
-            <!-- Grid de opciones: Voces y Gestos -->
+            <!-- Options grid: Voices and Gestures -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
               
-              <!-- Sección Voces -->
+              <!-- Voices -->
               <div class="glass-strong rounded-3xl border border-slate-200/50 p-6 card-hover">
                 <div class="flex items-center gap-3 mb-5">
                   <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg animate-float" style="animation-delay: 0s">
                     <i class="iconoir-voice-square text-2xl text-white"></i>
                   </div>
                   <div>
-                    <h3 class="text-lg font-bold text-slate-900">Voces</h3>
-                    <p class="text-sm text-slate-500">Saben todo lo que necesitas</p>
+                    <h3 class="text-lg font-bold text-slate-900">Voices</h3>
+                    <p class="text-sm text-slate-500">Specialized assistants for focused work</p>
                   </div>
                 </div>
                 
                 <div class="space-y-2.5">
                   <?php if ($accessRepo->hasVoiceAccess($userId, 'lex')): ?>
-                  <!-- Lex - Activo -->
+                  <!-- Lex - Active -->
                   <button class="voice-option w-full p-4 bg-white/60 hover:bg-white border border-slate-200/80 hover:border-rose-300 rounded-2xl transition-smooth text-left group hover:shadow-md" data-voice="lex">
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">L</div>
                       <div class="flex-1 min-w-0">
                         <div class="font-semibold text-slate-800 group-hover:text-rose-600 transition-smooth">Lex</div>
-                        <div class="text-xs text-slate-500">Tu asistente legal de Ebone</div>
+                        <div class="text-xs text-slate-500">Your legal assistant</div>
                       </div>
                       <i class="iconoir-arrow-right text-slate-300 group-hover:text-rose-500 group-hover:translate-x-1 transition-smooth"></i>
                     </div>
                   </button>
                   <?php endif; ?>
 
-                  <!-- Cubo - Próximamente -->
+                  <!-- Placeholder - Coming soon -->
                   <div class="w-full p-4 bg-white/40 border border-slate-200/80 rounded-2xl opacity-60">
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-sm flex-shrink-0">C</div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-500">Cubo</div>
-                        <div class="text-xs text-slate-400">Próximamente</div>
+                        <div class="font-semibold text-slate-500">Operations</div>
+                        <div class="text-xs text-slate-400">Coming soon</div>
                       </div>
                       <span class="px-2 py-0.5 text-xs bg-slate-100 text-slate-400 rounded-full">Soon</span>
                     </div>
                   </div>
 
-                  <!-- Uniges - Próximamente -->
+                  <!-- Placeholder - Coming soon -->
                   <div class="w-full p-4 bg-white/40 border border-slate-200/80 rounded-2xl opacity-60">
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-sm flex-shrink-0">U</div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-500">Uniges</div>
-                        <div class="text-xs text-slate-400">Próximamente</div>
+                        <div class="font-semibold text-slate-500">Knowledge</div>
+                        <div class="text-xs text-slate-400">Coming soon</div>
                       </div>
                       <span class="px-2 py-0.5 text-xs bg-slate-100 text-slate-400 rounded-full">Soon</span>
                     </div>
@@ -247,22 +247,22 @@ $headerShowLogo = true;
 
                   <button id="view-all-voices" class="w-full p-3 mt-1 hover:bg-violet-50 border-2 border-dashed border-slate-200 hover:border-violet-300 rounded-2xl transition-smooth text-center group">
                     <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-violet-600 transition-smooth">
-                      <span>Ver todas las voces</span>
+                      <span>View all voices</span>
                       <i class="iconoir-arrow-right group-hover:translate-x-1 transition-smooth"></i>
                     </div>
                   </button>
                 </div>
               </div>
 
-              <!-- Sección Gestos -->
+              <!-- Gestures -->
               <div class="glass-strong rounded-3xl border border-slate-200/50 p-6 card-hover">
                 <div class="flex items-center gap-3 mb-5">
                   <div class="w-12 h-12 rounded-2xl gradient-brand flex items-center justify-center shadow-lg animate-float" style="animation-delay: 0.5s">
                     <i class="iconoir-magic-wand text-2xl text-white"></i>
                   </div>
                   <div>
-                    <h3 class="text-lg font-bold text-slate-900">Gestos</h3>
-                    <p class="text-sm text-slate-500">Acciones rápidas optimizadas</p>
+                    <h3 class="text-lg font-bold text-slate-900">Gestures</h3>
+                    <p class="text-sm text-slate-500">Optimized quick actions</p>
                   </div>
                 </div>
                 
@@ -274,8 +274,8 @@ $headerShowLogo = true;
                         <i class="iconoir-page-edit text-lg text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-800 group-hover:text-[#115c6c] transition-smooth">Escribir artículo</div>
-                        <div class="text-xs text-slate-500">Blogs, noticias, notas de prensa</div>
+                        <div class="font-semibold text-slate-800 group-hover:text-[#115c6c] transition-smooth">Write Content</div>
+                        <div class="text-xs text-slate-500">Blogs, updates, press notes</div>
                       </div>
                       <i class="iconoir-arrow-right text-slate-300 group-hover:text-[#23AAC5] group-hover:translate-x-1 transition-smooth"></i>
                     </div>
@@ -289,8 +289,8 @@ $headerShowLogo = true;
                         <i class="iconoir-send-diagonal text-lg text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-800 group-hover:text-violet-600 transition-smooth">Redes sociales</div>
-                        <div class="text-xs text-slate-500">Publicaciones para RRSS</div>
+                        <div class="font-semibold text-slate-800 group-hover:text-violet-600 transition-smooth">Social Media</div>
+                        <div class="text-xs text-slate-500">Posts for social channels</div>
                       </div>
                       <i class="iconoir-arrow-right text-slate-300 group-hover:text-violet-500 group-hover:translate-x-1 transition-smooth"></i>
                     </div>
@@ -304,8 +304,8 @@ $headerShowLogo = true;
                         <i class="iconoir-podcast text-lg text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-800 group-hover:text-rose-600 transition-smooth">Podcast desde artículo</div>
-                        <div class="text-xs text-slate-500">Audio con 2 voces IA</div>
+                        <div class="font-semibold text-slate-800 group-hover:text-rose-600 transition-smooth">Article to Podcast</div>
+                        <div class="text-xs text-slate-500">Audio with 2 AI voices</div>
                       </div>
                       <i class="iconoir-arrow-right text-slate-300 group-hover:text-rose-500 group-hover:translate-x-1 transition-smooth"></i>
                     </div>
@@ -316,7 +316,7 @@ $headerShowLogo = true;
 
                   <button id="view-all-gestures" class="w-full p-3 mt-1 hover:bg-[#23AAC5]/5 border-2 border-dashed border-slate-200 hover:border-[#23AAC5]/50 rounded-2xl transition-smooth text-center group">
                     <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-[#23AAC5] transition-smooth">
-                      <span>Ver todos los gestos</span>
+                      <span>View all gestures</span>
                       <i class="iconoir-arrow-right group-hover:translate-x-1 transition-smooth"></i>
                     </div>
                   </button>
@@ -329,7 +329,7 @@ $headerShowLogo = true;
         <div id="messages" class="hidden p-4 lg:p-8 pb-36 lg:pb-8 space-y-2"></div>
         <div id="typing-indicator" class="hidden px-8 pb-4">
           <div class="flex gap-3 items-start max-w-3xl">
-            <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-sm font-semibold flex-shrink-0">E</div>
+            <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-sm font-semibold flex-shrink-0">i</div>
             <div class="bg-white border border-slate-200 px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-sm">
               <span class="streaming-indicator flex gap-1">
                 <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
@@ -342,60 +342,60 @@ $headerShowLogo = true;
         <div id="drop-overlay" class="hidden fixed inset-0 z-[65] pointer-events-none p-4 lg:p-8">
           <div class="w-full h-full rounded-2xl border-2 border-dashed border-[#23AAC5] bg-[#23AAC5]/10 flex items-center justify-center">
             <div class="px-5 py-3 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm text-center">
-              <div class="text-sm font-medium text-[#115c6c]">Suelta archivos aquí para adjuntarlos</div>
-              <div class="mt-1 text-[11px] text-slate-400">PDF, PNG, JPG, GIF, WEBP, CSV, XLS, XLSX (máx. 30MB)</div>
+              <div class="text-sm font-medium text-[#115c6c]">Drop files here to attach them</div>
+              <div class="mt-1 text-[11px] text-slate-400">PDF, PNG, JPG, GIF, WEBP, CSV, XLS, XLSX (max. 30MB)</div>
             </div>
           </div>
         </div>
       </section>
-      <!-- Footer del chat: fijo en móvil sobre el bottom-nav -->
+      <!-- Chat footer: fixed on mobile above the bottom nav -->
       <footer id="chat-footer" class="hidden fixed lg:relative bottom-16 lg:bottom-0 left-0 right-0 p-3 lg:p-4 bg-gradient-to-t from-white via-white to-white/80 z-40">
         <form id="chat-form" class="max-w-3xl mx-auto">
           <div class="bg-white rounded-2xl lg:rounded-3xl p-3 lg:p-4 border border-slate-200 shadow-lg">
-            <!-- Preview de archivos adjuntos (múltiples) -->
+            <!-- Attached files preview (multiple) -->
             <div id="files-preview" class="hidden mb-3 space-y-2">
               <div id="files-list" class="space-y-1"></div>
               <button type="button" id="clear-all-files" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1">
-                <i class="iconoir-xmark"></i> Quitar todos
+                <i class="iconoir-xmark"></i> Remove all
               </button>
             </div>
             
             <input type="file" id="file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx" multiple />
             
-            <!-- Fila superior: textarea + botón enviar -->
+            <!-- Top row: textarea + submit button -->
             <div class="flex items-start gap-3 mb-2">
-              <textarea id="chat-input" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Escribe un mensaje..." style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
-              <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-xl transition-smooth shrink-0" title="Enviar">
+              <textarea id="chat-input" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Write a message..." style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
+              <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-xl transition-smooth shrink-0" title="Send">
                 <i class="iconoir-arrow-up text-xl"></i>
               </button>
             </div>
             
             <div class="flex items-center justify-between px-1">
-              <!-- Fila inferior: botones de acción -->
+              <!-- Bottom row: action buttons -->
               <div class="flex items-center gap-1">
-                <button type="button" id="attach-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Adjuntar archivo (PDF, imagen, CSV o Excel)">
+                <button type="button" id="attach-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Attach file (PDF, image, CSV, or Excel)">
                   <i class="iconoir-attachment text-lg"></i>
                 </button>
-                <button type="button" id="image-mode-btn" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generar imagen con nanobanana 🍌">
+                <button type="button" id="image-mode-btn" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generate image">
                   <i class="iconoir-media-image text-lg"></i>
                 </button>
-                <button type="button" id="web-search-btn" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="Buscar en internet">
+                <button type="button" id="web-search-btn" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="Search the web">
                   <i class="iconoir-globe text-lg"></i>
                 </button>
                 <?php if ($user['is_superadmin']): ?>
-                <select id="model-select-chat" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Seleccionar modelo (Solo Superadmin)">
-                  <option value="google/gemini-3-flash-preview">Cargando modelos...</option>
+                <select id="model-select-chat" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Select model (Superadmin only)">
+                  <option value="google/gemini-3-flash-preview">Loading models...</option>
                 </select>
-                <button type="button" id="manage-models-btn-chat" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-smooth" title="Gestionar modelos (Solo Superadmin)">
+                <button type="button" id="manage-models-btn-chat" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-smooth" title="Manage models (Superadmin only)">
                   <i class="iconoir-settings text-lg"></i>
                 </button>
                 <?php endif; ?>
               </div>
-              <span id="shortcut-hint-chat" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter para enviar</span>
+              <span id="shortcut-hint-chat" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter to send</span>
             </div>
             <div id="image-mode-files-warning-chat" class="hidden mt-2 px-1 text-xs text-amber-600 flex items-center gap-1.5">
               <i class="iconoir-warning-triangle"></i>
-              <span>En modo imagen no se pueden adjuntar, arrastrar ni pegar archivos.</span>
+              <span>Files cannot be attached, dragged, or pasted in image mode.</span>
             </div>
           </div>
         </form>
@@ -403,40 +403,40 @@ $headerShowLogo = true;
     </main>
   </div>
   
-  <!-- Toolbar de selección flotante para edición parcial (DESKTOP) -->
+  <!-- Floating selection toolbar for partial editing (desktop) -->
   <div id="selection-toolbar" class="fixed z-50 hidden md:block">
     <div class="bg-slate-900 text-white rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1">
       <button id="selection-edit-btn" class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
         </svg>
-        Editar
+        Edit
       </button>
       <div class="w-px h-5 bg-white/20"></div>
       <button id="selection-regenerate-btn" class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
-        Regenerar
+        Regenerate
       </button>
     </div>
     <div class="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3 h-3 bg-slate-900 rotate-45"></div>
   </div>
   
-  <!-- Barra de selección anclada para MÓVIL -->
+  <!-- Anchored selection bar for mobile -->
   <div id="selection-bar-mobile" class="bg-slate-900 text-white shadow-[0_-8px_30px_rgba(0,0,0,0.5)] border-t border-slate-700 transition-all duration-300" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 2147483647; display: none; transform: translateY(100%);">
     <div class="px-4 py-4 pb-10"> <!-- Padding extra abajo para notch de iOS -->
       <div class="flex items-center gap-3">
-        <!-- Texto seleccionado (truncado) -->
+        <!-- Selected text (truncated) -->
         <div class="flex-1 min-w-0">
-          <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1 font-bold">Selección activa</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1 font-bold">Active selection</div>
           <div id="mobile-selection-preview" class="text-sm truncate opacity-90 italic"></div>
         </div>
         <!-- Botones -->
         <div class="flex items-center gap-2 flex-shrink-0">
           <button id="mobile-edit-btn" class="flex items-center gap-1.5 px-3 py-2 bg-white/10 active:bg-white/20 rounded-xl transition-colors text-sm font-semibold">
             <i class="iconoir-edit-pencil text-base"></i>
-            Editar
+            Edit
           </button>
           <button id="mobile-regenerate-btn" class="flex items-center gap-1.5 px-3 py-2 bg-[#23AAC5] active:bg-[#1d8fa6] rounded-xl transition-colors text-sm font-semibold shadow-lg shadow-cyan-500/20">
             <i class="iconoir-refresh text-base"></i>
@@ -450,58 +450,58 @@ $headerShowLogo = true;
     </div>
   </div>
   
-  <!-- Modal de edición de selección -->
+  <!-- Selection edit modal -->
   <div id="selection-edit-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
       <div class="p-5 border-b border-slate-200">
-        <h3 id="edit-modal-title" class="text-lg font-semibold text-slate-900">Editar selección</h3>
-        <p class="text-sm text-slate-500 mt-1">Indica a la IA cómo quieres que cambie esta parte</p>
+        <h3 id="edit-modal-title" class="text-lg font-semibold text-slate-900">Edit selection</h3>
+        <p class="text-sm text-slate-500 mt-1">Tell the AI how you want this part changed</p>
       </div>
       
       <div class="p-5 space-y-4">
         <!-- Preview del texto seleccionado -->
         <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
-          <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Texto seleccionado</div>
+          <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Selected text</div>
           <div id="edit-modal-selection" class="text-sm text-slate-700 max-h-24 overflow-y-auto"></div>
         </div>
         
         <!-- Input de instrucciones -->
         <div>
           <label for="edit-modal-instructions" class="block text-sm font-medium text-slate-700 mb-2">
-            Tus instrucciones
+            Your instructions
           </label>
           <textarea 
             id="edit-modal-instructions" 
             class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-all text-sm resize-none"
             rows="3"
-            placeholder="Ej: Hazlo más formal, Añade más detalle sobre..., Simplifica esta explicación..."
+            placeholder="Example: Make it more formal, add more detail about..., simplify this explanation..."
           ></textarea>
         </div>
       </div>
       
       <div class="p-5 border-t border-slate-200 flex items-center justify-end gap-3 bg-slate-50">
         <button id="edit-modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
-          Cancelar
+          Cancel
         </button>
         <button id="edit-modal-submit" class="px-5 py-2 text-sm font-medium text-white gradient-brand-btn rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
           </svg>
-          Aplicar cambios
+          Apply changes
         </button>
       </div>
     </div>
   </div>
   
-  <!-- Lightbox para imágenes generadas (nanobanana 🍌) -->
+  <!-- Lightbox for generated images -->
   <div id="image-lightbox" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onclick="closeLightbox()">
     <button onclick="closeLightbox()" class="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors">
       <i class="iconoir-xmark text-2xl"></i>
     </button>
-    <img id="lightbox-img" src="" alt="Imagen ampliada" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl" onclick="event.stopPropagation()">
+    <img id="lightbox-img" src="" alt="Expanded image" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl" onclick="event.stopPropagation()">
   </div>
   
-  <!-- Modal Mover a Carpeta -->
+  <!-- Move to folder modal -->
   <div id="move-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] flex flex-col">
       <!-- Header -->
@@ -511,8 +511,8 @@ $headerShowLogo = true;
             <i class="iconoir-folder-settings text-xl text-white"></i>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-slate-900">Mover conversación</h3>
-            <p class="text-xs text-slate-500" id="move-conv-title">Selecciona la carpeta de destino</p>
+            <h3 class="text-lg font-semibold text-slate-900">Move conversation</h3>
+            <p class="text-xs text-slate-500" id="move-conv-title">Choose the destination folder</p>
           </div>
         </div>
         <button id="close-move-modal" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
@@ -520,36 +520,36 @@ $headerShowLogo = true;
         </button>
       </div>
       
-      <!-- Body - Lista de carpetas -->
+      <!-- Body - folder list -->
       <div class="flex-1 overflow-y-auto p-6">
         <div class="space-y-2" id="folder-options">
-          <!-- Opción "Sin carpeta" -->
+          <!-- "No folder" option -->
           <button data-target-folder="0" class="folder-option w-full p-4 bg-slate-50 hover:bg-[#23AAC5]/5 border-2 border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-left group">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0 group-hover:bg-[#23AAC5]/10">
                 <i class="iconoir-folder-minus text-xl text-slate-500 group-hover:text-[#23AAC5]"></i>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="font-semibold text-slate-800 group-hover:text-[#23AAC5] transition-colors">Sin carpeta</div>
-                <div class="text-xs text-slate-500">Mover a la raíz</div>
+                <div class="font-semibold text-slate-800 group-hover:text-[#23AAC5] transition-colors">No folder</div>
+                <div class="text-xs text-slate-500">Move to root</div>
               </div>
               <i class="iconoir-nav-arrow-right text-slate-300 group-hover:text-[#23AAC5] transition-colors"></i>
             </div>
           </button>
           
-          <!-- Carpetas dinámicas se insertarán aquí -->
+          <!-- Dynamic folders are inserted here -->
         </div>
         
         <div id="empty-folders" class="hidden text-center py-8 text-slate-400 text-sm">
           <i class="iconoir-folder text-4xl mb-2"></i>
-          <p>No tienes carpetas creadas</p>
+          <p>You do not have any folders yet</p>
         </div>
       </div>
       
       <!-- Footer -->
       <div class="p-6 border-t border-slate-200 flex gap-3">
         <button id="cancel-move" class="flex-1 px-4 py-2.5 border-2 border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors">
-          Cancelar
+          Cancel
         </button>
       </div>
     </div>
@@ -606,7 +606,7 @@ $headerShowLogo = true;
     const imageModeBtnEmpty = document.getElementById('image-mode-btn-empty');
     const attachBtnEmptyDesktop = document.getElementById('attach-btn-empty-desktop');
     
-    // Elementos para múltiples archivos
+    // Multiple-file elements
     const filesPreview = document.getElementById('files-preview');
     const filesList = document.getElementById('files-list');
     const clearAllFilesBtn = document.getElementById('clear-all-files');
@@ -619,24 +619,24 @@ $headerShowLogo = true;
 
     let csrf = null;
     let currentConversationId = null;
-    let emptyConversationId = null; // id de conversación sin mensajes aún
+    let emptyConversationId = null; // id for a conversation with no messages yet
     let currentUser = null;
     let currentConvTitle = null;
-    let currentFiles = []; // archivos adjuntos actuales (array)
-    let currentFilesEmpty = []; // archivos adjuntos en estado vacío (array)
-    let currentFolderId = -1; // -1 = todas, 0 = sin carpeta, >0 = carpeta específica
-    let allFolders = []; // cache de carpetas
-    let conversationToMove = null; // conversación que se está moviendo
-    let imageMode = false; // modo generación de imágenes (nanobanana 🍌)
-    let webSearchMode = false; // modo búsqueda web
+    let currentFiles = []; // current attached files
+    let currentFilesEmpty = []; // attached files in empty state
+    let currentFolderId = -1; // -1 = all, 0 = no folder, >0 = specific folder
+    let allFolders = []; // folder cache
+    let conversationToMove = null; // conversation being moved
+    let imageMode = false; // image generation mode
+    let webSearchMode = false; // web search mode
     
-    // Estado de streaming
+    // Streaming state
     let isGenerating = false;
     let abortController = null;
     let currentStreamingBubble = null;
     let currentStreamingMessageId = null;
     
-    // Estado de selección para regeneración parcial
+    // Selection state for partial regeneration
     let selectedText = null;
     let selectedMessageId = null;
     let dragCounter = 0;
@@ -663,7 +663,7 @@ $headerShowLogo = true;
       const warning = document.createElement('div');
       warning.id = warningId;
       warning.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-amber-500 text-white px-4 py-2 rounded-xl shadow-lg z-[70] text-sm flex items-center gap-2';
-      warning.innerHTML = '<i class="iconoir-warning-triangle"></i><span>Desactiva modo imagen para adjuntar archivos.</span>';
+      warning.innerHTML = '<i class="iconoir-warning-triangle"></i><span>Disable image mode to attach files.</span>';
       document.body.appendChild(warning);
 
       setTimeout(() => {
@@ -681,11 +681,11 @@ $headerShowLogo = true;
       let addedCount = 0;
       for (const file of files) {
         if (file.size > MAX_FILE_SIZE) {
-          alert(`El archivo "${file.name}" es demasiado grande. Máximo 30MB.`);
+          alert(`The file "${file.name}" is too large. Maximum size is 30MB.`);
           continue;
         }
         if (!VALID_FILE_TYPES.includes(file.type)) {
-          alert(`El archivo "${file.name}" no es un tipo soportado.`);
+          alert(`The file "${file.name}" is not a supported type.`);
           continue;
         }
         targetArray.push(file);
@@ -775,7 +775,7 @@ $headerShowLogo = true;
       inputEmptyEl?.focus();
     }
 
-    // Eliminar conversación vacía (sin mensajes) para evitar acumulación
+    // Delete empty conversations to avoid accumulation.
     async function cleanupEmptyConversation(exceptId = null) {
       if (emptyConversationId && emptyConversationId !== exceptId) {
         const idToDelete = emptyConversationId;
@@ -786,15 +786,15 @@ $headerShowLogo = true;
             body: { id: idToDelete } 
           });
         } catch (e) {
-          console.warn('Error limpiando conversación vacía:', e);
+          console.warn('Error cleaning empty conversation:', e);
         }
       }
     }
 
-    // Limpiar conversación vacía al salir de la página
+    // Clean empty conversation when leaving the page.
     window.addEventListener('beforeunload', () => {
       if (emptyConversationId) {
-        // Usar sendBeacon para petición asíncrona que sobrevive al cierre
+        // Use sendBeacon for an async request that survives page close.
         const data = new FormData();
         data.append('id', emptyConversationId);
         data.append('csrf_token', csrf);
@@ -947,7 +947,7 @@ $headerShowLogo = true;
           
           const imgEl = document.createElement('img');
           imgEl.src = imgUrl;
-          imgEl.alt = 'Imagen generada ' + (idx + 1);
+          imgEl.alt = 'Generated image ' + (idx + 1);
           imgEl.className = 'max-w-full rounded-xl shadow-md cursor-pointer hover:shadow-lg transition-shadow';
           imgEl.style.maxHeight = '400px';
           imgEl.addEventListener('click', () => openLightbox(imgUrl));
@@ -959,7 +959,7 @@ $headerShowLogo = true;
           downloadBtn.href = imgUrl;
           downloadBtn.download = `nanobanana-${Date.now()}-${idx + 1}.png`;
           downloadBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors';
-          downloadBtn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+          downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
           
           actionsEl.appendChild(downloadBtn);
           imgWrap.appendChild(imgEl);
@@ -979,13 +979,13 @@ $headerShowLogo = true;
         const pdfBtn = document.createElement('button');
         pdfBtn.type = 'button';
         pdfBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 text-red-700 hover:bg-red-100 rounded-lg transition-colors';
-        pdfBtn.innerHTML = '<i class="iconoir-page"></i> Descargar PDF';
+        pdfBtn.innerHTML = '<i class="iconoir-page"></i> Download PDF';
         pdfBtn.addEventListener('click', (e) => downloadDocument(content, 'pdf', e.currentTarget));
         
         const docxBtn = document.createElement('button');
         docxBtn.type = 'button';
         docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
-        docxBtn.innerHTML = '<i class="iconoir-page-star"></i> Descargar Word';
+        docxBtn.innerHTML = '<i class="iconoir-page-star"></i> Download Word';
         docxBtn.addEventListener('click', (e) => downloadDocument(content, 'docx', e.currentTarget));
         
         downloadActionsEl.appendChild(pdfBtn);
@@ -1106,7 +1106,7 @@ $headerShowLogo = true;
           
           const imgEl = document.createElement('img');
           imgEl.src = imgUrl;
-          imgEl.alt = 'Imagen generada ' + (idx + 1);
+          imgEl.alt = 'Generated image ' + (idx + 1);
           imgEl.className = 'max-w-full rounded-xl shadow-md cursor-pointer hover:shadow-lg transition-shadow';
           imgEl.style.maxHeight = '400px';
           imgEl.addEventListener('click', () => openLightbox(imgUrl));
@@ -1118,7 +1118,7 @@ $headerShowLogo = true;
           downloadBtn.href = imgUrl;
           downloadBtn.download = `nanobanana-${Date.now()}-${idx + 1}.png`;
           downloadBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors';
-          downloadBtn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+          downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
           
           actionsEl.appendChild(downloadBtn);
           imgWrap.appendChild(imgEl);
@@ -1138,13 +1138,13 @@ $headerShowLogo = true;
         const pdfBtn = document.createElement('button');
         pdfBtn.type = 'button';
         pdfBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 text-red-700 hover:bg-red-100 rounded-lg transition-colors';
-        pdfBtn.innerHTML = '<i class="iconoir-page"></i> Descargar PDF';
+        pdfBtn.innerHTML = '<i class="iconoir-page"></i> Download PDF';
         pdfBtn.addEventListener('click', (e) => downloadDocument(content, 'pdf', e.currentTarget));
         
         const docxBtn = document.createElement('button');
         docxBtn.type = 'button';
         docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
-        docxBtn.innerHTML = '<i class="iconoir-page-star"></i> Descargar Word';
+        docxBtn.innerHTML = '<i class="iconoir-page-star"></i> Download Word';
         docxBtn.addEventListener('click', (e) => downloadDocument(content, 'docx', e.currentTarget));
         
         downloadActionsEl.appendChild(pdfBtn);
@@ -1275,13 +1275,13 @@ $headerShowLogo = true;
                 } else if (json.type === 'annotations') {
                   annotations = json.annotations;
                 } else if (json.type === 'error') {
-                  throw new Error(json.message || 'Error de streaming');
+                  throw new Error(json.message || 'Streaming error');
                 } else if (json.type === 'conversation') {
                   newConversationId = json.id;
                 }
               } catch (e) {
                 if (e.name !== 'SyntaxError') {
-                  console.error('Error de parseo de stream:', e);
+                console.error('Stream parse error:', e);
                 }
               }
             }
@@ -1538,20 +1538,20 @@ $headerShowLogo = true;
       const isClickInMessages = e.target.closest('#messages') !== null;
 
       if (!isClickInsideUI && !isClickInMessages) {
-        // Solo limpiar si el clic está fuera de los mensajes Y fuera de la UI
+        // Clear only if the click is outside messages and outside the UI.
         clearSelection();
       }
     });
     
-    // Ocultar toolbar al hacer scroll (solo si no está seleccionando activamente)
+    // Hide toolbar on scroll when not actively selecting.
     messagesContainer.addEventListener('scroll', () => {
       if (!isMobile() && !isSelecting) {
-        // Ocultar toolbar y limpiar selección en desktop (solo si no está arrastrando para seleccionar)
+        // Hide toolbar and clear selection on desktop.
         clearSelection();
       }
     });
     
-    // Botones de la toolbar (desktop)
+    // Toolbar buttons (desktop)
     selectionEditBtn?.addEventListener('click', () => {
       hideSelectionToolbar();
       showEditModal('edit');
@@ -1559,8 +1559,8 @@ $headerShowLogo = true;
     
     selectionRegenerateBtn?.addEventListener('click', () => {
       hideSelectionToolbar();
-      // Regeneración instantánea con instrucción genérica
-      submitRegeneration("Reescribe esta parte para que sea más clara y natural, manteniendo el mismo significado.");
+      // Instant regeneration with a generic instruction.
+      submitRegeneration("Rewrite this part so it is clearer and more natural while keeping the same meaning.");
     });
     
     function showEditModal(mode) {
@@ -1568,7 +1568,7 @@ $headerShowLogo = true;
       
       hideSelectionToolbar();
       
-      editModalTitle.textContent = 'Editar selección';
+      editModalTitle.textContent = 'Edit selection';
       editModalSelection.textContent = selectedText;
       editModalInstructions.value = '';
       
@@ -1582,21 +1582,21 @@ $headerShowLogo = true;
       }
     }
     
-    // Eventos del modal
+    // Modal events
     editModalCancel?.addEventListener('click', hideEditModal);
     
     editModal?.addEventListener('click', (e) => {
       if (e.target === editModal) hideEditModal();
     });
     
-    // Cerrar con Escape
+    // Close with Escape
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && editModal && !editModal.classList.contains('hidden')) {
         hideEditModal();
       }
     });
     
-    // Enviar con Cmd/Ctrl+Enter
+    // Send with Cmd/Ctrl+Enter
     editModalInstructions?.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
@@ -1617,11 +1617,11 @@ $headerShowLogo = true;
       
       if (isFromModal) {
         const originalBtnText = editModalSubmit.innerHTML;
-        editModalSubmit.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Procesando...';
+        editModalSubmit.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...';
         editModalSubmit.disabled = true;
       }
       
-      // Si es instantáneo, mostrar un pequeño indicador visual en la burbuja
+      // For instant edits, show a small visual indicator on the bubble.
       const bubble = document.querySelector(`[data-message-id="${selectedMessageId}"]`);
       if (!isFromModal && bubble) {
         bubble.classList.add('opacity-50', 'pointer-events-none');
@@ -1641,7 +1641,7 @@ $headerShowLogo = true;
         if (result.success && result.message) {
           if (bubble) {
             bubble.innerHTML = mdToHtml(result.message.content);
-            // Efecto de highlight verde
+            // Green highlight effect.
             bubble.classList.add('ring-2', 'ring-emerald-400', 'ring-opacity-75');
             setTimeout(() => {
               bubble.classList.remove('ring-2', 'ring-emerald-400', 'ring-opacity-75');
@@ -1652,10 +1652,10 @@ $headerShowLogo = true;
         if (isFromModal) hideEditModal();
         
       } catch (error) {
-        alert('Error al regenerar: ' + error.message);
+        alert('Error regenerating: ' + error.message);
       } finally {
         if (isFromModal) {
-          editModalSubmit.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Aplicar cambios';
+          editModalSubmit.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Apply changes';
           editModalSubmit.disabled = false;
         }
         if (bubble) {
@@ -1663,7 +1663,7 @@ $headerShowLogo = true;
         }
       }
     }
-    // ===== FIN SELECCIÓN DE TEXTO =====
+    // ===== END TEXT SELECTION =====
 
     async function api(path, opts={}){
       const res = await fetch(path, {
@@ -1699,7 +1699,7 @@ $headerShowLogo = true;
           body: {
             content: content,
             format: format,
-            title: currentConvTitle || 'Documento de Ebonia'
+            title: currentConvTitle || 'iaiaPRO document'
           }
         });
         
@@ -1723,7 +1723,7 @@ $headerShowLogo = true;
           URL.revokeObjectURL(url);
         }
       } catch (error) {
-        alert('Error generando documento: ' + error.message);
+        alert('Error generating document: ' + error.message);
       } finally {
         // Restaurar estado del botón
         buttonElement.innerHTML = originalHTML;
@@ -1766,24 +1766,24 @@ $headerShowLogo = true;
       }
     })();
 
-    // El dropdown de perfil se maneja en header-unified.php
+    // Profile dropdown is handled in header-unified.php.
     
     sortSelect.addEventListener('change', () => loadConversations());
     
-    // Crear nueva carpeta
+    // Create new folder
     newFolderBtn.addEventListener('click', async () => {
-      const name = prompt('Nombre de la carpeta:');
+      const name = prompt('Folder name:');
       if (!name || name.trim() === '') return;
       try {
         await api('/api/folders/create.php', { method: 'POST', body: { name: name.trim() } });
         await loadFolders();
         await loadConversations();
       } catch (err) {
-        alert('Error al crear carpeta: ' + err.message);
+        alert('Error creating folder: ' + err.message);
       }
     });
     
-    // Cerrar modal
+    // Close modal
     closeMoveModal.addEventListener('click', () => {
       moveModal.classList.add('hidden');
       conversationToMove = null;
@@ -1794,7 +1794,7 @@ $headerShowLogo = true;
       conversationToMove = null;
     });
     
-    // Cerrar modal al hacer clic fuera
+    // Close modal when clicking outside
     moveModal.addEventListener('click', (e) => {
       if (e.target === moveModal) {
         moveModal.classList.add('hidden');
@@ -1806,13 +1806,13 @@ $headerShowLogo = true;
       const data = await api('/api/folders/list.php');
       allFolders = data.folders || [];
       
-      // Contar conversaciones totales y sin carpeta
+      // Count total conversations and root conversations.
       const allConvs = await api('/api/conversations/list.php?folder_id=-1');
       const rootConvs = await api('/api/conversations/list.php?folder_id=0');
       document.getElementById('all-count').textContent = (allConvs.items || []).length;
       document.getElementById('root-count').textContent = (rootConvs.items || []).length;
       
-      // Renderizar carpetas dinámicas
+      // Render dynamic folders.
       const existingDynamic = folderListEl.querySelectorAll('.dynamic-folder');
       existingDynamic.forEach(el => el.remove());
       
@@ -1849,7 +1849,7 @@ $headerShowLogo = true;
           loadConversations();
         });
         
-        // Acciones de carpeta (renombrar, eliminar) - siempre presentes pero invisibles
+        // Folder actions (rename, delete), always present but invisible.
         const actions = document.createElement('div');
         actions.className = 'flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0';
         
@@ -1858,16 +1858,16 @@ $headerShowLogo = true;
         renameBtn.style.lineHeight = '0';
         renameBtn.setAttribute('data-action-folder', 'rename');
         renameBtn.innerHTML = '<i class="iconoir-edit-pencil text-xs"></i>';
-        renameBtn.title = 'Renombrar';
+        renameBtn.title = 'Rename';
         renameBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          const newName = prompt('Nuevo nombre:', folder.name);
+          const newName = prompt('New name:', folder.name);
           if (!newName || newName.trim() === '') return;
           try {
             await api('/api/folders/rename.php', { method: 'POST', body: { id: folder.id, name: newName.trim() } });
             await loadFolders();
           } catch (err) {
-            alert('Error al renombrar: ' + err.message);
+            alert('Error renaming: ' + err.message);
           }
         });
         
@@ -1876,12 +1876,12 @@ $headerShowLogo = true;
         delBtn.style.lineHeight = '0';
         delBtn.setAttribute('data-action-folder', 'delete');
         delBtn.innerHTML = '<i class="iconoir-trash text-xs"></i>';
-        delBtn.title = 'Eliminar';
+        delBtn.title = 'Delete';
         delBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
           const msg = folder.conversation_count > 0 
-            ? `¿Eliminar "${folder.name}"? Las ${folder.conversation_count} conversaciones quedarán sin carpeta.`
-            : `¿Eliminar "${folder.name}"?`;
+            ? `Delete "${folder.name}"? Its ${folder.conversation_count} conversation${folder.conversation_count !== 1 ? 's' : ''} will be moved to No folder.`
+            : `Delete "${folder.name}"?`;
           if (!confirm(msg)) return;
           try {
             await api('/api/folders/delete.php', { method: 'POST', body: { id: folder.id } });
@@ -1891,7 +1891,7 @@ $headerShowLogo = true;
             await loadFolders();
             await loadConversations();
           } catch (err) {
-            alert('Error al eliminar: ' + err.message);
+            alert('Error deleting: ' + err.message);
           }
         });
         
@@ -1904,7 +1904,7 @@ $headerShowLogo = true;
         folderListEl.appendChild(li);
       }
       
-      // Actualizar estado activo de "Todas" y "Sin carpeta"
+      // Update active state for "All" and "No folder".
       const allFolderItems = document.querySelectorAll('.folder-item');
       allFolderItems.forEach(item => {
         const folderId = parseInt(item.dataset.folderId);
@@ -1913,7 +1913,7 @@ $headerShowLogo = true;
           item.classList.add('bg-gradient-to-r', 'from-[#23AAC5]/10', 'to-[#115c6c]/10', 'shadow-sm');
         }
         
-        // Añadir event listeners solo para "Todas" (-1) y "Sin carpeta" (0)
+        // Add event listeners only for "All" (-1) and "No folder" (0).
         if (folderId === -1 || folderId === 0) {
           item.addEventListener('click', () => {
             currentFolderId = folderId;
@@ -1928,7 +1928,7 @@ $headerShowLogo = true;
       conversationToMove = conversation;
       document.getElementById('move-conv-title').textContent = `"${conversation.title}"`;
       
-      // Renderizar opciones de carpetas
+      // Render folder options.
       const dynamicOptions = folderOptionsEl.querySelectorAll('.dynamic-folder-option');
       dynamicOptions.forEach(el => el.remove());
       
@@ -1942,7 +1942,7 @@ $headerShowLogo = true;
           btn.dataset.targetFolder = folder.id;
           btn.className = 'folder-option dynamic-folder-option w-full p-4 bg-slate-50 hover:bg-[#23AAC5]/5 border-2 border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-left group';
           
-          // Marcar si es la carpeta actual
+          // Mark current folder.
           if (conversation.folder_id && conversation.folder_id == folder.id) {
             btn.classList.add('border-[#23AAC5]', 'bg-[#23AAC5]/5');
           }
@@ -1954,7 +1954,7 @@ $headerShowLogo = true;
               </div>
               <div class="flex-1 min-w-0">
                 <div class="font-semibold text-slate-800 group-hover:text-[#23AAC5] transition-colors">${folder.name}</div>
-                <div class="text-xs text-slate-500">${folder.conversation_count} conversación${folder.conversation_count !== 1 ? 'es' : ''}</div>
+                <div class="text-xs text-slate-500">${folder.conversation_count} conversation${folder.conversation_count !== 1 ? 's' : ''}</div>
               </div>
               <i class="iconoir-nav-arrow-right text-slate-300 group-hover:text-[#23AAC5] transition-colors"></i>
             </div>
@@ -1965,17 +1965,17 @@ $headerShowLogo = true;
         });
       }
       
-      // Añadir listener al botón "Sin carpeta"
+      // Add listener to the "No folder" button.
       const rootBtn = folderOptionsEl.querySelector('[data-target-folder="0"]');
       if (rootBtn) {
-        // Remover listeners anteriores clonando
+        // Remove previous listeners by cloning.
         const newRootBtn = rootBtn.cloneNode(true);
         rootBtn.parentNode.replaceChild(newRootBtn, rootBtn);
         
-        // Resetear clases por si acaso
+        // Reset classes defensively.
         newRootBtn.classList.remove('border-[#23AAC5]', 'bg-[#23AAC5]/5');
         
-        // Marcar si está en raíz
+        // Mark if in root.
         if (!conversation.folder_id || conversation.folder_id === 0 || conversation.folder_id === "0") {
           newRootBtn.classList.add('border-[#23AAC5]', 'bg-[#23AAC5]/5');
         }
@@ -2004,7 +2004,7 @@ $headerShowLogo = true;
         await loadFolders();
         await loadConversations();
       } catch (err) {
-        alert('Error al mover: ' + err.message);
+        alert('Error moving: ' + err.message);
       }
     }
 
@@ -2014,7 +2014,7 @@ $headerShowLogo = true;
       const data = await api(`/api/conversations/list.php?sort=${encodeURIComponent(sort)}${folderParam}`);
       const items = data.items || [];
       if(items.length === 0){
-        convListEl.innerHTML = '<li class="text-slate-400 text-sm px-3 py-2">(vacío)</li>';
+        convListEl.innerHTML = '<li class="text-slate-400 text-sm px-3 py-2">(empty)</li>';
         return;
       }
       convListEl.innerHTML = '';
@@ -2035,14 +2035,14 @@ $headerShowLogo = true;
         starBtn.innerHTML = c.is_favorite 
           ? '<i class="iconoir-star-solid text-amber-500"></i>'
           : '<i class="iconoir-star text-slate-300 group-hover:text-slate-400"></i>';
-        starBtn.title = c.is_favorite ? 'Quitar de favoritos' : 'Añadir a favoritos';
+        starBtn.title = c.is_favorite ? 'Remove from favorites' : 'Add to favorites';
         starBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
           try {
             await api('/api/conversations/toggle_favorite.php', { method: 'POST', body: { id: c.id } });
             await loadConversations();
           } catch (err) {
-            alert('Error al cambiar favorito: ' + err.message);
+            alert('Error changing favorite: ' + err.message);
           }
         });
 
@@ -2054,16 +2054,16 @@ $headerShowLogo = true;
         textContainer.className = 'flex-1 min-w-0 max-w-[180px]';
         const titleEl = document.createElement('div');
         titleEl.className = 'font-medium text-sm truncate ' + (isActive ? 'text-[#115c6c]' : 'text-slate-700 group-hover:text-slate-900');
-        titleEl.textContent = c.title || `Conversación ${c.id}`;
+        titleEl.textContent = c.title || `Conversation ${c.id}`;
         const timeEl = document.createElement('div');
         timeEl.className = 'text-xs text-slate-400';
-        timeEl.textContent = new Date(c.updated_at).toLocaleDateString('es-ES', {month: 'short', day: 'numeric'});
+        timeEl.textContent = new Date(c.updated_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
         textContainer.appendChild(titleEl);
         textContainer.appendChild(timeEl);
 
         btn.appendChild(textContainer);
         btn.addEventListener('click', async () => {
-          // Asegurar cierre de drawer móvil
+          // Ensure mobile drawer closes.
           closeMobileDrawer('conversations-drawer');
           await cleanupEmptyConversation(c.id);
           currentConversationId = c.id;
@@ -2079,10 +2079,10 @@ $headerShowLogo = true;
         renameBtn.className = 'p-1.5 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors';
         renameBtn.setAttribute('data-action', 'rename');
         renameBtn.innerHTML = '<i class="iconoir-edit-pencil"></i>';
-        renameBtn.title = 'Renombrar';
+        renameBtn.title = 'Rename';
         renameBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          const title = prompt('Nuevo título', c.title || '');
+          const title = prompt('New title', c.title || '');
           if (!title) return;
           try {
             await api('/api/conversations/rename.php', { method: 'POST', body: { id: c.id, title } });
@@ -2091,7 +2091,7 @@ $headerShowLogo = true;
             }
             await loadConversations();
           } catch (err) {
-            alert('Error al renombrar: ' + err.message);
+              alert('Error renaming: ' + err.message);
           }
         });
 
@@ -2099,7 +2099,7 @@ $headerShowLogo = true;
         moveBtn.className = 'p-1.5 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors';
         moveBtn.setAttribute('data-action', 'move');
         moveBtn.innerHTML = '<i class="iconoir-folder-settings"></i>';
-        moveBtn.title = 'Mover a carpeta';
+        moveBtn.title = 'Move to folder';
         moveBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
           openMoveModal(c);
@@ -2109,10 +2109,10 @@ $headerShowLogo = true;
         delBtn.className = 'p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors';
         delBtn.setAttribute('data-action', 'delete');
         delBtn.innerHTML = '<i class="iconoir-trash"></i>';
-        delBtn.title = 'Borrar';
+        delBtn.title = 'Delete';
         delBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          if(!confirm('¿Eliminar conversación?')) return;
+          if(!confirm('Delete conversation?')) return;
           try {
             await api('/api/conversations/delete.php', { method: 'POST', body: { id: c.id } });
             if(currentConversationId === c.id){
@@ -2126,7 +2126,7 @@ $headerShowLogo = true;
             await loadFolders();
             await loadConversations();
           } catch (err) {
-            alert('Error al eliminar: ' + err.message);
+            alert('Error deleting: ' + err.message);
           }
         });
 
@@ -2138,7 +2138,7 @@ $headerShowLogo = true;
         container.appendChild(btn);
         container.appendChild(actions);
         li.appendChild(container);
-        // Hacer clic en toda la fila (excepto botones de acción)
+        // Make the whole row clickable except action buttons.
         li.addEventListener('click', (e) => {
           if (e.target.closest('button') && !e.target.closest('[data-conv-id]')) return;
           btn.click();
@@ -2155,7 +2155,7 @@ $headerShowLogo = true;
       if(items.length > 0){
         showChatMode();
         for(const m of items){
-          // Pasar messageId para que los mensajes del historial soporten selección
+          // Pass messageId so history messages support selection.
           append(m.role, m.content, m.file || null, m.images || null, null, { messageId: m.id });
         }
         emptyConversationId = null;
@@ -2166,7 +2166,7 @@ $headerShowLogo = true;
     }
     
     function updateConvTitle(title) {
-      if (title && title !== 'Nueva conversación') {
+      if (title && title !== 'New conversation') {
         currentConvTitle = title;
         const span = convTitleEl.querySelector('span');
         if (span) span.textContent = title;
@@ -2179,7 +2179,7 @@ $headerShowLogo = true;
 
     newConvBtn.addEventListener('click', async ()=>{
       try{
-        // Si ya hay una conversación vacía sin mensajes, reutilizarla
+        // If there is already an empty conversation, reuse it.
         if (emptyConversationId) {
           currentConversationId = emptyConversationId;
           updateConvTitle(null);
@@ -2194,7 +2194,7 @@ $headerShowLogo = true;
         await loadConversations();
         showEmptyMode();
       }catch(e){
-        alert('Error al crear conversación: ' + e.message);
+        alert('Error creating conversation: ' + e.message);
       }
     });
 
@@ -2203,20 +2203,20 @@ $headerShowLogo = true;
       
       const filesArray = Array.isArray(files) ? files : (files ? [files] : []);
       
-      // Evitar envíos duplicados mientras se genera
+      // Prevent duplicate sends while generating.
       if (isGenerating) return;
       
-      // La conversación ya no está vacía: va a recibir un mensaje
+      // The conversation is no longer empty: it will receive a message.
       if (emptyConversationId === currentConversationId) {
         emptyConversationId = null;
       }
 
-      // Mostrar modo chat si estábamos en vacío
+      // Show chat mode if we were in empty state.
       showChatMode();
       
       const fileToUpload = filesArray.length > 0 ? filesArray[0] : null;
       
-      // 1. Mostrar mensaje de usuario inmediatamente
+      // 1. Show user message immediately.
       const userFile = fileToUpload ? {
         name: fileToUpload.name,
         mime_type: fileToUpload.type || '',
@@ -2249,7 +2249,7 @@ $headerShowLogo = true;
             const reason = uploadData?.error?.message
               || uploadData?.message
               || `HTTP ${uploadRes.status}`;
-            throw new Error('No se ha podido subir el archivo: ' + reason);
+            throw new Error('Could not upload the file: ' + reason);
           }
           uploadedFileId = uploadData.file_id;
         }
@@ -2272,7 +2272,7 @@ $headerShowLogo = true;
         });
 
         if (!response.ok) {
-          throw new Error('Error en el servidor');
+          throw new Error('Server error');
         }
 
         const reader = response.body.getReader();
@@ -2306,13 +2306,13 @@ $headerShowLogo = true;
                   throw new Error(data.message);
                 }
               } catch (e) {
-                console.error('Error parseando chunk:', e);
+                console.error('Chunk parse error:', e);
               }
             }
           }
         }
       } catch (e) {
-        console.error('Error en stream:', e);
+        console.error('Stream error:', e);
         assistantBubble.innerHTML = `<span class="text-red-500">Error: ${escapeHtml(e.message)}</span>`;
       } finally {
         isGenerating = false;
@@ -2331,7 +2331,7 @@ $headerShowLogo = true;
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
-          // Quitar el prefijo "data:mime/type;base64,"
+          // Remove the "data:mime/type;base64," prefix.
           const base64 = reader.result.split(',')[1];
           resolve(base64);
         };
@@ -2340,25 +2340,25 @@ $headerShowLogo = true;
       });
     }
 
-    // Manejar adjuntar archivo
+    // Handle file attachment.
     attachBtn.addEventListener('click', () => {
       fileInput.click();
     });
 
-    // Toggle modo generación de imágenes (nanobanana 🍌)
+    // Toggle image generation mode.
     const imageModeBtn = document.getElementById('image-mode-btn');
     const webSearchBtn = document.getElementById('web-search-btn');
     const webSearchBtnEmpty = document.getElementById('web-search-btn-empty');
     const chatInput = document.getElementById('chat-input');
     const chatInputEmpty = document.getElementById('chat-input-empty');
-    const defaultPlaceholder = 'Escribe un mensaje...';
-    const defaultPlaceholderEmpty = 'Pregúntame lo que quieras';
-    const imagePlaceholder = 'Describe la imagen que quieres crear... 🍌';
-    const webSearchPlaceholder = 'Pregunta algo y buscaré en internet... 🌐';
+    const defaultPlaceholder = 'Write a message...';
+    const defaultPlaceholderEmpty = 'Ask me anything';
+    const imagePlaceholder = 'Describe the image you want to create...';
+    const webSearchPlaceholder = 'Ask something and I will search the web...';
 
     const chatInputMaxHeight = 160;
 
-    // Auto-resize para textareas. Cuando llegan al máximo, activan scroll interno.
+    // Auto-resize textareas. At max height, they enable internal scrolling.
     function autoResize(textarea) {
       const wasAtBottom = textarea.scrollTop + textarea.clientHeight >= textarea.scrollHeight - 4;
       const caretAtEnd = textarea.selectionStart === textarea.value.length && textarea.selectionEnd === textarea.value.length;
@@ -2379,17 +2379,17 @@ $headerShowLogo = true;
       textarea.scrollTop = 0;
     }
 
-    // Event listeners para auto-resize
+    // Auto-resize event listeners
     chatInput.addEventListener('input', () => autoResize(chatInput));
     chatInputEmpty.addEventListener('input', () => autoResize(chatInputEmpty));
 
     function updateImageModeUI() {
-      // Clases para el nuevo diseño moderno
+      // Classes for the modern design.
       const btnActive = 'p-2 text-amber-600 bg-amber-50 rounded-lg transition-smooth';
       const btnInactive = 'p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth';
 
       if (imageMode) {
-        // Chat normal
+        // Normal chat
         imageModeBtn.className = btnActive;
         chatInput.placeholder = imagePlaceholder;
         attachBtn.disabled = true;
@@ -2403,7 +2403,7 @@ $headerShowLogo = true;
           attachBtnEmptyDesktop.disabled = true;
           attachBtnEmptyDesktop.classList.add('opacity-50', 'cursor-not-allowed');
         }
-        // Deshabilitar web search en modo imagen
+        // Disable web search in image mode.
         webSearchBtn.disabled = true;
         webSearchBtn.classList.add('opacity-50', 'cursor-not-allowed');
         webSearchBtnEmpty.disabled = true;
@@ -2411,7 +2411,7 @@ $headerShowLogo = true;
         imageModeFilesWarningChat?.classList.remove('hidden');
         imageModeFilesWarningEmpty?.classList.remove('hidden');
       } else {
-        // Chat normal
+        // Normal chat
         imageModeBtn.className = btnInactive;
         chatInput.placeholder = webSearchMode ? webSearchPlaceholder : defaultPlaceholder;
         attachBtn.disabled = false;
@@ -2425,7 +2425,7 @@ $headerShowLogo = true;
           attachBtnEmptyDesktop.disabled = false;
           attachBtnEmptyDesktop.classList.remove('opacity-50', 'cursor-not-allowed');
         }
-        // Habilitar web search
+        // Enable web search.
         webSearchBtn.disabled = false;
         webSearchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         webSearchBtnEmpty.disabled = false;
@@ -2444,7 +2444,7 @@ $headerShowLogo = true;
         webSearchBtnEmpty.className = btnActive;
         chatInput.placeholder = webSearchPlaceholder;
         chatInputEmpty.placeholder = webSearchPlaceholder;
-        // Deshabilitar modo imagen en búsqueda web
+        // Disable image mode during web search.
         imageModeBtn.disabled = true;
         imageModeBtn.classList.add('opacity-50', 'cursor-not-allowed');
         imageModeBtnEmpty.disabled = true;
@@ -2454,7 +2454,7 @@ $headerShowLogo = true;
         webSearchBtnEmpty.className = btnInactive;
         chatInput.placeholder = defaultPlaceholder;
         chatInputEmpty.placeholder = defaultPlaceholderEmpty;
-        // Habilitar modo imagen
+        // Enable image mode.
         imageModeBtn.disabled = false;
         imageModeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         imageModeBtnEmpty.disabled = false;
@@ -2462,11 +2462,11 @@ $headerShowLogo = true;
       }
     }
 
-    // Event listener para botón de imagen en chat normal
+    // Image button listener in normal chat.
     imageModeBtn.addEventListener('click', () => {
       imageMode = !imageMode;
       updateImageModeUI();
-      // Si se activa modo imagen, limpiar archivos adjuntos
+      // If image mode is activated, clear attached files.
       if (imageMode && currentFiles.length > 0) {
         currentFiles = [];
         fileInput.value = '';
@@ -2531,10 +2531,10 @@ $headerShowLogo = true;
       if (!text && currentFiles.length === 0) return;
       
       resetChatTextarea(inputEl);
-      // Enviar solo el primer archivo por ahora (el backend procesa de a uno)
+      // Send only the first file for now. The backend processes one at a time.
       await handleSubmit(text, currentFiles.length > 0 ? currentFiles[0] : null);
       
-      // Limpiar archivos después de enviar
+      // Clear files after sending.
       if (currentFiles.length > 0) {
         currentFiles = [];
         fileInput.value = '';
@@ -2549,10 +2549,10 @@ $headerShowLogo = true;
       if (!text && currentFilesEmpty.length === 0) return;
       
       resetChatTextarea(inputEmptyEl);
-      // Enviar solo el primer archivo por ahora
+      // Send only the first file for now.
       await handleSubmit(text, currentFilesEmpty.length > 0 ? currentFilesEmpty[0] : null);
       
-      // Limpiar archivos después de enviar
+      // Clear files after sending.
       if (currentFilesEmpty.length > 0) {
         currentFilesEmpty = [];
         fileInputEmpty.value = '';
@@ -2560,7 +2560,7 @@ $headerShowLogo = true;
       }
     });
 
-    // Manejar adjuntar archivo en estado vacío
+    // Handle file attachment in empty state.
     attachBtnEmpty.addEventListener('click', () => {
       fileInputEmpty.click();
     });
@@ -2740,15 +2740,13 @@ $headerShowLogo = true;
         btn.classList.add('active', 'text-white/80');
         btn.classList.remove('text-white/60');
         
-        // Redirigir a las vistas correspondientes
+        // Redirect to the corresponding views.
         if (tab === 'gestures') {
           window.location.href = '/gestos/';
         } else if (tab === 'voices') {
           window.location.href = '/voices/';
-        } else if (tab === 'apps') {
-          window.location.href = '/aplicaciones/';
         } else if (tab === 'conversations') {
-          // Volver al estado vacío si estamos en una conversación
+          // Return to empty state if we are inside a conversation.
           if (currentConversationId) {
             cleanupEmptyConversation();
             currentConversationId = null;
@@ -2776,7 +2774,7 @@ $headerShowLogo = true;
     }
   </script>
   
-  <!-- Modal FAQ / Dudas Rápidas -->
+  <!-- Nana Quick Answers Modal -->
   <div id="faq-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
       <!-- Header -->
@@ -2786,12 +2784,12 @@ $headerShowLogo = true;
             <i class="iconoir-help-circle text-xl text-white"></i>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-slate-900">Dudas rápidas</h3>
-            <p class="text-xs text-slate-500">Pregunta sobre el Grupo Ebone</p>
+            <h3 class="text-lg font-semibold text-slate-900">Ask Nana</h3>
+            <p class="text-xs text-slate-500">Quick answers from your workspace</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button id="faq-clear-btn" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Nueva conversación">
+          <button id="faq-clear-btn" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="New conversation">
             <i class="iconoir-refresh text-lg"></i>
           </button>
           <button id="faq-close-btn" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
@@ -2800,23 +2798,23 @@ $headerShowLogo = true;
         </div>
       </div>
       
-      <!-- Mensajes -->
+      <!-- Messages -->
       <div id="faq-messages" class="flex-1 overflow-y-auto p-5 space-y-4">
-        <!-- Estado inicial con sugerencias -->
+        <!-- Initial suggestions -->
         <div id="faq-suggestions" class="space-y-3">
-          <p class="text-sm text-slate-600 text-center mb-4">¿Qué quieres saber? Aquí tienes algunas ideas:</p>
+          <p class="text-sm text-slate-600 text-center mb-4">What would you like to know? Try one of these:</p>
           <div class="grid grid-cols-1 gap-2">
             <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#23AAC5]/5 border border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-sm text-slate-700 hover:text-[#23AAC5]">
-              ¿Qué es CUBOFIT y cómo funciona?
+              What can iaiaPRO help me with?
             </button>
             <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#23AAC5]/5 border border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-sm text-slate-700 hover:text-[#23AAC5]">
-              ¿Cuántos empleados tiene el Grupo Ebone?
+              How do I get better answers from the assistant?
             </button>
             <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#23AAC5]/5 border border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-sm text-slate-700 hover:text-[#23AAC5]">
-              ¿Qué servicios ofrece UNIGES-3?
+              What kind of documents can I upload?
             </button>
             <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#23AAC5]/5 border border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-sm text-slate-700 hover:text-[#23AAC5]">
-              ¿Dónde están las sedes del grupo?
+              How should I use Voices and Gestures?
             </button>
           </div>
         </div>
@@ -2830,7 +2828,7 @@ $headerShowLogo = true;
             <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
             <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
           </div>
-          <span>Pensando...</span>
+          <span>Thinking...</span>
         </div>
       </div>
       
@@ -2841,7 +2839,7 @@ $headerShowLogo = true;
             id="faq-input" 
             type="text" 
             class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-all text-sm" 
-            placeholder="Escribe tu pregunta..."
+            placeholder="Ask Nana..."
             autocomplete="off"
           />
           <button type="submit" class="px-5 py-3 gradient-brand-btn text-white rounded-xl font-medium shadow-md hover:shadow-lg hover:opacity-90 transition-all">
@@ -2853,7 +2851,7 @@ $headerShowLogo = true;
   </div>
   
   <script>
-    // FAQ Modal Logic
+    // Nana modal logic.
     (function() {
       const faqBtn = document.getElementById('faq-btn');
       const faqModal = document.getElementById('faq-modal');
@@ -2865,9 +2863,9 @@ $headerShowLogo = true;
       const faqSuggestions = document.getElementById('faq-suggestions');
       const faqTyping = document.getElementById('faq-typing');
       
-      let faqHistory = []; // Historial en memoria
+      let faqHistory = []; // In-memory history
       
-      // Helpers locales
+      // Local helpers
       function escapeHtml(str) {
         return str.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
       }
@@ -2884,32 +2882,32 @@ $headerShowLogo = true;
         return s;
       }
       
-      // Abrir modal
+      // Open modal
       faqBtn.addEventListener('click', () => {
         faqModal.classList.remove('hidden');
         faqInput.focus();
       });
       
-      // Cerrar modal
+      // Close modal
       faqCloseBtn.addEventListener('click', () => {
         faqModal.classList.add('hidden');
       });
       
-      // Cerrar con click fuera
+      // Close on backdrop click
       faqModal.addEventListener('click', (e) => {
         if (e.target === faqModal) {
           faqModal.classList.add('hidden');
         }
       });
       
-      // Cerrar con Escape
+      // Close with Escape
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !faqModal.classList.contains('hidden')) {
           faqModal.classList.add('hidden');
         }
       });
       
-      // Limpiar conversación
+      // Clear conversation
       faqClearBtn.addEventListener('click', () => {
         faqHistory = [];
         faqMessages.innerHTML = faqSuggestions.outerHTML;
@@ -2917,7 +2915,7 @@ $headerShowLogo = true;
         bindSuggestions();
       });
       
-      // Sugerencias
+      // Suggestions
       function bindSuggestions() {
         document.querySelectorAll('.faq-suggestion').forEach(btn => {
           btn.addEventListener('click', () => {
@@ -2928,22 +2926,22 @@ $headerShowLogo = true;
       }
       bindSuggestions();
       
-      // Enviar mensaje
+      // Send message
       faqForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const message = faqInput.value.trim();
         if (!message) return;
         
-        // Ocultar sugerencias
+        // Hide suggestions
         const suggestions = faqMessages.querySelector('#faq-suggestions');
         if (suggestions) suggestions.classList.add('hidden');
         
-        // Añadir mensaje usuario
+        // Add user message
         appendFaqMessage('user', message);
         faqInput.value = '';
         faqHistory.push({ role: 'user', content: message });
         
-        // Mostrar typing
+        // Show typing
         faqTyping.classList.remove('hidden');
         faqMessages.scrollTop = faqMessages.scrollHeight;
         
@@ -2956,7 +2954,7 @@ $headerShowLogo = true;
             },
             body: JSON.stringify({
               message: message,
-              history: faqHistory.slice(0, -1) // Enviar historial sin el mensaje actual
+              history: faqHistory.slice(0, -1) // Send history without the current message
             }),
             credentials: 'include'
           });
@@ -2965,7 +2963,7 @@ $headerShowLogo = true;
           faqTyping.classList.add('hidden');
           
           if (!res.ok) {
-            appendFaqMessage('assistant', 'Lo siento, ha ocurrido un error. Por favor, inténtalo de nuevo.');
+            appendFaqMessage('assistant', 'Sorry, something went wrong. Please try again.');
             return;
           }
           
@@ -2974,7 +2972,7 @@ $headerShowLogo = true;
           
         } catch (err) {
           faqTyping.classList.add('hidden');
-          appendFaqMessage('assistant', 'Error de conexión. Por favor, inténtalo de nuevo.');
+          appendFaqMessage('assistant', 'Connection error. Please try again.');
         }
       });
       
@@ -2982,12 +2980,12 @@ $headerShowLogo = true;
         const div = document.createElement('div');
         div.className = 'flex gap-3 ' + (role === 'user' ? 'justify-end' : 'justify-start');
         
-        // Obtener iniciales del usuario del avatar existente en el DOM
+        // Get user initials from the existing DOM avatar.
         const userInitials = document.getElementById('user-avatar')?.textContent?.trim() || '?';
         
         const avatar = role === 'user' 
           ? `<div class="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">${userInitials}</div>`
-          : `<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs font-semibold flex-shrink-0">E</div>`;
+          : `<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs font-semibold flex-shrink-0">N</div>`;
         
         const bubbleClass = role === 'user'
           ? 'gradient-brand text-white'
@@ -3078,7 +3076,7 @@ $headerShowLogo = true;
           modelSelectEmpty.value = selected;
           modelSelectChat.value = selected;
         } catch (error) {
-          console.warn('No se pudo cargar catálogo de modelos:', error);
+          console.warn('Could not load model catalog:', error);
         }
       }
 
@@ -3108,22 +3106,22 @@ $headerShowLogo = true;
       const mobileDrawerContent = document.getElementById('conversations-drawer-content');
       
       if (desktopSidebar && mobileDrawerContent) {
-        // Clonar contenido de carpetas y conversaciones al drawer móvil
+        // Clone folder and conversation content into the mobile drawer.
         const foldersSection = desktopSidebar.querySelector('.flex-1.overflow-y-auto');
         if (foldersSection) {
           mobileDrawerContent.innerHTML = foldersSection.innerHTML;
-          // Forzar visibilidad de acciones (no hay hover en móvil)
+          // Force action visibility. There is no hover on mobile.
           mobileDrawerContent.querySelectorAll('.group .opacity-0').forEach(el => {
             el.classList.remove('opacity-0');
             el.classList.add('opacity-100');
           });
         }
         
-        // Observer para mantener sincronizado
+        // Keep the mobile drawer synchronized.
         const observer = new MutationObserver(() => {
           if (foldersSection) {
             mobileDrawerContent.innerHTML = foldersSection.innerHTML;
-            // Forzar visibilidad de acciones tras refrescar
+            // Force action visibility after refresh.
             mobileDrawerContent.querySelectorAll('.group .opacity-0').forEach(el => {
               el.classList.remove('opacity-0');
               el.classList.add('opacity-100');
@@ -3133,9 +3131,9 @@ $headerShowLogo = true;
         
         observer.observe(desktopSidebar, { childList: true, subtree: true });
         
-        // Event delegation para clics en el drawer móvil
+        // Event delegation for mobile drawer clicks.
         mobileDrawerContent.addEventListener('click', (e) => {
-          // Botón "Nueva carpeta"
+          // "New folder" button
           const newFolderBtnMobile = e.target.closest('#new-folder-btn');
           if (newFolderBtnMobile) {
             const desktopNewFolderBtn = desktopSidebar.querySelector('#new-folder-btn');
@@ -3143,11 +3141,11 @@ $headerShowLogo = true;
             return;
           }
 
-          // Buscar si se hizo clic en una conversación
+          // Check if a conversation was clicked.
           const convItem = e.target.closest('[data-conv-id]');
           if (convItem) {
             const convId = convItem.getAttribute('data-conv-id');
-            // ¿Se clicó un botón de acción dentro de la conversación?
+            // Was an action button clicked inside the conversation?
             const actionBtn = e.target.closest('[data-action]');
             if (actionBtn) {
               const action = actionBtn.getAttribute('data-action');
@@ -3157,29 +3155,29 @@ $headerShowLogo = true;
                 if (desktopAction) {
                   e.preventDefault();
                   e.stopPropagation();
-                  // No cerrar el drawer para acciones que no cambian de vista, excepto mover que abre modal
+                  // Do not close the drawer for actions that do not change view, except move, which opens a modal.
                   if (action === 'move') closeMobileDrawer('conversations-drawer');
                   desktopAction.click();
                 }
               }
               return;
             }
-            // Click en la conversación (abrir)
+            // Conversation click (open)
             const desktopConv = desktopSidebar.querySelector(`[data-conv-id="${convId}"]`);
             if (desktopConv) {
               closeMobileDrawer('conversations-drawer');
-              // Click sobre el botón principal dentro de la fila
+              // Click the main button inside the row.
               const mainBtn = desktopConv.querySelector('[data-conv-id]');
               if (mainBtn) mainBtn.click(); else desktopConv.click();
             }
             return;
           }
           
-          // Buscar si se hizo clic en una carpeta
+          // Check if a folder was clicked.
           const folderItem = e.target.closest('[data-folder-id]');
           if (folderItem) {
             const folderId = folderItem.getAttribute('data-folder-id');
-            // ¿Se clicó una acción de carpeta?
+            // Was a folder action clicked?
             const folderActionBtn = e.target.closest('[data-action-folder]');
             if (folderActionBtn) {
               const action = folderActionBtn.getAttribute('data-action-folder');
@@ -3194,15 +3192,15 @@ $headerShowLogo = true;
               }
               return;
             }
-            // Buscar y clickear la carpeta correspondiente en desktop
+            // Find and click the corresponding desktop folder.
             const desktopFolder = desktopSidebar.querySelector(`[data-folder-id="${folderId}"]`);
             if (desktopFolder) {
               desktopFolder.click();
-              // Refrescar contenido del drawer después del clic
+              // Refresh drawer content after click.
               setTimeout(() => {
                 if (foldersSection) {
                   mobileDrawerContent.innerHTML = foldersSection.innerHTML;
-                  // Reaplicar visibilidad de acciones
+                  // Reapply action visibility.
                   mobileDrawerContent.querySelectorAll('.group .opacity-0').forEach(el => {
                     el.classList.remove('opacity-0');
                     el.classList.add('opacity-100');
@@ -3215,7 +3213,7 @@ $headerShowLogo = true;
         });
       }
       
-      // Sincronizar botón nueva conversación móvil
+      // Sync mobile new conversation button.
       const mobileNewBtn = document.getElementById('mobile-new-conv-btn');
       const desktopNewBtn = document.getElementById('new-conv-btn');
       if (mobileNewBtn && desktopNewBtn) {

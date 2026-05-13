@@ -138,7 +138,7 @@ El podcast debe sonar como DOS EXPERTOS AMIGOS charlando en un bar, no como pres
 
 ## ESTRUCTURA
 
-1. **APERTURA (30-45 seg)**: Saludo (el podcast se llamará "El Pulso de Ebonia" + gancho provocador sobre el tema.
+1. **APERTURA (30-45 seg)**: Saludo (el podcast se llamará "The iaiaPRO Brief" + gancho provocador sobre el tema.
 2. **DESARROLLO (85% del tiempo)**: 
    - Explorar cada concepto EN PROFUNDIDAD
    - No solo explicar QUÉ, sino POR QUÉ importa
@@ -397,7 +397,7 @@ PROMPT;
 {$this->speaker2} es un divulgador español con voz serena, segura y didáctica. Aporta profundidad, matices y ejemplos con tono conversacional, no académico.
 
 # THE SCENE
-Están grabando "El Pulso de Ebonia" en un estudio de podcast corporativo moderno, tranquilo y bien sonorizado. La conversación debe sonar como un podcast profesional para escuchar en el coche: entretenido, claro, humano y fácil de seguir sin mirar pantalla.
+Están grabando "The iaiaPRO Brief" en un estudio de podcast corporativo moderno, tranquilo y bien sonorizado. La conversación debe sonar como un podcast profesional para escuchar en el coche: entretenido, claro, humano y fácil de seguir sin mirar pantalla.
 
 # DIRECTOR'S NOTES
 Language and accent:

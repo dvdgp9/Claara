@@ -6,6 +6,6 @@ use App\Session;
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'No autenticado', 401);
+    Response::error('unauthorized', 'Not authenticated', 401);
 }
 Response::json(['user' => $user, 'csrf_token' => $_SESSION['csrf_token'] ?? null]);

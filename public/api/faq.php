@@ -1,12 +1,12 @@
 <?php
 /**
- * FAQ Chatbot Endpoint
+ * Nana quick answers endpoint
  * 
- * Chatbot de dudas rápidas usando QWEN Turbo.
- * No persiste en BD, pero recibe historial para continuidad de conversación.
+ * Quick answers chatbot using Qwen.
+ * It does not persist to the database, but receives history for conversation continuity.
  * 
- * IMPORTANTE: Usa ContextBuilder para cargar TODA la información corporativa.
- * El modelo está instruido para NO inventar información.
+ * Uses ContextBuilder to load the quick-answer knowledge base.
+ * The model is instructed not to invent information.
  */
 require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Chat/OpenRouterClient.php';
@@ -20,10 +20,10 @@ use Chat\OpenRouterClient;
 use Chat\ContextBuilder;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
-// Requiere sesión y CSRF
+// Requires session and CSRF.
 $user = AuthService::requireAuth();
 Session::requireCsrf();
 
@@ -32,38 +32,35 @@ $message = trim((string)($input['message'] ?? ''));
 $history = $input['history'] ?? [];
 
 if ($message === '') {
-    Response::error('validation_error', 'Se requiere un mensaje', 400);
+    Response::error('validation_error', 'Message is required', 400);
 }
 
-// Validar historial (array de {role, content})
+// Validate history (array of {role, content}).
 if (!is_array($history)) {
     $history = [];
 }
 
-// Limitar historial a últimos 20 mensajes para no exceder contexto
+// Limit history to the last 20 messages to avoid exceeding context.
 if (count($history) > 20) {
     $history = array_slice($history, -20);
 }
 
-// Cargar contexto específico para FAQ desde docs/context_faq/
-// Separado del chat principal para permitir instrucciones específicas
+// Load Nana-specific context from docs/context_faq/.
+// Separate from the main chat to allow specific instructions.
 $faqContextDir = dirname(dirname(__DIR__)) . '/docs/context_faq';
 $contextBuilder = new ContextBuilder($faqContextDir);
 $systemPrompt = $contextBuilder->buildSystemPrompt();
 
-// Crear cliente OpenRouter con modelo rápido para FAQ
-// - qwen/qwen-plus: buena relación calidad/precio para FAQ
-// - temperature 0.1: respuestas muy deterministas, menos creatividad = menos alucinaciones
-// - max_tokens 600: respuestas cortas pero suficientes
+// Create an OpenRouter client with a fast model for quick answers.
 $llmClient = new OpenRouterClient(
     null,                   // API key desde .env
     'qwen/qwen-plus',       // Modelo rápido vía OpenRouter
     $systemPrompt,
-    0.1,                    // Temperature muy baja para máxima fiabilidad
-    600                     // Tokens suficientes para respuestas concisas
+    0.1,
+    600
 );
 
-// Construir mensajes: historial + mensaje actual
+// Build messages: history + current message.
 $messages = [];
 foreach ($history as $h) {
     if (isset($h['role']) && isset($h['content'])) {
@@ -73,7 +70,7 @@ foreach ($history as $h) {
         ];
     }
 }
-// Añadir mensaje actual
+// Add current message.
 $messages[] = ['role' => 'user', 'content' => $message];
 
 try {
@@ -84,5 +81,5 @@ try {
         'model' => $llmClient->getModel()
     ]);
 } catch (\Exception $e) {
-    Response::error('faq_error', 'Error al procesar pregunta: ' . $e->getMessage(), 500);
+    Response::error('faq_error', 'Error processing question: ' . $e->getMessage(), 500);
 }

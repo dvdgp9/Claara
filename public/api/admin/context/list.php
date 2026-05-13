@@ -2,8 +2,8 @@
 /**
  * GET /api/admin/context/list.php?target=lex
  * 
- * Lista todos los documentos de contexto de un target específico.
- * Requiere superadmin.
+ * Lists all context documents for a specific target.
+ * Requires superadmin.
  */
 require_once __DIR__ . '/../../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../../src/Auth/AdminGuard.php';
@@ -14,7 +14,7 @@ use Auth\AdminGuard;
 use Repos\ContextDocsRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    Response::error('method_not_allowed', 'Sólo GET', 405);
+    Response::error('method_not_allowed', 'GET only', 405);
 }
 
 AdminGuard::requireSuperadmin();
@@ -22,7 +22,7 @@ AdminGuard::requireSuperadmin();
 $target = $_GET['target'] ?? '';
 
 if (!ContextDocsRepo::isValidTarget($target)) {
-    Response::error('invalid_target', 'Target inválido. Valores permitidos: ' . implode(', ', ContextDocsRepo::getValidTargets()), 400);
+    Response::error('invalid_target', 'Invalid target. Allowed values: ' . implode(', ', ContextDocsRepo::getValidTargets()), 400);
 }
 
 $repo = new ContextDocsRepo();

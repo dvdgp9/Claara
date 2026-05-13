@@ -13,19 +13,19 @@ use Voices\VoiceExecutionsRepo;
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Sesión no válida', 401);
+    Response::error('unauthorized', 'Invalid session', 401);
 }
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id <= 0) {
-    Response::error('missing_id', 'Se requiere id', 400);
+    Response::error('missing_id', 'id is required', 400);
 }
 
 $repo = new VoiceExecutionsRepo();
 $item = $repo->getById($id, (int)$user['id']);
 
 if (!$item) {
-    Response::error('not_found', 'No encontrado', 404);
+    Response::error('not_found', 'Not found', 404);
 }
 
 Response::json($item);

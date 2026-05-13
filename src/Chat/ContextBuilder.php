@@ -2,12 +2,10 @@
 namespace Chat;
 
 /**
- * Construye el contexto corporativo para inyectar en los LLM.
+ * Builds the assistant context injected into LLMs.
  * 
- * Lee todos los archivos markdown de docs/context/ y los combina
- * en un único prompt de sistema. Este contexto es el mismo para
- * todos los proveedores (Gemini, OpenAI, etc.), cada uno lo usa
- * en su formato nativo.
+ * Reads all markdown files from docs/context/ and combines them into a
+ * single system prompt. The context is provider-agnostic.
  */
 class ContextBuilder
 {
@@ -19,7 +17,7 @@ class ContextBuilder
     }
 
     /**
-     * Construye el prompt de sistema completo con todo el contexto corporativo.
+     * Builds the complete system prompt.
      */
     public function buildSystemPrompt(): string
     {
@@ -41,26 +39,19 @@ class ContextBuilder
             }
         }
 
-        // Añadir contexto temporal dinámico
+        // Add dynamic temporal context.
         $content = trim($content);
-        $dateStr = date('l, d de F de Y');
+        $dateStr = date('l, F j, Y');
         $timeStr = date('H:i');
-        
-        // Traducción simple de días y meses al español si es necesario
-        $days = ['Monday'=>'Lunes', 'Tuesday'=>'Martes', 'Wednesday'=>'Miércoles', 'Thursday'=>'Jueves', 'Friday'=>'Viernes', 'Saturday'=>'Sábado', 'Sunday'=>'Domingo'];
-        $months = ['January'=>'Enero', 'February'=>'Febrero', 'March'=>'Marzo', 'April'=>'Abril', 'May'=>'Mayo', 'June'=>'Junio', 'July'=>'Julio', 'August'=>'Agosto', 'September'=>'Septiembre', 'October'=>'Octubre', 'November'=>'Noviembre', 'December'=>'Diciembre'];
-        
-        foreach($days as $en => $es) $dateStr = str_replace($en, $es, $dateStr);
-        foreach($months as $en => $es) $dateStr = str_replace($en, $es, $dateStr);
 
-        $temporalContext = "\n\n---\n\n## Contexto Temporal\nFecha actual: " . $dateStr . "\nHora actual: " . $timeStr;
+        $temporalContext = "\n\n---\n\n## Temporal Context\nCurrent date: " . $dateStr . "\nCurrent time: " . $timeStr;
         
         return $content . $temporalContext;
     }
 
     /**
-     * Obtiene todos los archivos .md del directorio de contexto, ordenados alfabéticamente.
-     * Prioriza archivos de instrucciones al inicio.
+     * Gets all .md context files sorted alphabetically.
+     * Prioritizes instruction files first.
      * 
      * @return array<string>
      */
@@ -71,15 +62,15 @@ class ContextBuilder
             return [];
         }
 
-        // Ordenar alfabéticamente primero
+        // Sort alphabetically first.
         sort($files);
         
-        // Archivos prioritarios que deben ir al inicio
+        // Priority files that should appear first.
         $priorityFiles = [
             $this->contextDir . '/system_prompt.md',
         ];
         
-        // Mover archivos prioritarios al inicio
+        // Move priority files to the beginning.
         foreach (array_reverse($priorityFiles) as $priorityFile) {
             if (in_array($priorityFile, $files)) {
                 $files = array_values(array_diff($files, [$priorityFile]));
@@ -91,10 +82,10 @@ class ContextBuilder
     }
 
     /**
-     * Prompt por defecto si no hay archivos de contexto.
+     * Default prompt if no context files exist.
      */
     private function getDefaultPrompt(): string
     {
-        return "Eres Ebonia, un asistente de IA corporativa profesional y útil.";
+        return "You are iaiaPRO, a friendly and professional AI assistant for everyday work.";
     }
 }

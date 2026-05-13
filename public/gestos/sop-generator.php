@@ -30,13 +30,13 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'Todos los gestos';
-$headerTitle = 'Generador de procesos';
+$headerBackText = 'All gestures';
+$headerTitle = 'Process generator';
 $headerIcon = 'iconoir-clipboard-check';
 $headerIconColor = 'from-emerald-500 to-teal-600';
 $headerDrawerId = 'sop-history-drawer';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <style>
@@ -237,7 +237,7 @@ $headerDrawerId = 'sop-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-emerald-500"></i>
-            Historial
+            History
           </h2>
         </div>
       </div>
@@ -245,7 +245,7 @@ $headerDrawerId = 'sop-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Cargando...
+          Loading...
         </div>
       </div>
     </aside>
@@ -253,7 +253,7 @@ $headerDrawerId = 'sop-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'sop-history-drawer';
-    $drawerTitle = 'Historial';
+    $drawerTitle = 'History';
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-emerald-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -270,10 +270,10 @@ $headerDrawerId = 'sop-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 mb-2">
-              Generador de procesos
+              Process generator
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Transforma información desestructurada en procedimientos operativos profesionales. Sube texto, audio, imágenes o PDFs.
+              Transform unstructured information into professional operating procedures. Upload text, audio, images, or PDFs.
             </p>
           </div>
 
@@ -285,18 +285,18 @@ $headerDrawerId = 'sop-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">
                   <i class="iconoir-text text-emerald-500 mr-1"></i>
-                  Título del procedimiento <span class="text-slate-400 font-normal">(opcional)</span>
+                  Procedure title <span class="text-slate-400 font-normal">(optional)</span>
                 </label>
                 <input type="text" id="sop-title" 
                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none transition-all"
-                       placeholder="Ej: Proceso de onboarding de nuevos empleados">
+                       placeholder="Ex: New employee onboarding process">
               </div>
               
               <!-- Fuentes de contenido -->
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-3">
                   <i class="iconoir-input-field text-emerald-500 mr-1"></i>
-                  Fuentes de contenido <span class="text-slate-400 font-normal">(añade una o varias)</span>
+                  Content sources <span class="text-slate-400 font-normal">(add one or more)</span>
                 </label>
                 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -306,8 +306,8 @@ $headerDrawerId = 'sop-history-drawer';
                     <div class="source-icon w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center mb-2">
                       <i class="iconoir-text text-slate-500 text-xl"></i>
                     </div>
-                    <div class="text-sm font-medium text-slate-700">Texto</div>
-                    <div class="text-xs text-slate-400">Pega contenido</div>
+                    <div class="text-sm font-medium text-slate-700">Text</div>
+                    <div class="text-xs text-slate-400">Paste content</div>
                   </div>
                   
                   <!-- URL -->
@@ -317,7 +317,7 @@ $headerDrawerId = 'sop-history-drawer';
                       <i class="iconoir-link text-slate-500 text-xl"></i>
                     </div>
                     <div class="text-sm font-medium text-slate-700">URL</div>
-                    <div class="text-xs text-slate-400">Extrae de web</div>
+                    <div class="text-xs text-slate-400">Extract from web</div>
                   </div>
                   
                   <!-- Audio -->
@@ -336,8 +336,8 @@ $headerDrawerId = 'sop-history-drawer';
                     <div class="source-icon w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center mb-2">
                       <i class="iconoir-media-image text-slate-500 text-xl"></i>
                     </div>
-                    <div class="text-sm font-medium text-slate-700">Imágenes</div>
-                    <div class="text-xs text-slate-400">Analiza capturas</div>
+                    <div class="text-sm font-medium text-slate-700">Images</div>
+                    <div class="text-xs text-slate-400">Analyze screenshots</div>
                   </div>
                 </div>
                 
@@ -347,14 +347,14 @@ $headerDrawerId = 'sop-history-drawer';
                   <div id="panel-text" class="source-panel hidden">
                     <textarea id="input-text" rows="6"
                               class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none transition-all resize-none"
-                              placeholder="Pega aquí el texto con la información del proceso: notas de reuniones, emails, instrucciones informales, etc."></textarea>
+                              placeholder="Paste process information here: meeting notes, emails, informal instructions, etc."></textarea>
                   </div>
                   
                   <!-- Panel URL -->
                   <div id="panel-url" class="source-panel hidden">
                     <input type="url" id="input-url"
                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none transition-all"
-                           placeholder="https://ejemplo.com/articulo-con-instrucciones">
+                           placeholder="https://example.com/article-with-instructions">
                   </div>
                   
                   <!-- Panel Audio -->
@@ -362,10 +362,10 @@ $headerDrawerId = 'sop-history-drawer';
                     <!-- Tabs: Subir / Grabar -->
                     <div class="flex gap-2 mb-3">
                       <button type="button" data-audio-tab="upload" class="audio-tab-btn active px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-100 text-emerald-700">
-                        <i class="iconoir-upload mr-1"></i> Subir archivo
+                        <i class="iconoir-upload mr-1"></i> Upload file
                       </button>
                       <button type="button" data-audio-tab="record" class="audio-tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
-                        <i class="iconoir-mic mr-1"></i> Grabar
+                        <i class="iconoir-mic mr-1"></i> Record
                       </button>
                     </div>
                     
@@ -375,8 +375,8 @@ $headerDrawerId = 'sop-history-drawer';
                         <input type="file" id="input-audio" accept="audio/*" class="hidden">
                         <div id="audio-placeholder">
                           <i class="iconoir-upload text-4xl text-slate-300 mb-2"></i>
-                          <p class="text-sm text-slate-500">Arrastra un archivo de audio o haz clic para seleccionar</p>
-                          <p class="text-xs text-slate-400 mt-1">MP3, WAV, M4A, WebM (máx. 25MB)</p>
+                          <p class="text-sm text-slate-500">Drag an audio file or click to select</p>
+                          <p class="text-xs text-slate-400 mt-1">MP3, WAV, M4A, WebM (max 25MB)</p>
                         </div>
                         <div id="audio-preview" class="hidden">
                           <div class="file-preview">
@@ -384,7 +384,7 @@ $headerDrawerId = 'sop-history-drawer';
                               <i class="iconoir-sound-high"></i>
                             </div>
                             <div class="flex-1 text-left">
-                              <div class="font-medium text-slate-700" id="audio-name">archivo.mp3</div>
+                              <div class="font-medium text-slate-700" id="audio-name">file.mp3</div>
                               <div class="text-sm text-slate-400" id="audio-size">2.5 MB</div>
                             </div>
                             <button type="button" id="remove-audio" class="text-slate-400 hover:text-red-500 p-2">
@@ -403,9 +403,9 @@ $headerDrawerId = 'sop-history-drawer';
                           <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
                             <i class="iconoir-mic text-3xl text-emerald-500"></i>
                           </div>
-                          <p class="text-sm text-slate-600">Pulsa el botón para empezar a grabar</p>
+                          <p class="text-sm text-slate-600">Press the button to start recording</p>
                           <button type="button" id="start-record-btn" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all">
-                            <i class="iconoir-mic mr-2"></i> Iniciar grabación
+                            <i class="iconoir-mic mr-2"></i> Start recording
                           </button>
                         </div>
                         
@@ -415,11 +415,11 @@ $headerDrawerId = 'sop-history-drawer';
                             <i class="iconoir-mic text-3xl text-red-500"></i>
                           </div>
                           <div>
-                            <p class="text-sm font-medium text-red-600">Grabando...</p>
+                            <p class="text-sm font-medium text-red-600">Recording...</p>
                             <p id="record-timer" class="text-2xl font-bold text-slate-700 mt-1">00:00</p>
                           </div>
                           <button type="button" id="stop-record-btn" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow-md transition-all">
-                            <i class="iconoir-stop mr-2"></i> Detener
+                            <i class="iconoir-stop mr-2"></i> Stop
                           </button>
                         </div>
                         
@@ -430,13 +430,13 @@ $headerDrawerId = 'sop-history-drawer';
                               <i class="iconoir-mic"></i>
                             </div>
                             <div class="flex-1 text-left">
-                              <div class="font-medium text-slate-700">Grabación de audio</div>
+                              <div class="font-medium text-slate-700">Audio recording</div>
                               <div class="text-sm text-slate-400" id="record-duration">0:00</div>
                             </div>
-                            <button type="button" id="play-record-btn" class="text-emerald-500 hover:text-emerald-600 p-2" title="Reproducir">
+                            <button type="button" id="play-record-btn" class="text-emerald-500 hover:text-emerald-600 p-2" title="Play">
                               <i class="iconoir-play"></i>
                             </button>
-                            <button type="button" id="remove-record-btn" class="text-slate-400 hover:text-red-500 p-2" title="Eliminar">
+                            <button type="button" id="remove-record-btn" class="text-slate-400 hover:text-red-500 p-2" title="Delete">
                               <i class="iconoir-xmark"></i>
                             </button>
                           </div>
@@ -452,8 +452,8 @@ $headerDrawerId = 'sop-history-drawer';
                       <input type="file" id="input-images" accept="image/*" multiple class="hidden">
                       <div id="images-placeholder" class="text-center">
                         <i class="iconoir-media-image-list text-4xl text-slate-300 mb-2"></i>
-                        <p class="text-sm text-slate-500">Arrastra imágenes o haz clic para seleccionar</p>
-                        <p class="text-xs text-slate-400 mt-1">Capturas de pantalla, diagramas, fotos (múltiples)</p>
+                        <p class="text-sm text-slate-500">Drag images or click to select</p>
+                        <p class="text-xs text-slate-400 mt-1">Screenshots, diagrams, photos (multiple)</p>
                       </div>
                       <div id="images-grid" class="images-grid hidden"></div>
                     </div>
@@ -465,8 +465,8 @@ $headerDrawerId = 'sop-history-drawer';
                       <input type="file" id="input-pdf" accept=".pdf" class="hidden">
                       <div id="pdf-placeholder">
                         <i class="iconoir-page text-4xl text-slate-300 mb-2"></i>
-                        <p class="text-sm text-slate-500">Arrastra un PDF o haz clic para seleccionar</p>
-                        <p class="text-xs text-slate-400 mt-1">Documentos, manuales, guías (máx. 20MB)</p>
+                        <p class="text-sm text-slate-500">Drag a PDF or click to select</p>
+                        <p class="text-xs text-slate-400 mt-1">Documents, handbooks, guides (max 20MB)</p>
                       </div>
                       <div id="pdf-preview" class="hidden">
                         <div class="file-preview">
@@ -474,7 +474,7 @@ $headerDrawerId = 'sop-history-drawer';
                             <i class="iconoir-page"></i>
                           </div>
                           <div class="flex-1 text-left">
-                            <div class="font-medium text-slate-700" id="pdf-name">documento.pdf</div>
+                            <div class="font-medium text-slate-700" id="pdf-name">document.pdf</div>
                             <div class="text-sm text-slate-400" id="pdf-size">1.2 MB</div>
                           </div>
                           <button type="button" id="remove-pdf" class="text-slate-400 hover:text-red-500 p-2">
@@ -489,7 +489,7 @@ $headerDrawerId = 'sop-history-drawer';
                 <!-- Botón añadir PDF (siempre visible) -->
                 <button type="button" id="add-pdf-btn" class="mt-3 text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                   <i class="iconoir-plus"></i>
-                  Añadir PDF
+                  Add PDF
                 </button>
               </div>
               
@@ -502,7 +502,7 @@ $headerDrawerId = 'sop-history-drawer';
                                disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
                                flex items-center justify-center gap-2">
                   <i class="iconoir-clipboard-check text-xl"></i>
-                  Generar SOP
+                  Generate SOP
                 </button>
               </div>
             </form>
@@ -512,7 +512,7 @@ $headerDrawerId = 'sop-history-drawer';
           <div id="new-process-btn-container" class="hidden">
             <button id="new-process-btn" class="w-full py-3 px-4 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-400 transition-all flex items-center justify-center gap-2 font-medium">
               <i class="iconoir-plus"></i>
-              Generar nuevo proceso
+              Generate new process
             </button>
           </div>
 
@@ -523,15 +523,15 @@ $headerDrawerId = 'sop-history-drawer';
               <div class="result-tabs">
                 <button class="result-tab active" data-result="markdown">
                   <i class="iconoir-file-text"></i>
-                  Documento
+                  Document
                 </button>
                 <button class="result-tab" data-result="mermaid">
                   <i class="iconoir-git-fork"></i>
-                  Diagrama
+                  Diagram
                 </button>
                 <button class="result-tab" data-result="downloads">
                   <i class="iconoir-download"></i>
-                  Descargas
+                  Downloads
                 </button>
               </div>
             </div>
@@ -541,11 +541,11 @@ $headerDrawerId = 'sop-history-drawer';
               <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-slate-700">
                   <i class="iconoir-file-text text-emerald-500 mr-1"></i>
-                  Procedimiento estructurado
+                  Structured procedure
                 </h3>
                 <button id="copy-markdown-btn" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                   <i class="iconoir-copy"></i>
-                  Copiar
+                  Copy
                 </button>
               </div>
               <div id="markdown-content" class="prose prose-slate max-w-none bg-white rounded-xl p-6 border border-slate-100">
@@ -558,16 +558,16 @@ $headerDrawerId = 'sop-history-drawer';
               <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-slate-700">
                   <i class="iconoir-git-fork text-emerald-500 mr-1"></i>
-                  Diagrama de flujo
+                  Flowchart
                 </h3>
                 <div class="flex items-center gap-3">
                   <button id="download-diagram-png" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                     <i class="iconoir-download"></i>
-                    Descargar PNG
+                    Download PNG
                   </button>
                   <button id="copy-mermaid-btn" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                     <i class="iconoir-copy"></i>
-                    Copiar código
+                    Copy code
                   </button>
                 </div>
               </div>
@@ -580,7 +580,7 @@ $headerDrawerId = 'sop-history-drawer';
             <div id="result-downloads" class="result-panel p-6">
               <h3 class="font-semibold text-slate-700 mb-4">
                 <i class="iconoir-download text-emerald-500 mr-1"></i>
-                Descargar documento
+                Download document
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- PDF -->
@@ -590,7 +590,7 @@ $headerDrawerId = 'sop-history-drawer';
                   </div>
                   <div>
                     <div class="font-semibold text-slate-700">PDF</div>
-                    <div class="text-sm text-slate-400">Documento portable</div>
+                    <div class="text-sm text-slate-400">Portable document</div>
                   </div>
                   <i class="iconoir-download ml-auto text-slate-400"></i>
                 </a>
@@ -602,7 +602,7 @@ $headerDrawerId = 'sop-history-drawer';
                   </div>
                   <div>
                     <div class="font-semibold text-slate-700">Word (DOCX)</div>
-                    <div class="text-sm text-slate-400">Editable en Microsoft Word</div>
+                    <div class="text-sm text-slate-400">Editable in Microsoft Word</div>
                   </div>
                   <i class="iconoir-download ml-auto text-slate-400"></i>
                 </a>
@@ -624,8 +624,8 @@ $headerDrawerId = 'sop-history-drawer';
           <i class="iconoir-clipboard-check text-4xl text-emerald-500 animate-pulse"></i>
         </div>
       </div>
-      <h3 class="text-lg font-semibold text-slate-700 mb-2">Generando SOP</h3>
-      <p id="processing-status" class="text-slate-500 text-sm">Procesando contenido...</p>
+      <h3 class="text-lg font-semibold text-slate-700 mb-2">Generating SOP</h3>
+      <p id="processing-status" class="text-slate-500 text-sm">Processing content...</p>
       <div class="mt-4 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
         <div id="processing-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500" style="width: 0%"></div>
       </div>

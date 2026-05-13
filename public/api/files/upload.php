@@ -1,6 +1,6 @@
 <?php
 /**
- * API: Subir archivo al chat
+ * API: Upload a chat file
  * POST /api/files/upload.php
  * Body JSON: { data: base64, mime_type: string, name: string, conversation_id?: int }
  * Response: { success: true, file_id: int, url: string }
@@ -14,18 +14,18 @@ use App\Response;
 use Repos\ChatFilesRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Solo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Sesión no válida', 401);
+    Response::error('unauthorized', 'Invalid session', 401);
 }
 
 // Validar CSRF - puede venir en header o en POST (FormData)
 $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
 if (!$csrfToken || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfToken)) {
-    Response::error('csrf_invalid', 'CSRF token inválido o ausente', 403);
+    Response::error('csrf_invalid', 'CSRF token is invalid or missing', 403);
 }
 
 $repo = new ChatFilesRepo();
@@ -104,7 +104,7 @@ $isFormData = isset($_FILES['file']);
 if ($isFormData) {
     // FormData: archivo binario directo
     if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-        Response::error('validation_error', 'Error al subir archivo', 400);
+        Response::error('validation_error', 'Error uploading file', 400);
     }
 
     $uploadedFile = $_FILES['file'];
@@ -120,29 +120,29 @@ if ($isFormData) {
     // JSON: archivo en base64
     $body = json_decode(file_get_contents('php://input'), true) ?? [];
     $base64Data = $body['data'] ?? '';
-    $originalName = $body['name'] ?? 'archivo';
+    $originalName = $body['name'] ?? 'file';
     $mimeType = $resolveAllowedMimeType((string)($body['mime_type'] ?? ''), $originalName, null);
     $conversationId = isset($body['conversation_id']) ? (int)$body['conversation_id'] : null;
 
     if (empty($base64Data)) {
-        Response::error('validation_error', 'Datos de archivo requeridos', 400);
+        Response::error('validation_error', 'File data is required', 400);
     }
 
     $binaryData = base64_decode($base64Data);
     if ($binaryData === false) {
-        Response::error('validation_error', 'Datos base64 inválidos', 400);
+        Response::error('validation_error', 'Invalid base64 data', 400);
     }
 }
 
 if ($mimeType === '' || !isset($allowedTypes[$mimeType])) {
-    Response::error('validation_error', 'Tipo de archivo no soportado', 400);
+    Response::error('validation_error', 'Unsupported file type', 400);
 }
 
 // Validar tamaño (máx 30MB)
 $maxSize = 30 * 1024 * 1024;
 $size = strlen($binaryData);
 if ($size > $maxSize) {
-    Response::error('validation_error', 'El archivo excede el límite de 30MB', 400);
+    Response::error('validation_error', 'File exceeds the 30MB limit', 400);
 }
 
 // Generar nombre único
@@ -157,7 +157,7 @@ if (!is_dir($storagePath)) {
 // Guardar archivo
 $filePath = $storagePath . '/' . $storedName;
 if (file_put_contents($filePath, $binaryData) === false) {
-    Response::error('server_error', 'Error al guardar archivo', 500);
+    Response::error('server_error', 'Error saving file', 500);
 }
 
 // Guardar en base de datos
@@ -173,7 +173,7 @@ try {
 } catch (\Exception $e) {
     // Si falla la DB, borrar archivo físico
     @unlink($filePath);
-    Response::error('server_error', 'Error al registrar archivo', 500);
+    Response::error('server_error', 'Error registering file', 500);
 }
 
 Response::json([

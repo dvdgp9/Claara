@@ -32,13 +32,13 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'Todos los gestos';
-$headerTitle = 'Análisis Eco Proy.';
+$headerBackText = 'All gestures';
+$headerTitle = 'Project Analysis';
 $headerIcon = 'iconoir-folder-settings';
 $headerIconColor = 'from-emerald-500 to-teal-600';
 $headerDrawerId = 'project-admin-history-drawer';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <style>
@@ -132,7 +132,7 @@ $headerDrawerId = 'project-admin-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-emerald-500"></i>
-            Historial
+            History
           </h2>
         </div>
       </div>
@@ -140,7 +140,7 @@ $headerDrawerId = 'project-admin-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Cargando...
+          Loading...
         </div>
       </div>
     </aside>
@@ -148,7 +148,7 @@ $headerDrawerId = 'project-admin-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'project-admin-history-drawer';
-    $drawerTitle = 'Historial';
+    $drawerTitle = 'History';
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-emerald-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -165,10 +165,10 @@ $headerDrawerId = 'project-admin-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 mb-2">
-              Análisis Eco Proy.
+              Project Analysis
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Sube pliegos de concursos públicos y extrae automáticamente gastos no personales, horas de trabajo y otra información clave.
+              Upload tender documents and automatically extract non-staff costs, work hours, and other key information.
             </p>
           </div>
 
@@ -180,13 +180,13 @@ $headerDrawerId = 'project-admin-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-3">
                   <i class="iconoir-page text-emerald-500 mr-1"></i>
-                  Documentos del pliego
+                  Tender documents
                 </label>
                 
                 <div id="dropzone" class="dropzone flex flex-col items-center justify-center w-full h-32 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-all">
                   <i class="iconoir-upload text-2xl text-slate-400 mb-2"></i>
-                  <span class="text-sm text-slate-500">Arrastra PDFs aquí o haz clic para seleccionar</span>
-                  <span class="text-xs text-slate-400 mt-1">Máximo 40MB por archivo</span>
+                  <span class="text-sm text-slate-500">Drag PDFs here or click to select</span>
+                  <span class="text-xs text-slate-400 mt-1">Maximum 40MB per file</span>
                   <input type="file" id="file-input" accept=".pdf" multiple class="hidden" />
                 </div>
                 
@@ -194,22 +194,22 @@ $headerDrawerId = 'project-admin-history-drawer';
                 <div id="files-list" class="mt-3 space-y-2 hidden"></div>
               </div>
 
-              <!-- Instrucciones adicionales -->
+              <!-- Additional instructions -->
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">
                   <i class="iconoir-edit-pencil text-emerald-500 mr-1"></i>
-                  Instrucciones adicionales <span class="font-normal text-slate-400">(opcional)</span>
+                  Additional instructions <span class="font-normal text-slate-400">(optional)</span>
                 </label>
                 <textarea id="additional-instructions" rows="3"
                           class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
-                          placeholder="Ej: Céntrate en los requisitos de equipamiento informático..."></textarea>
+                          placeholder="Example: Focus on IT equipment requirements..."></textarea>
               </div>
 
               <!-- Tipo de análisis -->
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">
                   <i class="iconoir-sparks text-emerald-500 mr-1"></i>
-                  ¿Qué quieres analizar? <span class="font-normal text-slate-400">(selecciona uno o varios)</span>
+                  What do you want to analyze? <span class="font-normal text-slate-400">(select one or more)</span>
                 </label>
                 
                 <div class="grid grid-cols-2 gap-3">
@@ -218,8 +218,8 @@ $headerDrawerId = 'project-admin-history-drawer';
                     <div class="action-icon w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white mb-3">
                       <i class="iconoir-wallet text-xl"></i>
                     </div>
-                    <div class="text-sm font-semibold text-slate-800">Gastos no personales</div>
-                    <div class="text-xs text-slate-500 mt-1">Equipamiento, materiales, licencias, seguros...</div>
+                    <div class="text-sm font-semibold text-slate-800">Non-staff costs</div>
+                    <div class="text-xs text-slate-500 mt-1">Equipment, materials, licenses, insurance...</div>
                   </button>
                   
                   <button type="button" data-action="hours" class="action-card p-4 rounded-xl border-2 border-slate-200 text-left">
@@ -227,18 +227,18 @@ $headerDrawerId = 'project-admin-history-drawer';
                     <div class="action-icon w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 mb-3">
                       <i class="iconoir-clock text-xl"></i>
                     </div>
-                    <div class="text-sm font-semibold text-slate-800">Conteo de horas</div>
-                    <div class="text-xs text-slate-500 mt-1">Horas de servicio, formación, coordinación...</div>
+                    <div class="text-sm font-semibold text-slate-800">Hours count</div>
+                    <div class="text-xs text-slate-500 mt-1">Service, training, and coordination hours...</div>
                   </button>
                 </div>
                 
-                <p id="selected-count" class="text-xs text-emerald-600 font-medium mt-3">1 análisis seleccionado</p>
+                <p id="selected-count" class="text-xs text-emerald-600 font-medium mt-3">1 analysis selected</p>
               </div>
               
               <!-- Botón analizar -->
               <button type="submit" id="analyze-btn" disabled class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                 <i class="iconoir-sparks"></i>
-                <span id="analyze-btn-text">Analizar pliego</span>
+                <span id="analyze-btn-text">Analyze tender</span>
               </button>
               
               <!-- Progress -->
@@ -246,8 +246,8 @@ $headerDrawerId = 'project-admin-history-drawer';
                 <div class="flex items-center gap-3">
                   <div class="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                   <div>
-                    <p id="progress-text" class="text-sm font-medium text-emerald-700">Analizando...</p>
-                    <p id="progress-detail" class="text-xs text-emerald-500">Extrayendo información del pliego</p>
+                    <p id="progress-text" class="text-sm font-medium text-emerald-700">Analyzing...</p>
+                    <p id="progress-detail" class="text-xs text-emerald-500">Extracting tender information</p>
                   </div>
                 </div>
               </div>
@@ -273,18 +273,18 @@ $headerDrawerId = 'project-admin-history-drawer';
               <div class="flex-1 min-w-0">
                 <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-1">
                   <i class="iconoir-check-circle text-green-500 shrink-0"></i>
-                  <span id="result-title" class="truncate">Análisis completado</span>
+                  <span id="result-title" class="truncate">Analysis completed</span>
                 </h2>
-                <p id="result-source" class="text-sm text-slate-500">Pliego analizado</p>
+                <p id="result-source" class="text-sm text-slate-500">Tender analyzed</p>
               </div>
               <div class="flex items-center gap-3 shrink-0">
                 <button type="button" id="copy-result-btn" class="text-sm font-semibold text-slate-600 hover:text-slate-800 flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow transition-all">
                   <i class="iconoir-copy"></i>
-                  <span>Copiar</span>
+                  <span>Copy</span>
                 </button>
                 <button type="button" id="new-analysis-btn" class="text-sm font-semibold text-emerald-600 hover:text-white flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-600 rounded-xl transition-all">
                   <i class="iconoir-plus"></i>
-                  <span>Nuevo</span>
+                  <span>New</span>
                 </button>
               </div>
             </div>
@@ -305,11 +305,11 @@ $headerDrawerId = 'project-admin-history-drawer';
   </script>
   <script src="/assets/js/gesture-admin-proyectos.js"></script>
   
-  <!-- Bottom Navigation (móvil) -->
+  <!-- Bottom Navigation (mobile) -->
   <?php include __DIR__ . '/../includes/bottom-nav.php'; ?>
   
   <script>
-    // Sincronizar historial con drawer móvil
+    // Sync history with mobile drawer
     document.addEventListener('DOMContentLoaded', () => {
       const desktopHistory = document.getElementById('history-list');
       const mobileDrawerContent = document.getElementById('project-admin-history-drawer-content');

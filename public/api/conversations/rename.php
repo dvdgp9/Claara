@@ -9,7 +9,7 @@ use Auth\AuthService;
 use Repos\ConversationsRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 $user = AuthService::requireAuth();
@@ -19,12 +19,12 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $id = (int)($input['id'] ?? 0);
 $title = trim((string)($input['title'] ?? ''));
 if ($id <= 0 || $title === '') {
-    Response::error('validation_error', 'Campos id y title son obligatorios', 400);
+    Response::error('validation_error', 'The id and title fields are required', 400);
 }
 
 $repo = new ConversationsRepo();
 if (!$repo->findByIdForUser($id, (int)$user['id'])) {
-    Response::error('not_found', 'Conversación no encontrada', 404);
+    Response::error('not_found', 'Conversation not found', 404);
 }
 $repo->rename((int)$user['id'], $id, $title);
 Response::json(['ok' => true]);

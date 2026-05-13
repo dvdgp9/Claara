@@ -376,7 +376,7 @@ PROMPT;
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey,
                 'HTTP-Referer: ' . (Env::get('APP_URL') ?? 'https://ebonia.es'),
-                'X-Title: Ebonia SOP Generator'
+                'X-Title: iaiaPRO SOP Generator'
             ],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             CURLOPT_TIMEOUT => 180,

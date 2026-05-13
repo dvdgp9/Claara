@@ -1,12 +1,12 @@
 <?php
 /**
- * Partial: <head> común para todas las páginas
+ * Partial: shared <head> for all pages
  * 
  * Variables esperadas:
- * - $pageTitle (opcional): Título de la página, default "Ebonia — IA Corporativa"
- * - $csrfToken: Token CSRF de la sesión
+ * - $pageTitle (optional): page title, default "iaiaPRO — AI Workspace"
+ * - $csrfToken: session CSRF token
  */
-$pageTitle = $pageTitle ?? 'Ebonia — IA Corporativa';
+$pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
 ?>
 <head>
   <meta charset="utf-8" />
@@ -19,7 +19,7 @@ $pageTitle = $pageTitle ?? 'Ebonia — IA Corporativa';
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Ebonia">
+  <meta name="apple-mobile-web-app-title" content="iaiaPRO">
   
   <!-- Icons -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -123,26 +123,54 @@ $pageTitle = $pageTitle ?? 'Ebonia — IA Corporativa';
     }
     .animate-pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
     
+    /* Modern left rail surface */
+    .sidebar-rail {
+      background:
+        radial-gradient(120% 50% at 50% 0%, rgba(35,170,197,0.18), transparent 60%),
+        radial-gradient(90% 40% at 50% 100%, rgba(35,170,197,0.08), transparent 65%),
+        linear-gradient(180deg, #0f1b22 0%, #0a1418 100%);
+      position: relative;
+      isolation: isolate;
+    }
+    .sidebar-rail::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent 0%, rgba(35,170,197,0.28) 50%, transparent 100%);
+      pointer-events: none;
+    }
+
     .tab-item {
       position: relative;
-      transition: all 0.2s ease;
+      color: rgba(255,255,255,0.6);
+      transition: background-color .2s ease, color .2s ease, transform .25s cubic-bezier(.16,1,.3,1);
     }
+    .tab-item i { transition: transform .25s cubic-bezier(.16,1,.3,1); }
     .tab-item:hover {
-      background: rgba(35, 170, 197, 0.1);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.95);
     }
+    .tab-item:hover i { transform: translateY(-1px); }
+    .tab-item:active { transform: scale(0.97); }
     .tab-item.active {
-      background: rgba(35, 170, 197, 0.15);
+      background: rgba(35,170,197,0.18);
+      color: #ffffff;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 10px 26px -12px rgba(35,170,197,0.55);
     }
     .tab-item.active::before {
       content: '';
       position: absolute;
-      left: 0;
+      left: -6px;
       top: 50%;
       transform: translateY(-50%);
       width: 3px;
-      height: 32px;
+      height: 22px;
       background: #23AAC5;
-      border-radius: 0 2px 2px 0;
+      border-radius: 0 3px 3px 0;
+      box-shadow: 0 0 14px rgba(35,170,197,0.75);
     }
     
     /* Input focus */

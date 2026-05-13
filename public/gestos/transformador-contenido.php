@@ -32,13 +32,13 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'Todos los gestos';
-$headerTitle = 'Transformador de contenido';
+$headerBackText = 'All gestures';
+$headerTitle = 'Content transformer';
 $headerIcon = 'iconoir-refresh-double';
 $headerIconColor = 'from-indigo-500 to-purple-600';
 $headerDrawerId = 'repurposer-history-drawer';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <link rel="stylesheet" href="/assets/css/social-previews.css">
 <body class="bg-mesh text-slate-900 overflow-hidden">
@@ -139,7 +139,7 @@ $headerDrawerId = 'repurposer-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-indigo-500"></i>
-            Historial
+            History
           </h2>
         </div>
       </div>
@@ -147,7 +147,7 @@ $headerDrawerId = 'repurposer-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Cargando...
+          Loading...
         </div>
       </div>
     </aside>
@@ -155,7 +155,7 @@ $headerDrawerId = 'repurposer-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'repurposer-history-drawer';
-    $drawerTitle = 'Historial';
+    $drawerTitle = 'History';
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-indigo-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -172,10 +172,10 @@ $headerDrawerId = 'repurposer-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
-              Transforma tu contenido
+              Transform your content
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Convierte cualquier artículo, documento o texto en el formato que necesites: posts para redes, blogs, newsletters, landing pages o FAQs.
+              Convert any article, document, or text into the format you need: social posts, blogs, newsletters, landing pages, or FAQs.
             </p>
           </div>
 
@@ -183,11 +183,11 @@ $headerDrawerId = 'repurposer-history-drawer';
           <section id="input-section" class="glass-strong rounded-2xl p-6 border border-slate-200/50">
             <form id="repurposer-form" class="space-y-5">
               
-              <!-- Fuente del contenido -->
+              <!-- Content source -->
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-3">
                   <i class="iconoir-input-field text-indigo-500 mr-1"></i>
-                  Fuente del contenido
+                  Content source
                 </label>
                 
                 <!-- Tabs -->
@@ -196,7 +196,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                     <i class="iconoir-link mr-1"></i> URL
                   </button>
                   <button type="button" data-tab="text" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    <i class="iconoir-text mr-1"></i> Texto
+                    <i class="iconoir-text mr-1"></i> Text
                   </button>
                   <button type="button" data-tab="pdf" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
                     <i class="iconoir-page mr-1"></i> PDF
@@ -207,23 +207,23 @@ $headerDrawerId = 'repurposer-history-drawer';
                 <div id="tab-url" class="tab-content">
                   <input type="url" id="source-url" 
                          class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                         placeholder="https://ejemplo.com/articulo" />
-                  <p class="text-xs text-slate-500 mt-2">Pega la URL de cualquier artículo web</p>
+                         placeholder="https://example.com/article" />
+                  <p class="text-xs text-slate-500 mt-2">Paste the URL of any web article</p>
                 </div>
 
                 <!-- Text Input -->
                 <div id="tab-text" class="tab-content hidden">
                   <textarea id="source-text" rows="6"
                             class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
-                            placeholder="Pega aquí el texto que quieres transformar..."></textarea>
-                  <p class="text-xs text-slate-500 mt-2">Mínimo 20 palabras</p>
+                            placeholder="Paste the text you want to transform here..."></textarea>
+                  <p class="text-xs text-slate-500 mt-2">Minimum 20 words</p>
                 </div>
 
                 <!-- PDF Input -->
                 <div id="tab-pdf" class="tab-content hidden">
                   <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all">
                     <i class="iconoir-upload text-2xl text-slate-400 mb-2"></i>
-                    <span class="text-sm text-slate-500">Arrastra un PDF o haz clic para seleccionar</span>
+                    <span class="text-sm text-slate-500">Drag a PDF or click to select</span>
                     <input type="file" id="source-pdf" accept=".pdf" class="hidden" />
                   </label>
                   <p id="pdf-filename" class="text-xs text-slate-500 mt-2 hidden"></p>
@@ -234,9 +234,9 @@ $headerDrawerId = 'repurposer-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">
                   <i class="iconoir-sparks text-indigo-500 mr-1"></i>
-                  ¿Qué quieres generar? <span class="font-normal text-slate-400">(selecciona varios)</span>
+                  What do you want to generate? <span class="font-normal text-slate-400">(select multiple)</span>
                 </label>
-                <p class="text-xs text-slate-500 mb-3">Haz clic en los formatos que quieras generar. Puedes seleccionar varios a la vez.</p>
+                <p class="text-xs text-slate-500 mb-3">Click the formats you want to generate. You can select multiple at once.</p>
                 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <!-- Redes Sociales -->
@@ -255,7 +255,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-facebook text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">Facebook</div>
-                    <div class="text-xs text-slate-500">Publicación</div>
+                    <div class="text-xs text-slate-500">Post</div>
                   </button>
                   
                   <button type="button" data-format="linkedin" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
@@ -264,7 +264,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-linkedin text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">LinkedIn</div>
-                    <div class="text-xs text-slate-500">Profesional</div>
+                    <div class="text-xs text-slate-500">Professional</div>
                   </button>
                   
                   <button type="button" data-format="twitter" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
@@ -273,7 +273,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-x text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">X (Twitter)</div>
-                    <div class="text-xs text-slate-500">Tweet/Hilo</div>
+                    <div class="text-xs text-slate-500">Tweet/Thread</div>
                   </button>
                   
                   <!-- Contenido largo -->
@@ -283,7 +283,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-post text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">Blog</div>
-                    <div class="text-xs text-slate-500">Artículo SEO</div>
+                    <div class="text-xs text-slate-500">SEO article</div>
                   </button>
                   
                   <button type="button" data-format="landing" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
@@ -310,17 +310,17 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-help-circle text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">FAQs</div>
-                    <div class="text-xs text-slate-500">Preguntas</div>
+                    <div class="text-xs text-slate-500">Questions</div>
                   </button>
                 </div>
                 
-                <p id="selected-count" class="text-xs text-indigo-600 font-medium mt-3">1 formato seleccionado</p>
+                <p id="selected-count" class="text-xs text-indigo-600 font-medium mt-3">1 format selected</p>
               </div>
               
               <!-- Botón generar -->
               <button type="submit" id="generate-btn" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 <i class="iconoir-sparks"></i>
-                <span id="generate-btn-text">Transformar contenido</span>
+                <span id="generate-btn-text">Transform content</span>
               </button>
               
               <!-- Progress -->
@@ -328,8 +328,8 @@ $headerDrawerId = 'repurposer-history-drawer';
                 <div class="flex items-center gap-3">
                   <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                   <div>
-                    <p id="progress-text" class="text-sm font-medium text-indigo-700">Procesando...</p>
-                    <p id="progress-detail" class="text-xs text-indigo-500">Extrayendo y transformando contenido</p>
+                    <p id="progress-text" class="text-sm font-medium text-indigo-700">Processing...</p>
+                    <p id="progress-detail" class="text-xs text-indigo-500">Extracting and transforming content</p>
                   </div>
                 </div>
               </div>
@@ -355,23 +355,23 @@ $headerDrawerId = 'repurposer-history-drawer';
               <div class="flex-1 min-w-0">
                 <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-1">
                   <i class="iconoir-check-circle text-green-500 shrink-0"></i>
-                  <span id="result-title" class="truncate">Contenido generado</span>
+                  <span id="result-title" class="truncate">Generated content</span>
                 </h2>
-                <p id="result-source" class="text-sm text-slate-500">Fuente: URL</p>
+                <p id="result-source" class="text-sm text-slate-500">Source: URL</p>
               </div>
               <div class="flex items-center gap-3 shrink-0">
                 <button type="button" id="copy-all-btn" class="text-sm font-semibold text-slate-600 hover:text-slate-800 flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow transition-all">
                   <i class="iconoir-copy"></i>
-                  <span>Copiar todo</span>
+                  <span>Copy all</span>
                 </button>
                 <button type="button" onclick="resetUI()" class="text-sm font-semibold text-indigo-600 hover:text-white flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-600 rounded-xl transition-all">
                   <i class="iconoir-plus"></i>
-                  <span>Nueva</span>
+                  <span>New</span>
                 </button>
               </div>
             </div>
             
-            <!-- Tabs para navegación entre formatos (solo desktop) -->
+            <!-- Tabs for format navigation (desktop only) -->
             <div id="result-tabs" class="result-tabs hidden lg:flex"></div>
             
             <!-- Contenedor de resultados -->
@@ -390,7 +390,7 @@ $headerDrawerId = 'repurposer-history-drawer';
   <?php include __DIR__ . '/../includes/bottom-nav.php'; ?>
   
   <script>
-    // Sincronizar historial con drawer móvil
+    // Sync history with mobile drawer
     document.addEventListener('DOMContentLoaded', () => {
       const desktopHistory = document.getElementById('history-list');
       const mobileDrawerContent = document.getElementById('repurposer-history-drawer-content');

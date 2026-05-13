@@ -62,7 +62,7 @@ function sendError(string $message, int $code = 500): void {
 
 // Validar método
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    sendError('Sólo POST', 405);
+    sendError('POST only', 405);
 }
 
 // Requiere auth y CSRF

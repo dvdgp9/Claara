@@ -5,25 +5,25 @@ use App\DB;
 use PDO;
 
 /**
- * Repositorio para gestionar documentos de contexto.
+ * Repository for managing context documents.
  * 
- * Soporta tres targets:
- * - lex: Documentos RAG para la voz legal (convenios)
- * - eboniato: Documentos de contexto para el chatbot FAQ
- * - ebonia: Documentos de contexto para el chat general
+ * Supports three targets:
+ * - lex: indexed documents for the legal voice
+ * - eboniato: Nana quick-answer documents
+ * - ebonia: general chat context documents
  */
 class ContextDocsRepo
 {
     private PDO $pdo;
 
-    /** Rutas físicas por target (relativas a la raíz del proyecto) */
+    /** Physical paths by target (relative to project root). */
     private const TARGET_PATHS = [
-        'lex' => 'docs/context/voices/lex/convenios',
+        'lex' => 'docs/context/voices/lex/knowledge-base',
         'eboniato' => 'docs/context_faq',
         'ebonia' => 'docs/context',
     ];
 
-    /** Extensiones permitidas por target */
+    /** Allowed extensions by target. */
     private const ALLOWED_EXTENSIONS = [
         'lex' => ['pdf', 'txt', 'md'],
         'eboniato' => ['md'],
@@ -146,7 +146,7 @@ class ContextDocsRepo
     }
 
     /**
-     * Actualiza el estado RAG de un documento
+     * Updates index status fields for a document.
      */
     public function updateRagStatus(int $id, string $ragStatus, ?int $chunkCount = null, ?string $errorMessage = null): bool
     {

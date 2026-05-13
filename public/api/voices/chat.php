@@ -28,19 +28,19 @@ use Repos\UsageLogRepo;
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Sesión no válida', 401);
+    Response::error('unauthorized', 'Invalid session', 401);
 }
 
 // Validar CSRF
 $csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 $csrfSession = $_SESSION['csrf_token'] ?? '';
 if (!$csrfHeader || !$csrfSession || !hash_equals($csrfSession, $csrfHeader)) {
-    Response::error('csrf_invalid', 'Token CSRF inválido', 403);
+    Response::error('csrf_invalid', 'Invalid CSRF token', 403);
 }
 
 // Solo POST
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
-    Response::error('method_not_allowed', 'Solo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 $body = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -50,20 +50,20 @@ $history = $body['history'] ?? [];
 $executionId = $body['execution_id'] ?? null;
 
 if (!$voiceId) {
-    Response::error('missing_voice', 'Se requiere voice_id', 400);
+    Response::error('missing_voice', 'voice_id is required', 400);
 }
 if (!$message) {
-    Response::error('missing_message', 'Se requiere message', 400);
+    Response::error('missing_message', 'message is required', 400);
 }
 
 // Obtener contexto especializado de la voz
 $voiceContext = new VoiceContextBuilder($voiceId);
 
 if (!$voiceContext->voiceExists()) {
-    Response::error('invalid_voice', 'Voz no encontrada', 404);
+    Response::error('invalid_voice', 'Voice not found', 404);
 }
 
-// Intentar usar RAG si está habilitado para esta voz
+// Try semantic index retrieval if enabled for this voice
 $useRag = false;
 if ($voiceContext->hasRagEnabled()) {
     $openrouterKey = Env::get('OPENROUTER_API_KEY');
@@ -76,7 +76,7 @@ if ($voiceContext->hasRagEnabled()) {
     }
 }
 
-// Construir system prompt (con RAG si está disponible)
+// Build system prompt (with indexed context when available)
 if ($useRag) {
     $systemPrompt = $voiceContext->buildSystemPromptWithRag($message, 15);
 } else {
@@ -112,7 +112,7 @@ try {
     
     $reply = $client->generateWithMessages($messages);
 } catch (\Exception $e) {
-    Response::error('llm_error', 'Error al generar respuesta: ' . $e->getMessage(), 500);
+    Response::error('llm_error', 'Error generating response: ' . $e->getMessage(), 500);
 }
 
 // Guardar o actualizar ejecución

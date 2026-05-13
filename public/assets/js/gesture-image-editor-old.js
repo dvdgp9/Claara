@@ -85,7 +85,7 @@
     '': '',
     'warm': 'Warm cinematic color grading, golden hour hues, soft oranges and ambers',
     'cool': 'Cool professional color palette, crisp teals and blues, modern aesthetic',
-    'corporate': 'Ebonia corporate color scheme (#23AAC5 accent), professional blue-teal tones',
+    'corporate': 'iaiaPRO corporate color scheme (#23AAC5 accent), professional blue-teal tones',
     'monochrome': 'Fine art monochromatic scheme, rich tonal range',
     'pastel': 'Soft sophisticated pastel tones, muted and gentle professional colors',
     'bw': 'Classic black and white film photography, high dynamic range',
@@ -131,16 +131,16 @@
       modeGenerateBtn?.classList.add('active');
       modeEditBtn?.classList.remove('active');
       editImagesSection?.classList.add('hidden');
-      if (descriptionLabel) descriptionLabel.textContent = '¿Qué imagen quieres crear?';
-      if (descriptionField) descriptionField.placeholder = 'Describe la imagen que necesitas. Sé específico: objetos, escena, ambiente, colores...';
-      if (generateBtn) generateBtn.innerHTML = '<i class="iconoir-sparks"></i><span>Generar imagen</span>';
+      if (descriptionLabel) descriptionLabel.textContent = 'What image do you want to create?';
+      if (descriptionField) descriptionField.placeholder = 'Describe the image you need. Be specific: objects, scene, atmosphere, colors...';
+      if (generateBtn) generateBtn.innerHTML = '<i class="iconoir-sparks"></i><span>Generate image</span>';
     } else {
       modeEditBtn?.classList.add('active');
       modeGenerateBtn?.classList.remove('active');
       editImagesSection?.classList.remove('hidden');
-      if (descriptionLabel) descriptionLabel.textContent = '¿Qué cambios quieres hacer?';
-      if (descriptionField) descriptionField.placeholder = 'Describe la edición: "Cambia el fondo", "Añade gafas de sol"...';
-      if (generateBtn) generateBtn.innerHTML = '<i class="iconoir-edit"></i><span>Editar imagen</span>';
+      if (descriptionLabel) descriptionLabel.textContent = 'What changes do you want to make?';
+      if (descriptionField) descriptionField.placeholder = 'Describe the edit: "Change the background", "Add sunglasses"...';
+      if (generateBtn) generateBtn.innerHTML = '<i class="iconoir-edit"></i><span>Edit image</span>';
     }
   }
 
@@ -172,7 +172,7 @@
       if (!file) return;
 
       if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecciona una imagen válida');
+        alert('Please select a valid image');
         return;
       }
 
@@ -230,9 +230,9 @@
     const parts = [`Formato ${format}`];
 
     const labels = {
-      style: { 'photographic': 'Fotográfico', 'digital-art': 'Digital Art', 'corporate': 'Corporativo', 'minimalist': 'Minimalista', '3d-render': '3D Render', 'flat-design': 'Flat Design', 'isometric': 'Isométrico', 'headshot-pro': 'Retrato Pro', 'silicon-valley': 'Corporativo Pro', 'luxury-product': 'Producto Lujo' },
-      color: { 'warm': 'Cálidos', 'cool': 'Fríos', 'corporate': 'Corporativo', 'monochrome': 'Monocromo', 'pastel': 'Pastel', 'bw': 'B/N', 'vibrant': 'Vibrante' },
-      lighting: { 'natural': 'Luz natural', 'studio': 'Estudio', 'dramatic': 'Dramática', 'soft': 'Suave', 'backlight': 'Contraluz', 'golden': 'Hora dorada', 'volumetric': 'Volumétrica' },
+      style: { 'photographic': 'Photographic', 'digital-art': 'Digital Art', 'corporate': 'Corporate', 'minimalist': 'Minimalist', '3d-render': '3D Render', 'flat-design': 'Flat Design', 'isometric': 'Isometric', 'headshot-pro': 'Pro Portrait', 'silicon-valley': 'Pro Corporate', 'luxury-product': 'Luxury Product' },
+      color: { 'warm': 'Warm', 'cool': 'Cool', 'corporate': 'Corporate', 'monochrome': 'Monochrome', 'pastel': 'Pastel', 'bw': 'B/W', 'vibrant': 'Vibrant' },
+      lighting: { 'natural': 'Natural light', 'studio': 'Studio', 'dramatic': 'Dramatic', 'soft': 'Soft', 'backlight': 'Backlight', 'golden': 'Golden hour', 'volumetric': 'Volumetric' },
       composition: { 'bokeh': 'Bokeh', 'closeup': 'Primer plano', 'wide': 'Plano general', 'above': 'Cenital', 'below': 'Contrapicado', 'macro': 'Macro', 'negative-space': 'Espacio negativo' }
     };
 
@@ -361,7 +361,7 @@
       imageLoading?.classList.add('hidden');
       if (generateBtn) generateBtn.disabled = false;
       console.error('Error:', err);
-      alert('Error de conexión al generar la imagen');
+      alert('Connection error while generating the image');
     }
   }
 
@@ -417,7 +417,7 @@
 
       renderHistory(data.items || []);
     } catch (err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Error de conexión</div>';
+      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Connection error</div>';
     }
   }
 
@@ -430,7 +430,7 @@
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-media-image text-xl text-slate-400"></i>
           </div>
-          <p class="text-sm text-slate-500">Aún no has generado imágenes</p>
+          <p class="text-sm text-slate-500">You have not generated images yet</p>
           <p class="text-xs text-slate-400 mt-1">Usa el formulario para empezar</p>
         </div>
       `;
@@ -451,7 +451,7 @@
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" data-id="${item.id}" title="Eliminar">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" data-id="${item.id}" title="Delete">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -514,12 +514,12 @@
       imageResult?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     } catch (err) {
-      alert('Error de conexión');
+      alert('Connection error');
     }
   }
 
   async function deleteExecution(id) {
-    if (!confirm('¿Eliminar esta imagen del historial?')) return;
+    if (!confirm('Delete this image from history?')) return;
 
     try {
       const res = await fetch('/api/gestures/delete.php', {
@@ -531,13 +531,13 @@
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        alert('No se ha podido eliminar');
+        alert('Could not delete');
         return;
       }
 
       loadHistory();
     } catch (err) {
-      alert('Error de conexión al eliminar');
+      alert('Connection error while deleting');
     }
   }
 
@@ -561,12 +561,12 @@
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'ahora';
-    if (diffMins < 60) return `hace ${diffMins} min`;
-    if (diffHours < 24) return `hace ${diffHours}h`;
-    if (diffDays === 1) return 'ayer';
-    if (diffDays < 7) return `hace ${diffDays} días`;
-    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    if (diffMins < 1) return 'now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   }
 
   function escapeHtml(text) {

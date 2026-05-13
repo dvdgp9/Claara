@@ -24,13 +24,13 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'Todos los gestos';
-$headerTitle = 'Transcriptor de audio';
+$headerBackText = 'All gestures';
+$headerTitle = 'Audio transcriber';
 $headerIcon = 'iconoir-microphone';
 $headerIconColor = 'from-purple-500 to-indigo-600';
 $headerDrawerId = 'transcriber-history-drawer';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <style>
@@ -74,7 +74,7 @@ $headerDrawerId = 'transcriber-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-purple-500"></i>
-            Historial
+            History
           </h2>
         </div>
       </div>
@@ -82,7 +82,7 @@ $headerDrawerId = 'transcriber-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Cargando...
+          Loading...
         </div>
       </div>
     </aside>
@@ -90,7 +90,7 @@ $headerDrawerId = 'transcriber-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'transcriber-history-drawer';
-    $drawerTitle = 'Historial';
+    $drawerTitle = 'History';
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-purple-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -107,10 +107,10 @@ $headerDrawerId = 'transcriber-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 mb-2">
-              Transcriptor de audio
+              Audio transcriber
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Convierte archivos de audio en texto. Sube grabaciones de voz, entrevistas, reuniones o notas de audio y obtén una transcripción precisa.
+              Convert audio files into text. Upload voice recordings, interviews, meetings, or voice notes and get an accurate transcription.
             </p>
           </div>
 
@@ -122,7 +122,7 @@ $headerDrawerId = 'transcriber-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-3">
                   <i class="iconoir-upload text-purple-500 mr-1"></i>
-                  Archivo de audio
+                  Audio file
                 </label>
                 
                 <div id="drop-zone" class="audio-drop-zone rounded-xl p-8 text-center cursor-pointer">
@@ -133,11 +133,11 @@ $headerDrawerId = 'transcriber-history-drawer';
                       <i class="iconoir-music-double-note text-3xl text-purple-500"></i>
                     </div>
                     <div>
-                      <p class="text-slate-700 font-medium">Arrastra un archivo de audio aquí</p>
-                      <p class="text-sm text-slate-500">o haz clic para seleccionar</p>
+                      <p class="text-slate-700 font-medium">Drag an audio file here</p>
+                      <p class="text-sm text-slate-500">or click to select</p>
                     </div>
                     <p class="text-xs text-slate-400">
-                      Formatos: MP3, WAV, M4A, WebM, OGG • Máx. 50MB
+                      Formats: MP3, WAV, M4A, WebM, OGG • Max 50MB
                     </p>
                   </div>
                   
@@ -148,7 +148,7 @@ $headerDrawerId = 'transcriber-history-drawer';
                         <i class="iconoir-sound-high text-2xl"></i>
                       </div>
                       <div class="text-left">
-                        <p id="file-name" class="font-semibold text-slate-800 truncate max-w-[200px]">archivo.mp3</p>
+                        <p id="file-name" class="font-semibold text-slate-800 truncate max-w-[200px]">file.mp3</p>
                         <p id="file-size" class="text-sm text-slate-500">0 MB</p>
                       </div>
                       <button type="button" id="remove-file" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
@@ -162,14 +162,14 @@ $headerDrawerId = 'transcriber-history-drawer';
                 </div>
               </div>
               
-              <!-- Botón transcribir -->
+              <!-- Transcribe button -->
               <button type="submit" id="transcribe-btn" disabled
                       class="w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 
                              hover:from-purple-600 hover:to-indigo-700 transition-all shadow-lg shadow-purple-500/25
                              disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
                              flex items-center justify-center gap-2">
                 <i class="iconoir-microphone"></i>
-                <span>Transcribir audio</span>
+                <span>Transcribe audio</span>
               </button>
               
             </form>
@@ -185,8 +185,8 @@ $headerDrawerId = 'transcriber-history-drawer';
                 <div class="wave-bar w-1 h-8 bg-purple-500 rounded-full"></div>
                 <div class="wave-bar w-1 h-8 bg-purple-500 rounded-full"></div>
               </div>
-              <p class="text-slate-600 font-medium">Transcribiendo audio...</p>
-              <p class="text-sm text-slate-500">Esto puede tardar unos segundos dependiendo de la duración</p>
+              <p class="text-slate-600 font-medium">Transcribing audio...</p>
+              <p class="text-sm text-slate-500">This may take a few seconds depending on duration</p>
             </div>
           </section>
 
@@ -202,41 +202,41 @@ $headerDrawerId = 'transcriber-history-drawer';
                 </div>
                 <div class="flex items-center gap-2 text-slate-600">
                   <i class="iconoir-text text-purple-500"></i>
-                  <span id="result-words">-- palabras</span>
+                  <span id="result-words">-- words</span>
                 </div>
                 <div class="flex items-center gap-2 text-slate-600">
                   <i class="iconoir-page text-purple-500"></i>
-                  <span id="result-chars">-- caracteres</span>
+                  <span id="result-chars">-- characters</span>
                 </div>
               </div>
             </div>
             
-            <!-- Transcripción -->
+            <!-- Transcription -->
             <div class="glass-strong rounded-2xl border border-slate-200/50 overflow-hidden">
               <div class="p-4 border-b border-slate-200/50 flex items-center justify-between">
                 <h3 class="font-semibold text-slate-800 flex items-center gap-2">
                   <i class="iconoir-page-edit text-purple-500"></i>
-                  Transcripción
+                  Transcription
                 </h3>
                 <div class="flex items-center gap-2">
-                  <button id="copy-btn" class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all" title="Copiar">
+                  <button id="copy-btn" class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all" title="Copy">
                     <i class="iconoir-copy"></i>
                   </button>
-                  <button id="download-txt-btn" class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all" title="Descargar TXT">
+                  <button id="download-txt-btn" class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all" title="Download TXT">
                     <i class="iconoir-download"></i>
                   </button>
                 </div>
               </div>
               <div id="transcription-content" class="p-6 prose prose-slate prose-sm max-w-none min-h-[200px] max-h-[400px] overflow-auto">
-                <!-- Transcripción aquí -->
+                <!-- Transcription content -->
               </div>
             </div>
             
-            <!-- Botón nueva transcripción -->
+            <!-- New transcription button -->
             <button id="new-transcription-btn" 
                     class="w-full py-3 rounded-xl font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 transition-all flex items-center justify-center gap-2">
               <i class="iconoir-plus"></i>
-              Nueva transcripción
+              New transcription
             </button>
             
           </section>
@@ -319,17 +319,17 @@ $headerDrawerId = 'transcriber-history-drawer';
     });
     
     function handleFile(file) {
-      // Validar tipo
+      // Validate type
       const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/wave', 'audio/x-wav', 
                           'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/webm', 'audio/ogg'];
       if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a|webm|ogg)$/i)) {
-        alert('Formato no soportado. Usa: MP3, WAV, M4A, WebM, OGG');
+        alert('Unsupported format. Use: MP3, WAV, M4A, WebM, OGG');
         return;
       }
       
-      // Validar tamaño
+      // Validate file size
       if (file.size > 50 * 1024 * 1024) {
-        alert('El archivo es demasiado grande. Máximo 50MB.');
+        alert('File is too large. Maximum 50MB.');
         return;
       }
       
@@ -337,7 +337,7 @@ $headerDrawerId = 'transcriber-history-drawer';
       fileName.textContent = file.name;
       fileSize.textContent = formatFileSize(file.size);
       
-      // Crear URL para el reproductor
+      // Create URL for audio player
       audioPlayer.src = URL.createObjectURL(file);
       
       dropPlaceholder.classList.add('hidden');
@@ -366,13 +366,13 @@ $headerDrawerId = 'transcriber-history-drawer';
       e.preventDefault();
       if (!currentFile) return;
       
-      // Mostrar loading
+      // Show loading
       uploadSection.classList.add('hidden');
       resultSection.classList.add('hidden');
       loadingSection.classList.remove('hidden');
       
       try {
-        // Convertir a base64
+        // Convert to base64
         const base64 = await fileToBase64(currentFile);
         
         const response = await fetch('/api/gestures/transcribe.php', {
@@ -391,24 +391,24 @@ $headerDrawerId = 'transcriber-history-drawer';
         const data = await response.json();
         
         if (!data.success) {
-          throw new Error(data.error?.message || 'Error al transcribir');
+          throw new Error(data.error?.message || 'Transcription error');
         }
         
-        // Mostrar resultado
+        // Show result
         currentTranscription = data.transcription;
         currentExecutionId = data.execution_id;
         
         resultDuration.textContent = data.metadata?.duration_estimate || 'N/A';
-        resultWords.textContent = (data.metadata?.word_count || 0) + ' palabras';
-        resultChars.textContent = (data.metadata?.char_count || 0) + ' caracteres';
+        resultWords.textContent = (data.metadata?.word_count || 0) + ' words';
+        resultChars.textContent = (data.metadata?.char_count || 0) + ' characters';
         
-        // Renderizar transcripción con saltos de línea
+        // Render transcription preserving line breaks
         transcriptionContent.innerHTML = escapeHtml(currentTranscription).replace(/\n/g, '<br>');
         
         loadingSection.classList.add('hidden');
         resultSection.classList.remove('hidden');
         
-        // Recargar historial
+        // Reload history
         loadHistory();
         
       } catch (err) {
@@ -446,7 +446,7 @@ $headerDrawerId = 'transcriber-history-drawer';
           copyBtn.innerHTML = '<i class="iconoir-copy"></i>';
         }, 2000);
       } catch (err) {
-        alert('Error al copiar');
+        alert('Error copying');
       }
     });
     
@@ -455,7 +455,7 @@ $headerDrawerId = 'transcriber-history-drawer';
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'transcripcion.txt';
+      a.download = 'transcription.txt';
       a.click();
       URL.revokeObjectURL(url);
     });
@@ -491,7 +491,7 @@ $headerDrawerId = 'transcriber-history-drawer';
         const emptyHtml = `
           <div class="p-4 text-center text-slate-400 text-sm">
             <i class="iconoir-microphone text-2xl mb-2 block opacity-50"></i>
-            <p>Sin transcripciones aún</p>
+            <p>No transcriptions yet</p>
           </div>
         `;
         historyList.innerHTML = emptyHtml;
@@ -503,10 +503,10 @@ $headerDrawerId = 'transcriber-history-drawer';
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2 ${item.id == currentExecutionId ? 'active' : ''}" data-id="${item.id}">
           <i class="iconoir-microphone text-purple-500 mt-0.5"></i>
           <div class="flex-1 min-w-0 cursor-pointer history-item-main">
-            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-purple-600">${escapeHtml(item.title || 'Sin título')}</p>
-            <span class="text-[10px] text-slate-400">${new Date(item.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-purple-600">${escapeHtml(item.title || 'Untitled')}</p>
+            <span class="text-[10px] text-slate-400">${new Date(item.created_at).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Eliminar">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -515,14 +515,14 @@ $headerDrawerId = 'transcriber-history-drawer';
       historyList.innerHTML = html;
       if (drawerContent) {
         drawerContent.innerHTML = html;
-        // Forzar visibilidad de acciones en móvil (no hay hover)
+        // Force action visibility on mobile (no hover)
         drawerContent.querySelectorAll('.opacity-0, .lg\\:opacity-0').forEach(el => {
           el.classList.remove('opacity-0', 'lg:opacity-0');
           el.classList.add('opacity-100');
         });
       }
       
-      // Event listeners para cargar transcripciones del historial
+      // Event listeners to load history transcriptions
       addHistoryListeners(historyList);
       if (drawerContent) addHistoryListeners(drawerContent);
     }
@@ -550,7 +550,7 @@ $headerDrawerId = 'transcriber-history-drawer';
     }
     
     async function deleteFromHistory(id) {
-      if (!confirm('¿Eliminar esta transcripción del historial?')) return;
+      if (!confirm('Delete this transcription from history?')) return;
       
       try {
         const response = await fetch('/api/gestures/delete.php', {
@@ -564,7 +564,7 @@ $headerDrawerId = 'transcriber-history-drawer';
         const data = await response.json();
         
         if (data.success) {
-          // Si era el actual, limpiar vista
+          // If it was the active one, clear view
           if (currentExecutionId == id) {
             currentTranscription = '';
             currentExecutionId = null;
@@ -573,11 +573,11 @@ $headerDrawerId = 'transcriber-history-drawer';
           }
           loadHistory();
         } else {
-          alert(data.error?.message || 'Error al eliminar');
+          alert(data.error?.message || 'Error deleting');
         }
       } catch (err) {
         console.error('Error deleting:', err);
-        alert('Error de conexión');
+        alert('Connection error');
       }
     }
     
@@ -588,14 +588,14 @@ $headerDrawerId = 'transcriber-history-drawer';
         });
         const data = await response.json();
         
-        // El servidor devuelve { execution: { ... } }
+        // The server returns { execution: { ... } }
         const item = data.execution || data.item;
         
         if (item) {
           currentTranscription = item.output_content;
           currentExecutionId = item.id;
           
-          // Cargar metadatos si vienen como string JSON
+          // Load metadata if provided as JSON string
           let outputData = item.output_data || {};
           if (typeof outputData === 'string') {
             try {
@@ -606,41 +606,41 @@ $headerDrawerId = 'transcriber-history-drawer';
           }
           
           resultDuration.textContent = outputData.duration_estimate || 'N/A';
-          resultWords.textContent = (outputData.word_count || 0) + ' palabras';
-          resultChars.textContent = (outputData.char_count || 0) + ' caracteres';
+          resultWords.textContent = (outputData.word_count || 0) + ' words';
+          resultChars.textContent = (outputData.char_count || 0) + ' characters';
           
-          // Renderizar transcripción con saltos de línea
+        // Render transcription preserving line breaks
           transcriptionContent.innerHTML = escapeHtml(currentTranscription).replace(/\n/g, '<br>');
           
-          // Cambiar vistas
+          // Switch views
           uploadSection.classList.add('hidden');
           loadingSection.classList.add('hidden');
           resultSection.classList.remove('hidden');
 
-          // Asegurar que el scroll del contenido sea visible
+          // Ensure result section is visible
           setTimeout(() => {
             resultSection.scrollIntoView({ behavior: 'smooth' });
           }, 100);
           
-          // Actualizar estado activo en historial
+          // Update active history state
           document.querySelectorAll('.history-item').forEach(el => {
             el.classList.toggle('active', el.dataset.id == id);
           });
           
-          // Cerrar drawer en móvil si existe (compatible con SOP y otros gestos)
+          // Close mobile drawer if available
           const closeBtn = document.querySelector('[data-bs-dismiss="offcanvas"]');
           if (closeBtn && window.getComputedStyle(closeBtn).display !== 'none') {
             closeBtn.click();
           }
         } else {
-          alert('No se pudo cargar la transcripción');
+          alert('Could not load transcription');
         }
       } catch (err) {
-        alert('Error al cargar la transcripción');
+        alert('Error loading transcription');
       }
     }
     
-    // Cargar historial al inicio
+    // Load history on startup
     loadHistory();
   </script>
 </body>

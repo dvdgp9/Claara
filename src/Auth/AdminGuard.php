@@ -8,7 +8,7 @@ class AdminGuard {
     public static function requireSuperadmin(): array {
         $user = Session::user();
         if (!$user) {
-            Response::error('unauthorized', 'No autenticado', 401);
+            Response::error('unauthorized', 'Not authenticated', 401);
         }
         
         // Verificar si tiene rol admin o es superadmin

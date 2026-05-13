@@ -14,9 +14,9 @@ class Response {
     }
 
     /**
-     * Error de servidor seguro: loguea internamente, muestra mensaje genérico al cliente
+     * Safe server error: log internally, return a generic message to the client.
      */
-    public static function serverError(string $code, \Throwable $e, string $userMessage = 'Error interno del servidor'): void {
+    public static function serverError(string $code, \Throwable $e, string $userMessage = 'Internal server error'): void {
         error_log("[$code] " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
         self::json([ 'error' => [ 'code' => $code, 'message' => $userMessage ] ], 500);
     }

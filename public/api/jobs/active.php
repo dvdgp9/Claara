@@ -16,7 +16,7 @@ Session::start();
 $user = Session::user();
 
 if (!$user) {
-    Response::error('unauthorized', 'No autenticado', 401);
+    Response::error('unauthorized', 'Not authenticated', 401);
 }
 
 try {

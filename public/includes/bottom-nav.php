@@ -1,10 +1,10 @@
 <?php
 /**
- * Bottom Navigation Bar - Solo visible en móvil (<lg)
- * Incluye modales para acceso rápido a Voces y Gestos
+ * Bottom Navigation Bar - visible on mobile only (<lg)
+ * Includes quick-access modals for Voices and Gestures
  * 
  * Variables esperadas:
- * - $activeTab: Tab activa ('conversations', 'voices', 'gestures', 'apps', 'account')
+ * - $activeTab: active tab ('conversations', 'voices', 'gestures', 'account')
  */
 require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
@@ -19,58 +19,58 @@ $accessRepo = new UserFeatureAccessRepo();
 
 $activeTab = $activeTab ?? 'conversations';
 
-// Voces disponibles (mismo catálogo que left-tabs)
+// Available voices
 $voicesList = [
     [
         'id' => 'lex',
         'name' => 'Lex',
         'icon' => 'iconoir-book-stack',
         'href' => '/voices/lex.php',
-        'description' => 'Asistente legal',
+        'description' => 'Legal assistant',
         'gradient' => 'from-rose-500 to-pink-600'
     ]
 ];
 
-// Gestos disponibles (mismo catálogo que left-tabs)
+// Available gestures
 $gesturesList = [
     [
         'type' => 'podcast-from-article',
-        'name' => 'Generar podcast',
+        'name' => 'Generate Podcast',
         'icon' => 'iconoir-podcast',
         'href' => '/gestos/podcast-articulo.php',
-        'description' => 'Convierte texto en audio',
+        'description' => 'Turn text into audio',
         'gradient' => 'from-rose-500 to-orange-500'
     ],
     [
         'type' => 'write-article',
-        'name' => 'Escribir contenido',
+        'name' => 'Write Content',
         'icon' => 'iconoir-edit-pencil',
         'href' => '/gestos/escribir-articulo.php',
-        'description' => 'Genera artículos y blogs',
+        'description' => 'Generate articles and blogs',
         'gradient' => 'from-cyan-500 to-teal-600'
     ],
     [
         'type' => 'social-media',
-        'name' => 'Redes sociales',
+        'name' => 'Social Media',
         'icon' => 'iconoir-share-android',
         'href' => '/gestos/redes-sociales.php',
-        'description' => 'Crea posts para RRSS',
+        'description' => 'Create social posts',
         'gradient' => 'from-violet-500 to-fuchsia-600'
     ],
     [
         'type' => 'image-editor',
-        'name' => 'Editor de imágenes',
+        'name' => 'Image Studio',
         'icon' => 'iconoir-media-image',
         'href' => '/gestos/editor-imagenes.php',
-        'description' => 'Genera imágenes con IA',
+        'description' => 'Generate AI images',
         'gradient' => 'from-amber-500 to-orange-600'
     ],
     [
         'type' => 'audio-transcriber',
-        'name' => 'Transcriptor de audio',
+        'name' => 'Audio Transcriber',
         'icon' => 'iconoir-microphone',
         'href' => '/gestos/transcriptor-audio.php',
-        'description' => 'Convierte audio en texto',
+        'description' => 'Turn audio into text',
         'gradient' => 'from-purple-500 to-indigo-600'
     ]
 ];
@@ -86,34 +86,27 @@ $tabs = [
     'voices' => [
         'icon' => 'iconoir-voice-square',
         'iconActive' => 'iconoir-voice-square',
-        'label' => 'Voces',
+        'label' => 'Voices',
         'href' => '/voices/',
         'modal' => 'mobile-voices-modal'
     ],
     'gestures' => [
         'icon' => 'iconoir-magic-wand',
         'iconActive' => 'iconoir-magic-wand',
-        'label' => 'Gestos',
+        'label' => 'Gestures',
         'href' => '/gestos/',
         'modal' => 'mobile-gestures-modal'
-    ],
-    'apps' => [
-        'icon' => 'iconoir-view-grid',
-        'iconActive' => 'iconoir-view-grid',
-        'label' => 'Apps',
-        'href' => '/aplicaciones/',
-        'modal' => false
     ],
     'account' => [
         'icon' => 'iconoir-user',
         'iconActive' => 'iconoir-user',
-        'label' => 'Cuenta',
+        'label' => 'Account',
         'href' => '/account.php',
         'modal' => false
     ]
 ];
 ?>
-<!-- Bottom Navigation - Solo móvil -->
+<!-- Bottom Navigation - mobile only -->
 <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg safe-area-bottom">
   <div class="flex items-center justify-around h-16">
     <?php foreach ($tabs as $tabId => $tab): ?>
@@ -147,12 +140,12 @@ $tabs = [
   </div>
 </nav>
 
-<!-- Modal: Voces (móvil) -->
+<!-- Modal: Voices (mobile) -->
 <div id="mobile-voices-modal" class="mobile-quick-modal hidden lg:hidden fixed inset-0 z-[60]">
   <!-- Backdrop -->
   <div class="mobile-modal-backdrop absolute inset-0 bg-black/40 backdrop-blur-sm" data-close-modal></div>
   
-  <!-- Panel deslizante desde abajo -->
+  <!-- Bottom sheet -->
   <div class="mobile-modal-panel absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out max-h-[85vh] flex flex-col safe-area-bottom">
     <!-- Handle -->
     <div class="flex justify-center pt-3 pb-2">
@@ -166,8 +159,8 @@ $tabs = [
           <i class="iconoir-voice-square text-xl text-white"></i>
         </div>
         <div>
-          <h3 class="font-semibold text-slate-900 text-lg">Voces</h3>
-          <p class="text-xs text-slate-500">Asistentes especializados</p>
+          <h3 class="font-semibold text-slate-900 text-lg">Voices</h3>
+          <p class="text-xs text-slate-500">Specialized assistants</p>
         </div>
       </div>
     </div>
@@ -202,7 +195,7 @@ $tabs = [
             <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
               <i class="iconoir-voice-square text-3xl text-slate-300"></i>
             </div>
-            <p class="text-slate-500 text-sm">No tienes voces disponibles</p>
+            <p class="text-slate-500 text-sm">No voices available</p>
           </div>
         <?php endif; ?>
       </div>
@@ -211,19 +204,19 @@ $tabs = [
     <!-- Footer -->
     <div class="px-4 py-4 border-t border-slate-100">
       <a href="/voices/" class="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium rounded-xl shadow-lg active:scale-[0.98] transition-transform">
-        <span>Ver todas las voces</span>
+        <span>View all voices</span>
         <i class="iconoir-arrow-right"></i>
       </a>
     </div>
   </div>
 </div>
 
-<!-- Modal: Gestos (móvil) -->
+<!-- Modal: Gestures (mobile) -->
 <div id="mobile-gestures-modal" class="mobile-quick-modal hidden lg:hidden fixed inset-0 z-[60]">
   <!-- Backdrop -->
   <div class="mobile-modal-backdrop absolute inset-0 bg-black/40 backdrop-blur-sm" data-close-modal></div>
   
-  <!-- Panel deslizante desde abajo -->
+  <!-- Bottom sheet -->
   <div class="mobile-modal-panel absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out max-h-[85vh] flex flex-col safe-area-bottom">
     <!-- Handle -->
     <div class="flex justify-center pt-3 pb-2">
@@ -237,8 +230,8 @@ $tabs = [
           <i class="iconoir-magic-wand text-xl text-white"></i>
         </div>
         <div>
-          <h3 class="font-semibold text-slate-900 text-lg">Gestos</h3>
-          <p class="text-xs text-slate-500">Flujos automatizados</p>
+          <h3 class="font-semibold text-slate-900 text-lg">Gestures</h3>
+          <p class="text-xs text-slate-500">Automated workflows</p>
         </div>
       </div>
     </div>
@@ -273,7 +266,7 @@ $tabs = [
             <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
               <i class="iconoir-magic-wand text-3xl text-slate-300"></i>
             </div>
-            <p class="text-slate-500 text-sm">No tienes gestos disponibles</p>
+            <p class="text-slate-500 text-sm">No gestures available</p>
           </div>
         <?php endif; ?>
       </div>
@@ -282,7 +275,7 @@ $tabs = [
     <!-- Footer -->
     <div class="px-4 py-4 border-t border-slate-100">
       <a href="/gestos/" class="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-600 text-white font-medium rounded-xl shadow-lg active:scale-[0.98] transition-transform">
-        <span>Ver todos los gestos</span>
+        <span>View all gestures</span>
         <i class="iconoir-arrow-right"></i>
       </a>
     </div>
@@ -290,17 +283,17 @@ $tabs = [
 </div>
 
 <style>
-  /* Safe area para dispositivos con notch */
+  /* Safe area for devices with a notch */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
   
-  /* Eliminar highlight en tap */
+  /* Remove tap highlight */
   .tap-highlight-none {
     -webkit-tap-highlight-color: transparent;
   }
   
-  /* Espacio para bottom nav en el contenido principal */
+  /* Space for bottom nav in the main content */
   .has-bottom-nav {
     padding-bottom: 4rem; /* h-16 = 4rem */
   }
@@ -350,7 +343,7 @@ $tabs = [
     if (!modal) return;
     
     modal.classList.remove('hidden');
-    // Forzar reflow para que la transición funcione
+    // Force reflow so the transition works.
     modal.offsetHeight;
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -362,7 +355,7 @@ $tabs = [
     modal.classList.remove('active');
     document.body.style.overflow = '';
     
-    // Esperar a que termine la animación antes de ocultar
+    // Wait for the animation before hiding.
     setTimeout(() => {
       if (!modal.classList.contains('active')) {
         modal.classList.add('hidden');
@@ -374,7 +367,7 @@ $tabs = [
     modals.forEach(modal => closeModal(modal));
   }
   
-  // Event listeners para triggers
+  // Trigger listeners
   modalTriggers.forEach(trigger => {
     trigger.addEventListener('click', (e) => {
       e.preventDefault();

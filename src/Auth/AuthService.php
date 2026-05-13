@@ -14,13 +14,13 @@ class AuthService {
         $repo = new UsersRepo();
         $row = $repo->findByEmail($email);
         if (!$row) {
-            Response::error('invalid_credentials', 'Credenciales inválidas', 401);
+            Response::error('invalid_credentials', 'Invalid credentials', 401);
         }
         if (($row['status'] ?? 'active') !== 'active') {
-            Response::error('user_locked', 'Usuario deshabilitado', 423);
+            Response::error('user_locked', 'User is disabled', 423);
         }
         if (!Passwords::verify($password, $row['password_hash'])) {
-            Response::error('invalid_credentials', 'Credenciales inválidas', 401);
+            Response::error('invalid_credentials', 'Invalid credentials', 401);
         }
         // OK: actualizar último acceso y preparar payload de sesión
         $repo->updateLastLoginAt((int)$row['id']);
@@ -45,7 +45,7 @@ class AuthService {
     public static function requireAuth(): array {
         $user = Session::user();
         if (!$user) {
-            Response::error('unauthorized', 'No autenticado', 401);
+            Response::error('unauthorized', 'Not authenticated', 401);
         }
         return $user;
     }

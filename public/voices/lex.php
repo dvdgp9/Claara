@@ -21,13 +21,13 @@ if (!$accessRepo->hasVoiceAccess((int)$user['id'], 'lex')) {
 
 $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = 'voices';
-$userName = htmlspecialchars($user['first_name'] ?? 'Usuario');
+$userName = htmlspecialchars($user['first_name'] ?? 'there');
 
-// Configuración del header unificado
+// Shared header configuration
 $headerBackUrl = '/';
-$headerBackText = 'Inicio';
+$headerBackText = 'Home';
 $headerTitle = 'Lex';
-$headerSubtitle = 'Asistente Legal';
+$headerSubtitle = 'Legal Assistant';
 $headerIconText = 'L';
 $headerIconColor = 'from-rose-500 to-pink-600';
 $headerCustomButtons = '
@@ -37,56 +37,56 @@ $headerCustomButtons = '
   </button>
   <button id="toggle-docs-panel" class="hidden lg:flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-smooth">
     <i class="iconoir-folder"></i>
-    <span>Documentos</span>
+    <span>Documents</span>
     <i class="iconoir-nav-arrow-right text-xs" id="docs-arrow"></i>
   </button>';
 $headerDrawerId = 'lex-history-drawer';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
     <?php include __DIR__ . '/../includes/left-tabs.php'; ?>
     
-    <!-- Sidebar de historial (solo desktop) -->
+    <!-- History sidebar (desktop only) -->
     <aside id="history-sidebar" class="hidden lg:flex w-72 glass-strong border-r border-slate-200/50 flex-col shrink-0">
       <div class="p-4 border-b border-slate-200/50">
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-rose-500"></i>
-            Historial
+            History
           </h2>
-          <button id="new-chat-btn" class="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-smooth" title="Nueva consulta">
+          <button id="new-chat-btn" class="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-smooth" title="New query">
             <i class="iconoir-plus text-lg"></i>
           </button>
         </div>
       </div>
       
       <div id="history-list" class="flex-1 overflow-auto">
-        <!-- Se carga dinámicamente -->
+        <!-- Loaded dynamically -->
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Cargando...
+          Loading...
         </div>
       </div>
     </aside>
     
-    <!-- Mobile Drawer para historial -->
+    <!-- Mobile drawer for history -->
     <?php 
     $drawerId = 'lex-history-drawer';
-    $drawerTitle = 'Historial';
+    $drawerTitle = 'History';
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-rose-500';
     $drawerShowNewButton = true;
     $drawerNewButtonId = 'mobile-new-chat-btn';
-    $drawerNewButtonText = 'Nueva consulta';
+    $drawerNewButtonText = 'New query';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
     ?>
 
-    <!-- Mobile Drawer para documentos -->
+    <!-- Mobile drawer for documents -->
     <?php 
     $drawerId = 'lex-docs-drawer';
-    $drawerTitle = 'Documentos';
+    $drawerTitle = 'Documents';
     $drawerIcon = 'iconoir-folder';
     $drawerIconColor = 'text-rose-500';
     $drawerShowNewButton = false;
@@ -111,22 +111,22 @@ $headerDrawerId = 'lex-history-drawer';
                 <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center mx-auto mb-6 shadow-xl animate-float">
                   <span class="text-4xl font-bold text-white">L</span>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-900 mb-3">Hola, <?php echo $userName; ?></h2>
+                <h2 class="text-2xl font-bold text-slate-900 mb-3">Hi, <?php echo $userName; ?></h2>
                 <p class="text-slate-600 mb-6">
-                  Soy <strong>Lex</strong>, tu asistente legal del Grupo Ebone. Puedo ayudarte con consultas sobre convenios colectivos, normativas internas y documentación legal.
+                  I am <strong>Lex</strong>, your legal assistant. I can help with questions about reference documents, collective agreements, rights, leave, and legal procedures.
                 </p>
                 
-                <!-- Sugerencias -->
+                <!-- Suggestions -->
                 <div class="space-y-2">
-                  <p class="text-xs text-slate-400 uppercase tracking-wider mb-3">Prueba a preguntar:</p>
+                  <p class="text-xs text-slate-400 uppercase tracking-wider mb-3">Try asking:</p>
                   <button class="suggestion-btn w-full p-3 glass border border-slate-200/50 hover:border-rose-300 rounded-xl text-left transition-smooth group">
-                    <span class="text-sm text-slate-700 group-hover:text-rose-600">¿Cuántos días de vacaciones me corresponden según el convenio?</span>
+                    <span class="text-sm text-slate-700 group-hover:text-rose-600">How many vacation days does the agreement provide?</span>
                   </button>
                   <button class="suggestion-btn w-full p-3 glass border border-slate-200/50 hover:border-rose-300 rounded-xl text-left transition-smooth group">
-                    <span class="text-sm text-slate-700 group-hover:text-rose-600">¿Cuál es el procedimiento para solicitar una excedencia?</span>
+                    <span class="text-sm text-slate-700 group-hover:text-rose-600">What is the procedure for requesting unpaid leave?</span>
                   </button>
                   <button class="suggestion-btn w-full p-3 glass border border-slate-200/50 hover:border-rose-300 rounded-xl text-left transition-smooth group">
-                    <span class="text-sm text-slate-700 group-hover:text-rose-600">¿Qué dice el convenio sobre las horas extra?</span>
+                    <span class="text-sm text-slate-700 group-hover:text-rose-600">What does the agreement say about overtime?</span>
                   </button>
                 </div>
               </div>
@@ -157,11 +157,11 @@ $headerDrawerId = 'lex-history-drawer';
                 <textarea 
                   id="chat-input" rows="1"
                   class="flex-1 min-w-0 border-2 border-slate-200 rounded-xl px-3 lg:px-4 py-2.5 input-focus transition-smooth bg-white/80 resize-none overflow-hidden"
-                  placeholder="Escribe tu consulta legal..."
+                  placeholder="Write your legal question..."
                   style="min-height: 40px; max-height: 120px;"
                 ></textarea>
                 <button type="submit" class="h-11 p-3 lg:px-6 lg:py-[10px] bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2">
-                  <span class="hidden lg:inline">Enviar</span>
+                  <span class="hidden lg:inline">Send</span>
                   <i class="iconoir-send-diagonal text-base"></i>
                 </button>
               </div>
@@ -174,31 +174,31 @@ $headerDrawerId = 'lex-history-drawer';
           <div class="p-4 border-b border-slate-200/50">
             <h3 class="font-semibold text-slate-800 flex items-center gap-2">
               <i class="iconoir-folder text-rose-500"></i>
-              Documentos disponibles
+              Available documents
             </h3>
-            <p class="text-xs text-slate-500 mt-1">Fuentes de conocimiento de Lex</p>
+            <p class="text-xs text-slate-500 mt-1">Lex knowledge sources</p>
             
-            <!-- Buscador de documentos -->
+            <!-- Document search -->
             <div class="mt-3 relative">
               <i class="iconoir-search text-xs text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
               <input type="text" id="docs-search" 
                 class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-rose-300 transition-colors" 
-                placeholder="Buscar por título...">
+                placeholder="Search by title...">
             </div>
           </div>
           
           <div id="docs-list" class="flex-1 overflow-auto p-4 space-y-2">
-            <!-- Se carga dinámicamente -->
+            <!-- Loaded dynamically -->
             <div class="p-4 text-center text-slate-400 text-sm">
               <i class="iconoir-refresh animate-spin"></i>
-              Cargando documentos...
+              Loading documents...
             </div>
           </div>
           
           <div class="p-4 border-t border-slate-200/50">
             <p class="text-xs text-slate-400 text-center">
               <i class="iconoir-info-circle"></i>
-              Lex consulta estos documentos para responder
+              Lex uses these documents to answer
             </p>
           </div>
         </aside>
@@ -207,7 +207,7 @@ $headerDrawerId = 'lex-history-drawer';
     </main>
   </div>
 
-  <!-- Modal visor de documentos -->
+  <!-- Document viewer modal -->
   <div id="doc-viewer-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="glass-strong rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col border border-slate-200/50">
       <!-- Header -->
@@ -217,8 +217,8 @@ $headerDrawerId = 'lex-history-drawer';
             <i class="iconoir-page text-xl text-rose-600"></i>
           </div>
           <div>
-            <h3 id="doc-viewer-title" class="text-lg font-semibold text-slate-900">Documento</h3>
-            <p class="text-xs text-slate-500">Documento de referencia de Lex</p>
+            <h3 id="doc-viewer-title" class="text-lg font-semibold text-slate-900">Document</h3>
+            <p class="text-xs text-slate-500">Lex reference document</p>
           </div>
         </div>
         <button id="close-doc-viewer" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-smooth">
@@ -231,7 +231,7 @@ $headerDrawerId = 'lex-history-drawer';
         <div class="prose prose-slate max-w-none">
           <div class="text-center text-slate-400 py-8">
             <i class="iconoir-refresh animate-spin text-2xl mb-2"></i>
-            <p>Cargando documento...</p>
+            <p>Loading document...</p>
           </div>
         </div>
       </div>
@@ -239,7 +239,7 @@ $headerDrawerId = 'lex-history-drawer';
       <!-- Footer -->
       <div class="p-4 border-t border-slate-200/50 flex justify-end flex-shrink-0">
         <button id="close-doc-viewer-btn" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-smooth">
-          Cerrar
+          Close
         </button>
       </div>
     </div>
@@ -247,11 +247,11 @@ $headerDrawerId = 'lex-history-drawer';
 
   <script src="/assets/js/voice-lex.js"></script>
   
-  <!-- Bottom Navigation (móvil) -->
+  <!-- Bottom Navigation (mobile) -->
   <?php include __DIR__ . '/../includes/bottom-nav.php'; ?>
   
   <script>
-    // Sincronizar historial con drawer móvil
+    // Sync history with mobile drawer.
     document.addEventListener('DOMContentLoaded', () => {
       const desktopHistory = document.getElementById('history-list');
       const mobileDrawerContent = document.getElementById('lex-history-drawer-content');

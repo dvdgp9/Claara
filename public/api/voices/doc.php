@@ -13,23 +13,23 @@ use Voices\VoiceContextBuilder;
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Sesión no válida', 401);
+    Response::error('unauthorized', 'Invalid session', 401);
 }
 
 $voiceId = $_GET['voice_id'] ?? '';
 $docId = $_GET['doc_id'] ?? '';
 
 if (!$voiceId) {
-    Response::error('missing_voice', 'Se requiere voice_id', 400);
+    Response::error('missing_voice', 'voice_id is required', 400);
 }
 if (!$docId) {
-    Response::error('missing_doc', 'Se requiere doc_id', 400);
+    Response::error('missing_doc', 'doc_id is required', 400);
 }
 
 $builder = new VoiceContextBuilder($voiceId);
 
 if (!$builder->voiceExists()) {
-    Response::error('invalid_voice', 'Voz no encontrada', 404);
+    Response::error('invalid_voice', 'Voice not found', 404);
 }
 
 // Buscar el documento
@@ -43,7 +43,7 @@ foreach ($docs as $d) {
 }
 
 if (!$doc) {
-    Response::error('not_found', 'Documento no encontrado', 404);
+    Response::error('not_found', 'Document not found', 404);
 }
 
 // Detectar tipo de archivo
@@ -55,7 +55,7 @@ if (in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx'])) {
     // Si se pide descarga, enviar el archivo
     if ($isDownload) {
         if (!file_exists($doc['path'])) {
-            Response::error('file_not_found', 'Archivo no encontrado en el servidor', 404);
+            Response::error('file_not_found', 'File not found on server', 404);
         }
         
         // Configurar headers para mostrar PDF en navegador
@@ -77,7 +77,7 @@ if (in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx'])) {
             'size' => $doc['size'],
             'type' => $extension,
             'isBinary' => true,
-            'message' => 'Este es un archivo PDF. Los documentos están indexados y disponibles para consulta con el asistente Lex. Si necesitas ver el contenido completo, puedes abrirlo en una nueva ventana.'
+            'message' => 'This is a PDF file. Documents are indexed and available for Lex assistant queries. To view full content, open it in a new window.'
         ]
     ]);
 }
@@ -85,7 +85,7 @@ if (in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx'])) {
 // Leer contenido de archivos de texto
 $content = file_get_contents($doc['path']);
 if ($content === false) {
-    Response::error('read_error', 'Error al leer el documento', 500);
+    Response::error('read_error', 'Error reading document', 500);
 }
 
 Response::json([

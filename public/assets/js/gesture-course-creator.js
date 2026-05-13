@@ -1,8 +1,8 @@
 /**
- * Gesto: Creador de Cursos
+ * Gesto: Creador de Courses
  * Flujo de 3 fases:
  * - Fase 1: Subir PDF/texto → Generar índice editable
- * - Fase 2: Editar índice (opcional) → Desarrollar módulos
+ * - Fase 2: Editar índice (opcional) → Develop modules
  * - Fase 3 (opcional): Generar materiales complementarios (flashcards, tests, examen, podcast)
  */
 
@@ -73,13 +73,13 @@
       if (!file) return;
       
       if (file.type !== 'application/pdf') {
-        alert('Por favor, selecciona un archivo PDF');
+        alert('Please select a PDF file');
         sourcePdf.value = '';
         return;
       }
       
       if (file.size > 20 * 1024 * 1024) {
-        alert('El PDF es demasiado grande (máximo 20MB)');
+        alert('The PDF file is too large (maximum 20MB)');
         sourcePdf.value = '';
         return;
       }
@@ -110,7 +110,7 @@
   // =========================================================================
   async function generateOutline() {
     const duration = document.querySelector('input[name="duration"]:checked')?.value || '8h';
-    const level = document.querySelector('input[name="level"]:checked')?.value || 'intermedio';
+    const level = document.querySelector('input[name="level"]:checked')?.value || 'intermediate';
     const courseFormat = document.querySelector('input[name="course_format"]:checked')?.value || 'online';
     
     let inputData = { 
@@ -124,11 +124,11 @@
       case 'text':
         const text = sourceText?.value?.trim();
         if (!text) {
-          showError('Por favor, introduce el texto del material');
+          showError('Please enter the training material text');
           return;
         }
         if (text.split(/\s+/).length < 50) {
-          showError('El texto es demasiado corto (mínimo 50 palabras)');
+          showError('The text is too short (minimum 50 words)');
           return;
         }
         inputData.text = text;
@@ -137,14 +137,14 @@
       case 'pdf':
       default:
         if (!pdfBase64) {
-          showError('Por favor, selecciona un archivo PDF');
+          showError('Please select a PDF file');
           return;
         }
         inputData.pdf_base64 = pdfBase64;
         break;
     }
 
-    showProgress('Analizando contenido...', 'Generando índice pedagógico del curso');
+    showProgress('Analyzing content...', 'Generating course outline');
     hideError();
 
     try {
@@ -158,7 +158,7 @@
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error generando índice');
+        throw new Error(data.error?.message || data.message || 'Error generating outline');
       }
 
       currentOutline = data.outline;
@@ -184,7 +184,7 @@
     
     const outline = data.outline;
     if (!outline) {
-      showError('No se pudo generar el índice. Intenta de nuevo.');
+      showError('Could not generate the outline. Please try again.');
       return;
     }
 
@@ -193,17 +193,17 @@
       <div class="glass-strong rounded-2xl border border-slate-200/50 p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-xl font-bold text-slate-800">${escapeHtml(outline.course_title || 'Índice del Curso')}</h2>
+            <h2 class="text-xl font-bold text-slate-800">${escapeHtml(outline.course_title || 'Course Outline')}</h2>
             <p class="text-sm text-slate-500">${escapeHtml(outline.course_description || '')}</p>
           </div>
           <div class="flex items-center gap-2">
             <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full">${outline.total_hours || 8}h</span>
-            <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">${outline.level || 'intermedio'}</span>
+            <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">${outline.level || 'intermediate'}</span>
           </div>
         </div>
         
         <div class="mb-4">
-          <h3 class="font-semibold text-slate-700 mb-2">Objetivos generales</h3>
+          <h3 class="font-semibold text-slate-700 mb-2">General objectives</h3>
           <ul class="text-sm text-slate-600 space-y-1">
             ${(outline.objectives || []).map(obj => `<li class="flex items-start gap-2"><i class="iconoir-check-circle text-emerald-500 mt-0.5"></i> ${escapeHtml(obj)}</li>`).join('')}
           </ul>
@@ -216,11 +216,11 @@
 
       <div class="flex items-center justify-between">
         <button type="button" id="back-to-input-btn" class="px-4 py-2 text-slate-600 hover:text-slate-800 flex items-center gap-2">
-          <i class="iconoir-arrow-left"></i> Volver
+          <i class="iconoir-arrow-left"></i> Back
         </button>
         <button type="button" id="develop-modules-btn" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2">
           <i class="iconoir-play"></i>
-          <span>Desarrollar ${outline.modules?.length || 0} módulos</span>
+          <span>Develop ${outline.modules?.length || 0} modules</span>
         </button>
       </div>
     `;
@@ -250,7 +250,7 @@
             </div>
             <div class="flex-1">
               <input type="text" class="module-title-input w-full font-semibold text-slate-800 bg-white/50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30" value="${escapeHtml(module.title || '')}">
-              <p class="text-xs text-slate-500">${module.duration_hours || 2}h · ${lessons.length} lecciones</p>
+              <p class="text-xs text-slate-500">${module.duration_hours || 2}h · ${lessons.length} lessons</p>
             </div>
             <button type="button" class="toggle-module-btn p-2 hover:bg-white/50 rounded-lg transition-colors">
               <i class="iconoir-nav-arrow-down text-slate-600"></i>
@@ -258,7 +258,7 @@
           </div>
         </div>
         <div class="module-content p-4 space-y-3">
-          <div class="text-xs text-slate-500 mb-2">Objetivos: ${(module.objectives || []).join(', ')}</div>
+          <div class="text-xs text-slate-500 mb-2">Objectives: ${(module.objectives || []).join(', ')}</div>
           ${lessons.map((lesson, li) => `
             <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
               <span class="text-xs font-medium text-slate-400">${lesson.id || (index + 1) + '.' + (li + 1)}</span>
@@ -279,7 +279,7 @@
   // =========================================================================
   async function developModules() {
     if (!currentOutline || !currentExecutionId) {
-      alert('No hay índice para desarrollar');
+      alert('No outline available to develop');
       return;
     }
 
@@ -295,7 +295,7 @@
       developBtn.disabled = true;
       developBtn.innerHTML = `
         <i class="iconoir-refresh animate-spin"></i>
-        <span>Generando módulo 1 de ${totalModules}...</span>
+        <span>Generating module 1 of ${totalModules}...</span>
       `;
       developBtn.classList.add('opacity-75', 'cursor-wait');
     }
@@ -308,8 +308,8 @@
             <i class="iconoir-refresh animate-spin text-emerald-600 text-xl"></i>
           </div>
           <div class="flex-1">
-            <p class="font-semibold text-emerald-800">Desarrollando contenido del curso...</p>
-            <p class="text-sm text-emerald-600">Generando módulo 1 de ${totalModules}. Esto puede tardar varios minutos.</p>
+            <p class="font-semibold text-emerald-800">Developing course content...</p>
+            <p class="text-sm text-emerald-600">Generating module 1 of ${totalModules}. This may take several minutes.</p>
           </div>
         </div>
         <div class="mt-3 bg-emerald-200 rounded-full h-2 overflow-hidden">
@@ -343,16 +343,16 @@
       document.getElementById('develop-progress')?.remove();
 
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error desarrollando módulos');
+        throw new Error(data.error?.message || data.message || 'Error developing modules');
       }
 
       if (!data.modules || data.modules.length === 0) {
-        throw new Error('No se generaron módulos. Revisa el contenido fuente.');
+        throw new Error('No modules were generated. Review the source content.');
       }
 
-      console.log('Módulos generados:', data.modules.length); // Debug
+      console.log('Módulos generated:', data.modules.length); // Debug
       
-      // Mostrar módulos desarrollados
+      // Mostrar modules desarrollados
       showDevelopedModules(data);
       loadHistory();
 
@@ -365,7 +365,7 @@
         developBtn.disabled = false;
         developBtn.innerHTML = `
           <i class="iconoir-play"></i>
-          <span>Desarrollar ${totalModules} módulos</span>
+          <span>Develop ${totalModules} modules</span>
         `;
         developBtn.classList.remove('opacity-75', 'cursor-wait');
       }
@@ -375,7 +375,7 @@
   }
 
   function collectOutlineChanges() {
-    // Recoger títulos editados de módulos y lecciones
+    // Recoger títulos editados of modules y lessons
     const updatedOutline = JSON.parse(JSON.stringify(currentOutline));
     
     document.querySelectorAll('.module-card').forEach((card, mi) => {
@@ -404,11 +404,11 @@
     
     // Guardar para paso 3
     currentModules = data.modules || [];
-    currentCourseTitle = data.course_title || 'Curso desarrollado';
+    currentCourseTitle = data.course_title || 'Developed course';
     currentExecutionId = data.execution_id || currentExecutionId;
     
     if (resultTitle) resultTitle.textContent = currentCourseTitle;
-    if (resultSource) resultSource.textContent = `${data.total_developed} módulo${data.total_developed !== 1 ? 's' : ''} generado${data.total_developed !== 1 ? 's' : ''}`;
+    if (resultSource) resultSource.textContent = `${data.total_developed} module${data.total_developed !== 1 ? 's' : ''} generated${data.total_developed !== 1 ? 's' : ''}`;
     
     const modules = data.modules || [];
     
@@ -417,12 +417,12 @@
       const exportAllHtml = `
         <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
           <div>
-            <p class="font-semibold text-blue-800">Exportar curso completo</p>
-            <p class="text-xs text-blue-600">Descarga todos los módulos en un solo documento Word</p>
+            <p class="font-semibold text-blue-800">Export full course</p>
+            <p class="text-xs text-blue-600">Download all modules in a single Word document</p>
           </div>
           <button id="export-all-course-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2">
             <i class="iconoir-page"></i>
-            <span>Exportar a Word</span>
+            <span>Export to Word</span>
           </button>
         </div>
       `;
@@ -437,12 +437,12 @@
                 </div>
                 <div>
                   <h3 class="font-semibold text-slate-800">${escapeHtml(module.title)}</h3>
-                  <p class="text-xs text-slate-500">${module.word_count || 0} palabras</p>
+                  <p class="text-xs text-slate-500">${module.word_count || 0} words</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
                 <button class="copy-module-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5" data-index="${i}">
-                  <i class="iconoir-copy"></i> Copiar
+                  <i class="iconoir-copy"></i> Copy
                 </button>
                 <button class="export-module-word-btn px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-index="${i}">
                   <i class="iconoir-page"></i> Word
@@ -453,7 +453,7 @@
           
           <div class="p-4">
             <div class="preview-toggle mb-4">
-              <button class="active" data-view="preview">Vista previa</button>
+              <button class="active" data-view="preview">Preview</button>
               <button data-view="raw">Markdown</button>
             </div>
             <div class="preview-view content-preview max-h-96 overflow-auto">${module.html || renderMarkdownPreview(module.content)}</div>
@@ -464,16 +464,16 @@
         </div>
       `).join('');
       
-      // Event listeners para botones de módulos
+      // Event listeners para botones of modules
       modulesContainer.querySelectorAll('.copy-module-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const idx = parseInt(btn.dataset.index);
           const module = modules[idx];
           try {
             await navigator.clipboard.writeText(module.content);
-            btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+            btn.innerHTML = '<i class="iconoir-check"></i> Copied';
             setTimeout(() => {
-              btn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
+              btn.innerHTML = '<i class="iconoir-copy"></i> Copy';
             }, 2000);
           } catch (err) {
             console.error('Error copying:', err);
@@ -486,7 +486,7 @@
           const idx = parseInt(btn.dataset.index);
           const module = modules[idx];
           btn.disabled = true;
-          btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exportando...';
+          btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exporting...';
           await exportToWord('module', module.content, module.title);
           btn.disabled = false;
           btn.innerHTML = '<i class="iconoir-page"></i> Word';
@@ -519,21 +519,21 @@
       document.getElementById('export-all-course-btn')?.addEventListener('click', async function() {
         const btn = this;
         btn.disabled = true;
-        btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exportando...';
+        btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exporting...';
         
-        // Concatenar todo el contenido de los módulos
+        // Concatenar todo el contenido de los modules
         const allContent = modules.map(m => m.content).join('\n\n---\n\n');
         await exportToWord('course', allContent, currentCourseTitle);
         
         btn.disabled = false;
-        btn.innerHTML = '<i class="iconoir-page"></i> Exportar a Word';
+        btn.innerHTML = '<i class="iconoir-page"></i> Export to Word';
       });
       
       // Añadir panel de materiales complementarios (Paso 3)
       renderMaterialsPanel(modules);
     }
     
-    // Buscar materiales ya generados para este curso
+    // Buscar materiales ya generated para este curso
     if (currentExecutionId) {
       await loadRelatedMaterials(currentExecutionId);
     }
@@ -567,37 +567,37 @@
               <i class="iconoir-spark text-violet-600 text-xl"></i>
             </div>
             <div>
-              <h3 class="font-bold text-slate-800">Materiales complementarios</h3>
-              <p class="text-xs text-slate-500">Paso 3 (opcional): Selecciona un tipo y genera recursos adicionales</p>
+              <h3 class="font-bold text-slate-800">Supplementary materials</h3>
+              <p class="text-xs text-slate-500">Step 3 (optional): Select a type and generate additional resources</p>
             </div>
           </div>
         </div>
         
         <div class="p-4">
-          <p class="text-sm text-slate-600 mb-3">Selecciona qué quieres generar:</p>
+          <p class="text-sm text-slate-600 mb-3">Select what you want to generate:</p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-violet-400 transition-all text-left" data-type="flashcards">
               <i class="iconoir-multiple-pages text-2xl text-violet-500 mb-2 block"></i>
               <p class="font-semibold text-slate-700 text-sm">Flashcards</p>
-              <p class="text-xs text-slate-500">Tarjetas de estudio</p>
+              <p class="text-xs text-slate-500">Study cards</p>
             </div>
             
             <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-400 transition-all text-left" data-type="quiz">
               <i class="iconoir-check-circle text-2xl text-emerald-500 mb-2 block"></i>
               <p class="font-semibold text-slate-700 text-sm">Tests</p>
-              <p class="text-xs text-slate-500">5-10 preguntas/módulo</p>
+              <p class="text-xs text-slate-500">5-10 questions/module</p>
             </div>
             
             <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-orange-400 transition-all text-left" data-type="final_exam">
               <i class="iconoir-graduation-cap text-2xl text-orange-500 mb-2 block"></i>
-              <p class="font-semibold text-slate-700 text-sm">Examen final</p>
-              <p class="text-xs text-slate-500">20 preguntas tipo test</p>
+              <p class="font-semibold text-slate-700 text-sm">Final exam</p>
+              <p class="text-xs text-slate-500">20 multiple-choice questions</p>
             </div>
             
             <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-pink-400 transition-all text-left" data-type="podcast">
               <i class="iconoir-microphone text-2xl text-pink-500 mb-2 block"></i>
               <p class="font-semibold text-slate-700 text-sm">Podcast</p>
-              <p class="text-xs text-slate-500">Guion de audio</p>
+              <p class="text-xs text-slate-500">Audio script</p>
             </div>
           </div>
           
@@ -605,32 +605,32 @@
           <div id="generate-material-action" class="hidden mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
             <div class="flex items-center justify-between">
               <div>
-                <p class="font-semibold text-slate-700">Seleccionado: <span id="selected-material-name" class="text-violet-600"></span></p>
-                <p class="text-xs text-slate-500">Haz clic en Generar para crear el material</p>
+                <p class="font-semibold text-slate-700">Selected: <span id="selected-material-name" class="text-violet-600"></span></p>
+                <p class="text-xs text-slate-500">Click Generate to create the material</p>
               </div>
               <button id="confirm-generate-btn" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2">
                 <i class="iconoir-spark"></i>
-                <span>Generar</span>
+                <span>Generate</span>
               </button>
             </div>
           </div>
           
-          <!-- Área de resultado del material generado -->
+          <!-- Área de resultado del material generated -->
           <div id="material-result" class="hidden mt-4">
             <div class="flex items-center justify-between mb-3">
               <h4 id="material-result-title" class="font-semibold text-slate-700"></h4>
               <div class="flex gap-2">
                 <button id="copy-material-btn" class="px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
-                  <i class="iconoir-copy"></i> Copiar
+                  <i class="iconoir-copy"></i> Copy
                 </button>
                 <button id="download-material-btn" class="px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
-                  <i class="iconoir-download"></i> Descargar
+                  <i class="iconoir-download"></i> Download
                 </button>
               </div>
             </div>
             <div class="preview-toggle mb-3">
-              <button class="active" data-view="preview">Vista previa</button>
-              <button data-view="raw">Texto</button>
+              <button class="active" data-view="preview">Preview</button>
+              <button data-view="raw">Text</button>
             </div>
             <div id="material-preview" class="content-preview max-h-96 overflow-auto border border-slate-200 rounded-xl p-4 bg-white"></div>
             <div id="material-raw" class="hidden">
@@ -643,8 +643,8 @@
             <div class="flex items-center gap-3">
               <i class="iconoir-refresh animate-spin text-violet-600 text-xl"></i>
               <div>
-                <p class="font-semibold text-violet-800">Generando material...</p>
-                <p id="material-progress-text" class="text-sm text-violet-600">Esto puede tardar unos segundos</p>
+                <p class="font-semibold text-violet-800">Generating material...</p>
+                <p id="material-progress-text" class="text-sm text-violet-600">This may take a few seconds</p>
               </div>
             </div>
           </div>
@@ -656,9 +656,9 @@
     
     const typeNames = {
       'flashcards': 'Flashcards',
-      'quiz': 'Tests por módulo',
-      'final_exam': 'Examen final',
-      'podcast': 'Guion de Podcast'
+      'quiz': 'Module quizzes',
+      'final_exam': 'Final exam',
+      'podcast': 'Podcast script'
     };
     
     // Event listeners para tarjetas de selección
@@ -715,9 +715,9 @@
   async function generateMaterial(type) {
     const typeNames = {
       'flashcards': 'Flashcards',
-      'quiz': 'Tests por módulo',
-      'final_exam': 'Examen final',
-      'podcast': 'Guion de Podcast'
+      'quiz': 'Module quizzes',
+      'final_exam': 'Final exam',
+      'podcast': 'Podcast script'
     };
     
     const progress = document.getElementById('material-progress');
@@ -728,11 +728,11 @@
     // Mostrar progreso
     progress?.classList.remove('hidden');
     result?.classList.add('hidden');
-    if (progressText) progressText.textContent = `Generando ${typeNames[type]}...`;
+    if (progressText) progressText.textContent = `Generating ${typeNames[type]}...`;
     btns.forEach(b => b.disabled = true);
     
     try {
-      // Concatenar contenido de módulos
+      // Concatenar contenido of modules
       const modulesContent = currentModules.map(m => 
         `## ${m.title}\n\n${m.content}`
       ).join('\n\n---\n\n');
@@ -752,7 +752,7 @@
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error generando material');
+        throw new Error(data.error?.message || data.message || 'Error generating material');
       }
       
       // Guardar y mostrar resultado
@@ -786,15 +786,15 @@
     if (preview) preview.innerHTML = renderMarkdownPreview(output);
     if (rawContent) rawContent.textContent = output;
     
-    // Copiar material
+    // Copy material
     document.getElementById('copy-material-btn')?.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(currentMaterialOutput);
         const btn = document.getElementById('copy-material-btn');
         if (btn) {
-          btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
+          btn.innerHTML = '<i class="iconoir-check"></i> Copied';
           setTimeout(() => {
-            btn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
+            btn.innerHTML = '<i class="iconoir-copy"></i> Copy';
           }, 2000);
         }
       } catch (err) {
@@ -802,18 +802,18 @@
       }
     });
     
-    // Descargar material a Word
+    // Download material a Word
     document.getElementById('download-material-btn')?.addEventListener('click', async () => {
       const btn = document.getElementById('download-material-btn');
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exportando...';
+        btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exporting...';
       }
       
       const typeNames = {
         'flashcards': 'Flashcards',
         'quiz': 'Tests',
-        'final_exam': 'Examen Final',
+        'final_exam': 'Final Exam',
         'podcast': 'Podcast'
       };
       const materialTitle = `${currentCourseTitle} - ${typeNames[currentMaterialType] || 'Material'}`;
@@ -822,7 +822,7 @@
       
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+        btn.innerHTML = '<i class="iconoir-download"></i> Download';
       }
     });
   }
@@ -847,7 +847,7 @@
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error exportando documento');
+        throw new Error(data.error?.message || data.message || 'Error exporting document');
       }
       
       // Decodificar base64 y descargar
@@ -869,12 +869,12 @@
       URL.revokeObjectURL(url);
       
     } catch (err) {
-      console.error('Error exportando a Word:', err);
-      alert('Error exportando: ' + err.message);
+      console.error('Error exporting to Word:', err);
+      alert('Error exporting: ' + err.message);
     }
   }
 
-  // Buscar materiales complementarios ya generados para un curso
+  // Buscar materiales complementarios ya generated para un curso
   async function loadRelatedMaterials(courseExecutionId) {
     if (!courseExecutionId) return;
     
@@ -926,7 +926,7 @@
       },
       'course_material_final_exam': { 
         icon: 'iconoir-graduation-cap', 
-        label: 'Examen', 
+        label: 'Exam', 
         btnClass: 'border-orange-300 hover:bg-orange-50 text-orange-700'
       },
       'course_material_podcast': { 
@@ -948,7 +948,7 @@
     const materialsHtml = `
       <div class="existing-materials mb-4 p-4 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-xl">
         <p class="text-sm font-semibold text-violet-800 mb-3 flex items-center gap-2">
-          <i class="iconoir-check-circle"></i> Materiales ya generados (clic para ver)
+          <i class="iconoir-check-circle"></i> Materials already generated (click to view)
         </p>
         <div class="flex flex-wrap gap-2">
           ${materials.map(mat => {
@@ -958,7 +958,7 @@
               btnClass: 'border-gray-300 hover:bg-gray-50 text-gray-700'
             };
             // Formatear fecha corta
-            const date = mat.created_at ? new Date(mat.created_at).toLocaleDateString('es-ES', { 
+            const date = mat.created_at ? new Date(mat.created_at).toLocaleDateString('en-US', { 
               day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
             }) : '';
             return `
@@ -991,7 +991,7 @@
   }
 
   function downloadModule(module, courseTitle) {
-    const filename = `${slugify(courseTitle || 'curso')}-modulo-${module.module_id}.md`;
+    const filename = `${slugify(courseTitle || 'course')}-module-${module.module_id}.md`;
     const blob = new Blob([module.content], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1055,7 +1055,7 @@
 
   // === Markdown Preview ===
   function renderMarkdownPreview(text) {
-    if (!text) return '<p class="text-slate-400">Sin contenido</p>';
+    if (!text) return '<p class="text-slate-400">No content</p>';
     
     let html = escapeHtml(text);
     
@@ -1114,22 +1114,22 @@
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-graduation-cap text-xl text-emerald-400"></i>
           </div>
-          <p class="text-sm text-slate-500">Aún no has creado cursos</p>
-          <p class="text-xs text-slate-400 mt-1">Sube un PDF para empezar</p>
+          <p class="text-sm text-slate-500">You have not created courses yet</p>
+          <p class="text-xs text-slate-400 mt-1">Upload a PDF to get started</p>
         </div>
       `;
       return;
     }
 
-    const levelIcons = { basico: '🌱', intermedio: '🌿', avanzado: '🌳' };
+    const levelIcons = { basico: '🌱', intermediate: '🌿', avanzado: '🌳' };
     
     // Mapeo de content_type a fase y etiqueta
     const contentTypeMap = {
-      'course_outline': { phase: 1, label: 'Índice', icon: 'iconoir-list', bgClass: 'bg-emerald-100', iconClass: 'text-emerald-600' },
-      'course_developed': { phase: 2, label: 'Desarrollado', icon: 'iconoir-graduation-cap', bgClass: 'bg-emerald-600', iconClass: 'text-white' },
+      'course_outline': { phase: 1, label: 'Outline', icon: 'iconoir-list', bgClass: 'bg-emerald-100', iconClass: 'text-emerald-600' },
+      'course_developed': { phase: 2, label: 'Developed', icon: 'iconoir-graduation-cap', bgClass: 'bg-emerald-600', iconClass: 'text-white' },
       'course_material_flashcards': { phase: 3, label: 'Flashcards', icon: 'iconoir-multiple-pages', bgClass: 'bg-violet-500', iconClass: 'text-white' },
       'course_material_quiz': { phase: 3, label: 'Tests', icon: 'iconoir-check-circle', bgClass: 'bg-emerald-500', iconClass: 'text-white' },
-      'course_material_final_exam': { phase: 3, label: 'Examen', icon: 'iconoir-graduation-cap', bgClass: 'bg-orange-500', iconClass: 'text-white' },
+      'course_material_final_exam': { phase: 3, label: 'Exam', icon: 'iconoir-graduation-cap', bgClass: 'bg-orange-500', iconClass: 'text-white' },
       'course_material_podcast': { phase: 3, label: 'Podcast', icon: 'iconoir-microphone', bgClass: 'bg-pink-500', iconClass: 'text-white' }
     };
 
@@ -1141,7 +1141,7 @@
       const typeInfo = contentTypeMap[item.content_type] || contentTypeMap['course_outline'];
       const phase = typeInfo.phase;
       
-      const date = new Date(item.created_at).toLocaleDateString('es-ES', {
+      const date = new Date(item.created_at).toLocaleDateString('en-US', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -1156,12 +1156,12 @@
               <i class="${typeInfo.icon} ${typeInfo.iconClass} text-sm"></i>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Sin título')}</p>
+              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Untitled')}</p>
               <p class="text-xs text-slate-500 mt-0.5">
                 ${typeInfo.label} · ${date}
               </p>
             </div>
-            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Eliminar">
+            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Delete">
               <i class="iconoir-trash text-slate-400 hover:text-red-500 text-sm"></i>
             </button>
           </div>
@@ -1205,9 +1205,9 @@
         if (phase === 3 || contentType.startsWith('course_material_')) {
           const materialTypeNames = {
             'course_material_flashcards': 'Flashcards',
-            'course_material_quiz': 'Tests por módulo',
-            'course_material_final_exam': 'Examen final',
-            'course_material_podcast': 'Guion de Podcast'
+            'course_material_quiz': 'Module quizzes',
+            'course_material_final_exam': 'Final exam',
+            'course_material_podcast': 'Podcast script'
           };
           
           const materialOutput = outputData?.raw || item.output_content || '';
@@ -1224,7 +1224,7 @@
           if (outlineSection) outlineSection.classList.add('hidden');
           if (resultSection) resultSection.classList.remove('hidden');
           
-          if (resultTitle) resultTitle.textContent = outputData?.course_title || 'Curso';
+          if (resultTitle) resultTitle.textContent = outputData?.course_title || 'Course';
           if (resultSource) resultSource.textContent = materialTitle;
           
           if (modulesContainer) {
@@ -1233,7 +1233,7 @@
               <div class="mb-4">
                 <button id="back-to-course-btn" class="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium" data-course-id="${sourceExecutionId}">
                   <i class="iconoir-arrow-left"></i>
-                  <span>Volver al curso</span>
+                  <span>Back to course</span>
                 </button>
               </div>
               ` : ''}
@@ -1251,18 +1251,18 @@
                     </div>
                     <div class="flex items-center gap-2">
                       <button class="copy-material-hist-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
-                        <i class="iconoir-copy"></i> Copiar
+                        <i class="iconoir-copy"></i> Copy
                       </button>
                       <button class="download-material-hist-btn px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
-                        <i class="iconoir-download"></i> Descargar
+                        <i class="iconoir-download"></i> Download
                       </button>
                     </div>
                   </div>
                 </div>
                 <div class="p-4">
                   <div class="preview-toggle mb-4">
-                    <button class="active" data-view="preview">Vista previa</button>
-                    <button data-view="raw">Texto</button>
+                    <button class="active" data-view="preview">Preview</button>
+                    <button data-view="raw">Text</button>
                   </div>
                   <div class="preview-view content-preview max-h-96 overflow-auto">${renderMarkdownPreview(materialOutput)}</div>
                   <div class="raw-view hidden">
@@ -1278,8 +1278,8 @@
                 await navigator.clipboard.writeText(materialOutput);
                 const btn = modulesContainer.querySelector('.copy-material-hist-btn');
                 if (btn) {
-                  btn.innerHTML = '<i class="iconoir-check"></i> Copiado';
-                  setTimeout(() => btn.innerHTML = '<i class="iconoir-copy"></i> Copiar', 2000);
+                  btn.innerHTML = '<i class="iconoir-check"></i> Copied';
+                  setTimeout(() => btn.innerHTML = '<i class="iconoir-copy"></i> Copy', 2000);
                 }
               } catch (err) { console.error(err); }
             });
@@ -1288,22 +1288,22 @@
               const btn = modulesContainer.querySelector('.download-material-hist-btn');
               if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exportando...';
+                btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exporting...';
               }
               
               const typeNames = {
                 'course_material_flashcards': 'Flashcards',
                 'course_material_quiz': 'Tests',
-                'course_material_final_exam': 'Examen Final',
+                'course_material_final_exam': 'Final Exam',
                 'course_material_podcast': 'Podcast'
               };
-              const title = `${outputData?.course_title || 'Curso'} - ${typeNames[contentType] || 'Material'}`;
+              const title = `${outputData?.course_title || 'Course'} - ${typeNames[contentType] || 'Material'}`;
               
               await exportToWord('material', materialOutput, title);
               
               if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="iconoir-download"></i> Descargar';
+                btn.innerHTML = '<i class="iconoir-download"></i> Download';
               }
             });
             
@@ -1349,7 +1349,7 @@
             execution_id: id
           });
         } 
-        // Fase 1: Índice editable
+        // Fase 1: Outline editable
         else if (outputData?.outline) {
           currentOutline = outputData.outline;
           currentExecutionId = id;
@@ -1367,7 +1367,7 @@
   }
 
   async function deleteHistoryItem(id) {
-    if (!confirm('¿Eliminar este curso del historial?')) return;
+    if (!confirm('Delete this course from history?')) return;
     
     try {
       const response = await fetch('/api/gestures/delete.php', {

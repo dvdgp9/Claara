@@ -159,7 +159,7 @@
       panel.innerHTML = `
         <div class="hover-panel-empty">
           <i class="iconoir-warning-triangle"></i>
-          <p class="hover-panel-empty-text">Error al cargar</p>
+          <p class="hover-panel-empty-text">Could not load</p>
         </div>
       `;
     }
@@ -178,13 +178,13 @@
     cache.conversations = data.items;
     cache.lastFetch.conversations = Date.now();
 
-    const items = data.items.slice(0, 6); // Últimas 6
+    const items = data.items.slice(0, 6);
 
     if (items.length === 0) {
       panel.innerHTML = `
         <div class="hover-panel-empty">
           <i class="iconoir-chat-bubble"></i>
-          <p class="hover-panel-empty-text">Sin conversaciones aún</p>
+          <p class="hover-panel-empty-text">No conversations yet</p>
         </div>
       `;
       return;
@@ -196,7 +196,7 @@
           <i class="iconoir-chat-bubble"></i>
         </div>
         <div class="hover-panel-item-info">
-          <div class="hover-panel-item-title">${escapeHtml(conv.title || 'Conversación sin título')}</div>
+          <div class="hover-panel-item-title">${escapeHtml(conv.title || 'Untitled conversation')}</div>
           <div class="hover-panel-item-meta">${formatTimeAgo(conv.updated_at || conv.created_at)}</div>
         </div>
       </a>
@@ -204,10 +204,8 @@
   }
 
   async function loadVoices(panel) {
-    // Por ahora las voces son estáticas, pero preparado para API
     const voices = [
-      { id: 'lex', name: 'Lex', description: 'Abogado experto', icon: 'iconoir-book-stack', href: '/voices/lex.php' }
-      // Añadir más voces aquí cuando estén disponibles
+      { id: 'lex', name: 'Lex', description: 'Legal assistant', icon: 'iconoir-book-stack', href: '/voices/lex.php' }
     ];
 
     cache.voices = voices;
@@ -217,7 +215,7 @@
       panel.innerHTML = `
         <div class="hover-panel-empty">
           <i class="iconoir-voice-square"></i>
-          <p class="hover-panel-empty-text">No hay voces disponibles</p>
+          <p class="hover-panel-empty-text">No voices available</p>
         </div>
       `;
       return;
@@ -272,14 +270,14 @@
         submenu.innerHTML = `
           <div class="hover-panel-empty" style="padding: 16px;">
             <i class="iconoir-clock"></i>
-            <p class="hover-panel-empty-text">Sin historial aún</p>
+          <p class="hover-panel-empty-text">No history yet</p>
           </div>
         `;
         return;
       }
 
       submenu.innerHTML = items.map(item => {
-        const title = item.title || 'Sin título';
+        const title = item.title || 'Untitled';
         const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
         return `
           <a href="${getGestureUrl(gestureType)}?id=${item.id}" class="hover-submenu-item">
@@ -294,7 +292,7 @@
       submenu.innerHTML = `
         <div class="hover-panel-empty" style="padding: 16px;">
           <i class="iconoir-warning-triangle"></i>
-          <p class="hover-panel-empty-text">Error al cargar</p>
+          <p class="hover-panel-empty-text">Could not load</p>
         </div>
       `;
     }

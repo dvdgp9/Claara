@@ -2,9 +2,9 @@
 /**
  * DELETE /api/admin/context/delete.php?id=X
  * 
- * Elimina un documento de contexto.
- * Para documentos de Lex, también elimina los vectores de Qdrant.
- * Requiere superadmin.
+ * Deletes a context document.
+ * For Lex documents, also deletes vectors from Qdrant.
+ * Requires superadmin.
  */
 require_once __DIR__ . '/../../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../../src/Auth/AdminGuard.php';
@@ -20,7 +20,7 @@ use Repos\ContextDocsRepo;
 use Rag\QdrantClient;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
-    Response::error('method_not_allowed', 'Sólo DELETE', 405);
+    Response::error('method_not_allowed', 'DELETE only', 405);
 }
 
 AdminGuard::requireSuperadmin();
@@ -28,19 +28,19 @@ Session::requireCsrf();
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
-    Response::error('invalid_id', 'ID de documento inválido', 400);
+    Response::error('invalid_id', 'Invalid document ID', 400);
 }
 
 $repo = new ContextDocsRepo();
 $doc = $repo->getById($id);
 
 if (!$doc) {
-    Response::error('not_found', 'Documento no encontrado', 404);
+    Response::error('not_found', 'Document not found', 404);
 }
 
 $errors = [];
 
-// 1. Si es Lex con RAG procesado, eliminar vectores de Qdrant
+// 1. If Lex has processed index data, remove vectors from Qdrant
 if ($doc['target'] === 'lex' && $doc['rag_status'] === 'processed' && $doc['rag_chunk_count'] > 0) {
     try {
         $qdrant = new QdrantClient(
@@ -51,15 +51,15 @@ if ($doc['target'] === 'lex' && $doc['rag_status'] === 'processed' && $doc['rag_
         $documentId = pathinfo($doc['filename'], PATHINFO_FILENAME);
         
         // Eliminar puntos por document_id
-        if ($qdrant->collectionExists('lex_convenios')) {
-            $qdrant->deletePointsByFilter('lex_convenios', [
+        if ($qdrant->collectionExists('lex_knowledge_base')) {
+            $qdrant->deletePointsByFilter('lex_knowledge_base', [
                 'must' => [
                     ['key' => 'document_id', 'match' => ['value' => $documentId]]
                 ]
             ]);
         }
     } catch (\Exception $e) {
-        $errors[] = 'Error al eliminar vectores de Qdrant: ' . $e->getMessage();
+        $errors[] = 'Error deleting vectors from Qdrant: ' . $e->getMessage();
     }
 }
 
@@ -69,17 +69,17 @@ $filePath = $targetPath . '/' . $doc['filename'];
 
 if (file_exists($filePath)) {
     if (!unlink($filePath)) {
-        $errors[] = 'Error al eliminar el archivo físico';
+        $errors[] = 'Error deleting physical file';
     }
 }
 
 // 3. Eliminar registro de BD
 if (!$repo->delete($id)) {
-    Response::error('db_error', 'Error al eliminar el registro de la base de datos', 500);
+    Response::error('db_error', 'Error deleting database record', 500);
 }
 
 Response::json([
     'success' => true,
-    'message' => 'Documento eliminado correctamente',
+    'message' => 'Document deleted successfully',
     'warnings' => !empty($errors) ? $errors : null
 ]);

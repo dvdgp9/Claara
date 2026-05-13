@@ -1,9 +1,9 @@
 /**
- * Service Worker para Ebonia PWA
- * Estrategia: Network-first con caché mínimo solo para instalabilidad
+ * Service Worker for iaiaPRO PWA
+ * Strategy: network-first with a minimal cache for installability
  */
 
-const CACHE_VERSION = 'ebonia-v1';
+const CACHE_VERSION = 'iaiapro-v1';
 const MINIMAL_CACHE = [
   '/',
   '/manifest.json',

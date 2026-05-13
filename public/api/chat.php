@@ -27,7 +27,7 @@ use Repos\UserFeatureAccessRepo;
 use Utils\SpreadsheetReader;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 // Requiere sesión y CSRF

@@ -47,15 +47,15 @@ CREATE TABLE IF NOT EXISTS available_features (
 -- Seed de features disponibles
 INSERT INTO available_features (feature_type, feature_slug, name, description, icon, sort_order) VALUES
 -- Gestos
-('gesture', 'write-article', 'Escribir artículo', 'Genera artículos, blogs y notas de prensa', 'iconoir-page-edit', 1),
-('gesture', 'social-media', 'Redes sociales', 'Crea publicaciones para redes sociales', 'iconoir-send-diagonal', 2),
-('gesture', 'podcast-from-article', 'Podcast desde artículo', 'Convierte artículos en podcasts con IA', 'iconoir-podcast', 3),
+('gesture', 'write-article', 'Write article', 'Generate articles, blogs, and press notes', 'iconoir-page-edit', 1),
+('gesture', 'social-media', 'Social media', 'Create posts for social channels', 'iconoir-send-diagonal', 2),
+('gesture', 'podcast-from-article', 'Podcast from article', 'Turn articles into AI-generated podcasts', 'iconoir-podcast', 3),
 
 -- Voces
-('voice', 'lex', 'Lex', 'Asistente legal de Ebone', 'iconoir-balance', 1),
+('voice', 'lex', 'Lex', 'Legal assistant', 'iconoir-balance', 1),
 
 -- Features globales
-('feature', 'image-generation', 'Generación de imágenes', 'Crear imágenes con nanobanana 🍌', 'iconoir-media-image', 1);
+('feature', 'image-generation', 'Image generation', 'Create images with Nanobanana', 'iconoir-media-image', 1);
 
 -- Por defecto, dar acceso a todas las features al superadmin (user_id=1)
 INSERT INTO user_feature_access (user_id, feature_type, feature_slug, enabled)

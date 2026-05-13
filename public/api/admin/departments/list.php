@@ -8,7 +8,7 @@ use Auth\AdminGuard;
 use Repos\DepartmentsRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    Response::error('method_not_allowed', 'Sólo GET', 405);
+    Response::error('method_not_allowed', 'GET only', 405);
 }
 
 AdminGuard::requireSuperadmin();

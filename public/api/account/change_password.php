@@ -9,7 +9,7 @@ use Auth\AuthService;
 use Repos\UsersRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'Sólo POST', 405);
+    Response::error('method_not_allowed', 'POST only', 405);
 }
 
 Session::requireCsrf();
@@ -21,22 +21,22 @@ $newPassword = (string)($input['new_password'] ?? '');
 $confirmPassword = (string)($input['confirm_password'] ?? '');
 
 if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') {
-    Response::error('validation_error', 'Todos los campos son obligatorios', 400);
+    Response::error('validation_error', 'All fields are required', 400);
 }
 
 if ($newPassword !== $confirmPassword) {
-    Response::error('validation_error', 'Las contraseñas no coinciden', 400);
+    Response::error('validation_error', 'Passwords do not match', 400);
 }
 
 if (strlen($newPassword) < 8) {
-    Response::error('validation_error', 'La contraseña debe tener al menos 8 caracteres', 400);
+    Response::error('validation_error', 'Password must be at least 8 characters', 400);
 }
 
 // Verificar contraseña actual
 $repo = new UsersRepo();
 $dbUser = $repo->findByEmail($user['email']);
 if (!$dbUser || !password_verify($currentPassword, $dbUser['password_hash'])) {
-    Response::error('validation_error', 'Contraseña actual incorrecta', 400);
+    Response::error('validation_error', 'Current password is incorrect', 400);
 }
 
 // Actualizar contraseña

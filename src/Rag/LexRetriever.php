@@ -2,8 +2,7 @@
 namespace Rag;
 
 /**
- * Retriever especializado para la voz Lex
- * Busca chunks relevantes de convenios laborales
+ * Specialized retriever for the Lex voice.
  */
 class LexRetriever
 {
@@ -14,7 +13,7 @@ class LexRetriever
     public function __construct(
         QdrantClient $qdrant,
         EmbeddingService $embeddings,
-        string $collection = 'lex_convenios'
+        string $collection = 'lex_knowledge_base'
     ) {
         $this->qdrant = $qdrant;
         $this->embeddings = $embeddings;
@@ -69,11 +68,11 @@ class LexRetriever
     public function formatForPrompt(array $chunks): string
     {
         if (empty($chunks)) {
-            return "No se encontró información relevante en los convenios.";
+            return "No relevant information was found in the knowledge base.";
         }
 
-        $formatted = "## Fragmentos relevantes de los convenios\n\n";
-        $formatted .= "A continuación tienes los fragmentos más relevantes para responder la consulta. Cita la fuente cuando uses esta información.\n\n";
+        $formatted = "## Relevant knowledge base excerpts\n\n";
+        $formatted .= "Use the following excerpts to answer the request. Cite the source when you rely on this information.\n\n";
 
         foreach ($chunks as $i => $chunk) {
             $num = $i + 1;
