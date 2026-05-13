@@ -44,6 +44,11 @@ require_once dirname(__DIR__) . '/Sop/AudioTranscriber.php';
 require_once dirname(__DIR__) . '/Sop/ImageDescriber.php';
 require_once dirname(__DIR__) . '/Sop/SopGenerator.php';
 
+// Lead Finder
+require_once dirname(__DIR__) . '/LeadFinder/LeadSearchProvider.php';
+require_once dirname(__DIR__) . '/LeadFinder/MockLeadSearchProvider.php';
+require_once dirname(__DIR__) . '/LeadFinder/LeadFinderRepo.php';
+
 // Utils
 require_once dirname(__DIR__) . '/Utils/DocumentGenerator.php';
 

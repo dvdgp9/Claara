@@ -17,6 +17,8 @@ use Audio\ContentExtractor;
 use Audio\PodcastScriptGenerator;
 use Audio\GeminiTtsClient;
 use Gestures\GestureExecutionsRepo;
+use LeadFinder\LeadFinderRepo;
+use LeadFinder\MockLeadSearchProvider;
 use Repos\UsageLogRepo;
 use Sop\AudioTranscriber;
 
@@ -118,6 +120,9 @@ try {
             break;
         case 'audio-transcribe':
             $outputData = processAudioTranscribeJob($jobId, $inputData, $userId, $repo);
+            break;
+        case 'lead-finder':
+            $outputData = processLeadFinderJob($jobId, $inputData, $userId, $repo);
             break;
             
         default:
@@ -458,4 +463,81 @@ function processAudioTranscribeJob(int $jobId, array $inputData, int $userId, Ba
             'segment_seconds' => (int)($result['metadata']['segment_seconds'] ?? 0),
         ],
     ];
+}
+
+/**
+ * Process Lead Finder job.
+ */
+function processLeadFinderJob(int $jobId, array $inputData, int $userId, BackgroundJobsRepo $repo): array
+{
+    $runId = (int)($inputData['run_id'] ?? 0);
+    $query = trim((string)($inputData['query'] ?? ''));
+    $maxResults = (int)($inputData['max_results'] ?? 25);
+
+    if ($runId <= 0) {
+        throw new \Exception('Missing Lead Finder run id');
+    }
+    if ($query === '') {
+        throw new \Exception('Missing Lead Finder query');
+    }
+
+    $maxResults = max(1, min($maxResults, 100));
+    $leadRepo = new LeadFinderRepo();
+
+    try {
+        $run = $leadRepo->findRunForUser($runId, $userId);
+        if (!$run) {
+            throw new \Exception('Lead Finder run not found');
+        }
+
+        $leadRepo->markRunProcessing($runId);
+        $repo->updateProcessingSnapshot($jobId, 'Preparing search...', [
+            'is_partial' => true,
+            'phase' => 'preparing',
+            'run_id' => $runId,
+            'query' => $query,
+        ]);
+
+        $provider = new MockLeadSearchProvider();
+        $repo->updateProcessingSnapshot($jobId, 'Collecting sources...', [
+            'is_partial' => true,
+            'phase' => 'collecting',
+            'run_id' => $runId,
+            'provider' => $provider->providerKey(),
+        ]);
+
+        $results = $provider->search($query, $maxResults);
+
+        $repo->updateProcessingSnapshot($jobId, 'Normalizing results...', [
+            'is_partial' => true,
+            'phase' => 'normalizing',
+            'run_id' => $runId,
+            'found_count' => count($results),
+        ]);
+
+        $savedCount = $leadRepo->replaceResults($runId, $results);
+
+        $repo->updateProcessingSnapshot($jobId, 'Saving leads...', [
+            'is_partial' => true,
+            'phase' => 'saving',
+            'run_id' => $runId,
+            'found_count' => count($results),
+            'saved_count' => $savedCount,
+        ]);
+
+        $leadRepo->markRunCompleted($runId);
+
+        $usageLog = new UsageLogRepo();
+        $usageLog->log($userId, 'gesture', 1, ['gesture_type' => 'lead-finder']);
+
+        return [
+            'run_id' => $runId,
+            'query' => $query,
+            'provider' => $provider->providerKey(),
+            'results_count' => $savedCount,
+        ];
+    } catch (\Exception $e) {
+        $leadRepo->markRunFailed($runId, $e->getMessage());
+        throw $e;
+    }
 }

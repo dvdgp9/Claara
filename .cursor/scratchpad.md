@@ -1076,8 +1076,8 @@ Provider contract propuesto:
 
 - [x] Task 1: Inspect existing gesture patterns.
 - [x] Task 2: Database migration for Lead Finder.
-- [ ] Task 3: Backend repos and provider interface.
-- [ ] Task 4: Async job integration.
+- [x] Task 3: Backend repos and provider interface.
+- [x] Task 4: Async job integration.
 - [ ] Task 5: API endpoints.
 - [ ] Task 6: Main gesture UI.
 - [ ] Task 7: Register gesture in navigation.
@@ -1111,6 +1111,20 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - 2026-05-14 fix: `users.id` es `BIGINT UNSIGNED`, por lo que `lead_finder_runs.user_id`, `lead_finder_runs.id` y `lead_finder_results.run_id` deben usar tipos compatibles. Corregida la migración tras error MySQL errno 150 en producción.
 - 2026-05-14 fix 2: eliminada la FK opcional de `lead_finder_runs.job_id` contra `background_jobs.id`. El vínculo no es crítico y evita fallos por tipos históricos inconsistentes en `background_jobs`; `job_id` queda indexado.
 
+2026-05-14 Task 3 findings:
+- Añadido `src/LeadFinder/LeadSearchProvider.php` como contrato de provider.
+- Añadido `src/LeadFinder/MockLeadSearchProvider.php` con resultados deterministas, campos normalizados y deduplicación básica por web/email/name.
+- Añadido `src/LeadFinder/LeadFinderRepo.php` para crear runs, asociar job, marcar estado, guardar/reemplazar resultados, listar historial, editar filas y refrescar contadores.
+- Registrados los nuevos archivos en `src/App/bootstrap.php`.
+- Validado con `php -l` en los nuevos archivos y prueba PHP del provider mock con query `schools and high schools in Castellón`.
+
+2026-05-14 Task 4 findings:
+- Añadido job type `lead-finder` en `public/api/jobs/process.php`.
+- Añadida función `processLeadFinderJob()` que lee `run_id`, `query`, `max_results`, marca el run como processing, usa `MockLeadSearchProvider`, guarda resultados en `lead_finder_results`, marca run completed y registra usage log.
+- El worker emite snapshots: `Preparing search...`, `Collecting sources...`, `Normalizing results...`, `Saving leads...`.
+- Si falla el procesamiento, el job queda failed por el catch global y el run queda `failed` mediante `LeadFinderRepo::markRunFailed()`.
+- Validado con `php -l public/api/jobs/process.php`.
+
 ---
 
 # Current Status / Progress Tracking
@@ -1129,6 +1143,8 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - 2026-05-13 (Planner): Planificado nuevo gesture `Lead Finder` con UX premium, provider desacoplado, historial, validación de resultados y export. La integración real de API queda pendiente de elegir proveedor y revisar documentación actualizada.
 - 2026-05-13 (Executor): Lead Finder Task 1 completada. Inspeccionados patrones de gestures, historial, jobs, permisos y registro en catálogo. Próximo paso: migración de BD para `lead_finder_runs` y `lead_finder_results`.
 - 2026-05-13 (Executor): Lead Finder Task 2 completada. Creada migración `016_lead_finder.sql` para runs/results y registro del feature. Pendiente de ejecutar cuando el usuario lo valide.
+- 2026-05-14 (Executor): Lead Finder Task 3 completada. Añadidos repo backend, contrato de provider y provider mock; sintaxis validada y provider probado.
+- 2026-05-14 (Executor): Lead Finder Task 4 completada. Integrado job type `lead-finder` en el worker con progreso, provider mock y persistencia de resultados.
 
 # Executor's Feedback or Assistance Requests
 
@@ -1140,6 +1156,8 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - Solicitud al planner/usuario: confirmar si este MVP por prompts es suficiente o si quieres que en el siguiente paso lo convierta a modal completo con edición inline/reordenación.
 - Lead Finder: Task 1 completada. Solicitud al usuario/planner: validar que avancemos a Task 2, que crea migración de base de datos para runs/results. No se ha tocado todavía la BD ni código funcional.
 - Lead Finder: Task 2 completada. Solicitud al usuario/planner: validar migración antes de ejecutarla; siguiente paso de implementación sería Task 3, repositorio backend + provider mock.
+- Lead Finder: Task 3 completada. Siguiente paso sugerido: Task 4, integrar job type `lead-finder` en `public/api/jobs/process.php`.
+- Lead Finder: Task 4 completada. Siguiente paso sugerido: Task 5, crear endpoints `search/get/history/update-result/export/delete`.
 
 # Lessons
 
