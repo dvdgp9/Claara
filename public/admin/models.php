@@ -18,14 +18,14 @@ if (empty($user['is_superadmin'])) {
 
 $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = '';
-$pageTitle = 'Modelos disponibles';
-$headerTitle = 'Modelos disponibles';
+$pageTitle = 'Available Models';
+$headerTitle = 'Available Models';
 $headerSubtitle = 'Catalog visible in the chat selector';
 $headerIcon = 'iconoir-settings';
 $headerBackUrl = '/';
 $headerBackText = 'Chat';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-slate-50 text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
@@ -39,8 +39,8 @@ $headerBackText = 'Chat';
           <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mt-4 lg:mt-6 mb-6">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-cyan-700 mb-2">Superadmin</p>
-              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Modelos disponibles</h1>
-              <p class="text-slate-600 text-sm lg:text-base mt-1">Activa, ordena y edita los modelos que aparecen en el selector del chat.</p>
+              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Available Models</h1>
+              <p class="text-slate-600 text-sm lg:text-base mt-1">Enable, reorder, and edit the models shown in the chat selector.</p>
             </div>
             <button id="new-model-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
               <i class="iconoir-plus-circle"></i>
@@ -55,7 +55,7 @@ $headerBackText = 'Chat';
                   <h2 class="font-semibold text-slate-800">Catalog</h2>
                   <p id="models-count" class="text-xs text-slate-500 mt-0.5">Loading models...</p>
                 </div>
-                <button id="refresh-models-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" title="Actualizar">
+                <button id="refresh-models-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" title="Refresh">
                   <i class="iconoir-refresh"></i>
                 </button>
               </div>
@@ -74,11 +74,11 @@ $headerBackText = 'Chat';
                 <table class="w-full min-w-[780px]">
                   <thead class="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Modelo</th>
-                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Clave OpenRouter</th>
-                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Orden</th>
-                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
-                      <th class="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Model</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">OpenRouter Key</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Order</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                      <th class="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="models-list" class="divide-y divide-slate-200"></tbody>
@@ -93,7 +93,7 @@ $headerBackText = 'Chat';
               <h2 class="font-semibold text-slate-800 mb-2">How it works</h2>
               <p class="text-sm text-slate-600 leading-relaxed">Active models appear in the chat selector for superadmins, ordered by the Order field.</p>
               <div class="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3">
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Ejemplo de clave</p>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Example Key</p>
                 <code class="text-xs text-slate-700 break-all">google/gemini-3-flash-preview</code>
               </div>
             </aside>
@@ -119,12 +119,12 @@ $headerBackText = 'Chat';
           <input type="text" id="model-label" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="Gemini 3 Flash" required>
         </div>
         <div>
-          <label class="text-sm font-medium text-slate-700 block mb-2">Clave del modelo *</label>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Model key *</label>
           <input type="text" id="model-key" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors font-mono text-sm" placeholder="provider/model" required>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-medium text-slate-700 block mb-2">Orden</label>
+            <label class="text-sm font-medium text-slate-700 block mb-2">Order</label>
             <input type="number" id="model-sort" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" value="10">
           </div>
           <label class="flex items-center gap-3 mt-0 sm:mt-8">
@@ -143,7 +143,7 @@ $headerBackText = 'Chat';
 
   <div id="save-toast" class="hidden fixed bottom-6 right-6 bg-slate-800 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 z-[100]">
     <i class="iconoir-check text-lg"></i>
-    <span class="text-sm font-medium">Guardado</span>
+    <span class="text-sm font-medium">Saved</span>
   </div>
 
   <script>
@@ -183,7 +183,7 @@ $headerBackText = 'Chat';
       const count = document.getElementById('models-count');
 
       loading.classList.add('hidden');
-      count.textContent = `${models.length} modelo${models.length === 1 ? '' : 's'} configurado${models.length === 1 ? '' : 's'}`;
+      count.textContent = `${models.length} model${models.length === 1 ? '' : 's'} configured`;
 
       if (models.length === 0) {
         empty.classList.remove('hidden');
@@ -347,7 +347,7 @@ $headerBackText = 'Chat';
 
       loadModels().catch(error => {
         document.getElementById('models-loading').classList.add('hidden');
-        showToast(error.message || 'No se pudieron cargar los modelos.', true);
+        showToast(error.message || 'Could not load models.', true);
       });
     });
   </script>
