@@ -70,12 +70,29 @@ class AudioTranscriber
             return ['success' => false, 'error' => 'Audio file exceeds 50MB limit'];
         }
 
+        $this->notifyProgress($onProgress, [
+            'phase' => 'probing',
+            'segments_done' => 0,
+            'segments_total' => 0,
+            'segmented' => false,
+            'segment_seconds' => $this->segmentSeconds,
+            'partial_text' => '',
+        ]);
+
         $durationSeconds = $this->probeDurationSeconds($filePath);
         $segments = [];
         $segmentTmpDir = null;
 
         if ($durationSeconds !== null && $durationSeconds >= $this->segmentThresholdSeconds) {
             $segmentTmpDir = dirname(__DIR__, 2) . '/storage/transcribe-segments/' . bin2hex(random_bytes(8));
+            $this->notifyProgress($onProgress, [
+                'phase' => 'segmenting',
+                'segments_done' => 0,
+                'segments_total' => max(1, (int)ceil($durationSeconds / $this->segmentSeconds)),
+                'segmented' => true,
+                'segment_seconds' => $this->segmentSeconds,
+                'partial_text' => '',
+            ]);
             $segments = $this->buildSegments($filePath, $segmentTmpDir);
             if (!$segments['success']) {
                 return $segments;
@@ -94,6 +111,16 @@ class AudioTranscriber
         $segmentsTotal = count($segments);
 
         foreach ($segments as $idx => $segment) {
+            $this->notifyProgress($onProgress, [
+                'segments_done' => $idx,
+                'segments_total' => $segmentsTotal,
+                'segmented' => $segmentsTotal > 1,
+                'segment_seconds' => $this->segmentSeconds,
+                'current_segment' => $idx + 1,
+                'phase' => 'transcribing',
+                'partial_text' => implode("\n\n", $outputParts),
+            ]);
+
             $textResult = $this->transcribeBytes(file_get_contents($segment['path']) ?: '', $segment['mime'], $segment['filename']);
 
             if (!$textResult['success']) {
@@ -108,17 +135,15 @@ class AudioTranscriber
                 $outputParts[] = $segmentText;
             }
 
-            if ($onProgress) {
-                $onProgress([
-                    'segments_done' => $idx + 1,
-                    'segments_total' => $segmentsTotal,
-                    'segmented' => $segmentsTotal > 1,
-                    'segment_seconds' => $this->segmentSeconds,
-                    'current_segment' => $idx + 1,
-                    'phase' => 'transcribing',
-                    'partial_text' => implode("\n\n", $outputParts),
-                ]);
-            }
+            $this->notifyProgress($onProgress, [
+                'segments_done' => $idx + 1,
+                'segments_total' => $segmentsTotal,
+                'segmented' => $segmentsTotal > 1,
+                'segment_seconds' => $this->segmentSeconds,
+                'current_segment' => $idx + 1,
+                'phase' => 'transcribing',
+                'partial_text' => implode("\n\n", $outputParts),
+            ]);
         }
 
         if ($segmentTmpDir) {
@@ -143,6 +168,14 @@ class AudioTranscriber
                 'segment_seconds' => $this->segmentSeconds,
             ],
         ];
+    }
+
+    private function notifyProgress(?callable $onProgress, array $progress): void
+    {
+        if (!$onProgress) {
+            return;
+        }
+        $onProgress($progress);
     }
 
     private function transcribeBytes(string $audioBytes, string $mimeType, string $filename): array

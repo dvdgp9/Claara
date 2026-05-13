@@ -45,7 +45,8 @@ if (!$isCliOrCron) {
     session_write_close();
 }
 
-// Configurar tiempo máximo de ejecución (default 75 min).
+// Configure max execution time. Long audio transcription can legitimately run
+// for a long time, so the stuck-job window must be longer than this runtime.
 $maxRuntime = (int)(Env::get('BACKGROUND_JOB_MAX_SECONDS') ?? 4500);
 if ($maxRuntime < 300) {
     $maxRuntime = 300;
@@ -60,7 +61,7 @@ if (!$isCliOrCron && isset($_SERVER['HTTP_HOST'])) {
     header('Content-Type: application/json');
     header('Connection: close');
     
-    $response = json_encode(['success' => true, 'processing' => true, 'message' => 'Procesando en background']);
+    $response = json_encode(['success' => true, 'processing' => true, 'message' => 'Processing in background']);
     header('Content-Length: ' . strlen($response));
     
     echo $response;
@@ -76,8 +77,11 @@ if (!$isCliOrCron && isset($_SERVER['HTTP_HOST'])) {
 
 $repo = new BackgroundJobsRepo();
 
-// Primero, resetear jobs "colgados" (más de 15 minutos en processing)
-$stuckReset = $repo->resetStuckJobs(15);
+// Reset only jobs that have clearly exceeded the configured worker runtime.
+// A fixed 15-minute reset can restart valid long audio jobs while they are
+// still processing.
+$stuckWindowMinutes = max(30, (int)ceil($maxRuntime / 60) + 10);
+$stuckReset = $repo->resetStuckJobs($stuckWindowMinutes);
 
 // Obtener siguiente job pendiente
 $job = $repo->getNextPending();
@@ -85,10 +89,10 @@ $job = $repo->getNextPending();
 if (!$job) {
     // No hay jobs pendientes
     if ($isCliOrCron) {
-        echo "No hay jobs pendientes\n";
+        echo "No pending jobs\n";
         exit(0);
     }
-    echo json_encode(['success' => true, 'processed' => false, 'message' => 'No hay jobs pendientes']);
+    echo json_encode(['success' => true, 'processed' => false, 'message' => 'No pending jobs']);
     exit;
 }
 
@@ -104,7 +108,7 @@ if ($isCliOrCron) {
 
 try {
     // Marcar como processing
-    $repo->markProcessing($jobId, 'Iniciando procesamiento...');
+    $repo->markProcessing($jobId, 'Starting processing...');
     
     $outputData = [];
     
@@ -361,16 +365,26 @@ function processAudioTranscribeJob(int $jobId, array $inputData, int $userId, Ba
         function (array $progress) use ($repo, $jobId) {
             $done = (int)($progress['segments_done'] ?? 0);
             $total = (int)($progress['segments_total'] ?? 0);
+            $phase = (string)($progress['phase'] ?? 'transcribing');
+            $current = (int)($progress['current_segment'] ?? 0);
             $partialText = (string)($progress['partial_text'] ?? '');
-            $progressText = $total > 0
-                ? "Transcribing segment {$done}/{$total}..."
-                : 'Transcribing audio...';
+            if ($phase === 'probing') {
+                $progressText = 'Analyzing audio duration...';
+            } elseif ($phase === 'segmenting') {
+                $progressText = 'Preparing audio segments...';
+            } elseif ($total > 1) {
+                $segmentLabel = max(1, $current ?: min($done + 1, $total));
+                $progressText = "Transcribing segment {$segmentLabel}/{$total}...";
+            } else {
+                $progressText = 'Transcribing audio...';
+            }
 
             $repo->updateProcessingSnapshot($jobId, $progressText, [
                 'is_partial' => true,
-                'phase' => (string)($progress['phase'] ?? 'transcribing'),
+                'phase' => $phase,
                 'segments_done' => $done,
                 'segments_total' => $total,
+                'current_segment' => $current,
                 'segment_seconds' => (int)($progress['segment_seconds'] ?? 0),
                 'segmented' => (bool)($progress['segmented'] ?? false),
                 'partial_transcription' => $partialText,

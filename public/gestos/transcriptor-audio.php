@@ -289,6 +289,7 @@ $headerDrawerId = 'transcriber-history-drawer';
     let currentJobId = null;
     let statusPollTimer = null;
     let wakeWorkerTimer = null;
+    let workerTriggerInFlight = false;
     
     // ===== FILE HANDLING =====
     
@@ -420,6 +421,8 @@ $headerDrawerId = 'transcriber-history-drawer';
     }
 
     async function triggerWorker() {
+      if (workerTriggerInFlight) return;
+      workerTriggerInFlight = true;
       try {
         await fetch('/api/jobs/process.php', {
           method: 'POST',
@@ -427,6 +430,8 @@ $headerDrawerId = 'transcriber-history-drawer';
         });
       } catch (err) {
         console.warn('Could not trigger worker:', err);
+      } finally {
+        workerTriggerInFlight = false;
       }
     }
 
@@ -446,16 +451,12 @@ $headerDrawerId = 'transcriber-history-drawer';
       sessionStorage.setItem('audio_transcriber_job_id', String(jobId));
       setLoadingState('Queued transcription job...', 'Processing starts in background.');
 
-      triggerWorker();
       clearJobTimers();
+      triggerWorker();
 
       statusPollTimer = setInterval(() => {
         pollJobStatus(jobId);
       }, 4000);
-
-      wakeWorkerTimer = setInterval(() => {
-        triggerWorker();
-      }, 30000);
 
       pollJobStatus(jobId);
     }
@@ -469,6 +470,12 @@ $headerDrawerId = 'transcriber-history-drawer';
         if (!data.success || !data.job) return;
 
         const job = data.job;
+        if (job.status === 'pending') {
+          setLoadingState('Queued transcription job...', 'Waiting for the background worker.');
+          triggerWorker();
+          return;
+        }
+
         if (job.progress_text) {
           setLoadingState(job.progress_text, 'You can keep this page open while processing.');
         }
