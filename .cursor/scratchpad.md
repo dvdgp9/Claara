@@ -1109,6 +1109,7 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - Da acceso inicial a superadmins existentes mediante `user_feature_access`.
 - No se ha ejecutado la migración todavía en local ni producción.
 - 2026-05-14 fix: `users.id` es `BIGINT UNSIGNED`, por lo que `lead_finder_runs.user_id`, `lead_finder_runs.id` y `lead_finder_results.run_id` deben usar tipos compatibles. Corregida la migración tras error MySQL errno 150 en producción.
+- 2026-05-14 fix 2: eliminada la FK opcional de `lead_finder_runs.job_id` contra `background_jobs.id`. El vínculo no es crítico y evita fallos por tipos históricos inconsistentes en `background_jobs`; `job_id` queda indexado.
 
 ---
 
@@ -1147,3 +1148,4 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - Los comandos externos (`ffprobe`, `ffmpeg`) deben ejecutarse con timeout explícito. `exec()` sin timeout puede dejar un job indefinidamente en la misma fase si un contenedor de audio bloquea el análisis.
 - `.gitignore` ignoraba `migrations/`, lo que también ocultaba SQL nuevos bajo `docs/migrations/`. Para nuevas migraciones versionadas, mantener la excepción `!docs/migrations/` y `!docs/migrations/*.sql`; si no, `git add .` no las sube.
 - En migraciones con foreign keys, confirmar que los tipos coinciden exactamente con la tabla referenciada. `users.id` usa `BIGINT UNSIGNED`; usar `INT` en tablas nuevas provoca MySQL errno 150.
+- Evitar foreign keys no esenciales contra tablas antiguas con historial de tipos inconsistente. Para `lead_finder_runs.job_id`, basta índice normal y validación en aplicación.

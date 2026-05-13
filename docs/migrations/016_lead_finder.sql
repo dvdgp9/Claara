@@ -21,8 +21,6 @@ CREATE TABLE IF NOT EXISTS lead_finder_runs (
 
   CONSTRAINT fk_lead_finder_runs_user
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  CONSTRAINT fk_lead_finder_runs_job
-    FOREIGN KEY (job_id) REFERENCES background_jobs(id) ON DELETE SET NULL,
 
   INDEX idx_lead_finder_runs_user_created (user_id, created_at),
   INDEX idx_lead_finder_runs_status (status),
