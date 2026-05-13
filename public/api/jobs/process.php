@@ -18,6 +18,7 @@ use Audio\PodcastScriptGenerator;
 use Audio\GeminiTtsClient;
 use Gestures\GestureExecutionsRepo;
 use Repos\UsageLogRepo;
+use Sop\AudioTranscriber;
 
 // Permitir llamadas desde cron (sin sesión) o desde frontend (con sesión)
 // Para cron, verificar token secreto; para frontend, verificar sesión
@@ -44,8 +45,12 @@ if (!$isCliOrCron) {
     session_write_close();
 }
 
-// Configurar tiempo máximo de ejecución (15 minutos para podcasts largos por segmentos)
-set_time_limit(900);
+// Configurar tiempo máximo de ejecución (default 75 min).
+$maxRuntime = (int)(Env::get('BACKGROUND_JOB_MAX_SECONDS') ?? 4500);
+if ($maxRuntime < 300) {
+    $maxRuntime = 300;
+}
+set_time_limit($maxRuntime);
 
 // Enviar respuesta inmediata al frontend para no bloquear
 if (!$isCliOrCron && isset($_SERVER['HTTP_HOST'])) {
@@ -106,6 +111,9 @@ try {
     switch ($jobType) {
         case 'podcast':
             $outputData = processPodcastJob($jobId, $inputData, $userId, $repo);
+            break;
+        case 'audio-transcribe':
+            $outputData = processAudioTranscribeJob($jobId, $inputData, $userId, $repo);
             break;
             
         default:
@@ -322,5 +330,118 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
         'tts_model' => $ttsClient->getModel(),
         'tts_segments' => $audioResult['segments'] ?? $totalSegments,
         'source' => $source
+    ];
+}
+
+/**
+ * Process audio transcription job.
+ */
+function processAudioTranscribeJob(int $jobId, array $inputData, int $userId, BackgroundJobsRepo $repo): array
+{
+    $filePath = (string)($inputData['file_path'] ?? '');
+    $audioMime = (string)($inputData['audio_mime'] ?? '');
+    $audioFilename = (string)($inputData['audio_filename'] ?? 'audio');
+    $audioSizeMB = (float)($inputData['size_mb'] ?? 0);
+
+    if ($filePath === '' || $audioMime === '') {
+        throw new \Exception('Missing audio file path or mime type');
+    }
+
+    if (!is_file($filePath)) {
+        throw new \Exception('Temporary audio file not found');
+    }
+
+    $repo->updateProgress($jobId, 'Transcribing audio...');
+
+    $transcriber = new AudioTranscriber();
+    $result = $transcriber->transcribeFile(
+        $filePath,
+        $audioMime,
+        $audioFilename,
+        function (array $progress) use ($repo, $jobId) {
+            $done = (int)($progress['segments_done'] ?? 0);
+            $total = (int)($progress['segments_total'] ?? 0);
+            $partialText = (string)($progress['partial_text'] ?? '');
+            $progressText = $total > 0
+                ? "Transcribing segment {$done}/{$total}..."
+                : 'Transcribing audio...';
+
+            $repo->updateProcessingSnapshot($jobId, $progressText, [
+                'is_partial' => true,
+                'phase' => (string)($progress['phase'] ?? 'transcribing'),
+                'segments_done' => $done,
+                'segments_total' => $total,
+                'segment_seconds' => (int)($progress['segment_seconds'] ?? 0),
+                'segmented' => (bool)($progress['segmented'] ?? false),
+                'partial_transcription' => $partialText,
+            ]);
+        }
+    );
+
+    if (!$result['success']) {
+        throw new \Exception((string)($result['error'] ?? 'Transcription failed'));
+    }
+
+    $transcription = trim((string)($result['text'] ?? ''));
+    if ($transcription === '') {
+        throw new \Exception('Transcription is empty');
+    }
+
+    $durationEstimate = $result['duration_estimate'] ?? null;
+
+    $title = mb_substr(preg_replace('/\s+/', ' ', $transcription), 0, 60);
+    if (mb_strlen($transcription) > 60) {
+        $title .= '...';
+    }
+    if (trim($title) === '') {
+        $title = 'Transcription - ' . date('Y-m-d H:i');
+    }
+
+    $repo->updateProcessingSnapshot($jobId, 'Saving transcription...', [
+        'is_partial' => true,
+        'phase' => 'saving',
+        'partial_transcription' => mb_substr($transcription, 0, 4000),
+    ]);
+
+    $gesturesRepo = new GestureExecutionsRepo();
+    $executionId = $gesturesRepo->create([
+        'user_id' => $userId,
+        'gesture_type' => 'audio-transcriber',
+        'title' => $title,
+        'input_data' => [
+            'filename' => $audioFilename,
+            'mime_type' => $audioMime,
+            'size_mb' => round($audioSizeMB, 2),
+            'duration_estimate' => $durationEstimate,
+        ],
+        'output_content' => $transcription,
+        'output_data' => [
+            'word_count' => str_word_count($transcription),
+            'char_count' => mb_strlen($transcription),
+            'duration_estimate' => $durationEstimate,
+        ],
+        'content_type' => 'transcription',
+        'business_line' => null,
+        'model' => 'gemini-2.5-flash',
+    ]);
+
+    $usageLog = new UsageLogRepo();
+    $usageLog->log($userId, 'gesture', 1, ['gesture_type' => 'audio-transcriber']);
+
+    @unlink($filePath);
+
+    return [
+        'execution_id' => $executionId,
+        'title' => $title,
+        'transcription' => $transcription,
+        'metadata' => [
+            'filename' => $audioFilename,
+            'duration_estimate' => $durationEstimate,
+            'word_count' => str_word_count($transcription),
+            'char_count' => mb_strlen($transcription),
+            'segmented' => (bool)($result['metadata']['segmented'] ?? false),
+            'segment_count' => (int)($result['metadata']['segment_count'] ?? 1),
+            'segment_seconds' => (int)($result['metadata']['segment_seconds'] ?? 0),
+        ],
     ];
 }

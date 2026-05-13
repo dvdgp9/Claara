@@ -138,6 +138,23 @@ class BackgroundJobsRepo
     }
 
     /**
+     * Update progress and partial output snapshot while job is processing.
+     */
+    public function updateProcessingSnapshot(int $id, string $progressText, array $outputData): bool
+    {
+        $stmt = $this->db->prepare("
+            UPDATE background_jobs
+            SET progress_text = :progress_text, output_data = :output_data
+            WHERE id = :id
+        ");
+        return $stmt->execute([
+            'id' => $id,
+            'progress_text' => $progressText,
+            'output_data' => json_encode($outputData),
+        ]);
+    }
+
+    /**
      * Marcar job como completed
      */
     public function markCompleted(int $id, array $outputData): bool

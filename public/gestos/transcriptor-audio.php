@@ -280,10 +280,15 @@ $headerDrawerId = 'transcriber-history-drawer';
     
     const historyList = document.getElementById('history-list');
     const drawerContent = document.getElementById('transcriber-history-drawer')?.querySelector('.drawer-content');
+    const loadingTitle = loadingSection.querySelector('.text-slate-600');
+    const loadingSubtitle = loadingSection.querySelector('.text-sm.text-slate-500');
     
     let currentFile = null;
     let currentTranscription = '';
     let currentExecutionId = null;
+    let currentJobId = null;
+    let statusPollTimer = null;
+    let wakeWorkerTimer = null;
     
     // ===== FILE HANDLING =====
     
@@ -372,20 +377,16 @@ $headerDrawerId = 'transcriber-history-drawer';
       loadingSection.classList.remove('hidden');
       
       try {
-        // Convert to base64
-        const base64 = await fileToBase64(currentFile);
-        
+        const formData = new FormData();
+        formData.append('audio_file', currentFile, currentFile.name);
+        formData.append('async', '1');
+
         const response = await fetch('/api/gestures/transcribe.php', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
             'X-CSRF-Token': csrf
           },
-          body: JSON.stringify({
-            audio_base64: base64,
-            audio_mime: currentFile.type || 'audio/mpeg',
-            audio_filename: currentFile.name
-          })
+          body: formData
         });
         
         const data = await response.json();
@@ -393,23 +394,12 @@ $headerDrawerId = 'transcriber-history-drawer';
         if (!data.success) {
           throw new Error(data.error?.message || 'Transcription error');
         }
-        
-        // Show result
-        currentTranscription = data.transcription;
-        currentExecutionId = data.execution_id;
-        
-        resultDuration.textContent = data.metadata?.duration_estimate || 'N/A';
-        resultWords.textContent = (data.metadata?.word_count || 0) + ' words';
-        resultChars.textContent = (data.metadata?.char_count || 0) + ' characters';
-        
-        // Render transcription preserving line breaks
-        transcriptionContent.innerHTML = escapeHtml(currentTranscription).replace(/\n/g, '<br>');
-        
-        loadingSection.classList.add('hidden');
-        resultSection.classList.remove('hidden');
-        
-        // Reload history
-        loadHistory();
+
+        if (data.async && data.job_id) {
+          startJobPolling(parseInt(data.job_id, 10));
+        } else {
+          throw new Error('Invalid async response: missing job_id');
+        }
         
       } catch (err) {
         alert('Error: ' + err.message);
@@ -418,22 +408,112 @@ $headerDrawerId = 'transcriber-history-drawer';
       }
     });
     
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result.split(',')[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-    
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function setLoadingState(title, subtitle = '') {
+      if (loadingTitle) loadingTitle.textContent = title;
+      if (loadingSubtitle) loadingSubtitle.textContent = subtitle;
+    }
+
+    async function triggerWorker() {
+      try {
+        await fetch('/api/jobs/process.php', {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': csrf }
+        });
+      } catch (err) {
+        console.warn('Could not trigger worker:', err);
+      }
+    }
+
+    function clearJobTimers() {
+      if (statusPollTimer) {
+        clearInterval(statusPollTimer);
+        statusPollTimer = null;
+      }
+      if (wakeWorkerTimer) {
+        clearInterval(wakeWorkerTimer);
+        wakeWorkerTimer = null;
+      }
+    }
+
+    function startJobPolling(jobId) {
+      currentJobId = jobId;
+      sessionStorage.setItem('audio_transcriber_job_id', String(jobId));
+      setLoadingState('Queued transcription job...', 'Processing starts in background.');
+
+      triggerWorker();
+      clearJobTimers();
+
+      statusPollTimer = setInterval(() => {
+        pollJobStatus(jobId);
+      }, 4000);
+
+      wakeWorkerTimer = setInterval(() => {
+        triggerWorker();
+      }, 30000);
+
+      pollJobStatus(jobId);
+    }
+
+    async function pollJobStatus(jobId) {
+      try {
+        const res = await fetch(`/api/jobs/status.php?id=${jobId}`, {
+          headers: { 'X-CSRF-Token': csrf }
+        });
+        const data = await res.json();
+        if (!data.success || !data.job) return;
+
+        const job = data.job;
+        if (job.progress_text) {
+          setLoadingState(job.progress_text, 'You can keep this page open while processing.');
+        }
+
+        const partial = job.output_data?.partial_transcription;
+        if (partial && loadingSubtitle) {
+          loadingSubtitle.textContent = partial.length > 180
+            ? `${partial.substring(0, 180)}...`
+            : partial;
+        }
+
+        if (job.status === 'completed') {
+          clearJobTimers();
+          sessionStorage.removeItem('audio_transcriber_job_id');
+          currentJobId = null;
+
+          const out = job.output_data || {};
+          currentTranscription = out.transcription || '';
+          currentExecutionId = out.execution_id || null;
+
+          resultDuration.textContent = out.metadata?.duration_estimate || 'N/A';
+          resultWords.textContent = (out.metadata?.word_count || 0) + ' words';
+          resultChars.textContent = (out.metadata?.char_count || 0) + ' characters';
+          transcriptionContent.innerHTML = escapeHtml(currentTranscription).replace(/\n/g, '<br>');
+
+          loadingSection.classList.add('hidden');
+          resultSection.classList.remove('hidden');
+          loadHistory();
+          return;
+        }
+
+        if (job.status === 'failed') {
+          clearJobTimers();
+          sessionStorage.removeItem('audio_transcriber_job_id');
+          currentJobId = null;
+          throw new Error(job.error_message || 'Transcription job failed');
+        }
+      } catch (err) {
+        clearJobTimers();
+        sessionStorage.removeItem('audio_transcriber_job_id');
+        currentJobId = null;
+        alert('Error: ' + err.message);
+        loadingSection.classList.add('hidden');
+        uploadSection.classList.remove('hidden');
+      }
     }
     
     // ===== ACTIONS =====
@@ -642,6 +722,16 @@ $headerDrawerId = 'transcriber-history-drawer';
     
     // Load history on startup
     loadHistory();
+
+    // Resume active job after reload
+    const savedJobId = parseInt(sessionStorage.getItem('audio_transcriber_job_id') || '', 10);
+    if (savedJobId > 0) {
+      uploadSection.classList.add('hidden');
+      resultSection.classList.add('hidden');
+      loadingSection.classList.remove('hidden');
+      setLoadingState('Resuming transcription job...', 'Recovering background progress.');
+      startJobPolling(savedJobId);
+    }
   </script>
 </body>
 </html>

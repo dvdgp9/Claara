@@ -4,45 +4,300 @@ namespace Sop;
 
 use App\Env;
 
-/**
- * Transcriptor de audio usando Google Gemini API directamente
- * Usa File API para archivos grandes (hasta 2GB)
- * Soporta mp3, wav, m4a, webm, ogg
- */
 class AudioTranscriber
 {
     private string $apiKey;
     private string $model = 'gemini-2.5-flash';
     private string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
     private string $uploadUrl = 'https://generativelanguage.googleapis.com/upload/v1beta/files';
-    
+    private string $ffmpegPath;
+    private string $ffprobePath;
+    private int $segmentThresholdSeconds = 600; // 10 minutes
+    private int $segmentSeconds = 180; // 3 minutes
+    private int $minSegmentSeconds = 45;
+
     public function __construct(?string $apiKey = null)
     {
-        // Usar GEMINI_API_KEY directamente (no OpenRouter)
         $this->apiKey = $apiKey ?? (Env::get('GEMINI_API_KEY') ?? '');
+        $this->ffmpegPath = (string)(Env::get('FFMPEG_PATH') ?? '/usr/bin/ffmpeg');
+        $this->ffprobePath = (string)(Env::get('FFPROBE_PATH') ?? '/usr/bin/ffprobe');
     }
-    
-    private function debugLog(string $message): void
-    {
-        // Debug eliminado
-    }
-    
-    /**
-     * Transcribe audio desde base64 usando Gemini API directamente
-     * 
-     * @param string $base64Data Audio en base64
-     * @param string $mimeType Tipo MIME del audio
-     * @param string $filename Nombre del archivo (opcional)
-     * @return array ['success' => bool, 'text' => string, 'error' => string|null]
-     */
+
     public function transcribe(string $base64Data, string $mimeType, string $filename = 'audio'): array
     {
-        if (empty($this->apiKey)) {
-            return ['success' => false, 'error' => 'Falta GEMINI_API_KEY'];
+        if ($base64Data === '') {
+            return ['success' => false, 'error' => 'Missing audio payload'];
         }
-        
-        // Validar tipo de audio
-        $validTypes = [
+
+        $tmpDir = dirname(__DIR__, 2) . '/storage/transcribe-tmp';
+        if (!is_dir($tmpDir) && !@mkdir($tmpDir, 0775, true)) {
+            return ['success' => false, 'error' => 'Could not create temporary directory'];
+        }
+
+        $ext = $this->extensionFromMime($mimeType);
+        $tmpFile = $tmpDir . '/inline_' . bin2hex(random_bytes(8)) . '.' . $ext;
+        $bytes = base64_decode($base64Data, true);
+        if ($bytes === false) {
+            return ['success' => false, 'error' => 'Invalid base64 audio payload'];
+        }
+
+        if (file_put_contents($tmpFile, $bytes) === false) {
+            return ['success' => false, 'error' => 'Could not write temporary audio file'];
+        }
+
+        try {
+            return $this->transcribeFile($tmpFile, $mimeType, $filename);
+        } finally {
+            @unlink($tmpFile);
+        }
+    }
+
+    public function transcribeFile(string $filePath, string $mimeType, string $filename = 'audio', ?callable $onProgress = null): array
+    {
+        if ($this->apiKey === '') {
+            return ['success' => false, 'error' => 'Missing GEMINI_API_KEY'];
+        }
+        if (!is_file($filePath) || !is_readable($filePath)) {
+            return ['success' => false, 'error' => 'Audio file not found or not readable'];
+        }
+        if (!in_array($mimeType, $this->validAudioMimeTypes(), true)) {
+            return ['success' => false, 'error' => 'Unsupported audio type: ' . $mimeType];
+        }
+
+        $fileSize = filesize($filePath) ?: 0;
+        $fileSizeMB = $fileSize / (1024 * 1024);
+        if ($fileSizeMB > 50) {
+            return ['success' => false, 'error' => 'Audio file exceeds 50MB limit'];
+        }
+
+        $durationSeconds = $this->probeDurationSeconds($filePath);
+        $segments = [];
+        $segmentTmpDir = null;
+
+        if ($durationSeconds !== null && $durationSeconds >= $this->segmentThresholdSeconds) {
+            $segmentTmpDir = dirname(__DIR__, 2) . '/storage/transcribe-segments/' . bin2hex(random_bytes(8));
+            $segments = $this->buildSegments($filePath, $segmentTmpDir);
+            if (!$segments['success']) {
+                return $segments;
+            }
+            $segments = $segments['segments'];
+        } else {
+            $segments = [[
+                'path' => $filePath,
+                'mime' => $mimeType,
+                'filename' => $filename,
+                'is_temp' => false,
+            ]];
+        }
+
+        $outputParts = [];
+        $segmentsTotal = count($segments);
+
+        foreach ($segments as $idx => $segment) {
+            $textResult = $this->transcribeBytes(file_get_contents($segment['path']) ?: '', $segment['mime'], $segment['filename']);
+
+            if (!$textResult['success']) {
+                if ($segmentTmpDir) {
+                    $this->cleanupDirectory($segmentTmpDir);
+                }
+                return $textResult;
+            }
+
+            $segmentText = trim((string)($textResult['text'] ?? ''));
+            if ($segmentText !== '' && $segmentText !== '[no speech]') {
+                $outputParts[] = $segmentText;
+            }
+
+            if ($onProgress) {
+                $onProgress([
+                    'segments_done' => $idx + 1,
+                    'segments_total' => $segmentsTotal,
+                    'segmented' => $segmentsTotal > 1,
+                    'segment_seconds' => $this->segmentSeconds,
+                    'current_segment' => $idx + 1,
+                    'phase' => 'transcribing',
+                    'partial_text' => implode("\n\n", $outputParts),
+                ]);
+            }
+        }
+
+        if ($segmentTmpDir) {
+            $this->cleanupDirectory($segmentTmpDir);
+        }
+
+        $finalText = trim(implode("\n\n", $outputParts));
+        if ($finalText === '') {
+            return ['success' => false, 'error' => 'Transcription is empty'];
+        }
+
+        return [
+            'success' => true,
+            'text' => $finalText,
+            'duration_estimate' => $durationSeconds !== null ? $this->formatDurationSeconds($durationSeconds) : null,
+            'metadata' => [
+                'provider' => 'gemini',
+                'model' => $this->model,
+                'audio_size_mb' => round($fileSizeMB, 2),
+                'segmented' => $segmentsTotal > 1,
+                'segment_count' => $segmentsTotal,
+                'segment_seconds' => $this->segmentSeconds,
+            ],
+        ];
+    }
+
+    private function transcribeBytes(string $audioBytes, string $mimeType, string $filename): array
+    {
+        if ($audioBytes === '') {
+            return ['success' => false, 'error' => 'Empty audio bytes'];
+        }
+
+        $uploadResult = $this->uploadFile($audioBytes, $mimeType, $filename);
+        if (!$uploadResult['success']) {
+            return $uploadResult;
+        }
+
+        $prompt = implode("\n", [
+            'Transcribe this audio faithfully and chronologically.',
+            'Do not summarize and do not add commentary.',
+            'Output must always be in speaker turns with labels:',
+            '- If names are clear, use names.',
+            '- If roles are clear, use role labels.',
+            '- Otherwise use Speaker 1:, Speaker 2:, Speaker 3:, etc.',
+            '- Even with one speaker, keep the Speaker 1: label.',
+            'If no intelligible human speech exists in the whole segment, return exactly: [no speech]',
+            'Keep the original language of the audio content.',
+        ]);
+
+        $payload = [
+            'contents' => [[
+                'parts' => [
+                    [
+                        'fileData' => [
+                            'mimeType' => $mimeType,
+                            'fileUri' => $uploadResult['uri'],
+                        ],
+                    ],
+                    ['text' => $prompt],
+                ],
+            ]],
+            'generationConfig' => [
+                'temperature' => 0.1,
+                'maxOutputTokens' => 65536,
+            ],
+        ];
+
+        $url = "{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}";
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_TIMEOUT => 600,
+            CURLOPT_CONNECTTIMEOUT => 30,
+        ]);
+
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($curlError) {
+            return ['success' => false, 'error' => 'Gemini connection error: ' . $curlError];
+        }
+        if (!$response) {
+            return ['success' => false, 'error' => 'No response from Gemini'];
+        }
+
+        $data = json_decode($response, true);
+        if (isset($data['error'])) {
+            $errorMsg = $data['error']['message'] ?? 'Unknown API error';
+            return ['success' => false, 'error' => 'Gemini API error: ' . $errorMsg];
+        }
+        if ($httpCode !== 200) {
+            return ['success' => false, 'error' => "Gemini HTTP error {$httpCode}"];
+        }
+
+        $text = trim((string)($data['candidates'][0]['content']['parts'][0]['text'] ?? ''));
+        if ($text === '') {
+            return ['success' => false, 'error' => 'Empty transcription response'];
+        }
+
+        return ['success' => true, 'text' => $text];
+    }
+
+    private function uploadFile(string $fileBytes, string $mimeType, string $filename): array
+    {
+        $metadata = json_encode(['file' => ['displayName' => $filename]]);
+        $start = curl_init("{$this->uploadUrl}?key={$this->apiKey}");
+        curl_setopt_array($start, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'X-Goog-Upload-Protocol: resumable',
+                'X-Goog-Upload-Command: start',
+                'X-Goog-Upload-Header-Content-Length: ' . strlen($fileBytes),
+                'X-Goog-Upload-Header-Content-Type: ' . $mimeType,
+                'Content-Type: application/json',
+            ],
+            CURLOPT_POSTFIELDS => $metadata,
+            CURLOPT_HEADER => true,
+            CURLOPT_TIMEOUT => 60,
+        ]);
+
+        $startResponse = curl_exec($start);
+        $headerSize = curl_getinfo($start, CURLINFO_HEADER_SIZE);
+        $headers = substr((string)$startResponse, 0, $headerSize);
+        $startHttpCode = curl_getinfo($start, CURLINFO_HTTP_CODE);
+        curl_close($start);
+
+        if ($startHttpCode !== 200) {
+            return ['success' => false, 'error' => "Upload init failed with HTTP {$startHttpCode}"];
+        }
+
+        preg_match('/x-goog-upload-url:\s*(.+)/i', $headers, $matches);
+        $uploadUrl = trim((string)($matches[1] ?? ''));
+        if ($uploadUrl === '') {
+            return ['success' => false, 'error' => 'Could not obtain upload URL'];
+        }
+
+        $upload = curl_init($uploadUrl);
+        curl_setopt_array($upload, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Length: ' . strlen($fileBytes),
+                'X-Goog-Upload-Offset: 0',
+                'X-Goog-Upload-Command: upload, finalize',
+            ],
+            CURLOPT_POSTFIELDS => $fileBytes,
+            CURLOPT_TIMEOUT => 300,
+        ]);
+
+        $uploadResponse = curl_exec($upload);
+        $uploadError = curl_error($upload);
+        $uploadHttpCode = curl_getinfo($upload, CURLINFO_HTTP_CODE);
+        curl_close($upload);
+
+        if ($uploadError) {
+            return ['success' => false, 'error' => 'Upload connection error: ' . $uploadError];
+        }
+        if ($uploadHttpCode !== 200) {
+            return ['success' => false, 'error' => "Upload failed with HTTP {$uploadHttpCode}"];
+        }
+
+        $data = json_decode((string)$uploadResponse, true);
+        $fileUri = $data['file']['uri'] ?? null;
+        if (!$fileUri) {
+            return ['success' => false, 'error' => 'Upload did not return a file URI'];
+        }
+
+        return ['success' => true, 'uri' => $fileUri];
+    }
+
+    private function validAudioMimeTypes(): array
+    {
+        return [
             'audio/mpeg',
             'audio/mp3',
             'audio/wav',
@@ -54,248 +309,117 @@ class AudioTranscriber
             'audio/webm',
             'audio/ogg',
         ];
-        
-        if (!in_array($mimeType, $validTypes)) {
-            return ['success' => false, 'error' => 'Tipo de audio no soportado: ' . $mimeType];
-        }
-        
-        // Decodificar audio
-        $audioBytes = base64_decode($base64Data);
-        $audioSizeBytes = strlen($audioBytes);
-        $audioSizeMB = $audioSizeBytes / (1024 * 1024);
-        
-        if ($audioSizeMB > 50) {
-            return ['success' => false, 'error' => "El audio es demasiado grande (" . round($audioSizeMB, 1) . "MB). Máximo 50MB."];
-        }
-        
-        $this->debugLog("Tamaño audio: {$audioSizeMB} MB, MIME: {$mimeType}");
-        
-        // Paso 1: Subir archivo a Gemini File API
-        $uploadResult = $this->uploadFile($audioBytes, $mimeType, $filename);
-        unset($audioBytes); // Liberar memoria
-        
-        if (!$uploadResult['success']) {
-            return $uploadResult;
-        }
-        
-        $fileUri = $uploadResult['uri'];
-        $this->debugLog("Archivo subido: {$fileUri}");
-        
-        // Paso 2: Generar transcripción con el archivo
-        $prompt = 'Analiza este audio y realiza una transcripción fiel en español. 
-ES MUY IMPORTANTE que identifiques a los diferentes hablantes si hay más de uno.
-Usa el formato:
-Hablante 1: [Texto]
-Hablante 2: [Texto]
-
-Si puedes deducir el rol de cada uno por el contexto (ej. "Entrevistador", "Cliente", "Soporte"), usa ese nombre descriptivo en lugar de "Hablante X".
-Si solo hay un hablante claro, puedes omitir la etiqueta del nombre.
-Devuelve SOLO la transcripción textual, sin introducción ni explicaciones adicionales. Mantén los párrafos y pausas naturales.';
-
-        $payload = [
-            'contents' => [
-                [
-                    'parts' => [
-                        [
-                            'fileData' => [
-                                'mimeType' => $mimeType,
-                                'fileUri' => $fileUri
-                            ]
-                        ],
-                        [
-                            'text' => $prompt
-                        ]
-                    ]
-                ]
-            ],
-            'generationConfig' => [
-                'temperature' => 0.1,
-                'maxOutputTokens' => 16384
-            ]
-        ];
-        
-        $url = "{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}";
-        
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_TIMEOUT => 600,
-            CURLOPT_CONNECTTIMEOUT => 30,
-        ]);
-        
-        $this->debugLog("Enviando a Gemini API...");
-        $response = curl_exec($ch);
-        $curlError = curl_error($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        $this->debugLog("Respuesta Gemini: HTTP {$httpCode}");
-        
-        if ($curlError) {
-            $this->debugLog("ERROR cURL: " . $curlError);
-            return ['success' => false, 'error' => 'Error de conexión: ' . $curlError];
-        }
-        
-        if (!$response) {
-            $this->debugLog("ERROR: Respuesta vacía");
-            return ['success' => false, 'error' => 'No se recibió respuesta de Gemini'];
-        }
-        
-        $data = json_decode($response, true);
-        
-        if (isset($data['error'])) {
-            $errorMsg = $data['error']['message'] ?? 'Error desconocido';
-            $this->debugLog("ERROR API: " . $errorMsg);
-            return ['success' => false, 'error' => 'Error de API: ' . $errorMsg];
-        }
-        
-        if ($httpCode !== 200) {
-            $this->debugLog("ERROR HTTP: " . $httpCode . " - " . substr($response, 0, 500));
-            return ['success' => false, 'error' => "Error HTTP {$httpCode}"];
-        }
-        
-        $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
-        
-        if (empty($text)) {
-            $this->debugLog("ERROR: Transcripción vacía");
-            return ['success' => false, 'error' => 'Transcripción vacía'];
-        }
-        
-        $this->debugLog("Transcripción exitosa: " . strlen($text) . " caracteres");
-        
-        return [
-            'success' => true,
-            'text' => trim($text),
-            'duration_estimate' => $this->estimateDuration($audioSizeBytes, $mimeType)
-        ];
     }
-    
-    /**
-     * Sube archivo a Gemini File API
-     */
-    private function uploadFile(string $fileBytes, string $mimeType, string $filename): array
+
+    private function probeDurationSeconds(string $filePath): ?int
     {
-        $this->debugLog("Subiendo archivo a Gemini File API...");
-        
-        // Usar resumable upload para archivos grandes
-        $metadata = json_encode(['file' => ['displayName' => $filename]]);
-        
-        // Paso 1: Iniciar upload resumable
-        $ch = curl_init("{$this->uploadUrl}?key={$this->apiKey}");
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'X-Goog-Upload-Protocol: resumable',
-                'X-Goog-Upload-Command: start',
-                'X-Goog-Upload-Header-Content-Length: ' . strlen($fileBytes),
-                'X-Goog-Upload-Header-Content-Type: ' . $mimeType,
-                'Content-Type: application/json'
-            ],
-            CURLOPT_POSTFIELDS => $metadata,
-            CURLOPT_HEADER => true,
-            CURLOPT_TIMEOUT => 60,
-        ]);
-        
-        $response = curl_exec($ch);
-        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        $headers = substr($response, 0, $headerSize);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpCode !== 200) {
-            $this->debugLog("ERROR inicio upload: HTTP {$httpCode}");
-            return ['success' => false, 'error' => "Error al iniciar upload: HTTP {$httpCode}"];
+        if (!is_file($this->ffprobePath)) {
+            return null;
         }
-        
-        // Extraer URL de upload
-        preg_match('/x-goog-upload-url:\s*(.+)/i', $headers, $matches);
-        $uploadUrl = trim($matches[1] ?? '');
-        
-        if (empty($uploadUrl)) {
-            $this->debugLog("ERROR: No se obtuvo URL de upload");
-            return ['success' => false, 'error' => 'No se obtuvo URL de upload'];
+
+        $cmd = sprintf(
+            '%s -v error -show_entries format=duration -of default=nokey=1:noprint_wrappers=1 %s 2>/dev/null',
+            escapeshellarg($this->ffprobePath),
+            escapeshellarg($filePath)
+        );
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+        if ($exitCode !== 0 || empty($output)) {
+            return null;
         }
-        
-        $this->debugLog("URL de upload obtenida");
-        
-        // Paso 2: Subir bytes
-        $ch = curl_init($uploadUrl);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'Content-Length: ' . strlen($fileBytes),
-                'X-Goog-Upload-Offset: 0',
-                'X-Goog-Upload-Command: upload, finalize'
-            ],
-            CURLOPT_POSTFIELDS => $fileBytes,
-            CURLOPT_TIMEOUT => 300, // 5 min para upload
-        ]);
-        
-        $response = curl_exec($ch);
-        $curlError = curl_error($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($curlError) {
-            $this->debugLog("ERROR cURL upload: " . $curlError);
-            return ['success' => false, 'error' => 'Error de conexión en upload: ' . $curlError];
+
+        $duration = (float)trim($output[0]);
+        if ($duration <= 0) {
+            return null;
         }
-        
-        if ($httpCode !== 200) {
-            $this->debugLog("ERROR upload: HTTP {$httpCode} - " . substr($response, 0, 500));
-            return ['success' => false, 'error' => "Error en upload: HTTP {$httpCode}"];
-        }
-        
-        $data = json_decode($response, true);
-        $fileUri = $data['file']['uri'] ?? null;
-        
-        if (empty($fileUri)) {
-            $this->debugLog("ERROR: No se obtuvo URI del archivo");
-            return ['success' => false, 'error' => 'No se obtuvo URI del archivo subido'];
-        }
-        
-        $this->debugLog("Archivo subido exitosamente: {$fileUri}");
-        
-        return ['success' => true, 'uri' => $fileUri];
+        return (int)round($duration);
     }
-    
-    /**
-     * Estima la duración del audio basándose en el tamaño
-     */
-    private function estimateDuration(int $bytes, string $mimeType): ?string
+
+    private function buildSegments(string $sourcePath, string $segmentDir): array
     {
-        // Estimaciones aproximadas de bitrate por formato
-        $bitratesKbps = [
-            'audio/mpeg' => 128,
-            'audio/mp3' => 128,
-            'audio/wav' => 1411, // CD quality
-            'audio/wave' => 1411,
-            'audio/x-wav' => 1411,
-            'audio/mp4' => 128,
-            'audio/m4a' => 128,
-            'audio/x-m4a' => 128,
-            'audio/webm' => 96,
-            'audio/ogg' => 96,
-        ];
-        
-        $bitrate = $bitratesKbps[$mimeType] ?? 128;
-        $seconds = ($bytes * 8) / ($bitrate * 1000);
-        
+        if (!is_file($this->ffmpegPath)) {
+            return ['success' => false, 'error' => 'ffmpeg not found'];
+        }
+        if (!is_dir($segmentDir) && !@mkdir($segmentDir, 0775, true)) {
+            return ['success' => false, 'error' => 'Could not create segment directory'];
+        }
+
+        $pattern = $segmentDir . '/segment_%03d.m4a';
+        $cmd = sprintf(
+            '%s -hide_banner -loglevel error -y -i %s -vn -ac 1 -ar 16000 -c:a aac -b:a 48k -f segment -segment_time %d -reset_timestamps 1 %s 2>&1',
+            escapeshellarg($this->ffmpegPath),
+            escapeshellarg($sourcePath),
+            $this->segmentSeconds,
+            escapeshellarg($pattern)
+        );
+
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+        if ($exitCode !== 0) {
+            $this->cleanupDirectory($segmentDir);
+            return ['success' => false, 'error' => 'ffmpeg segmentation failed: ' . implode(' ', $output)];
+        }
+
+        $segmentFiles = glob($segmentDir . '/segment_*.m4a');
+        if (!$segmentFiles) {
+            $this->cleanupDirectory($segmentDir);
+            return ['success' => false, 'error' => 'No segments created'];
+        }
+        sort($segmentFiles);
+
+        $segments = [];
+        foreach ($segmentFiles as $index => $segmentPath) {
+            $segments[] = [
+                'path' => $segmentPath,
+                'mime' => 'audio/mp4',
+                'filename' => sprintf('segment_%03d.m4a', $index + 1),
+                'is_temp' => true,
+            ];
+        }
+
+        return ['success' => true, 'segments' => $segments];
+    }
+
+    private function cleanupDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        $files = glob($dir . '/*');
+        if (is_array($files)) {
+            foreach ($files as $file) {
+                @unlink($file);
+            }
+        }
+        @rmdir($dir);
+    }
+
+    private function extensionFromMime(string $mimeType): string
+    {
+        return match ($mimeType) {
+            'audio/mpeg', 'audio/mp3' => 'mp3',
+            'audio/wav', 'audio/wave', 'audio/x-wav' => 'wav',
+            'audio/mp4', 'audio/m4a', 'audio/x-m4a' => 'm4a',
+            'audio/webm' => 'webm',
+            'audio/ogg' => 'ogg',
+            default => 'audio',
+        };
+    }
+
+    private function formatDurationSeconds(int $seconds): string
+    {
         if ($seconds < 60) {
-            return (int)round($seconds) . ' segundos';
-        } elseif ($seconds < 3600) {
-            $mins = (int)floor($seconds / 60);
-            $secs = (int)round(fmod($seconds, 60));
-            return "{$mins}:{$secs} minutos";
-        } else {
-            $hours = (int)floor($seconds / 3600);
-            $mins = (int)floor(fmod($seconds, 3600) / 60);
-            return "{$hours}h {$mins}min";
+            return $seconds . ' sec';
         }
+        if ($seconds < 3600) {
+            $mins = (int)floor($seconds / 60);
+            $secs = $seconds % 60;
+            return sprintf('%d:%02d min', $mins, $secs);
+        }
+        $hours = (int)floor($seconds / 3600);
+        $mins = (int)floor(($seconds % 3600) / 60);
+        return sprintf('%dh %02dm', $hours, $mins);
     }
 }

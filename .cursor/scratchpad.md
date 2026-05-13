@@ -86,6 +86,63 @@ Chatbot ligero para preguntas rápidas sobre el Grupo Ebone. Usa QWEN Turbo (`qw
 - [x] `.env` local configurado.
 - [x] SOP Generator: historial con eliminación y edición de título.
 
+## Feature: Audio Transcriber para audios largos
+
+### Motivación
+El gesto de transcripción actual funciona en flujo síncrono y sube audio como base64 desde el navegador. Esto no escala bien para reuniones largas: puede provocar timeouts HTTP, uso alto de memoria, respuestas cortadas y poca visibilidad del progreso. La mejora debe permitir procesar audios de 40-45 minutos con jobs en background, subida multipart, progreso parcial y segmentación con `ffmpeg`.
+
+### Documento operativo
+Plan detallado: `docs/audio_transcription_implementation_scratchpad.md`
+
+Informe técnico de referencia: `docs/audio_transcription_technical_report.md`
+
+### Estado operativo del servidor
+- `ffmpeg`: disponible en `/usr/bin/ffmpeg`
+- `ffprobe`: disponible en `/usr/bin/ffprobe`
+- `open_basedir`: no activo
+
+### Estrategia de implementación
+1. [ ] Añadir plumbing de jobs para `audio-transcribe`.
+   - `BackgroundJobsRepo::updateProcessingSnapshot()`
+   - soporte en `public/api/jobs/process.php`
+   - guardado final en `gesture_executions`
+
+2. [ ] Cambiar `/api/gestures/transcribe.php` a subida `multipart/form-data`.
+   - campo principal `audio_file`
+   - crear job async
+   - mantener compatibilidad temporal con JSON/base64
+
+3. [ ] Actualizar `public/gestos/transcriptor-audio.php`.
+   - eliminar base64 desde navegador
+   - hacer polling de `/api/jobs/status.php`
+   - mostrar progreso y transcripción parcial
+   - recuperar job activo tras recarga con `sessionStorage`
+
+4. [ ] Refactorizar `src/Sop/AudioTranscriber.php`.
+   - añadir `transcribeFile()`
+   - prompt en inglés, manteniendo el idioma original del audio
+   - etiquetas obligatorias de hablante (`Speaker 1:`, `Speaker 2:` o nombre/rol si se deduce)
+
+5. [ ] Añadir duración y segmentación.
+   - `ffprobe` para duración
+   - `ffmpeg` para segmentos M4A/AAC mono 16 kHz
+   - segmentar desde 10 minutos
+   - segmentos base de 180s
+
+6. [ ] Añadir fallbacks por segmento.
+   - segmento vacío
+   - `[no speech]`
+   - `MAX_TOKENS`
+   - repeticiones artificiales
+
+7. [ ] Hardening operativo.
+   - `.env.example` con variables de transcripción
+   - log en `storage/transcribe-debug.log`
+   - limpieza de temporales en `storage/transcribe-jobs`
+
+### Primer corte recomendado
+Implementar primero fases 1-3 y un `transcribeFile()` mínimo sin segmentación. Esto elimina base64, reduce riesgo de 504 y deja lista la UI de polling. Después implementar segmentación y fallbacks.
+
 ## Gesto: Redes Sociales (en progreso)
 
 - [ ] Crear página `/public/gestos/redes-sociales.php`
