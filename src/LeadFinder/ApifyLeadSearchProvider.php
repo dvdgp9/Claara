@@ -37,8 +37,31 @@ class ApifyLeadSearchProvider implements LeadSearchProvider
         }
 
         $maxResults = max(1, min($maxResults, 100));
-        $items = $this->runActorAndFetchItems($query, $maxResults);
-        $normalized = $this->normalizeItems($items, $query);
+        $primaryLang = $this->looksSpanish($query) ? 'es' : 'en';
+        $secondaryLang = $primaryLang === 'en' ? 'es' : 'en';
+
+        $normalized = [];
+        $normalized = array_merge($normalized, $this->normalizeItems(
+            $this->runActorAndFetchItems($query, max($maxResults, 50), $primaryLang),
+            $query
+        ));
+
+        if (count($this->dedupe($normalized)) < $maxResults) {
+            $normalized = array_merge($normalized, $this->normalizeItems(
+                $this->runActorAndFetchItems($query, max($maxResults, 50), $secondaryLang),
+                $query
+            ));
+        }
+
+        if (count($this->dedupe($normalized)) < $maxResults) {
+            $variant = $this->queryVariant($query);
+            if ($variant !== '' && mb_strtolower($variant) !== mb_strtolower($query)) {
+                $normalized = array_merge($normalized, $this->normalizeItems(
+                    $this->runActorAndFetchItems($variant, max($maxResults, 50), $primaryLang),
+                    $query
+                ));
+            }
+        }
 
         return array_slice($this->dedupe($normalized), 0, $maxResults);
     }
@@ -46,7 +69,7 @@ class ApifyLeadSearchProvider implements LeadSearchProvider
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function runActorAndFetchItems(string $query, int $maxResults): array
+    private function runActorAndFetchItems(string $query, int $maxResults, string $language): array
     {
         $url = sprintf(
             'https://api.apify.com/v2/acts/%s/run-sync-get-dataset-items?token=%s&format=json&clean=true&timeout=%d',
@@ -59,7 +82,7 @@ class ApifyLeadSearchProvider implements LeadSearchProvider
             'searchStringsArray' => [$query],
             'maxCrawledPlacesPerSearch' => $maxResults,
             'maxCrawledPlaces' => $maxResults,
-            'language' => 'en',
+            'language' => $language,
         ];
 
         $payload = json_encode($input);
@@ -102,6 +125,19 @@ class ApifyLeadSearchProvider implements LeadSearchProvider
         }
 
         return $items;
+    }
+
+    private function looksSpanish(string $query): bool
+    {
+        $q = mb_strtolower($query);
+        return preg_match('/\b(colegio|instituto|escuela|en|m[áa]laga|valencia|castell[oó]n)\b/u', $q) === 1;
+    }
+
+    private function queryVariant(string $query): string
+    {
+        $variant = preg_replace('/\bcity\b/i', '', $query);
+        $variant = preg_replace('/\s+/', ' ', (string)$variant);
+        return trim((string)$variant);
     }
 
     /**
@@ -244,4 +280,3 @@ class ApifyLeadSearchProvider implements LeadSearchProvider
         return $out;
     }
 }
-
