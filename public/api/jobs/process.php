@@ -17,7 +17,9 @@ use Audio\ContentExtractor;
 use Audio\PodcastScriptGenerator;
 use Audio\GeminiTtsClient;
 use Gestures\GestureExecutionsRepo;
+use LeadFinder\ApifyLeadSearchProvider;
 use LeadFinder\LeadFinderRepo;
+use LeadFinder\LeadSearchProvider;
 use LeadFinder\MockLeadSearchProvider;
 use Repos\UsageLogRepo;
 use Sop\AudioTranscriber;
@@ -498,7 +500,7 @@ function processLeadFinderJob(int $jobId, array $inputData, int $userId, Backgro
             'query' => $query,
         ]);
 
-        $provider = new MockLeadSearchProvider();
+        $provider = buildLeadSearchProvider();
         $repo->updateProcessingSnapshot($jobId, 'Collecting sources...', [
             'is_partial' => true,
             'phase' => 'collecting',
@@ -540,4 +542,17 @@ function processLeadFinderJob(int $jobId, array $inputData, int $userId, Backgro
         $leadRepo->markRunFailed($runId, $e->getMessage());
         throw $e;
     }
+}
+
+function buildLeadSearchProvider(): LeadSearchProvider
+{
+    $provider = strtolower(trim((string)(Env::get('LEAD_FINDER_PROVIDER', 'mock') ?? 'mock')));
+    if ($provider === 'apify') {
+        $token = (string)(Env::get('APIFY_API_TOKEN') ?? '');
+        $actorId = (string)(Env::get('APIFY_ACTOR_ID', 'compass/google-maps-extractor') ?? 'compass/google-maps-extractor');
+        $timeoutSeconds = (int)(Env::get('APIFY_TIMEOUT_SECONDS', '120') ?? 120);
+        return new ApifyLeadSearchProvider($token, $actorId, $timeoutSeconds);
+    }
+
+    return new MockLeadSearchProvider();
 }

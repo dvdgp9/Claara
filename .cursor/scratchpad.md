@@ -1166,6 +1166,7 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - 2026-05-14 (Executor): Lead Finder Task 4 completada. Integrado job type `lead-finder` en el worker con progreso, provider mock y persistencia de resultados.
 - 2026-05-14 (Executor): Lead Finder Task 5 completada. Endpoints API listos para search/get/history/update/export/delete con auth/csrf.
 - 2026-05-14 (Executor): Lead Finder Tasks 6-8 completadas. UI principal, registro del gesture, edición/validación de resultados e export CSV implementados con provider mock.
+- 2026-05-14 (Executor): Lead Finder Task 9 iniciada y casi completada. Integrado provider real de Apify con selección por `.env`, manteniendo mock como fallback.
 
 # Executor's Feedback or Assistance Requests
 
@@ -1181,6 +1182,7 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - Lead Finder: Task 4 completada. Siguiente paso sugerido: Task 5, crear endpoints `search/get/history/update-result/export/delete`.
 - Lead Finder: Task 5 completada. Siguiente paso sugerido: Task 6, construir `public/gestos/lead-finder.php` + `public/assets/js/gesture-lead-finder.js` con UX completa.
 - Lead Finder: Tasks 6-8 completadas. Siguiente paso sugerido: Task 10, QA manual en producción con provider mock; Task 9 queda bloqueada hasta elegir API real y revisar documentación actualizada.
+- Lead Finder: Task 9 (Apify) implementada en código (`ApifyLeadSearchProvider` + `buildLeadSearchProvider()`), pendiente validación end-to-end con una búsqueda real desde UI y revisión del actor elegido.
 
 # Lessons
 
@@ -1188,5 +1190,6 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - En jobs largos de audio, no usar una ventana fija corta de `resetStuckJobs()`. Debe ser mayor que `BACKGROUND_JOB_MAX_SECONDS`, porque si no se reinician jobs legítimos en mitad de la transcripción y pueden lanzarse workers duplicados desde el polling del frontend.
 - Los comandos externos (`ffprobe`, `ffmpeg`) deben ejecutarse con timeout explícito. `exec()` sin timeout puede dejar un job indefinidamente en la misma fase si un contenedor de audio bloquea el análisis.
 - `.gitignore` ignoraba `migrations/`, lo que también ocultaba SQL nuevos bajo `docs/migrations/`. Para nuevas migraciones versionadas, mantener la excepción `!docs/migrations/` y `!docs/migrations/*.sql`; si no, `git add .` no las sube.
+- Para providers externos de scraping, dejar selección por variable de entorno y fallback mock reduce riesgo durante despliegue: permite activar/desactivar proveedor real sin tocar frontend ni schema.
 - En migraciones con foreign keys, confirmar que los tipos coinciden exactamente con la tabla referenciada. `users.id` usa `BIGINT UNSIGNED`; usar `INT` en tablas nuevas provoca MySQL errno 150.
 - Evitar foreign keys no esenciales contra tablas antiguas con historial de tipos inconsistente. Para `lead_finder_runs.job_id`, basta índice normal y validación en aplicación.

@@ -47,6 +47,7 @@ require_once dirname(__DIR__) . '/Sop/SopGenerator.php';
 // Lead Finder
 require_once dirname(__DIR__) . '/LeadFinder/LeadSearchProvider.php';
 require_once dirname(__DIR__) . '/LeadFinder/MockLeadSearchProvider.php';
+require_once dirname(__DIR__) . '/LeadFinder/ApifyLeadSearchProvider.php';
 require_once dirname(__DIR__) . '/LeadFinder/LeadFinderRepo.php';
 
 // Utils
