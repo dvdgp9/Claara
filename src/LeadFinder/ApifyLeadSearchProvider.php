@@ -38,31 +38,8 @@ class ApifyLeadSearchProvider implements LeadSearchProvider
 
         $maxResults = max(1, min($maxResults, 100));
         $primaryLang = $this->looksSpanish($query) ? 'es' : 'en';
-        $secondaryLang = $primaryLang === 'en' ? 'es' : 'en';
-
-        $normalized = [];
-        $normalized = array_merge($normalized, $this->normalizeItems(
-            $this->runActorAndFetchItems($query, max($maxResults, 50), $primaryLang),
-            $query
-        ));
-
-        if (count($this->dedupe($normalized)) < $maxResults) {
-            $normalized = array_merge($normalized, $this->normalizeItems(
-                $this->runActorAndFetchItems($query, max($maxResults, 50), $secondaryLang),
-                $query
-            ));
-        }
-
-        if (count($this->dedupe($normalized)) < $maxResults) {
-            $variant = $this->queryVariant($query);
-            if ($variant !== '' && mb_strtolower($variant) !== mb_strtolower($query)) {
-                $normalized = array_merge($normalized, $this->normalizeItems(
-                    $this->runActorAndFetchItems($variant, max($maxResults, 50), $primaryLang),
-                    $query
-                ));
-            }
-        }
-
+        $items = $this->runActorAndFetchItems($query, $maxResults, $primaryLang);
+        $normalized = $this->normalizeItems($items, $query);
         return array_slice($this->dedupe($normalized), 0, $maxResults);
     }
 
@@ -81,7 +58,7 @@ class ApifyLeadSearchProvider implements LeadSearchProvider
         $input = [
             'searchStringsArray' => $this->searchTermsFor($query),
             'maxCrawledPlacesPerSearch' => $maxResults,
-            'maxCrawledPlaces' => max($maxResults, min($maxResults * 2, 100)),
+            'maxCrawledPlaces' => $maxResults,
             'language' => $language,
             'skipClosedPlaces' => false,
             'searchMatching' => 'all',

@@ -25,13 +25,14 @@ APIFY_TIMEOUT_SECONDS=120
      - `searchStringsArray: parsed search terms`
      - `locationQuery: parsed location, when detected`
      - `maxCrawledPlacesPerSearch: maxResults`
-     - `maxCrawledPlaces: up to 2x maxResults, capped at 100`
+     - `maxCrawledPlaces: exactly maxResults`
      - `language: "en" or "es"`
 5. Results are normalized and persisted in `lead_finder_results`.
 
 ## Notes
 
 - The provider enforces bounds: `maxResults` in `[1, 100]`.
+- The provider performs one Apify run per user search and hard-caps crawl size to the requested amount to control credit spend.
 - Free-form requests are parsed into search terms plus location. Example: `Schools in Malaga city` becomes terms `school`, `high school` and location `Malaga, Spain`.
 - HTTP timeout is controlled by `APIFY_TIMEOUT_SECONDS` (clamped to `[30, 600]`).
 - If `LEAD_FINDER_PROVIDER=apify` but token/actor is missing, the job fails with explicit error and run status becomes `failed`.
