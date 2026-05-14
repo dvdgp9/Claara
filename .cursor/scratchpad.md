@@ -1078,10 +1078,10 @@ Provider contract propuesto:
 - [x] Task 2: Database migration for Lead Finder.
 - [x] Task 3: Backend repos and provider interface.
 - [x] Task 4: Async job integration.
-- [ ] Task 5: API endpoints.
-- [ ] Task 6: Main gesture UI.
-- [ ] Task 7: Register gesture in navigation.
-- [ ] Task 8: Export.
+- [x] Task 5: API endpoints.
+- [x] Task 6: Main gesture UI.
+- [x] Task 7: Register gesture in navigation.
+- [x] Task 8: Export.
 - [ ] Task 9: Provider real integration.
 - [ ] Task 10: Manual QA.
 
@@ -1125,6 +1125,25 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - Si falla el procesamiento, el job queda failed por el catch global y el run queda `failed` mediante `LeadFinderRepo::markRunFailed()`.
 - Validado con `php -l public/api/jobs/process.php`.
 
+2026-05-14 Task 5 findings:
+- Creados endpoints en `public/api/gestures/lead-finder/`:
+  - `search.php`: crea run + background job `lead-finder` y vincula `job_id`.
+  - `get.php`: devuelve run + resultados.
+  - `history.php`: lista runs del usuario.
+  - `update-result.php`: edición de fila y estado (`pending|validated|rejected`).
+  - `export.php`: export CSV por descarga directa.
+  - `delete.php`: borra run (cascade de resultados).
+- Todos aplican sesión, validación de acceso al gesture (`lead-finder`) y CSRF en endpoints mutables.
+- Validación de sintaxis completada con `php -l` en los seis endpoints.
+
+2026-05-14 Task 6-8 findings:
+- Creada pantalla principal `public/gestos/lead-finder.php` con sidebar/historial del patrón de gestures, input mínimo, selector compacto de resultados, chips de ejemplo, estados empty/loading/error/result y tabla editable.
+- Añadido `public/assets/js/gesture-lead-finder.js` para crear búsquedas, despertar worker, pollear estado, cargar historial, editar/validar/rechazar filas, borrar runs y descargar CSV.
+- Añadido CSS nuevo en `public/assets/css/styles.css` y enlazado desde `public/includes/head.php`, evitando CSS inline.
+- Registrado Lead Finder en `public/gestos/index.php` y acceso por defecto en `UserFeatureAccessRepo`.
+- Export CSV queda implementado y conectado desde UI. XLSX queda diferido hasta decidir dependencia/formato; el MVP usa CSV porque Excel lo abre correctamente y no añade librerías nuevas.
+- Validación local completada con `php -l` en PHP modificado/endpoints y `node --check` en el JS.
+
 ---
 
 # Current Status / Progress Tracking
@@ -1145,6 +1164,8 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - 2026-05-13 (Executor): Lead Finder Task 2 completada. Creada migración `016_lead_finder.sql` para runs/results y registro del feature. Pendiente de ejecutar cuando el usuario lo valide.
 - 2026-05-14 (Executor): Lead Finder Task 3 completada. Añadidos repo backend, contrato de provider y provider mock; sintaxis validada y provider probado.
 - 2026-05-14 (Executor): Lead Finder Task 4 completada. Integrado job type `lead-finder` en el worker con progreso, provider mock y persistencia de resultados.
+- 2026-05-14 (Executor): Lead Finder Task 5 completada. Endpoints API listos para search/get/history/update/export/delete con auth/csrf.
+- 2026-05-14 (Executor): Lead Finder Tasks 6-8 completadas. UI principal, registro del gesture, edición/validación de resultados e export CSV implementados con provider mock.
 
 # Executor's Feedback or Assistance Requests
 
@@ -1158,6 +1179,8 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - Lead Finder: Task 2 completada. Solicitud al usuario/planner: validar migración antes de ejecutarla; siguiente paso de implementación sería Task 3, repositorio backend + provider mock.
 - Lead Finder: Task 3 completada. Siguiente paso sugerido: Task 4, integrar job type `lead-finder` en `public/api/jobs/process.php`.
 - Lead Finder: Task 4 completada. Siguiente paso sugerido: Task 5, crear endpoints `search/get/history/update-result/export/delete`.
+- Lead Finder: Task 5 completada. Siguiente paso sugerido: Task 6, construir `public/gestos/lead-finder.php` + `public/assets/js/gesture-lead-finder.js` con UX completa.
+- Lead Finder: Tasks 6-8 completadas. Siguiente paso sugerido: Task 10, QA manual en producción con provider mock; Task 9 queda bloqueada hasta elegir API real y revisar documentación actualizada.
 
 # Lessons
 

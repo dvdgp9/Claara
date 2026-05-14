@@ -29,6 +29,7 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
+  <link rel="stylesheet" href="/assets/css/styles.css">
   <script>
     window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';
     // Refresh CSRF token periódicamente para evitar expiración por inactividad

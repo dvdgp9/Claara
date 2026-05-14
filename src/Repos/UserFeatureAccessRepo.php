@@ -13,6 +13,7 @@ class UserFeatureAccessRepo
         'gesture:image-editor' => true,
         'gesture:content-repurposer' => true,
         'gesture:sop-generator' => true,
+        'gesture:lead-finder' => true,
     ];
 
     private PDO $pdo;
