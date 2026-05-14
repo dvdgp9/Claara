@@ -90,7 +90,7 @@ $headerDrawerId = 'lead-finder-history-drawer';
 
                 <div class="grid grid-cols-[1fr_auto] gap-3 items-end">
                   <div class="space-y-2">
-                    <label for="lead-max-results" class="block text-sm font-semibold text-slate-800">Max results</label>
+                    <label for="lead-max-results" class="block text-sm font-semibold text-slate-800">Up to results</label>
                     <select id="lead-max-results" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium text-slate-700 input-focus">
                       <option value="25">25</option>
                       <option value="50">50</option>
@@ -149,7 +149,7 @@ $headerDrawerId = 'lead-finder-history-drawer';
                     <i class="iconoir-table-rows"></i>
                     <span class="text-sm font-semibold">No results loaded</span>
                   </div>
-                  <p class="text-sm text-slate-500 leading-relaxed">Run a search to build a reviewable lead list. Results will appear as editable rows with source, confidence and validation status.</p>
+                  <p class="text-sm text-slate-500 leading-relaxed">Run a search to build a reviewable lead list. Results include public profile data, while email coverage depends on source availability.</p>
                 </div>
               </div>
             </div>
@@ -159,7 +159,7 @@ $headerDrawerId = 'lead-finder-history-drawer';
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-4 lg:p-5">
               <div>
                 <h3 class="font-bold text-slate-950">Review queue</h3>
-                <p class="text-sm text-slate-500">Edit fields, validate useful leads, reject noise, then export.</p>
+                <p class="text-sm text-slate-500">Edit fields, validate useful leads, reject noise, then export. Missing emails can be enriched in a later step.</p>
               </div>
               <div class="flex items-center gap-2">
                 <button id="export-csv-btn" class="lead-finder-icon-btn" title="Export CSV">

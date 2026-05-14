@@ -303,7 +303,7 @@
       <tr data-id="${row.id}">
         <td><input class="lead-finder-cell-input" data-field="name" value="${attr(row.name)}"></td>
         <td><input class="lead-finder-cell-input" data-field="website" value="${attr(row.website)}"></td>
-        <td><input class="lead-finder-cell-input" data-field="email" value="${attr(row.email)}"></td>
+        <td><input class="lead-finder-cell-input ${emailInputClass(row.email)}" data-field="email" value="${attr(row.email)}" placeholder="Not found yet"></td>
         <td><input class="lead-finder-cell-input" data-field="phone" value="${attr(row.phone)}"></td>
         <td><input class="lead-finder-cell-input" data-field="address" value="${attr(row.address)}"></td>
         <td><input class="lead-finder-cell-input" data-field="confidence" value="${attr(confidencePercent(row.confidence))}"></td>
@@ -345,6 +345,9 @@
   async function handleResultChange(event) {
     const field = event.target.closest('[data-field]');
     if (!field) return;
+    if (field.dataset.field === 'email') {
+      field.classList.toggle('lead-finder-cell-input-empty', field.value.trim() === '');
+    }
     await saveRow(field.closest('tr'));
   }
 
@@ -493,5 +496,9 @@
     const number = parseFloat(String(value || '').replace('%', ''));
     if (Number.isNaN(number)) return null;
     return Math.max(0, Math.min(1, number > 1 ? number / 100 : number));
+  }
+
+  function emailInputClass(value) {
+    return String(value || '').trim() === '' ? 'lead-finder-cell-input-empty' : '';
   }
 })();
