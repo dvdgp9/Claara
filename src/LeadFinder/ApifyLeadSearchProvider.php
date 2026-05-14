@@ -79,11 +79,18 @@ class ApifyLeadSearchProvider implements LeadSearchProvider
         );
 
         $input = [
-            'searchStringsArray' => [$query],
+            'searchStringsArray' => $this->searchTermsFor($query),
             'maxCrawledPlacesPerSearch' => $maxResults,
-            'maxCrawledPlaces' => $maxResults,
+            'maxCrawledPlaces' => max($maxResults, min($maxResults * 2, 100)),
             'language' => $language,
+            'skipClosedPlaces' => false,
+            'searchMatching' => 'all',
         ];
+
+        $locationQuery = $this->locationQueryFor($query);
+        if ($locationQuery !== '') {
+            $input['locationQuery'] = $locationQuery;
+        }
 
         $payload = json_encode($input);
         if ($payload === false) {
@@ -131,6 +138,86 @@ class ApifyLeadSearchProvider implements LeadSearchProvider
     {
         $q = mb_strtolower($query);
         return preg_match('/\b(colegio|instituto|escuela|en|m[áa]laga|valencia|castell[oó]n)\b/u', $q) === 1;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function searchTermsFor(string $query): array
+    {
+        $subject = $this->subjectFromQuery($query);
+        $lower = mb_strtolower($subject);
+
+        if (preg_match('/\b(school|schools|colegio|colegios|escuela|escuelas)\b/u', $lower) === 1) {
+            return $this->uniqueTerms(['school', 'high school']);
+        }
+
+        if (preg_match('/\b(institute|institutes|instituto|institutos)\b/u', $lower) === 1) {
+            return $this->uniqueTerms(['institute', 'high school']);
+        }
+
+        if (preg_match('/\b(dental|dentist|dentista|dentistas|clinica dental|clinicas dentales)\b/u', $lower) === 1) {
+            return $this->uniqueTerms(['dentist', 'dental clinic']);
+        }
+
+        if (preg_match('/\b(hotel|hotels|hostal|hostels)\b/u', $lower) === 1) {
+            return $this->uniqueTerms(['hotel']);
+        }
+
+        return $this->uniqueTerms([$subject !== '' ? $subject : $query]);
+    }
+
+    private function subjectFromQuery(string $query): string
+    {
+        if (preg_match('/^(.+?)\s+(?:in|near|around|at|en)\s+.+$/iu', $query, $matches) === 1) {
+            return trim($matches[1]);
+        }
+
+        return trim($this->queryVariant($query));
+    }
+
+    private function locationQueryFor(string $query): string
+    {
+        if (preg_match('/\b(?:in|near|around|at|en)\s+(.+)$/iu', $query, $matches) !== 1) {
+            return '';
+        }
+
+        $location = trim($matches[1]);
+        $location = preg_replace('/\bcity\b/i', '', $location);
+        $location = preg_replace('/\s+/', ' ', (string)$location);
+        $location = trim((string)$location, " \t\n\r\0\x0B,.;");
+
+        if ($location === '') {
+            return '';
+        }
+
+        if ($this->looksSpanish($query) && !preg_match('/\bspain\b|\bespaña\b/iu', $location)) {
+            $location .= ', Spain';
+        }
+
+        return $location;
+    }
+
+    /**
+     * @param array<int, string> $terms
+     * @return array<int, string>
+     */
+    private function uniqueTerms(array $terms): array
+    {
+        $seen = [];
+        $out = [];
+
+        foreach ($terms as $term) {
+            $term = trim($term);
+            $key = mb_strtolower($term);
+            if ($term === '' || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $out[] = $term;
+        }
+
+        return $out !== [] ? $out : ['business'];
     }
 
     private function queryVariant(string $query): string

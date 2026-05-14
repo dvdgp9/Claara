@@ -8,7 +8,7 @@ Production provider for `Lead Finder` gesture. Replaces mock data with real resu
 ```env
 LEAD_FINDER_PROVIDER=apify
 APIFY_API_TOKEN=...
-APIFY_ACTOR_ID=compass/google-maps-extractor
+APIFY_ACTOR_ID=compass/crawler-google-places
 APIFY_TIMEOUT_SECONDS=120
 ```
 
@@ -22,15 +22,17 @@ APIFY_TIMEOUT_SECONDS=120
 4. `ApifyLeadSearchProvider` executes:
    - `POST https://api.apify.com/v2/acts/{actorId}/run-sync-get-dataset-items`
    - Input payload:
-     - `searchStringsArray: [query]`
+     - `searchStringsArray: parsed search terms`
+     - `locationQuery: parsed location, when detected`
      - `maxCrawledPlacesPerSearch: maxResults`
-     - `maxCrawledPlaces: maxResults`
-     - `language: "en"`
+     - `maxCrawledPlaces: up to 2x maxResults, capped at 100`
+     - `language: "en" or "es"`
 5. Results are normalized and persisted in `lead_finder_results`.
 
 ## Notes
 
 - The provider enforces bounds: `maxResults` in `[1, 100]`.
+- Free-form requests are parsed into search terms plus location. Example: `Schools in Malaga city` becomes terms `school`, `high school` and location `Malaga, Spain`.
 - HTTP timeout is controlled by `APIFY_TIMEOUT_SECONDS` (clamped to `[30, 600]`).
 - If `LEAD_FINDER_PROVIDER=apify` but token/actor is missing, the job fails with explicit error and run status becomes `failed`.
 - `raw_data` stores original provider row for traceability.
@@ -42,4 +44,3 @@ APIFY_TIMEOUT_SECONDS=120
 3. Confirm rows include `name`, and where available `website/email/phone/address`.
 4. Edit/validate/reject one row and export CSV.
 5. Confirm history load and deletion still work.
-

@@ -1167,6 +1167,7 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - 2026-05-14 (Executor): Lead Finder Task 5 completada. Endpoints API listos para search/get/history/update/export/delete con auth/csrf.
 - 2026-05-14 (Executor): Lead Finder Tasks 6-8 completadas. UI principal, registro del gesture, edición/validación de resultados e export CSV implementados con provider mock.
 - 2026-05-14 (Executor): Lead Finder Task 9 iniciada y casi completada. Integrado provider real de Apify con selección por `.env`, manteniendo mock como fallback.
+- 2026-05-14 (Executor): Lead Finder Apify ajustado para `compass/crawler-google-places`: parsing de query libre a `searchStringsArray` + `locationQuery`, con cap global algo mayor para mejorar cobertura sin multiplicar runs.
 
 # Executor's Feedback or Assistance Requests
 
