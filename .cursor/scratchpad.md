@@ -1124,6 +1124,11 @@ Recommended build order:
 3. Build Phase F and ship to a limited internal/test account.
 4. Only then start Microsoft/Slack providers.
 
+2026-05-15 Executor progress:
+- Phase A started.
+- Created migration `docs/migrations/017_connectors.sql` with connector provider catalog, accounts, encrypted token storage, selected items and import tracking.
+- Migration is not executed yet. It should be reviewed and then applied explicitly because it touches production DB.
+
 ---
 
 ## Feature: Lead Finder Gesture
