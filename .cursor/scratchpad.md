@@ -1127,7 +1127,9 @@ Recommended build order:
 2026-05-15 Executor progress:
 - Phase A started.
 - Created migration `docs/migrations/017_connectors.sql` with connector provider catalog, accounts, encrypted token storage, selected items and import tracking.
-- Migration is not executed yet. It should be reviewed and then applied explicitly because it touches production DB.
+- Migration was executed and marked in production on 2026-05-15.
+- Phase B started.
+- Added connector contracts, token crypto and repos under `src/Connectors/`; no UX/API endpoints yet.
 
 ---
 

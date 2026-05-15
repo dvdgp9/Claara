@@ -50,6 +50,16 @@ require_once dirname(__DIR__) . '/LeadFinder/MockLeadSearchProvider.php';
 require_once dirname(__DIR__) . '/LeadFinder/ApifyLeadSearchProvider.php';
 require_once dirname(__DIR__) . '/LeadFinder/LeadFinderRepo.php';
 
+// External connectors
+require_once dirname(__DIR__) . '/Connectors/ConnectorProviderInterface.php';
+require_once dirname(__DIR__) . '/Connectors/ConnectorItemImporterInterface.php';
+require_once dirname(__DIR__) . '/Connectors/ConnectorTokenCrypto.php';
+require_once dirname(__DIR__) . '/Connectors/ConnectorProvidersRepo.php';
+require_once dirname(__DIR__) . '/Connectors/ConnectorAccountsRepo.php';
+require_once dirname(__DIR__) . '/Connectors/ConnectorTokensRepo.php';
+require_once dirname(__DIR__) . '/Connectors/ConnectorItemsRepo.php';
+require_once dirname(__DIR__) . '/Connectors/ConnectorImportsRepo.php';
+
 // Utils
 require_once dirname(__DIR__) . '/Utils/DocumentGenerator.php';
 
