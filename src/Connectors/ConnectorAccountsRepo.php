@@ -93,6 +93,71 @@ class ConnectorAccountsRepo
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function listProviderStatusForUser(int $userId): array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT
+                p.provider_key,
+                p.display_name,
+                p.description,
+                p.icon,
+                p.is_enabled,
+                a.id AS account_id,
+                a.external_email,
+                a.external_name,
+                a.display_name AS account_display_name,
+                a.status AS account_status,
+                a.last_sync_at,
+                a.last_error_message,
+                a.connected_at,
+                COUNT(DISTINCT i.id) AS item_count,
+                COUNT(DISTINCT CASE WHEN i.status = "imported" THEN i.id END) AS imported_count
+            FROM connector_providers p
+            LEFT JOIN connector_accounts a
+                ON a.provider_key = p.provider_key
+                AND a.user_id = :user_id
+                AND a.status <> "disconnected"
+            LEFT JOIN connector_items i
+                ON i.account_id = a.id
+                AND i.status <> "removed"
+            GROUP BY
+                p.provider_key, p.display_name, p.description, p.icon, p.is_enabled,
+                a.id, a.external_email, a.external_name, a.display_name, a.status,
+                a.last_sync_at, a.last_error_message, a.connected_at
+            ORDER BY p.sort_order, p.display_name
+        ');
+        $stmt->execute(['user_id' => $userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function adminSummary(): array
+    {
+        $stmt = $this->pdo->query('
+            SELECT
+                p.provider_key,
+                p.display_name,
+                p.description,
+                p.icon,
+                p.is_enabled,
+                COUNT(DISTINCT CASE WHEN a.status = "connected" THEN a.id END) AS connected_accounts,
+                COUNT(DISTINCT CASE WHEN a.status = "error" THEN a.id END) AS error_accounts,
+                COUNT(DISTINCT i.id) AS selected_items,
+                COUNT(DISTINCT CASE WHEN i.status = "imported" THEN i.id END) AS imported_items,
+                MAX(a.last_sync_at) AS last_sync_at,
+                MAX(a.connected_at) AS last_connected_at
+            FROM connector_providers p
+            LEFT JOIN connector_accounts a
+                ON a.provider_key = p.provider_key
+                AND a.status <> "disconnected"
+            LEFT JOIN connector_items i
+                ON i.account_id = a.id
+                AND i.status <> "removed"
+            GROUP BY p.provider_key, p.display_name, p.description, p.icon, p.is_enabled
+            ORDER BY p.sort_order, p.display_name
+        ');
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function markDisconnected(int $accountId, int $userId): bool
     {
         $stmt = $this->pdo->prepare('
@@ -130,4 +195,3 @@ class ConnectorAccountsRepo
         return $value === '' ? null : mb_substr($value, 0, $maxLength);
     }
 }
-

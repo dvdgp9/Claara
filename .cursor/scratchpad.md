@@ -1130,6 +1130,9 @@ Recommended build order:
 - Migration was executed and marked in production on 2026-05-15.
 - Phase B started.
 - Added connector contracts, token crypto and repos under `src/Connectors/`; no UX/API endpoints yet.
+- UX decision: use a user-owned `Connectors` page first, with an admin global overview for provider health/status.
+- Phase C started.
+- Added read-only connector shell pages (`/connectors.php`, `/admin/connectors.php`), navigation entry, CSS/JS assets and read-only status endpoints. OAuth actions remain disabled until Phase D/F.
 
 ---
 

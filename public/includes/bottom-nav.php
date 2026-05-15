@@ -4,7 +4,7 @@
  * Includes quick-access modals for Voices and Gestures
  * 
  * Variables esperadas:
- * - $activeTab: active tab ('conversations', 'voices', 'gestures', 'account')
+ * - $activeTab: active tab ('conversations', 'voices', 'gestures', 'connectors', 'account')
  */
 require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
@@ -96,6 +96,13 @@ $tabs = [
         'label' => 'Gestures',
         'href' => '/gestos/',
         'modal' => 'mobile-gestures-modal'
+    ],
+    'connectors' => [
+        'icon' => 'iconoir-cloud-sync',
+        'iconActive' => 'iconoir-cloud-sync',
+        'label' => 'Sources',
+        'href' => '/connectors.php',
+        'modal' => false
     ],
     'account' => [
         'icon' => 'iconoir-user',

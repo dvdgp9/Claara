@@ -50,6 +50,16 @@ $tabs = [
         'hoverIcon' => 'iconoir-magic-wand',
         'newLabel' => 'View all',
         'newHref' => '/gestos/'
+    ],
+    'connectors' => [
+        'icon' => 'iconoir-cloud-sync',
+        'label' => 'Sources',
+        'href' => '/connectors.php',
+        'title' => 'Connected sources',
+        'hoverTitle' => 'External sources',
+        'hoverIcon' => 'iconoir-cloud-sync',
+        'newLabel' => 'Manage sources',
+        'newHref' => '/connectors.php'
     ]
 ];
 
@@ -205,6 +215,27 @@ $voicesList = [
                 </a>
               <?php endif; ?>
             <?php endforeach; ?>
+          <?php elseif ($tabId === 'connectors'): ?>
+            <a href="/connectors.php" class="hover-panel-item">
+              <div class="hover-panel-item-icon">
+                <i class="iconoir-google-drive"></i>
+              </div>
+              <div class="hover-panel-item-info">
+                <div class="hover-panel-item-title">Google Drive</div>
+                <div class="hover-panel-item-meta">Selected files first</div>
+              </div>
+            </a>
+            <?php if (!empty($user['is_superadmin']) || in_array('admin', $user['roles'] ?? [], true)): ?>
+              <a href="/admin/connectors.php" class="hover-panel-item">
+                <div class="hover-panel-item-icon">
+                  <i class="iconoir-dashboard-dots"></i>
+                </div>
+                <div class="hover-panel-item-info">
+                  <div class="hover-panel-item-title">Admin overview</div>
+                  <div class="hover-panel-item-meta">Provider health</div>
+                </div>
+              </a>
+            <?php endif; ?>
           <?php endif; ?>
         </div>
         

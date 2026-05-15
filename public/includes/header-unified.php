@@ -153,6 +153,10 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
           <i class="iconoir-user"></i>
           <span>My account</span>
         </a>
+        <a href="/connectors.php" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
+          <i class="iconoir-cloud-sync"></i>
+          <span>Connectors</span>
+        </a>
         
         <?php if (isset($user) && in_array('admin', $user['roles'] ?? [], true)): ?>
           <a href="/admin/users.php" id="admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
@@ -170,6 +174,10 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
           <a href="/admin/context-manager.php" id="context-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
             <i class="iconoir-folder"></i>
             <span>Context manager</span>
+          </a>
+          <a href="/admin/connectors.php" id="connectors-admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <i class="iconoir-cloud-sync"></i>
+            <span>Connector overview</span>
           </a>
           <?php if (!empty($user['is_superadmin'])): ?>
             <a href="/admin/models.php" id="models-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
