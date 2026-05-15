@@ -943,6 +943,158 @@ iaiaPRO quiere añadir conectores para Google Drive, OneDrive, Slack y Microsoft
 - Teams last.
 - Success criteria: no empezar Teams hasta tener framework + OneDrive validado en tenant Microsoft real.
 
+### Technical Implementation Plan
+
+Implementation principle: build the connector foundation for multiple providers, but ship only Google Drive fast path first. Avoid broad Drive/Graph scopes until the governance tasks explicitly approve them.
+
+#### Phase A: Data model and configuration
+- Add migration `017_connectors.sql`.
+- Tables:
+  - `connector_providers`: static catalog (`google_drive`, `onedrive`, `slack`, `teams`), enabled flag, display metadata.
+  - `connector_accounts`: one row per connected external account/workspace per iaiaPRO user; stores provider, user id, external account id/email/name, connection status, last sync/error fields.
+  - `connector_tokens`: encrypted OAuth tokens linked to `connector_accounts`; stores access token, refresh token, expiry, scopes and token metadata.
+  - `connector_items`: normalized external resources selected/imported by users; provider item id, item type, name, mime type, source URL, checksum/version, sync status.
+  - `connector_imports`: import attempts from connector items into iaiaPRO context; status, context target, document id, error message.
+- Env/config:
+  - `CONNECTOR_TOKEN_ENCRYPTION_KEY`
+  - `GOOGLE_CLIENT_ID`
+  - `GOOGLE_CLIENT_SECRET`
+  - `GOOGLE_REDIRECT_URI`
+  - later: Microsoft/Slack equivalents.
+- Success criteria:
+  - Migration runs cleanly on existing DB.
+  - Foreign keys use compatible `BIGINT UNSIGNED` types.
+  - Tokens are never stored in plaintext.
+
+#### Phase B: Connector domain layer
+- Add namespace `src/Connectors/`.
+- Core interfaces/classes:
+  - `ConnectorProviderInterface`: provider key, OAuth URLs, token exchange/refresh, account profile fetch.
+  - `ConnectorItemImporterInterface`: import selected external item into normalized content.
+  - `ConnectorTokenCrypto`: encrypt/decrypt OAuth tokens using `CONNECTOR_TOKEN_ENCRYPTION_KEY`.
+  - `ConnectorAccountsRepo`
+  - `ConnectorTokensRepo`
+  - `ConnectorItemsRepo`
+  - `ConnectorImportsRepo`
+- Success criteria:
+  - Unit-style CLI smoke test can create a fake account/item/import without touching provider APIs.
+  - Token crypto round trip works and plaintext token is not visible in DB fields.
+
+#### Phase C: Admin/user connector UI shell
+- Add page `public/admin/connectors.php` or `public/connectors.php` depending product decision.
+- MVP UI:
+  - provider cards with status: `Not connected`, `Connected`, `Error`, `Needs attention`.
+  - connect/disconnect buttons.
+  - last sync/import/error summary.
+  - selected/imported item list.
+- Success criteria:
+  - Existing sidebar/admin layout remains consistent.
+  - No provider-specific UX leaks into the shared shell except provider name/icon/status.
+
+#### Phase D: Shared connector API endpoints
+- Add endpoints under `public/api/connectors/`:
+  - `providers.php`: list enabled providers and connection status.
+  - `connect.php`: start OAuth for provider.
+  - `callback.php`: receive OAuth callback, exchange code, create/update account.
+  - `disconnect.php`: revoke/delete local connection.
+  - `items.php`: list selected/imported connector items.
+  - `import.php`: queue import of selected items.
+  - `sync.php`: manual sync/import trigger.
+- Apply session auth, ownership checks and CSRF for mutable routes.
+- Success criteria:
+  - Unauthenticated requests rejected.
+  - Users cannot see/disconnect/import another user's connector accounts.
+  - OAuth `state` is signed/session-bound to prevent CSRF.
+
+#### Phase E: Background jobs
+- Add job types in `public/api/jobs/process.php`:
+  - `connector-import`
+  - later `connector-sync`
+- `connector-import` flow:
+  - load connector item/account/token.
+  - refresh token if needed.
+  - fetch/download external content.
+  - extract text or file content using existing ingestion utilities where possible.
+  - create/update `context_documents` and downstream RAG/indexing using existing context pipeline.
+  - update `connector_imports` status and item sync status.
+- Success criteria:
+  - A selected Google Drive file can be imported without blocking the HTTP request.
+  - Failed imports preserve a useful error for UI/admin debugging.
+
+#### Phase F: Google Drive fast path provider
+- Scope strategy: `https://www.googleapis.com/auth/drive.file` only.
+- UX strategy: Google Picker chooses files explicitly shared with iaiaPRO.
+- Provider files:
+  - `src/Connectors/Google/GoogleDriveConnector.php`
+  - `src/Connectors/Google/GoogleDriveClient.php`
+  - `public/assets/js/google-drive-picker.js`
+- Flow:
+  - user connects Google OAuth.
+  - UI opens Google Picker with app client id and OAuth token.
+  - selected files are saved as `connector_items`.
+  - user clicks import, creating `connector-import` jobs.
+- Supported file types for v1:
+  - Google Docs exported as plain text or docx/pdf, depending existing extractor support.
+  - PDFs, text files, docx if already supported by ingestion.
+- Success criteria:
+  - No `drive.readonly` or broad Drive scope is requested.
+  - User can select one file via Picker, import it, and see it in Context Manager.
+  - Revoking/disconnecting removes local tokens and disables future imports.
+
+#### Phase G: OneDrive provider
+- Use Microsoft Graph delegated permissions with least privilege.
+- Candidate scopes to validate in Task 0:
+  - `offline_access`
+  - `Files.Read.Selected` if product flow supports selected files.
+  - fallback `Files.Read` only if selected-file flow is insufficient.
+- Add:
+  - `src/Connectors/Microsoft/OneDriveConnector.php`
+  - `src/Connectors/Microsoft/GraphClient.php`
+- Success criteria:
+  - Works in a Microsoft test tenant.
+  - Documented whether admin consent is required under restrictive tenant settings.
+
+#### Phase H: Slack provider
+- Use Slack OAuth with minimum channel/file scopes.
+- Candidate scopes to validate:
+  - read selected channels/messages only where possible.
+  - avoid broad workspace history ingestion as MVP default.
+- MVP:
+  - connect workspace.
+  - select channel.
+  - import recent messages or pinned/files into context.
+- Success criteria:
+  - Workspace admin approval requirements documented.
+  - Imported messages include channel/source metadata and timestamps.
+
+#### Phase I: Teams provider
+- Defer until Microsoft framework and OneDrive are stable.
+- Use Microsoft Graph with explicit tenant admin consent flow.
+- MVP decision needed:
+  - Teams channel messages?
+  - Teams files via SharePoint/OneDrive?
+  - Meeting transcripts?
+- Success criteria:
+  - Admin consent package tested with a real tenant admin.
+  - Permissions are documented in customer-facing language.
+
+#### Phase J: QA, security and release gates
+- Test matrix:
+  - connect/disconnect/reconnect each provider.
+  - token refresh and expired token recovery.
+  - import success/failure paths.
+  - ownership checks.
+  - context document visibility.
+  - provider revocation outside iaiaPRO.
+- Security gates:
+  - encrypted token storage verified.
+  - no token leakage in logs/errors.
+  - OAuth state validation.
+  - least-privilege scopes confirmed.
+  - deletion/revocation path documented.
+- Release gate:
+  - do not expose connector to production users until provider-specific OAuth/admin consent checklist is complete.
+
 ### Project Status Board: External Connectors
 
 - [ ] Task 0: OAuth/compliance discovery before coding.
@@ -951,10 +1103,26 @@ iaiaPRO quiere añadir conectores para Google Drive, OneDrive, Slack y Microsoft
 - [ ] Task 3: Microsoft tenant admin consent package.
 - [ ] Task 4: Shared connector foundation.
 - [ ] Task 5: Connector implementation order.
+- [ ] Phase A: Data model and configuration.
+- [ ] Phase B: Connector domain layer.
+- [ ] Phase C: Admin/user connector UI shell.
+- [ ] Phase D: Shared connector API endpoints.
+- [ ] Phase E: Background jobs.
+- [ ] Phase F: Google Drive fast path provider.
+- [ ] Phase G: OneDrive provider.
+- [ ] Phase H: Slack provider.
+- [ ] Phase I: Teams provider.
+- [ ] Phase J: QA, security and release gates.
 
 ### Planner Notes
 
 Recommendation as of 2026-05-15: choose Google Drive `drive.file` + Picker for v1 unless the business explicitly needs full Drive crawling. Treat Google restricted scope verification/CASA and Microsoft tenant admin consent as launch blockers with their own timeline, not as normal engineering tasks.
+
+Recommended build order:
+1. Finish Tasks 0-2 for Google Drive fast path in parallel with Phase A.
+2. Build Phases A-E as shared foundation.
+3. Build Phase F and ship to a limited internal/test account.
+4. Only then start Microsoft/Slack providers.
 
 ---
 
