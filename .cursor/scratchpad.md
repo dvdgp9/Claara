@@ -882,6 +882,82 @@ Actualmente los archivos solo se pueden adjuntar al chat mediante el botón de a
 
 ---
 
+## Feature: External Connectors Governance
+
+### Background and Motivation
+iaiaPRO quiere añadir conectores para Google Drive, OneDrive, Slack y Microsoft Teams para importar contenido al contexto. La estimación técnica inicial no debe tratar OAuth y consentimientos como simples prerequisitos ya resueltos: Google y Microsoft tienen procesos de verificación/aprobación que pueden bloquear lanzamiento aunque el código esté listo.
+
+### Key Challenges and Analysis
+
+1. **Google OAuth verification can be the critical path**
+   - Google Drive scopes amplios como `drive.readonly` o `drive` pueden activar verificación de scopes restringidos y security assessment si los datos pasan por servidores de la app.
+   - Google recomienda scopes mínimos. Para Drive, el camino preferente del MVP debe ser `drive.file` + Google Picker, donde el usuario selecciona explícitamente los archivos que comparte con iaiaPRO.
+   - Decisión de producto: aceptar el modelo "user-selected files only" en v1 para evitar una revisión CASA larga/costosa, o asumir el proceso burocrático si se necesita indexar Drive completo.
+
+2. **Microsoft Graph admin consent is a commercial onboarding task**
+   - OneDrive y Teams vía Microsoft Graph pueden requerir admin consent en el tenant del cliente, especialmente en entornos empresariales con consentimiento de usuario restringido.
+   - Esto no es solo implementación: cada cliente B2B puede necesitar que su IT admin apruebe la app, revise permisos y acepte el flujo de consent.
+   - Debemos preparar documentación, pantalla de estado y guía para admins antes de venderlo como feature empresarial.
+
+3. **Scope minimization changes the MVP**
+   - Google Drive MVP recomendado: importar archivos seleccionados por el usuario, no sincronizar todo Drive.
+   - OneDrive MVP recomendado: usar delegated permissions de menor alcance posible y probar en un tenant real con políticas de consentimiento restrictivas.
+   - Teams MVP debe ir después de OneDrive porque añade más fricción de permisos, canales, archivos y tenant governance.
+
+### High-level Task Breakdown
+
+#### Task 0: OAuth/compliance discovery before coding
+- Definir scopes exactos por conector.
+- Clasificar cada scope: non-sensitive/sensitive/restricted para Google; delegated/application y admin-consent-required para Microsoft.
+- Success criteria: tabla aprobada con scope, motivo, alternativa de menor privilegio y bloqueo comercial/técnico.
+
+#### Task 1: Google Drive launch path decision
+- Evaluar dos rutas:
+  - Fast path: `drive.file` + Google Picker + importación de archivos seleccionados.
+  - Full Drive path: scopes amplios + verificación OAuth/restricted scopes + posible CASA/security assessment.
+- Success criteria: decisión documentada antes de diseñar la BD y UX del conector.
+- Estimated process time:
+  - Fast path: 2-5 días de setup OAuth/branding/políticas si no hay incidencias.
+  - Full Drive path: varias semanas y posible security assessment anual si se usan restricted scopes con datos pasando por servidor.
+
+#### Task 2: Google OAuth readiness package
+- Preparar dominio verificado, OAuth consent screen, homepage pública, privacy policy, terms, data deletion/help contact y demo video si Google lo requiere.
+- Success criteria: checklist listo antes de mover el OAuth client a producción.
+
+#### Task 3: Microsoft tenant admin consent package
+- Definir permisos Microsoft Graph mínimos para OneDrive y Teams.
+- Preparar admin consent URL, explicación de permisos, guía de instalación para IT admin, guía de revocación y troubleshooting.
+- Success criteria: un admin de tenant externo puede aprobar la app sin intervención técnica directa.
+- Estimated process time:
+  - Internal/test tenant: 1-3 días.
+  - Cliente B2B nuevo: variable, normalmente dependiente del ciclo de aprobación de su IT/security.
+
+#### Task 4: Shared connector foundation
+- Implementar framework común de connectors, tokens, accounts, sync jobs, connector items y estado de sincronización.
+- Success criteria: Google Drive fast path puede conectarse, listar/seleccionar/importar y desconectarse sin tocar lógica específica de otros proveedores.
+
+#### Task 5: Connector implementation order
+- Google Drive fast path first.
+- OneDrive second.
+- Slack third.
+- Teams last.
+- Success criteria: no empezar Teams hasta tener framework + OneDrive validado en tenant Microsoft real.
+
+### Project Status Board: External Connectors
+
+- [ ] Task 0: OAuth/compliance discovery before coding.
+- [ ] Task 1: Google Drive launch path decision.
+- [ ] Task 2: Google OAuth readiness package.
+- [ ] Task 3: Microsoft tenant admin consent package.
+- [ ] Task 4: Shared connector foundation.
+- [ ] Task 5: Connector implementation order.
+
+### Planner Notes
+
+Recommendation as of 2026-05-15: choose Google Drive `drive.file` + Picker for v1 unless the business explicitly needs full Drive crawling. Treat Google restricted scope verification/CASA and Microsoft tenant admin consent as launch blockers with their own timeline, not as normal engineering tasks.
+
+---
+
 ## Feature: Lead Finder Gesture
 
 ### Background and Motivation
