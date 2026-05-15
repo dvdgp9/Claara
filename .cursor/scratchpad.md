@@ -1098,14 +1098,14 @@ Implementation principle: build the connector foundation for multiple providers,
 ### Project Status Board: External Connectors
 
 - [ ] Task 0: OAuth/compliance discovery before coding.
-- [ ] Task 1: Google Drive launch path decision.
+- [x] Task 1: Google Drive launch path decision.
 - [ ] Task 2: Google OAuth readiness package.
 - [ ] Task 3: Microsoft tenant admin consent package.
 - [ ] Task 4: Shared connector foundation.
-- [ ] Task 5: Connector implementation order.
-- [ ] Phase A: Data model and configuration.
-- [ ] Phase B: Connector domain layer.
-- [ ] Phase C: Admin/user connector UI shell.
+- [x] Task 5: Connector implementation order.
+- [x] Phase A: Data model and configuration.
+- [x] Phase B: Connector domain layer.
+- [x] Phase C: Admin/user connector UI shell.
 - [ ] Phase D: Shared connector API endpoints.
 - [ ] Phase E: Background jobs.
 - [ ] Phase F: Google Drive fast path provider.
