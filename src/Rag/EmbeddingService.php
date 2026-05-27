@@ -27,10 +27,15 @@ class EmbeddingService
     {
         $response = $this->request('/embeddings', [
             'model' => $this->model,
-            'input' => $text
+            'input' => $this->normalizeText($text)
         ]);
 
-        return $response['data'][0]['embedding'] ?? [];
+        $embedding = $response['data'][0]['embedding'] ?? [];
+        if (empty($embedding)) {
+            throw new \Exception('OpenRouter no devolvió embedding para el texto solicitado');
+        }
+
+        return $embedding;
     }
 
     /**
@@ -45,6 +50,8 @@ class EmbeddingService
             return [];
         }
 
+        $texts = array_values(array_map([$this, 'normalizeText'], $texts));
+
         $response = $this->request('/embeddings', [
             'model' => $this->model,
             'input' => $texts
@@ -57,7 +64,40 @@ class EmbeddingService
 
         // Ordenar por índice
         ksort($embeddings);
-        return array_values($embeddings);
+        $embeddings = array_values($embeddings);
+
+        if (count($embeddings) !== count($texts)) {
+            throw new \Exception('OpenRouter devolvió ' . count($embeddings) . ' embeddings para ' . count($texts) . ' textos');
+        }
+
+        return $embeddings;
+    }
+
+    /**
+     * Normaliza texto extraído de PDFs antes de enviarlo como JSON.
+     */
+    private function normalizeText(string $text): string
+    {
+        $text = str_replace("\0", '', $text);
+
+        if (function_exists('mb_check_encoding') && !mb_check_encoding($text, 'UTF-8')) {
+            $converted = @mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+            if (is_string($converted)) {
+                $text = $converted;
+            }
+        }
+
+        $clean = @iconv('UTF-8', 'UTF-8//IGNORE', $text);
+        if (is_string($clean)) {
+            $text = $clean;
+        }
+
+        $text = preg_replace('/[^\P{C}\t\n\r]+/u', '', $text);
+        if ($text === null) {
+            $text = '';
+        }
+
+        return trim($text);
     }
 
     /**
@@ -65,6 +105,14 @@ class EmbeddingService
      */
     private function request(string $path, array $body): array
     {
+        $payload = json_encode(
+            $body,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+        );
+        if ($payload === false) {
+            throw new \Exception('No se pudo codificar la petición JSON para OpenRouter: ' . json_last_error_msg());
+        }
+
         $ch = curl_init();
 
         curl_setopt_array($ch, [
@@ -72,7 +120,7 @@ class EmbeddingService
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 120,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($body),
+            CURLOPT_POSTFIELDS => $payload,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey,
