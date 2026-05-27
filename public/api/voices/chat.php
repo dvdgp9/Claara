@@ -32,7 +32,7 @@ use Repos\UsageLogRepo;
  * Falls back to treating the whole reply as plain text when parsing fails,
  * so a malformed response never breaks the chat.
  *
- * @return array{answer:string, sources:array, conflicts:array}
+ * @return array{answer:string, sources:array, conflicts:array, conflict_summary:?array}
  */
 function parseVoiceReply(string $raw): array
 {
@@ -69,15 +69,72 @@ function parseVoiceReply(string $raw): array
             }
         }
 
+        $conflictSummary = normalizeConflictSummary($data['conflict_summary'] ?? null);
+
         return [
             'answer' => (string)$data['answer_markdown'],
             'sources' => array_values(array_unique($sources)),
             'conflicts' => $conflicts,
+            'conflict_summary' => $conflictSummary,
         ];
     }
 
     // Fallback: render the raw text, no metadata.
-    return ['answer' => $raw, 'sources' => [], 'conflicts' => []];
+    return ['answer' => $raw, 'sources' => [], 'conflicts' => [], 'conflict_summary' => null];
+}
+
+function normalizeConflictSummary(mixed $raw): ?array
+{
+    if (!is_array($raw)) {
+        return null;
+    }
+
+    $hasConflict = filter_var($raw['has_conflict'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    if (!$hasConflict) {
+        return null;
+    }
+
+    $positions = [];
+    foreach ((array)($raw['positions'] ?? []) as $position) {
+        if (!is_array($position)) {
+            continue;
+        }
+        $claim = trim((string)($position['claim'] ?? ''));
+        if ($claim === '') {
+            continue;
+        }
+        $sources = array_values(array_filter(array_map(
+            static fn($x) => trim((string)$x),
+            (array)($position['sources'] ?? [])
+        ), static fn($x) => $x !== ''));
+        $positions[] = [
+            'claim' => $claim,
+            'document_count' => max(0, (int)($position['document_count'] ?? count($sources))),
+            'sources' => $sources,
+        ];
+    }
+
+    if (count($positions) < 2) {
+        return null;
+    }
+
+    $mostRecent = null;
+    if (isset($raw['most_recent']) && is_array($raw['most_recent'])) {
+        $mostRecent = [
+            'claim' => trim((string)($raw['most_recent']['claim'] ?? '')),
+            'source' => trim((string)($raw['most_recent']['source'] ?? '')),
+            'date' => trim((string)($raw['most_recent']['date'] ?? 'unknown')) ?: 'unknown',
+        ];
+    }
+
+    return [
+        'has_conflict' => true,
+        'topic' => trim((string)($raw['topic'] ?? '')),
+        'documents_considered' => max(0, (int)($raw['documents_considered'] ?? 0)),
+        'positions' => $positions,
+        'most_recent' => $mostRecent,
+        'official_source_note' => trim((string)($raw['official_source_note'] ?? '')),
+    ];
 }
 
 $user = Session::user();
@@ -123,7 +180,7 @@ if ($voiceContext->hasRagEnabled()) {
     $openrouterKey = Env::get('OPENROUTER_API_KEY');
     $qdrantHost = Env::get('QDRANT_HOST', 'localhost');
     $qdrantPort = (int) Env::get('QDRANT_PORT', 6333);
-    
+
     if ($openrouterKey) {
         $voiceContext->initRetriever($openrouterKey, $qdrantHost, $qdrantPort);
         $useRag = $voiceContext->isRagReady();
@@ -163,7 +220,7 @@ try {
         'google/gemini-3-flash-preview', // Forzado por código
         $systemPrompt
     );
-    
+
     $reply = $client->generateWithMessages($messages);
 } catch (\Exception $e) {
     Response::error('llm_error', 'Error generating response: ' . $e->getMessage(), 500);
@@ -178,6 +235,7 @@ $meta = [
     'source_match' => $useRag ? $voiceContext->computeSourceMatch($answer) : null,
     'sources' => $parsed['sources'],
     'conflicts' => $parsed['conflicts'],
+    'conflict_summary' => $parsed['conflict_summary'],
 ];
 
 // Guardar o actualizar ejecución

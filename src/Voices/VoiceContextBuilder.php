@@ -257,10 +257,22 @@ class VoiceContextBuilder
         $prompt .= "{\n";
         $prompt .= "  \"answer_markdown\": \"<your full answer, formatted in Markdown>\",\n";
         $prompt .= "  \"sources\": [\"<exact document name you relied on>\"],\n";
-        $prompt .= "  \"conflicts\": [{\"topic\": \"<short topic>\", \"sources\": [\"<doc A>\", \"<doc B>\"], \"note\": \"<how they disagree>\"}]\n";
+        $prompt .= "  \"conflicts\": [{\"topic\": \"<short topic>\", \"sources\": [\"<doc A>\", \"<doc B>\"], \"note\": \"<how they disagree>\"}],\n";
+        $prompt .= "  \"conflict_summary\": {\n";
+        $prompt .= "    \"has_conflict\": false,\n";
+        $prompt .= "    \"topic\": \"<topic analysed>\",\n";
+        $prompt .= "    \"documents_considered\": 0,\n";
+        $prompt .= "    \"positions\": [{\"claim\": \"<distinct answer/position>\", \"document_count\": 0, \"sources\": [\"<doc>\"]}],\n";
+        $prompt .= "    \"most_recent\": {\"claim\": \"<claim from most recent document>\", \"source\": \"<doc>\", \"date\": \"<YYYY-MM-DD or unknown>\"},\n";
+        $prompt .= "    \"official_source_note\": \"<state whether any source is explicitly marked official; say unknown/not marked when absent>\"\n";
+        $prompt .= "  }\n";
         $prompt .= "}\n";
         $prompt .= "- \"sources\": exact names of the documents you actually used. Use an empty array if you used none.\n";
         $prompt .= "- \"conflicts\": include an entry ONLY when the retrieved excerpts contradict each other on a point relevant to your answer. Use an empty array when there is no conflict.\n";
+        $prompt .= "- \"conflict_summary\": analyse only retrieved excerpts relevant to the user's question. Set has_conflict=true only when two or more retrieved documents give incompatible answers, values, dates, rules, thresholds, or obligations for the same topic.\n";
+        $prompt .= "- For conflict_summary.positions, group equivalent claims and count distinct documents, not chunks.\n";
+        $prompt .= "- For most_recent, use explicit dates from the document text or filename only. If no clear date exists, use date=\"unknown\" and do not infer recency.\n";
+        $prompt .= "- For official_source_note, never infer official status from confidence or wording. Say sources are not marked as official when no retrieved excerpt explicitly marks them so.\n";
         $prompt .= "- Never output anything outside the JSON object.\n\n";
 
         // Get relevant context through semantic index.
@@ -272,6 +284,7 @@ class VoiceContextBuilder
             $this->lastChunks = $chunks;
             $ragContext = $this->retriever->formatForPrompt($chunks);
             $prompt .= $ragContext;
+            $prompt .= $this->buildRetrievedDocumentSummary($chunks);
             
             // If filtered by document, state it.
             if ($documentFilter) {
@@ -288,6 +301,45 @@ class VoiceContextBuilder
         }
 
         return $prompt;
+    }
+
+    private function buildRetrievedDocumentSummary(array $chunks): string
+    {
+        if (empty($chunks)) {
+            return '';
+        }
+
+        $documents = [];
+        foreach ($chunks as $chunk) {
+            $name = (string)($chunk['document_name'] ?? 'Unknown document');
+            if (!isset($documents[$name])) {
+                $documents[$name] = [
+                    'chunks' => 0,
+                    'max_score' => 0.0,
+                    'sections' => [],
+                ];
+            }
+            $documents[$name]['chunks']++;
+            $documents[$name]['max_score'] = max($documents[$name]['max_score'], (float)($chunk['score'] ?? 0));
+            $section = trim((string)($chunk['section'] ?? ''));
+            if ($section !== '') {
+                $documents[$name]['sections'][$section] = true;
+            }
+        }
+
+        $summary = "\n## Retrieved document coverage\n";
+        $summary .= "Use this only to reason about whether multiple documents discuss the same topic and may disagree. Scores are retrieval relevance, not authority.\n";
+        foreach ($documents as $name => $info) {
+            $sections = array_keys($info['sections']);
+            $summary .= "- {$name}: {$info['chunks']} relevant excerpt(s), max retrieval score " . round($info['max_score'], 3);
+            if (!empty($sections)) {
+                $summary .= ", sections: " . implode('; ', array_slice($sections, 0, 3));
+            }
+            $summary .= "\n";
+        }
+        $summary .= "\n";
+
+        return $summary;
     }
 
     /**

@@ -453,8 +453,26 @@
       html += `<div class="flex flex-wrap items-center gap-1.5 mt-2">${parts.join('')}</div>`;
     }
 
-    // Conflict notice (from the model) — shown only when present.
-    if (Array.isArray(meta.conflicts) && meta.conflicts.length) {
+    const conflictSummary = meta.conflict_summary;
+    if (conflictSummary && Array.isArray(conflictSummary.positions) && conflictSummary.positions.length > 1) {
+      const topic = conflictSummary.topic ? ` · ${escapeHtml(conflictSummary.topic)}` : '';
+      const docCount = Number.isFinite(conflictSummary.documents_considered)
+        ? `${conflictSummary.documents_considered} docs considered` : 'Multiple docs considered';
+      const positions = conflictSummary.positions.map(p => {
+        const count = Number.isFinite(p.document_count) ? `${p.document_count} doc${p.document_count === 1 ? '' : 's'}` : '';
+        const srcs = Array.isArray(p.sources) && p.sources.length
+          ? `<div class="mt-0.5 text-amber-600">${p.sources.map(escapeHtml).join(', ')}</div>` : '';
+        return `<li><span class="font-medium">${escapeHtml(p.claim || '')}</span>${count ? ` <span class="text-amber-600">(${count})</span>` : ''}${srcs}</li>`;
+      }).join('');
+      const recent = conflictSummary.most_recent && conflictSummary.most_recent.claim
+        ? `<div class="mt-2 text-amber-700"><span class="font-medium">Most recent:</span> ${escapeHtml(conflictSummary.most_recent.claim)}${conflictSummary.most_recent.date ? ` <span class="text-amber-600">(${escapeHtml(conflictSummary.most_recent.date)})</span>` : ''}</div>` : '';
+      const official = conflictSummary.official_source_note
+        ? `<div class="mt-1 text-amber-700">${escapeHtml(conflictSummary.official_source_note)}</div>` : '';
+      html += `<div class="mt-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">` +
+        `<div class="flex items-center gap-1 font-semibold mb-1"><i class="iconoir-warning-triangle"></i>Potential source conflict<span class="font-normal">${topic}</span></div>` +
+        `<div class="mb-1 text-amber-700">${escapeHtml(docCount)}</div>` +
+        `<ul class="list-disc pl-4 space-y-1">${positions}</ul>${recent}${official}</div>`;
+    } else if (Array.isArray(meta.conflicts) && meta.conflicts.length) {
       const items = meta.conflicts.map(c => {
         const srcs = Array.isArray(c.sources) && c.sources.length
           ? ` <span class="text-amber-600">(${c.sources.map(escapeHtml).join(' vs ')})</span>` : '';
