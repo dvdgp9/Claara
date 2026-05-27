@@ -97,9 +97,15 @@ if (!$targetPath || !is_dir($targetPath)) {
 
 $destPath = $targetPath . '/' . $sanitizedFilename;
 
+// Comprobar permisos de escritura antes de mover (diagnóstico claro en prod)
+if (!is_writable($targetPath)) {
+    Response::error('target_not_writable', "Target directory is not writable by the web server: {$targetPath}", 500);
+}
+
 // Mover archivo
 if (!move_uploaded_file($tmpPath, $destPath)) {
-    Response::error('move_error', 'Error saving file', 500);
+    $reason = is_writable($targetPath) ? 'move_uploaded_file failed' : 'destination not writable';
+    Response::error('move_error', "Error saving file ({$reason})", 500);
 }
 
 // Crear registro en BD
