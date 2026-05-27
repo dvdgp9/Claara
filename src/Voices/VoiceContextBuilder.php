@@ -15,6 +15,7 @@ class VoiceContextBuilder
     private string $voiceId;
     private string $contextPath;
     private ?LexRetriever $retriever = null;
+    private array $lastChunks = [];
     
     // Available Voice definitions.
     private static array $voices = [
@@ -250,12 +251,25 @@ class VoiceContextBuilder
         $prompt .= "- Keep a professional, accessible tone.\n";
         $prompt .= "- Do not invent information that is not in the provided documentation.\n\n";
 
+        // Structured output contract (parsed by the backend).
+        $prompt .= "## Output Format (STRICT)\n";
+        $prompt .= "Return ONLY a single valid JSON object, with no surrounding text and no Markdown code fences. Use exactly this shape:\n";
+        $prompt .= "{\n";
+        $prompt .= "  \"answer_markdown\": \"<your full answer, formatted in Markdown>\",\n";
+        $prompt .= "  \"sources\": [\"<exact document name you relied on>\"],\n";
+        $prompt .= "  \"conflicts\": [{\"topic\": \"<short topic>\", \"sources\": [\"<doc A>\", \"<doc B>\"], \"note\": \"<how they disagree>\"}]\n";
+        $prompt .= "}\n";
+        $prompt .= "- \"sources\": exact names of the documents you actually used. Use an empty array if you used none.\n";
+        $prompt .= "- \"conflicts\": include an entry ONLY when the retrieved excerpts contradict each other on a point relevant to your answer. Use an empty array when there is no conflict.\n";
+        $prompt .= "- Never output anything outside the JSON object.\n\n";
+
         // Get relevant context through semantic index.
         if ($this->retriever && $this->retriever->isReady()) {
             // Detect whether the user mentioned a specific agreement to filter by.
             $documentFilter = $this->detectMentionedDocument($userQuery, $allDocs);
             
             $chunks = $this->retriever->retrieve($userQuery, $topK, $documentFilter);
+            $this->lastChunks = $chunks;
             $ragContext = $this->retriever->formatForPrompt($chunks);
             $prompt .= $ragContext;
             
@@ -274,6 +288,34 @@ class VoiceContextBuilder
         }
 
         return $prompt;
+    }
+
+    /**
+     * Computes a deterministic "source match" indicator from the last
+     * retrieved chunks' similarity scores. This reflects how well the
+     * knowledge base matched the question, NOT factual accuracy.
+     *
+     * @return array{percent:int, band:string}|null null when there are no chunks
+     */
+    public function computeSourceMatch(): ?array
+    {
+        if (empty($this->lastChunks)) {
+            return null;
+        }
+
+        $scores = array_map(static fn($c) => (float)($c['score'] ?? 0), $this->lastChunks);
+        rsort($scores);
+        $top = array_slice($scores, 0, 3);
+        $avg = array_sum($top) / count($top);
+        $avg = max(0.0, min(1.0, $avg));
+
+        // Thresholds are an initial assumption to tune during QA (see scratchpad).
+        $band = $avg >= 0.75 ? 'high' : ($avg >= 0.50 ? 'medium' : 'low');
+
+        return [
+            'percent' => (int) round($avg * 100),
+            'band' => $band,
+        ];
     }
 
     /**

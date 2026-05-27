@@ -1439,7 +1439,45 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 - 2026-05-18 (Executor): Implementado `scripts/extract_page_texts.php` para extracción de textos de traducción y generación de pack en `docs/translations/` (CSV + JSON + un `.md` por página pública).
 - 2026-05-18 (Executor): Ajustado extractor para que por defecto excluya `/public/admin` (páginas públicas reales) y añadir flag `--include-admin` para generar también admin cuando se necesite.
 
+## Feature: Voice Answer Trust & Source Conflicts (hybrid)
+
+### Background and Motivation
+Petición del compañero: cuando una voz responde, debe mostrar (1) un porcentaje de confianza sobre la información encontrada y (2) avisar de posibles fuentes en conflicto. Contexto: las voces actuales (`lex`, `cubo`, `uniges`) van a desaparecer; el objetivo es que los admins creen voces nuevas desde la app y TODAS sean RAG. Por tanto el diseño asume voz = RAG (Qdrant) y no hace casos especiales para voces estáticas.
+
+### Key Challenges and Analysis (Voice Trust)
+- **Naturaleza del "trust %"**: dos señales muy distintas. (a) Objetiva: similitud de los chunks recuperados de Qdrant (`score`), determinista, mide cobertura documental, NO veracidad. (b) Subjetiva: autoevaluación del modelo, mal calibrada. Decisión: NO fusionarlas en un único número engañoso. Se muestran como elementos separados y etiquetados con honestidad ("Source match", no "Accuracy").
+- **Conflictos entre fuentes**: solo el modelo puede leer dos fragmentos y detectar contradicción → se obtiene vía salida estructurada del LLM, no de los scores.
+- **Salida estructurada**: las voces NO usan streaming (`voices/chat.php` usa `generateWithMessages`), así que se puede pedir al modelo un JSON `{ answer_markdown, sources[], conflicts[] }` y parsearlo. Riesgo: JSON malformado → fallback: tratar el texto crudo como respuesta y ocultar metadatos (sin romper el chat).
+- **Persistencia sin migración**: `voice_executions.input_data` es JSON libre. Se embebe `meta` en el mensaje assistant del history → el restore de historial vuelve a mostrar badges. No se toca el esquema.
+- **Score de Qdrant**: cosine (~0..1). Umbrales propuestos (a validar/tunear): High ≥ 0.75, Medium 0.50–0.75, Low < 0.50. Representante = media de los top-3 chunks recuperados. Marcado como ASUNCIÓN a confirmar con datos reales.
+- **Etiquetado (requisito explícito del usuario)**: badge "Source match: 82% · High" + tooltip: "Indica cuánto coinciden los documentos de apoyo con tu pregunta. No es una garantía de exactitud factual."
+
+### High-level Task Breakdown (Voice Trust)
+1. **Backend: exponer score de recuperación.** En `voices/chat.php`, cuando `useRag`, capturar los chunks recuperados (vía `LexRetriever::retrieve`) y calcular `source_match = {percent, band}` con la media de top-3 scores.
+   - Success: la respuesta JSON del endpoint incluye `source_match` cuando hay RAG; ausente/`null` cuando no.
+2. **Backend: salida estructurada del LLM.** Ajustar el system prompt (en `VoiceContextBuilder`) para exigir un objeto JSON `{ answer_markdown, sources: string[], conflicts: [{topic, sources[], note}] }`. Parsear el reply en `voices/chat.php`; si falla el parseo, fallback a texto plano sin metadatos.
+   - Success: con una pregunta cubierta por la KB, el endpoint devuelve `sources` no vacío; con un caso de contradicción preparado, devuelve `conflicts` no vacío; con JSON malformado simulado, el chat sigue respondiendo (texto plano).
+3. **Backend: persistir meta en historial.** Guardar `meta = { source_match, sources, conflicts }` junto al mensaje assistant dentro de `input_data.history`.
+   - Success: tras recargar una ejecución vía `voices/get.php`, el `meta` viaja en el history.
+4. **Frontend: render de badge + fuentes + conflicto.** En `voice-lex.js` (`appendMessage` / `sendMessage` / restore loop): añadir bajo la burbuja del assistant un badge "Source match" con color por banda, chips de `sources`, y aviso "⚠️ Sources disagree" expandible cuando hay `conflicts`. Tooltip de etiquetado honesto.
+   - Success: QA visual: badge con color correcto por banda; chips de fuentes visibles; aviso de conflicto solo cuando procede; el restore desde historial muestra lo mismo.
+5. **QA end-to-end + tuning de umbrales.** Probar preguntas de alta/baja cobertura y un caso de conflicto real en la KB de `lex`; ajustar umbrales si los % no se sienten representativos. Documentar valores finales en Lessons.
+   - Success: validación manual del usuario (Planner confirma cierre).
+
+> Nota de diseño: el actual `voice-lex.js` es por-voz. Si se generaliza a voces creadas por admin, el render de trust debería vivir en un JS de voz genérico; se mantiene el cambio en `voice-lex.js` por ahora y se anota la deuda para la futura refactor de "voces dinámicas".
+
+### Current Status / Progress Tracking (Voice Trust)
+- 2026-05-27 (Executor): Tareas 1-3 (backend) completadas. `VoiceContextBuilder`: captura `lastChunks` en RAG, nuevo `computeSourceMatch()` (media top-3 scores → percent + band high/medium/low) y contrato de salida estructurada JSON `{answer_markdown, sources[], conflicts[]}` añadido al system prompt RAG. `voices/chat.php`: nueva `parseVoiceReply()` con fallback a texto plano si el JSON viene mal, calcula `meta`, persiste `meta` en el mensaje assistant de `input_data.history` (sin migración) y devuelve `reply` (answer limpio) + `meta`. `php -l` OK; parser probado en aislado (dedupe de sources, strip de fences, fallback).
+- 2026-05-27 (Executor): Tarea 4 (frontend) completada. `voice-lex.js`: nuevo `renderMeta()` que pinta badge "Source match" coloreado por banda (con tooltip honesto), chips de `sources` y aviso "Sources disagree" solo cuando hay `conflicts`. `appendMessage()` acepta `meta`; `sendMessage()` y el restore de historial lo propagan. `node --check` OK.
+
 # Executor's Feedback or Assistance Requests
+
+- Voice Trust: Tareas 1-4 implementadas (backend + frontend) y validadas a nivel de sintaxis. No puedo verificar end-to-end desde aquí porque requiere sesión, OpenRouter, BD y Qdrant en marcha. Solicito QA manual del usuario (Tarea 5) en la voz `lex`:
+  1. Pregunta bien cubierta por la KB → debe aparecer badge "Source match" (idealmente High/Medium) y chips de fuentes.
+  2. Pregunta fuera de cobertura → badge en Low (verificar que el % se siente representativo; si no, ajustamos umbrales).
+  3. Pregunta sobre un punto donde dos convenios se contradigan → debe salir el aviso "Sources disagree".
+  4. Recargar una consulta desde el historial lateral → badge/fuentes/conflictos deben re-renderizarse igual.
+  Tras tu feedback ajusto umbrales (High 0.75 / Medium 0.50 son una asunción inicial) y, si todo va bien, el Planner cierra la feature.
 
 - Migración Claara: hito de inventario completado. Siguiente paso propuesto para validar manualmente: cambiar el remoto local a `dvdgp9/Claara.git` y empujar la rama actual como `main`, preservando los dos borrados locales no relacionados sin revertirlos. Después se podrá actualizar el remoto del checkout de producción y revisar si Hestia ya tiene configurado el dominio `claara.tech` apuntando al nuevo docroot.
 - Migración Claara: despliegue base completado. Pendiente de validación manual del usuario: abrir `https://claara.tech/login.php`, iniciar sesión y confirmar que la app funciona igual que en `iaiapro.com`. Pendiente opcional para una fase posterior: rebranding visible de textos/logos `iaiaPRO` a `Claara`.

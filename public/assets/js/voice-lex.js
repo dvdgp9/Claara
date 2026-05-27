@@ -365,7 +365,7 @@
       messagesEl.innerHTML = '';
       
       for (const msg of messageHistory) {
-        appendMessage(msg.role, msg.content, false);
+        appendMessage(msg.role, msg.content, false, msg.meta || null);
       }
       
     } catch (e) {
@@ -416,7 +416,60 @@
     showEmptyState();
   }
 
-  function appendMessage(role, content, scroll = true) {
+  function renderMeta(meta) {
+    if (!meta || typeof meta !== 'object') return '';
+
+    const parts = [];
+
+    // Source-match badge (objective: how well docs matched the question).
+    const sm = meta.source_match;
+    if (sm && typeof sm.percent === 'number') {
+      const bandStyles = {
+        high: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        medium: 'bg-amber-50 text-amber-700 border-amber-200',
+        low: 'bg-rose-50 text-rose-700 border-rose-200'
+      };
+      const bandLabel = { high: 'High', medium: 'Medium', low: 'Low' };
+      const cls = bandStyles[sm.band] || bandStyles.low;
+      const label = bandLabel[sm.band] || '';
+      const tip = 'Indicates how well the supporting documents matched your question. It is not a guarantee of factual accuracy.';
+      parts.push(
+        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${cls}" title="${escapeHtml(tip)}">` +
+        `<i class="iconoir-database-check text-[13px]"></i>Source match: ${sm.percent}%${label ? ' · ' + label : ''}</span>`
+      );
+    }
+
+    // Sources used (from the model).
+    if (Array.isArray(meta.sources) && meta.sources.length) {
+      const chips = meta.sources.map(s =>
+        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs">` +
+        `<i class="iconoir-page text-[13px]"></i>${escapeHtml(s)}</span>`
+      ).join('');
+      parts.push(chips);
+    }
+
+    let html = '';
+    if (parts.length) {
+      html += `<div class="flex flex-wrap items-center gap-1.5 mt-2">${parts.join('')}</div>`;
+    }
+
+    // Conflict notice (from the model) — shown only when present.
+    if (Array.isArray(meta.conflicts) && meta.conflicts.length) {
+      const items = meta.conflicts.map(c => {
+        const srcs = Array.isArray(c.sources) && c.sources.length
+          ? ` <span class="text-amber-600">(${c.sources.map(escapeHtml).join(' vs ')})</span>` : '';
+        const topic = c.topic ? `<strong>${escapeHtml(c.topic)}:</strong> ` : '';
+        return `<li>${topic}${escapeHtml(c.note || '')}${srcs}</li>`;
+      }).join('');
+      html += `<div class="mt-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">` +
+        `<div class="flex items-center gap-1 font-semibold mb-1"><i class="iconoir-warning-triangle"></i>Sources disagree</div>` +
+        `<ul class="list-disc pl-4 space-y-0.5">${items}</ul></div>`;
+    }
+
+    return html;
+  }
+
+  function appendMessage(role, content, scroll = true, meta = null) {
     const initials = currentUser ? `${currentUser.first_name[0]}${currentUser.last_name[0]}` : '?';
     const wrap = document.createElement('div');
     wrap.className = `flex gap-3 ${role === 'user' ? 'justify-end' : 'justify-start'}`;
@@ -430,10 +483,11 @@
       : 'glass border border-slate-200/50 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm';
     
     const contentHtml = role === 'assistant' ? mdToHtml(content) : escapeHtml(content);
-    
+    const metaHtml = role === 'assistant' ? renderMeta(meta) : '';
+
     wrap.innerHTML = role === 'user'
       ? `<div class="${bubbleClass} px-5 py-3.5 max-w-2xl">${contentHtml}</div>${avatar}`
-      : `${avatar}<div class="${bubbleClass} px-5 py-3.5 max-w-2xl prose prose-sm">${contentHtml}</div>`;
+      : `${avatar}<div class="${bubbleClass} px-5 py-3.5 max-w-2xl prose prose-sm">${contentHtml}${metaHtml}</div>`;
     
     messagesEl.appendChild(wrap);
     
@@ -486,8 +540,9 @@
       
       // Add response
       const reply = data.reply || data.message?.content || 'No response';
-      messageHistory.push({ role: 'assistant', content: reply });
-      appendMessage('assistant', reply);
+      const meta = data.meta || null;
+      messageHistory.push({ role: 'assistant', content: reply, meta });
+      appendMessage('assistant', reply, true, meta);
       
       // Refresh history
       loadHistory();

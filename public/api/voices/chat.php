@@ -26,6 +26,60 @@ use Voices\VoiceExecutionsRepo;
 use Voices\VoiceContextBuilder;
 use Repos\UsageLogRepo;
 
+/**
+ * Parses the LLM reply into answer + metadata.
+ * Expects a JSON object { answer_markdown, sources[], conflicts[] }.
+ * Falls back to treating the whole reply as plain text when parsing fails,
+ * so a malformed response never breaks the chat.
+ *
+ * @return array{answer:string, sources:array, conflicts:array}
+ */
+function parseVoiceReply(string $raw): array
+{
+    $text = trim($raw);
+
+    // Strip ```json ... ``` fences if the model added them despite instructions.
+    if (str_starts_with($text, '```')) {
+        $text = preg_replace('/^```(?:json)?\s*/i', '', $text);
+        $text = preg_replace('/\s*```$/', '', $text);
+        $text = trim($text);
+    }
+
+    $data = json_decode($text, true);
+    if (is_array($data) && isset($data['answer_markdown'])) {
+        $sources = [];
+        foreach ((array)($data['sources'] ?? []) as $s) {
+            $s = trim((string)$s);
+            if ($s !== '') {
+                $sources[] = $s;
+            }
+        }
+
+        $conflicts = [];
+        foreach ((array)($data['conflicts'] ?? []) as $c) {
+            if (is_array($c) && (isset($c['topic']) || isset($c['note']))) {
+                $conflicts[] = [
+                    'topic' => trim((string)($c['topic'] ?? '')),
+                    'sources' => array_values(array_filter(array_map(
+                        static fn($x) => trim((string)$x),
+                        (array)($c['sources'] ?? [])
+                    ), static fn($x) => $x !== '')),
+                    'note' => trim((string)($c['note'] ?? '')),
+                ];
+            }
+        }
+
+        return [
+            'answer' => (string)$data['answer_markdown'],
+            'sources' => array_values(array_unique($sources)),
+            'conflicts' => $conflicts,
+        ];
+    }
+
+    // Fallback: render the raw text, no metadata.
+    return ['answer' => $raw, 'sources' => [], 'conflicts' => []];
+}
+
 $user = Session::user();
 if (!$user) {
     Response::error('unauthorized', 'Invalid session', 401);
@@ -115,6 +169,17 @@ try {
     Response::error('llm_error', 'Error generating response: ' . $e->getMessage(), 500);
 }
 
+// Parse structured reply (answer + sources + conflicts) with plain-text fallback.
+$parsed = parseVoiceReply($reply);
+$answer = $parsed['answer'];
+
+// Build the trust metadata bundle shown in the UI.
+$meta = [
+    'source_match' => $useRag ? $voiceContext->computeSourceMatch() : null,
+    'sources' => $parsed['sources'],
+    'conflicts' => $parsed['conflicts'],
+];
+
 // Guardar o actualizar ejecución
 $repo = new VoiceExecutionsRepo();
 
@@ -127,7 +192,7 @@ if (strlen($title) > 60) {
 // Preparar historial completo para guardar
 $fullHistory = $history;
 $fullHistory[] = ['role' => 'user', 'content' => $message];
-$fullHistory[] = ['role' => 'assistant', 'content' => $reply];
+$fullHistory[] = ['role' => 'assistant', 'content' => $answer, 'meta' => $meta];
 
 $inputData = [
     'history' => $fullHistory
@@ -141,7 +206,7 @@ if ($executionId) {
     // Actualizar ejecución existente
     $repo->update($executionId, (int)$user['id'], [
         'input_data' => $inputData,
-        'output_content' => $reply
+        'output_content' => $answer
     ]);
 } else {
     // Crear nueva ejecución
@@ -150,13 +215,14 @@ if ($executionId) {
         'voice_id' => $voiceId,
         'title' => $title,
         'input_data' => $inputData,
-        'output_content' => $reply,
+        'output_content' => $answer,
         'model' => $client->getModel()
     ]);
 }
 
 Response::json([
     'success' => true,
-    'reply' => $reply,
+    'reply' => $answer,
+    'meta' => $meta,
     'execution_id' => $executionId
 ]);
