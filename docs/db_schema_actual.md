@@ -1,7 +1,7 @@
 # Claara - Esquema de Base de Datos (Estado Real)
 
 **Fecha de auditoría:** 2025-12-01  
-**Base de datos:** `ebonia_db`  
+**Base de datos:** `claara_db`  
 **Servidor:** localhost:3306  
 **Charset:** utf8mb4 / utf8mb4_unicode_ci
 

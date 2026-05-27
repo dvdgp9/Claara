@@ -71,7 +71,7 @@ Notas:
 - `APP_URL=https://claara.tech` (o http://localhost:8000 en dev)
 - `DB_HOST=localhost`
 - `DB_PORT=3306`
-- `DB_NAME=ebonia`
+- `DB_NAME=claara`
 - `DB_USER=...`
 - `DB_PASS=...`
 - `GEMINI_API_KEY=...` (no se versiona)
