@@ -53,6 +53,9 @@ class LexRetriever
                 'text' => $result['payload']['text'] ?? '',
                 'document_id' => $result['payload']['document_id'] ?? '',
                 'document_name' => $result['payload']['document_name'] ?? '',
+                'document_date' => $result['payload']['document_date'] ?? null,
+                'is_official_source' => !empty($result['payload']['is_official_source']),
+                'source_authority' => $result['payload']['source_authority'] ?? null,
                 'chunk_index' => $result['payload']['chunk_index'] ?? 0,
                 'section' => $result['payload']['section'] ?? '',
                 'score' => $result['score'] ?? 0
@@ -77,6 +80,17 @@ class LexRetriever
         foreach ($chunks as $i => $chunk) {
             $num = $i + 1;
             $formatted .= "### [{$num}] {$chunk['document_name']}";
+            $metadata = [];
+            if (!empty($chunk['document_date'])) {
+                $metadata[] = 'date: ' . $chunk['document_date'];
+            }
+            $metadata[] = !empty($chunk['is_official_source']) ? 'official source: yes' : 'official source: no';
+            if (!empty($chunk['source_authority'])) {
+                $metadata[] = 'authority: ' . $chunk['source_authority'];
+            }
+            if (!empty($metadata)) {
+                $formatted .= " (" . implode('; ', $metadata) . ")";
+            }
             if (!empty($chunk['section'])) {
                 $formatted .= " - {$chunk['section']}";
             }

@@ -317,6 +317,9 @@ class VoiceContextBuilder
                     'chunks' => 0,
                     'max_score' => 0.0,
                     'sections' => [],
+                    'document_date' => $chunk['document_date'] ?? null,
+                    'is_official_source' => !empty($chunk['is_official_source']),
+                    'source_authority' => $chunk['source_authority'] ?? null,
                 ];
             }
             $documents[$name]['chunks']++;
@@ -332,6 +335,15 @@ class VoiceContextBuilder
         foreach ($documents as $name => $info) {
             $sections = array_keys($info['sections']);
             $summary .= "- {$name}: {$info['chunks']} relevant excerpt(s), max retrieval score " . round($info['max_score'], 3);
+            if (!empty($info['document_date'])) {
+                $summary .= ", document date: {$info['document_date']}";
+            } else {
+                $summary .= ", document date: unknown";
+            }
+            $summary .= !empty($info['is_official_source']) ? ", official source: yes" : ", official source: no";
+            if (!empty($info['source_authority'])) {
+                $summary .= ", authority: {$info['source_authority']}";
+            }
             if (!empty($sections)) {
                 $summary .= ", sections: " . implode('; ', array_slice($sections, 0, 3));
             }

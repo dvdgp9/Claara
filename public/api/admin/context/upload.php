@@ -52,6 +52,12 @@ $file = $_FILES['file'];
 $originalFilename = $file['name'];
 $tmpPath = $file['tmp_name'];
 $fileSize = $file['size'];
+$documentDate = trim((string)($_POST['document_date'] ?? ''));
+if ($documentDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $documentDate)) {
+    Response::error('invalid_document_date', 'Document date must use YYYY-MM-DD format', 400);
+}
+$isOfficialSource = !empty($_POST['is_official_source']) ? 1 : 0;
+$sourceAuthority = trim((string)($_POST['source_authority'] ?? ''));
 
 // Validar extensión
 $extension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
@@ -118,6 +124,9 @@ try {
         'file_size' => $fileSize,
         'status' => 'active',
         'description' => $_POST['description'] ?? null,
+        'document_date' => $documentDate !== '' ? $documentDate : null,
+        'is_official_source' => $isOfficialSource,
+        'source_authority' => $sourceAuthority !== '' ? $sourceAuthority : null,
         'created_by' => $user['id'],
     ]);
     

@@ -69,7 +69,11 @@ $repo->updateRagStatus($id, 'processing');
 try {
     // Procesar documento
     $documentId = pathinfo($doc['filename'], PATHINFO_FILENAME);
-    $result = $processor->processDocument($filePath, $documentId, $doc['filename']);
+    $result = $processor->processDocument($filePath, $documentId, $doc['filename'], [
+        'document_date' => $doc['document_date'] ?? null,
+        'is_official_source' => !empty($doc['is_official_source']),
+        'source_authority' => $doc['source_authority'] ?? null,
+    ]);
     
     // Actualizar estado a procesado
     $repo->updateRagStatus($id, 'processed', $result['chunks_processed']);

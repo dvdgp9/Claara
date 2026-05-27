@@ -7,7 +7,7 @@ use Throwable;
 
 /**
  * Repository for managing context documents.
- * 
+ *
  * Supports three targets:
  * - lex: indexed documents for the legal voice
  * - eboniato: Claara quick-answer documents
@@ -91,16 +91,11 @@ class ContextDocsRepo
     public function create(array $data): int
     {
         $now = date('Y-m-d H:i:s');
-        
+
         $ragStatus = $data['target'] === 'lex' ? 'pending' : 'not_applicable';
-        
-        $stmt = $this->pdo->prepare('
-            INSERT INTO context_documents 
-            (target, filename, original_filename, file_extension, file_size, status, rag_status, description, created_by, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ');
-        
-        $stmt->execute([
+
+        $fields = ['target', 'filename', 'original_filename', 'file_extension', 'file_size', 'status', 'rag_status', 'description'];
+        $values = [
             $data['target'],
             $data['filename'],
             $data['original_filename'],
@@ -109,11 +104,31 @@ class ContextDocsRepo
             $data['status'] ?? 'active',
             $ragStatus,
             $data['description'] ?? null,
-            $data['created_by'],
-            $now,
-            $now
-        ]);
-        
+        ];
+
+        foreach (['document_date', 'is_official_source', 'source_authority'] as $field) {
+            if ($this->contextDocsHasColumn($field)) {
+                $fields[] = $field;
+                $values[] = $data[$field] ?? ($field === 'is_official_source' ? 0 : null);
+            }
+        }
+
+        $fields[] = 'created_by';
+        $fields[] = 'created_at';
+        $fields[] = 'updated_at';
+        $values[] = $data['created_by'];
+        $values[] = $now;
+        $values[] = $now;
+
+        $placeholders = implode(', ', array_fill(0, count($fields), '?'));
+        $stmt = $this->pdo->prepare('
+            INSERT INTO context_documents
+            (' . implode(', ', $fields) . ')
+            VALUES (' . $placeholders . ')
+        ');
+
+        $stmt->execute($values);
+
         return (int)$this->pdo->lastInsertId();
     }
 
@@ -124,24 +139,29 @@ class ContextDocsRepo
     {
         $fields = [];
         $values = [];
-        
+
         $allowedFields = ['filename', 'original_filename', 'file_size', 'status', 'description'];
-        
+        foreach (['document_date', 'is_official_source', 'source_authority'] as $field) {
+            if ($this->contextDocsHasColumn($field)) {
+                $allowedFields[] = $field;
+            }
+        }
+
         foreach ($allowedFields as $field) {
             if (array_key_exists($field, $data)) {
                 $fields[] = "{$field} = ?";
                 $values[] = $data[$field];
             }
         }
-        
+
         if (empty($fields)) {
             return false;
         }
-        
+
         $fields[] = 'updated_at = ?';
         $values[] = date('Y-m-d H:i:s');
         $values[] = $id;
-        
+
         $sql = 'UPDATE context_documents SET ' . implode(', ', $fields) . ' WHERE id = ?';
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute($values);
@@ -154,22 +174,22 @@ class ContextDocsRepo
     {
         $sql = 'UPDATE context_documents SET rag_status = ?, updated_at = ?';
         $values = [$ragStatus, date('Y-m-d H:i:s')];
-        
+
         if ($chunkCount !== null) {
             $sql .= ', rag_chunk_count = ?';
             $values[] = $chunkCount;
         }
-        
+
         if ($errorMessage !== null) {
             $sql .= ', rag_error_message = ?';
             $values[] = $errorMessage;
         } elseif ($ragStatus !== 'error') {
             $sql .= ', rag_error_message = NULL';
         }
-        
+
         $sql .= ' WHERE id = ?';
         $values[] = $id;
-        
+
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute($values);
     }
@@ -205,7 +225,7 @@ class ContextDocsRepo
 
         try {
             $stmt = $this->pdo->prepare('
-                SELECT 
+                SELECT
                     ' . implode(",\n                    ", $selectParts) . '
                 FROM context_documents
                 WHERE target = ?
@@ -214,7 +234,7 @@ class ContextDocsRepo
             $row = $stmt->fetch();
         } catch (Throwable $e) {
             $stmt = $this->pdo->prepare('
-                SELECT 
+                SELECT
                     COUNT(*) as total_documents,
                     0 as total_size,
                     0 as total_chunks,
@@ -228,7 +248,7 @@ class ContextDocsRepo
             $stmt->execute([$target]);
             $row = $stmt->fetch();
         }
-        
+
         return [
             'total_documents' => (int)($row['total_documents'] ?? 0),
             'total_size' => (int)($row['total_size'] ?? 0),
@@ -248,7 +268,7 @@ class ContextDocsRepo
         if (!isset(self::TARGET_PATHS[$target])) {
             return null;
         }
-        
+
         $basePath = dirname(dirname(__DIR__));
         return $basePath . '/' . self::TARGET_PATHS[$target];
     }
@@ -278,22 +298,22 @@ class ContextDocsRepo
         // Obtener extensión
         $ext = pathinfo($filename, PATHINFO_EXTENSION);
         $name = pathinfo($filename, PATHINFO_FILENAME);
-        
+
         // Remover caracteres peligrosos, mantener solo alfanuméricos, guiones, underscores y puntos
         $name = preg_replace('/[^a-zA-Z0-9_\-\.\s]/', '', $name);
         $name = preg_replace('/\s+/', '_', $name);
         $name = trim($name, '._-');
-        
+
         // Limitar longitud
         if (strlen($name) > 200) {
             $name = substr($name, 0, 200);
         }
-        
+
         // Si el nombre quedó vacío, usar timestamp
         if (empty($name)) {
             $name = 'document_' . time();
         }
-        
+
         return $name . '.' . strtolower($ext);
     }
 
@@ -304,22 +324,22 @@ class ContextDocsRepo
     {
         $sanitized = self::sanitizeFilename($filename);
         $existing = $this->getByFilename($target, $sanitized);
-        
+
         if (!$existing) {
             return $sanitized;
         }
-        
+
         // Añadir sufijo numérico
         $ext = pathinfo($sanitized, PATHINFO_EXTENSION);
         $name = pathinfo($sanitized, PATHINFO_FILENAME);
-        
+
         $counter = 1;
         do {
             $newFilename = "{$name}_{$counter}.{$ext}";
             $existing = $this->getByFilename($target, $newFilename);
             $counter++;
         } while ($existing && $counter < 100);
-        
+
         return $newFilename;
     }
 

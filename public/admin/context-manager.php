@@ -166,6 +166,7 @@ if (!$isSuperadmin) {
                       <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Size</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                       <th id="col-rag" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Index</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Source</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
                       <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -226,6 +227,21 @@ if (!$isSuperadmin) {
             <textarea id="upload-description" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors resize-none" placeholder="Document description..."></textarea>
           </div>
 
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm font-medium text-slate-700 block mb-2">Document date</label>
+              <input type="date" id="upload-document-date" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors">
+            </div>
+            <div>
+              <label class="text-sm font-medium text-slate-700 block mb-2">Authority</label>
+              <input type="text" id="upload-source-authority" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="e.g. Official Gazette">
+            </div>
+          </div>
+          <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" id="upload-is-official-source" class="rounded border-slate-300 text-[#B7C9F2] focus:ring-[#B7C9F2]">
+            Mark as official source
+          </label>
+
           <div id="upload-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
 
           <div class="flex gap-3 pt-2">
@@ -271,6 +287,21 @@ if (!$isSuperadmin) {
           <label class="text-sm font-medium text-slate-700 block mb-2">Description (optional)</label>
           <input type="text" id="create-description" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="Short description...">
         </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 mb-4 flex-shrink-0">
+        <div>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Document date</label>
+          <input type="date" id="create-document-date" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Authority</label>
+          <input type="text" id="create-source-authority" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="e.g. Official Gazette">
+        </div>
+        <label class="flex items-end gap-2 text-sm text-slate-700 pb-2">
+          <input type="checkbox" id="create-is-official-source" class="rounded border-slate-300 text-[#B7C9F2] focus:ring-[#B7C9F2]">
+          Official source
+        </label>
       </div>
 
       <div class="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -357,6 +388,21 @@ if (!$isSuperadmin) {
         <span>After saving changes to a Lex document, you must <strong>reprocess the AI index</strong> to refresh vectors.</span>
       </div>
 
+      <div class="grid grid-cols-3 gap-4 mt-3 flex-shrink-0">
+        <div>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Document date</label>
+          <input type="date" id="edit-document-date" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Authority</label>
+          <input type="text" id="edit-source-authority" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="e.g. Official Gazette">
+        </div>
+        <label class="flex items-end gap-2 text-sm text-slate-700 pb-2">
+          <input type="checkbox" id="edit-is-official-source" class="rounded border-slate-300 text-[#B7C9F2] focus:ring-[#B7C9F2]">
+          Official source
+        </label>
+      </div>
+
       <div id="edit-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3 flex-shrink-0"></div>
 
       <!-- Footer actions -->
@@ -364,6 +410,9 @@ if (!$isSuperadmin) {
         <button type="button" id="save-content-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
           <i class="iconoir-floppy-disk mr-1"></i>
           Save changes
+        </button>
+        <button type="button" id="save-metadata-btn" class="px-4 py-2 border border-[#B7C9F2] text-[#B7C9F2] rounded-lg font-medium hover:bg-[#B7C9F2]/10 transition-colors text-sm">
+          Save metadata
         </button>
         <button type="button" id="close-edit-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
           Close
@@ -456,6 +505,16 @@ if (!$isSuperadmin) {
       if (!dateStr) return '-';
       const d = new Date(dateStr);
       return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function getSourceMetadataHtml(doc) {
+      const parts = [];
+      if (doc.document_date) parts.push(`<span title="Document date">${formatDate(doc.document_date)}</span>`);
+      if (Number(doc.is_official_source || 0) === 1) {
+        parts.push('<span class="inline-flex items-center gap-1 text-emerald-700"><i class="iconoir-verified-badge"></i>Official</span>');
+      }
+      if (doc.source_authority) parts.push(`<span title="Authority">${escapeHtml(doc.source_authority)}</span>`);
+      return parts.length ? `<div class="text-xs text-slate-600 space-y-1">${parts.join('<br>')}</div>` : '<span class="text-xs text-slate-400">Not set</span>';
     }
 
     // Escape HTML
@@ -574,6 +633,7 @@ if (!$isSuperadmin) {
             <td class="px-6 py-4 text-sm text-slate-600">${formatBytes(doc.file_size || 0)}</td>
             <td class="px-6 py-4"><span class="status-badge ${statusClass}">${doc.status}</span></td>
             <td class="px-6 py-4 ${ragColClass}">${ragStatusHtml}</td>
+            <td class="px-6 py-4">${getSourceMetadataHtml(doc)}</td>
             <td class="px-6 py-4 text-sm text-slate-600">${formatDate(doc.created_at)}</td>
             <td class="px-6 py-4 text-right">
               <div class="flex items-center justify-end gap-1">
@@ -651,6 +711,9 @@ if (!$isSuperadmin) {
       document.getElementById('upload-target').value = currentTarget;
       document.getElementById('file-input').value = '';
       document.getElementById('upload-description').value = '';
+      document.getElementById('upload-document-date').value = '';
+      document.getElementById('upload-source-authority').value = '';
+      document.getElementById('upload-is-official-source').checked = false;
       document.getElementById('selected-file').classList.add('hidden');
       document.getElementById('upload-error').classList.add('hidden');
       document.getElementById('upload-modal').classList.remove('hidden');
@@ -713,6 +776,11 @@ if (!$isSuperadmin) {
       formData.append('target', currentTarget);
       formData.append('file', file);
       formData.append('description', document.getElementById('upload-description').value);
+      formData.append('document_date', document.getElementById('upload-document-date').value);
+      formData.append('source_authority', document.getElementById('upload-source-authority').value);
+      if (document.getElementById('upload-is-official-source').checked) {
+        formData.append('is_official_source', '1');
+      }
 
       const submitBtn = document.getElementById('upload-submit');
       submitBtn.disabled = true;
@@ -749,6 +817,9 @@ if (!$isSuperadmin) {
       document.getElementById('create-target-name').textContent = targetNames[currentTarget] || currentTarget;
       document.getElementById('create-filename').value = '';
       document.getElementById('create-description').value = '';
+      document.getElementById('create-document-date').value = '';
+      document.getElementById('create-source-authority').value = '';
+      document.getElementById('create-is-official-source').checked = false;
       document.getElementById('create-content').value = '';
       document.getElementById('create-error').classList.add('hidden');
       
@@ -814,6 +885,11 @@ if (!$isSuperadmin) {
         formData.append('target', currentTarget);
         formData.append('file', file);
         formData.append('description', description);
+        formData.append('document_date', document.getElementById('create-document-date').value);
+        formData.append('source_authority', document.getElementById('create-source-authority').value);
+        if (document.getElementById('create-is-official-source').checked) {
+          formData.append('is_official_source', '1');
+        }
 
         await api('/api/admin/context/upload.php', {
           method: 'POST',
@@ -854,6 +930,9 @@ if (!$isSuperadmin) {
       document.getElementById('edit-doc-target').textContent = doc.target || '-';
       document.getElementById('edit-doc-size').textContent = formatBytes(doc.file_size || 0);
       document.getElementById('edit-doc-date').textContent = formatDate(doc.created_at);
+      document.getElementById('edit-document-date').value = doc.document_date || '';
+      document.getElementById('edit-source-authority').value = doc.source_authority || '';
+      document.getElementById('edit-is-official-source').checked = Number(doc.is_official_source || 0) === 1;
       
       // Ocultar contadores para PDFs
       document.getElementById('edit-char-count').parentElement.classList.toggle('hidden', isPdf);
@@ -951,6 +1030,42 @@ if (!$isSuperadmin) {
       } finally {
         btn.disabled = false;
         btn.textContent = 'Save changes';
+      }
+    });
+
+    document.getElementById('save-metadata-btn').addEventListener('click', async () => {
+      if (!selectedDoc) return;
+
+      const errorEl = document.getElementById('edit-error');
+      errorEl.classList.add('hidden');
+
+      const btn = document.getElementById('save-metadata-btn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        const result = await api('/api/admin/context/update.php', {
+          method: 'PUT',
+          body: {
+            id: selectedDoc.id,
+            document_date: document.getElementById('edit-document-date').value,
+            source_authority: document.getElementById('edit-source-authority').value,
+            is_official_source: document.getElementById('edit-is-official-source').checked
+          }
+        });
+
+        document.getElementById('edit-modal').classList.add('hidden');
+        showToast('Metadata saved successfully');
+        if (result.needs_index_reprocessing) {
+          showToast('Metadata saved. Reprocess the document to update the AI index.', false);
+        }
+        await loadDocuments();
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save metadata';
       }
     });
 

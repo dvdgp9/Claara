@@ -42,6 +42,7 @@ if (!$doc) {
 
 $updated = false;
 $contentUpdated = false;
+$metadataUpdated = false;
 
 // Actualizar contenido del archivo si se proporciona
 if (isset($input['content'])) {
@@ -83,6 +84,31 @@ if (array_key_exists('description', $input)) {
     $updated = true;
 }
 
+$metadata = [];
+if (array_key_exists('document_date', $input)) {
+    $documentDate = trim((string)$input['document_date']);
+    if ($documentDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $documentDate)) {
+        Response::error('invalid_document_date', 'Document date must use YYYY-MM-DD format', 400);
+    }
+    $metadata['document_date'] = $documentDate !== '' ? $documentDate : null;
+}
+if (array_key_exists('is_official_source', $input)) {
+    $metadata['is_official_source'] = !empty($input['is_official_source']) ? 1 : 0;
+}
+if (array_key_exists('source_authority', $input)) {
+    $authority = trim((string)$input['source_authority']);
+    $metadata['source_authority'] = $authority !== '' ? $authority : null;
+}
+if (!empty($metadata)) {
+    $repo->update($id, $metadata);
+    $metadataUpdated = true;
+    $updated = true;
+}
+
+if ($metadataUpdated && $doc['target'] === 'lex' && $doc['rag_status'] === 'processed') {
+    $repo->updateRagStatus($id, 'pending');
+}
+
 if (!$updated) {
     Response::error('no_changes', 'No changes were provided', 400);
 }
@@ -94,6 +120,6 @@ Response::json([
     'success' => true,
     'message' => $contentUpdated ? 'Content updated successfully' : 'Metadata updated successfully',
     'document' => $doc,
-    'needs_rag_reprocessing' => $contentUpdated && $doc['target'] === 'lex',
-    'needs_index_reprocessing' => $contentUpdated && $doc['target'] === 'lex'
+    'needs_rag_reprocessing' => ($contentUpdated || $metadataUpdated) && $doc['target'] === 'lex',
+    'needs_index_reprocessing' => ($contentUpdated || $metadataUpdated) && $doc['target'] === 'lex'
 ]);

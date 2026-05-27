@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS context_documents (
   rag_chunk_count INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Número de chunks en Qdrant',
   rag_error_message TEXT NULL COMMENT 'Mensaje de error si rag_status=error',
   description TEXT NULL COMMENT 'Descripción opcional del documento',
+  document_date DATE NULL COMMENT 'Document publication/effective date for conflict analysis',
+  is_official_source TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Whether the document is marked as an official source',
+  source_authority VARCHAR(255) NULL COMMENT 'Authority or organization behind the official source',
   created_by BIGINT UNSIGNED NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -20,6 +23,8 @@ CREATE TABLE IF NOT EXISTS context_documents (
   INDEX idx_target (target),
   INDEX idx_status (status),
   INDEX idx_rag_status (rag_status),
+  INDEX idx_document_date (document_date),
+  INDEX idx_official_source (is_official_source),
   UNIQUE KEY unique_target_filename (target, filename),
   
   CONSTRAINT fk_context_documents_created_by 

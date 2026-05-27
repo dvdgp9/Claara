@@ -61,7 +61,7 @@ class RagProcessor
      * @param string $documentName Nombre para mostrar
      * @return array Resultado con estadísticas
      */
-    public function processDocument(string $filePath, string $documentId, string $documentName): array
+    public function processDocument(string $filePath, string $documentId, string $documentName, array $metadata = []): array
     {
         if (!file_exists($filePath)) {
             throw new \Exception("Archivo no encontrado: {$filePath}");
@@ -109,6 +109,9 @@ class RagProcessor
                         'text' => $chunk['text'],
                         'document_id' => $documentId,
                         'document_name' => $documentName,
+                        'document_date' => $metadata['document_date'] ?? null,
+                        'is_official_source' => !empty($metadata['is_official_source']),
+                        'source_authority' => $metadata['source_authority'] ?? null,
                         'chunk_index' => $chunk['index'],
                         'section' => $chunk['section'] ?? '',
                         'char_start' => $chunk['char_start'],
