@@ -85,7 +85,7 @@ class QdrantClient
      * @param array $filter Filtros opcionales por payload
      * @return array Puntos encontrados con score de similitud
      */
-    public function search(string $collection, array $vector, int $limit = 5, array $filter = null): array
+    public function search(string $collection, array $vector, int $limit = 5, ?array $filter = null): array
     {
         $body = [
             'vector' => $vector,
@@ -158,7 +158,7 @@ class QdrantClient
     /**
      * Realiza una petición HTTP a Qdrant
      */
-    private function request(string $method, string $path, array $body = null): array
+    private function request(string $method, string $path, ?array $body = null): array
     {
         $ch = curl_init();
 
@@ -176,7 +176,14 @@ class QdrantClient
         ]);
 
         if ($body !== null) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+            $payload = json_encode(
+                $body,
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+            );
+            if ($payload === false) {
+                throw new \Exception('No se pudo codificar la petición JSON para Qdrant: ' . json_last_error_msg());
+            }
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         }
 
         $response = curl_exec($ch);
