@@ -297,7 +297,7 @@ class VoiceContextBuilder
      *
      * @return array{percent:int, band:string}|null null when there are no chunks
      */
-    public function computeSourceMatch(): ?array
+    public function computeSourceMatch(?string $answer = null): ?array
     {
         if (empty($this->lastChunks)) {
             return null;
@@ -307,15 +307,79 @@ class VoiceContextBuilder
         rsort($scores);
         $top = array_slice($scores, 0, 3);
         $avg = array_sum($top) / count($top);
-        $avg = max(0.0, min(1.0, $avg));
+        $semanticPercent = (int) round(max(0.0, min(1.0, $avg)) * 100);
 
-        // Thresholds are an initial assumption to tune during QA (see scratchpad).
-        $band = $avg >= 0.75 ? 'high' : ($avg >= 0.50 ? 'medium' : 'low');
+        $evidencePercent = $answer !== null ? $this->computeEvidenceCoverage($answer) : null;
+        $percent = $evidencePercent !== null ? max($semanticPercent, $evidencePercent) : $semanticPercent;
+
+        $band = $percent >= 80 ? 'high' : ($percent >= 50 ? 'medium' : 'low');
 
         return [
-            'percent' => (int) round($avg * 100),
+            'percent' => $percent,
             'band' => $band,
         ];
+    }
+
+    private function computeEvidenceCoverage(string $answer): ?int
+    {
+        $answerTokens = $this->meaningfulTokens($answer);
+        if (count($answerTokens) < 4) {
+            return null;
+        }
+
+        $sourceText = implode("\n", array_map(
+            static fn($chunk) => (string)($chunk['text'] ?? ''),
+            $this->lastChunks
+        ));
+        $sourceTokens = array_flip($this->meaningfulTokens($sourceText));
+        if (empty($sourceTokens)) {
+            return null;
+        }
+
+        $matched = 0;
+        foreach ($answerTokens as $token) {
+            if (isset($sourceTokens[$token])) {
+                $matched++;
+            }
+        }
+
+        return (int) round(($matched / count($answerTokens)) * 100);
+    }
+
+    /**
+     * Tokeniza texto para comparar evidencia literal sin que artículos y preposiciones dominen el resultado.
+     *
+     * @return array<int, string>
+     */
+    private function meaningfulTokens(string $text): array
+    {
+        $text = mb_strtolower($text, 'UTF-8');
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        if (is_string($ascii)) {
+            $text = $ascii;
+        }
+
+        preg_match_all('/[a-z0-9][a-z0-9\.]{1,}/i', $text, $matches);
+        $stopwords = array_flip([
+            'ademas', 'ante', 'bajo', 'cada', 'como', 'con', 'contra', 'cual', 'cuando',
+            'desde', 'donde', 'entre', 'esta', 'este', 'estos', 'estas', 'para', 'pero',
+            'por', 'que', 'segun', 'sin', 'sobre', 'sus', 'una', 'uno', 'unos', 'unas',
+            'del', 'las', 'los', 'les', 'the', 'and', 'for', 'from', 'that', 'this', 'with',
+        ]);
+
+        $tokens = [];
+        foreach ($matches[0] ?? [] as $token) {
+            $token = trim($token, '.');
+            if (strlen($token) < 3 && !ctype_digit($token)) {
+                continue;
+            }
+            if (isset($stopwords[$token])) {
+                continue;
+            }
+            $tokens[$token] = true;
+        }
+
+        return array_keys($tokens);
     }
 
     /**

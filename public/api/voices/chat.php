@@ -175,7 +175,7 @@ $answer = $parsed['answer'];
 
 // Build the trust metadata bundle shown in the UI.
 $meta = [
-    'source_match' => $useRag ? $voiceContext->computeSourceMatch() : null,
+    'source_match' => $useRag ? $voiceContext->computeSourceMatch($answer) : null,
     'sources' => $parsed['sources'],
     'conflicts' => $parsed['conflicts'],
 ];

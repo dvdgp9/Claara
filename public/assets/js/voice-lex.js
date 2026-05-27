@@ -432,10 +432,10 @@
       const bandLabel = { high: 'High', medium: 'Medium', low: 'Low' };
       const cls = bandStyles[sm.band] || bandStyles.low;
       const label = bandLabel[sm.band] || '';
-      const tip = 'Indicates how well the supporting documents matched your question. It is not a guarantee of factual accuracy.';
+      const tip = 'Indicates how much of the answer is backed by retrieved source text. It is not a guarantee of factual accuracy.';
       parts.push(
         `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${cls}" title="${escapeHtml(tip)}">` +
-        `<i class="iconoir-database-check text-[13px]"></i>Source match: ${sm.percent}%${label ? ' · ' + label : ''}</span>`
+        `<i class="iconoir-database-check text-[13px]"></i>Evidence match: ${sm.percent}%${label ? ' · ' + label : ''}</span>`
       );
     }
 
