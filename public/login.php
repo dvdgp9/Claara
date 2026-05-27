@@ -13,51 +13,23 @@ if ($user) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>iaiaPRO — Login</title>
+  <title>Claara — Login</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-    
-    .gradient-bg {
-      background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%);
-    }
-    
-    .btn-gradient {
-      background: linear-gradient(90deg, #23AAC5 0%, #115c6c 100%);
-    }
-    
-    input[type="text"],
-    input[type="password"] {
-      border: 2px solid #23AAC5;
-      border-radius: 50px;
-      padding: 12px 24px;
-      transition: all 0.3s ease;
-    }
-    
-    input[type="text"]:focus,
-    input[type="password"]:focus {
-      outline: none;
-      border-color: #115c6c;
-      box-shadow: 0 0 0 3px rgba(35, 170, 197, 0.1);
-    }
-  </style>
+  <link rel="stylesheet" href="/assets/css/styles.css">
 </head>
-<body class="min-h-screen bg-gray-100 flex">
+<body class="min-h-screen claara-login-page flex">
   <!-- Lado izquierdo - Gradiente -->
-  <div class="hidden lg:flex lg:w-1/2 gradient-bg items-center justify-center p-12 relative">
+  <div class="hidden lg:flex lg:w-1/2 claara-login-hero items-center justify-center p-12 relative">
     <div class="absolute top-12 left-12">
-      <img src="/assets/images/logo.png" alt="iaiaPRO" class="h-16 brightness-0 invert" />
+      <img src="/assets/images/claara-logo.png" alt="Claara" class="h-24 claara-logo-on-hero" />
     </div>
     
-    <div class="text-white text-center max-w-md">
-      <h2 class="text-4xl font-bold leading-tight">
-        Friendly AI assistance for focused, everyday work.
+    <div class="text-slate-800 text-left max-w-md">
+      <p class="claara-kicker mb-5">Clarity. Guidance. Answers.</p>
+      <h2 class="text-4xl font-semibold leading-tight">
+        Stop searching. <span class="text-[#FF8B73]">Ask Claara.</span>
       </h2>
     </div>
   </div>
@@ -66,7 +38,7 @@ if ($user) {
   <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
-        <img src="/assets/images/logo.png" alt="iaiaPRO" class="h-24 mx-auto" />
+        <img src="/assets/images/claara-logo.png" alt="Claara" class="h-24 mx-auto" />
       </div>
       
       <div class="text-center mb-8">
@@ -100,7 +72,7 @@ if ($user) {
           <input 
             id="remember" 
             type="checkbox" 
-            class="h-4 w-4 rounded border-gray-300 text-[#23AAC5] focus:ring-[#23AAC5]"
+            class="h-4 w-4 rounded border-gray-300 text-[#B7C9F2] focus:ring-[#B7C9F2]"
             checked
           />
           <label for="remember" class="ml-2 text-sm text-gray-700">
@@ -111,7 +83,7 @@ if ($user) {
         <button 
           type="submit" 
           id="submit-btn"
-          class="w-full btn-gradient text-white font-semibold py-3 rounded-full hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg"
+          class="w-full btn-gradient text-[#2F3440] font-semibold py-3 rounded-full hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg"
         >
           Log in
         </button>

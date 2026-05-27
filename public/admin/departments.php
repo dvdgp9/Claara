@@ -42,7 +42,7 @@ $headerBackText = 'Usuarios';
               <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Departments</h1>
               <p class="text-slate-600 text-sm lg:text-base mt-1">Create and maintain areas assigned to users.</p>
             </div>
-            <button id="new-department-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
+            <button id="new-department-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
               <i class="iconoir-plus-circle"></i>
               <span>New department</span>
             </button>
@@ -58,16 +58,16 @@ $headerBackText = 'Usuarios';
                 <div class="flex items-center gap-2">
                   <div class="relative">
                     <i class="iconoir-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="search-input" placeholder="Buscar..." class="w-full sm:w-56 pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors text-sm">
+                    <input type="text" id="search-input" placeholder="Buscar..." class="w-full sm:w-56 pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors text-sm">
                   </div>
-                  <button id="refresh-departments-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" title="Refresh">
+                  <button id="refresh-departments-btn" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-colors" title="Refresh">
                     <i class="iconoir-refresh"></i>
                   </button>
                 </div>
               </div>
 
               <div id="departments-loading" class="text-center py-12">
-                <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
+                <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#B7C9F2] border-r-transparent"></div>
                 <p class="text-sm text-slate-500 mt-3">Loading departments...</p>
               </div>
 
@@ -121,7 +121,7 @@ $headerBackText = 'Usuarios';
         <input type="hidden" id="department-id">
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Name *</label>
-          <input type="text" id="department-name" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="Operaciones" required>
+          <input type="text" id="department-name" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="Operaciones" required>
           <p class="text-xs text-slate-500 mt-1">Slug is generated automatically to keep consistency.</p>
         </div>
 
@@ -213,7 +213,7 @@ $headerBackText = 'Usuarios';
           </td>
           <td class="px-5 py-4">
             <div class="flex items-center justify-end gap-1">
-              <button type="button" class="edit-department-btn p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" data-id="${escapeHtml(department.id)}" title="Edit">
+              <button type="button" class="edit-department-btn p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-colors" data-id="${escapeHtml(department.id)}" title="Edit">
                 <i class="iconoir-edit-pencil"></i>
               </button>
               <button type="button" class="delete-department-btn p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-id="${escapeHtml(department.id)}" title="Delete">

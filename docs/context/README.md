@@ -1,6 +1,6 @@
-# iaiaPRO Context
+# Claara Context
 
-This folder contains the base knowledge files that iaiaPRO loads into the main assistant.
+This folder contains the base knowledge files that Claara loads into the main assistant.
 
 ## How It Works
 

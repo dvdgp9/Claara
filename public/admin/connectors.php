@@ -17,7 +17,7 @@ if (empty($user['is_superadmin']) && !in_array('admin', $user['roles'] ?? [], tr
 }
 
 $activeTab = 'connectors';
-$pageTitle = 'Connector Overview - iaiaPRO';
+$pageTitle = 'Connector Overview - Claara';
 $headerTitle = 'Connector Overview';
 $headerSubtitle = 'Global connection health and rollout status';
 $headerIcon = 'iconoir-cloud-sync';

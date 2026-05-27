@@ -22,21 +22,21 @@ if (!$isSuperadmin) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Context Manager — iaiaPRO</title>
+  <title>Context Manager — Claara</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
   <style>
-    .gradient-brand { background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%); }
+    .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .sidebar-rail {
       background:
-        radial-gradient(120% 50% at 50% 0%, rgba(35,170,197,0.18), transparent 60%),
-        radial-gradient(90% 40% at 50% 100%, rgba(35,170,197,0.08), transparent 65%),
+        radial-gradient(120% 50% at 50% 0%, rgba(183, 201, 242,0.18), transparent 60%),
+        radial-gradient(90% 40% at 50% 100%, rgba(183, 201, 242,0.08), transparent 65%),
         linear-gradient(180deg, #0f1b22 0%, #0a1418 100%);
       position: relative;
       isolation: isolate;
@@ -46,7 +46,7 @@ if (!$isSuperadmin) {
       position: absolute;
       top: 0; right: 0; bottom: 0;
       width: 1px;
-      background: linear-gradient(180deg, transparent 0%, rgba(35,170,197,0.28) 50%, transparent 100%);
+      background: linear-gradient(180deg, transparent 0%, rgba(183, 201, 242,0.28) 50%, transparent 100%);
       pointer-events: none;
     }
     .tab-item {
@@ -60,9 +60,9 @@ if (!$isSuperadmin) {
       color: rgba(255,255,255,0.95);
     }
     .tab-item.active {
-      background: rgba(35,170,197,0.18);
+      background: rgba(183, 201, 242,0.18);
       color: #ffffff;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -12px rgba(35,170,197,0.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -12px rgba(183, 201, 242,0.55);
     }
     .tab-item.active::before {
       content: '';
@@ -72,11 +72,11 @@ if (!$isSuperadmin) {
       transform: translateY(-50%);
       width: 3px;
       height: 22px;
-      background: #23AAC5;
+      background: #B7C9F2;
       border-radius: 0 3px 3px 0;
-      box-shadow: 0 0 14px rgba(35,170,197,0.75);
+      box-shadow: 0 0 14px rgba(183, 201, 242,0.75);
     }
-    .tab-active { border-bottom: 2px solid #23AAC5; color: #23AAC5; }
+    .tab-active { border-bottom: 2px solid #B7C9F2; color: #B7C9F2; }
     .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
     .status-active { background: #dcfce7; color: #166534; }
     .status-pending { background: #fef3c7; color: #92400e; }
@@ -114,10 +114,10 @@ if (!$isSuperadmin) {
                 <i class="iconoir-scale mr-2"></i>Lex (Legal)
               </button>
               <button data-target="eboniato" class="tab-btn flex-1 px-6 py-4 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors border-b-2 border-transparent">
-                <i class="iconoir-chat-bubble-question mr-2"></i>Nana (Quick Answers)
+                <i class="iconoir-chat-bubble-question mr-2"></i>Claara (Quick Answers)
               </button>
               <button data-target="ebonia" class="tab-btn flex-1 px-6 py-4 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors border-b-2 border-transparent">
-                <i class="iconoir-message-text mr-2"></i>iaiaPRO (Chat)
+                <i class="iconoir-message-text mr-2"></i>Claara (Chat)
               </button>
             </div>
           </div>
@@ -139,11 +139,11 @@ if (!$isSuperadmin) {
                 <span class="text-sm text-slate-600">Indexed chunks: <strong id="stat-chunks" class="text-slate-800">0</strong></span>
               </div>
               <div class="flex-1"></div>
-              <button id="create-btn" class="px-4 py-2 border border-[#23AAC5] text-[#23AAC5] rounded-lg font-medium hover:bg-[#23AAC5]/10 transition-all flex items-center gap-2 text-sm">
+              <button id="create-btn" class="px-4 py-2 border border-[#B7C9F2] text-[#B7C9F2] rounded-lg font-medium hover:bg-[#B7C9F2]/10 transition-all flex items-center gap-2 text-sm">
                 <i class="iconoir-edit-pencil"></i>
                 <span>Create document</span>
               </button>
-              <button id="upload-btn" class="px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center gap-2 shadow-md text-sm">
+              <button id="upload-btn" class="px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center gap-2 shadow-md text-sm">
                 <i class="iconoir-upload"></i>
                 <span>Upload file</span>
               </button>
@@ -151,7 +151,7 @@ if (!$isSuperadmin) {
 
             <!-- Loading -->
             <div id="docs-loading" class="text-center py-12">
-              <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
+              <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#B7C9F2] border-r-transparent"></div>
               <p class="text-sm text-slate-500 mt-3">Loading documents...</p>
             </div>
 
@@ -202,20 +202,20 @@ if (!$isSuperadmin) {
             <label class="text-sm font-medium text-slate-700 block mb-2">Target</label>
             <select id="upload-target" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-700" disabled>
               <option value="lex">Lex (Legal)</option>
-              <option value="eboniato">Nana (Quick Answers)</option>
-              <option value="ebonia">iaiaPRO (Chat)</option>
+              <option value="eboniato">Claara (Quick Answers)</option>
+              <option value="ebonia">Claara (Chat)</option>
             </select>
           </div>
 
           <div>
             <label class="text-sm font-medium text-slate-700 block mb-2">File</label>
-            <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#23AAC5] transition-colors cursor-pointer" id="drop-zone">
+            <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#B7C9F2] transition-colors cursor-pointer" id="drop-zone">
               <input type="file" id="file-input" class="hidden" accept=".pdf,.txt,.md">
               <i class="iconoir-upload text-3xl text-slate-400 mb-2"></i>
-              <p class="text-sm text-slate-600">Drag a file here or <span class="text-[#23AAC5] font-medium">click to select</span></p>
+              <p class="text-sm text-slate-600">Drag a file here or <span class="text-[#B7C9F2] font-medium">click to select</span></p>
               <p id="allowed-formats" class="text-xs text-slate-400 mt-1">Allowed formats: .pdf, .txt, .md</p>
             </div>
-            <p id="selected-file" class="hidden text-sm text-[#23AAC5] mt-2 flex items-center gap-2">
+            <p id="selected-file" class="hidden text-sm text-[#B7C9F2] mt-2 flex items-center gap-2">
               <i class="iconoir-check-circle"></i>
               <span id="selected-file-name"></span>
             </p>
@@ -223,13 +223,13 @@ if (!$isSuperadmin) {
 
           <div>
             <label class="text-sm font-medium text-slate-700 block mb-2">Description (optional)</label>
-            <textarea id="upload-description" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none" placeholder="Document description..."></textarea>
+            <textarea id="upload-description" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors resize-none" placeholder="Document description..."></textarea>
           </div>
 
           <div id="upload-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
 
           <div class="flex gap-3 pt-2">
-            <button type="submit" id="upload-submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
+            <button type="submit" id="upload-submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
               Upload document
             </button>
             <button type="button" id="cancel-upload" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
@@ -263,19 +263,19 @@ if (!$isSuperadmin) {
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">File name</label>
           <div class="flex">
-            <input type="text" id="create-filename" class="flex-1 px-3 py-2 border border-slate-200 rounded-l-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="my_document">
+            <input type="text" id="create-filename" class="flex-1 px-3 py-2 border border-slate-200 rounded-l-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="my_document">
             <span id="create-extension" class="px-3 py-2 bg-slate-100 border border-l-0 border-slate-200 rounded-r-lg text-slate-600 text-sm">.md</span>
           </div>
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Description (optional)</label>
-          <input type="text" id="create-description" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="Short description...">
+          <input type="text" id="create-description" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="Short description...">
         </div>
       </div>
 
       <div class="flex-1 overflow-hidden flex flex-col min-h-0">
         <label class="text-sm font-medium text-slate-700 block mb-2">Content</label>
-        <textarea id="create-content" class="flex-1 w-full px-4 py-3 bg-white border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none" placeholder="Paste or write document content here..." spellcheck="false"></textarea>
+        <textarea id="create-content" class="flex-1 w-full px-4 py-3 bg-white border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors resize-none" placeholder="Paste or write document content here..." spellcheck="false"></textarea>
       </div>
 
       <div class="flex items-center gap-4 pt-3 text-xs text-slate-500 flex-shrink-0">
@@ -343,7 +343,7 @@ if (!$isSuperadmin) {
 
       <!-- Content editor -->
       <div class="flex-1 overflow-hidden flex flex-col min-h-0 bg-slate-50 rounded-lg border border-slate-200">
-        <textarea id="edit-content" class="flex-1 w-full px-4 py-3 bg-white font-mono text-sm focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors resize-none border-0" placeholder="Document content..." spellcheck="false"></textarea>
+        <textarea id="edit-content" class="flex-1 w-full px-4 py-3 bg-white font-mono text-sm focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors resize-none border-0" placeholder="Document content..." spellcheck="false"></textarea>
       </div>
 
       <!-- Notices -->
@@ -361,7 +361,7 @@ if (!$isSuperadmin) {
 
       <!-- Footer actions -->
       <div class="flex gap-3 pt-4 border-t border-slate-100 mt-4 flex-shrink-0">
-        <button type="button" id="save-content-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
+        <button type="button" id="save-content-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md disabled:opacity-50">
           <i class="iconoir-floppy-disk mr-1"></i>
           Save changes
         </button>
@@ -546,7 +546,7 @@ if (!$isSuperadmin) {
         if (isPdf) {
           editBtn = `<button onclick="window.open('/api/admin/context/view.php?id=${doc.id}&raw=1', '_blank')" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-eye"></i>View</button>`;
         } else if (canEdit) {
-          editBtn = `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#23AAC5] hover:bg-[#23AAC5]/5 rounded transition-colors"><i class="iconoir-edit-pencil"></i>Edit</button>`;
+          editBtn = `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#B7C9F2] hover:bg-[#B7C9F2]/5 rounded transition-colors"><i class="iconoir-edit-pencil"></i>Edit</button>`;
         } else {
           editBtn = `<button onclick="openEditModal(${doc.id})" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded transition-colors"><i class="iconoir-eye"></i>View</button>`;
         }
@@ -670,14 +670,14 @@ if (!$isSuperadmin) {
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
-      dropZone.classList.add('border-[#23AAC5]', 'bg-[#23AAC5]/5');
+      dropZone.classList.add('border-[#B7C9F2]', 'bg-[#B7C9F2]/5');
     });
     dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('border-[#23AAC5]', 'bg-[#23AAC5]/5');
+      dropZone.classList.remove('border-[#B7C9F2]', 'bg-[#B7C9F2]/5');
     });
     dropZone.addEventListener('drop', (e) => {
       e.preventDefault();
-      dropZone.classList.remove('border-[#23AAC5]', 'bg-[#23AAC5]/5');
+      dropZone.classList.remove('border-[#B7C9F2]', 'bg-[#B7C9F2]/5');
       if (e.dataTransfer.files.length > 0) {
         fileInput.files = e.dataTransfer.files;
         updateSelectedFile();
@@ -742,7 +742,7 @@ if (!$isSuperadmin) {
     });
 
     // Create document modal
-    const targetNames = { lex: 'Lex', eboniato: 'Nana', ebonia: 'iaiaPRO' };
+    const targetNames = { lex: 'Lex', eboniato: 'Claara', ebonia: 'Claara' };
     const createContent = document.getElementById('create-content');
 
     document.getElementById('create-btn').addEventListener('click', () => {

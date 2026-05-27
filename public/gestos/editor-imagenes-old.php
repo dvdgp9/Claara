@@ -380,7 +380,7 @@ $headerDrawerId = 'gesture-history-drawer';
                     <label class="cursor-pointer">
                       <input type="radio" name="color" value="corporate" class="hidden peer" />
                       <div class="option-pill peer-checked:active p-2.5 border-2 border-slate-200 rounded-xl hover:border-amber-400 transition-all flex items-center gap-2">
-                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c]"></div>
+                        <div class="w-5 h-5 shrink-0 rounded-full bg-gradient-to-br from-[#B7C9F2] to-[#2F3440]"></div>
                         <span class="text-[10px] sm:text-xs font-medium truncate">Corporate</span>
                       </div>
                     </label>

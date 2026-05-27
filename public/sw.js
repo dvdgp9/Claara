@@ -1,9 +1,9 @@
 /**
- * Service Worker for iaiaPRO PWA
+ * Service Worker for Claara PWA
  * Strategy: network-first with a minimal cache for installability
  */
 
-const CACHE_VERSION = 'iaiapro-v1';
+const CACHE_VERSION = 'claara-v1';
 const MINIMAL_CACHE = [
   '/',
   '/manifest.json',

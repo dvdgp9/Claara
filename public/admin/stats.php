@@ -130,7 +130,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard — iaiaPRO</title>
+  <title>Dashboard — Claara</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -138,15 +138,15 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* Estilos base para el layout */
-    .gradient-brand { background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%); }
+    .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .sidebar-rail {
       background:
-        radial-gradient(120% 50% at 50% 0%, rgba(35,170,197,0.18), transparent 60%),
-        radial-gradient(90% 40% at 50% 100%, rgba(35,170,197,0.08), transparent 65%),
+        radial-gradient(120% 50% at 50% 0%, rgba(183, 201, 242,0.18), transparent 60%),
+        radial-gradient(90% 40% at 50% 100%, rgba(183, 201, 242,0.08), transparent 65%),
         linear-gradient(180deg, #0f1b22 0%, #0a1418 100%);
       position: relative;
       isolation: isolate;
@@ -156,7 +156,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
       position: absolute;
       top: 0; right: 0; bottom: 0;
       width: 1px;
-      background: linear-gradient(180deg, transparent 0%, rgba(35,170,197,0.28) 50%, transparent 100%);
+      background: linear-gradient(180deg, transparent 0%, rgba(183, 201, 242,0.28) 50%, transparent 100%);
       pointer-events: none;
     }
     .tab-item {
@@ -170,9 +170,9 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
       color: rgba(255,255,255,0.95);
     }
     .tab-item.active {
-      background: rgba(35,170,197,0.18);
+      background: rgba(183, 201, 242,0.18);
       color: #ffffff;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -12px rgba(35,170,197,0.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -12px rgba(183, 201, 242,0.55);
     }
     .tab-item.active::before {
       content: '';
@@ -182,9 +182,9 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
       transform: translateY(-50%);
       width: 3px;
       height: 22px;
-      background: #23AAC5;
+      background: #B7C9F2;
       border-radius: 0 3px 3px 0;
-      box-shadow: 0 0 14px rgba(35,170,197,0.75);
+      box-shadow: 0 0 14px rgba(183, 201, 242,0.75);
     }
   </style>
 </head>
@@ -205,14 +205,14 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 lg:mb-8 mt-4 lg:mt-6">
             <div>
               <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Dashboard</h1>
-              <p class="text-slate-600 text-sm lg:text-base mt-1">iaiaPRO usage statistics</p>
+              <p class="text-slate-600 text-sm lg:text-base mt-1">Claara usage statistics</p>
             </div>
             <div class="flex gap-2 lg:gap-3">
               <!-- Filtro de rango -->
               <div class="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
-                <a href="?range=7" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === '7' ? 'bg-[#23AAC5] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">7 days</a>
-                <a href="?range=30" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === '30' ? 'bg-[#23AAC5] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">30 days</a>
-                <a href="?range=all" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === 'all' ? 'bg-[#23AAC5] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">All</a>
+                <a href="?range=7" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === '7' ? 'bg-[#B7C9F2] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">7 days</a>
+                <a href="?range=30" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === '30' ? 'bg-[#B7C9F2] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">30 days</a>
+                <a href="?range=all" class="px-3 py-1 text-sm rounded-md transition-all <?= $range === 'all' ? 'bg-[#B7C9F2] text-white font-medium shadow-sm' : 'text-slate-600 hover:bg-slate-50' ?>">All</a>
               </div>
 
               <a href="/admin/users.php" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-all flex items-center gap-2 bg-white shadow-sm">
@@ -325,7 +325,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
       <!-- Gráfico de actividad -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-          <i class="iconoir-graph-up text-[#23AAC5]"></i>
+          <i class="iconoir-graph-up text-[#B7C9F2]"></i>
           Activity (<?= $range === 'all' ? 'all time' : ($range === '7' ? 'last 7 days' : 'last 30 days') ?>)
         </h2>
         <div class="h-64">
@@ -336,7 +336,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
       <!-- Uso por modelo -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-          <i class="iconoir-cpu text-[#23AAC5]"></i>
+          <i class="iconoir-cpu text-[#B7C9F2]"></i>
           Uso por Modelo
         </h2>
         <div class="space-y-3 max-h-64 overflow-y-auto">
@@ -354,7 +354,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
                 <span class="text-slate-500"><?= number_format($model['usage_count']) ?></span>
               </div>
               <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-[#23AAC5] to-[#115c6c] rounded-full" style="width: <?= $percent ?>%"></div>
+                <div class="h-full bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] rounded-full" style="width: <?= $percent ?>%"></div>
               </div>
             </div>
             <?php endforeach; ?>
@@ -433,7 +433,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="p-6 border-b border-slate-200">
         <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
-          <i class="iconoir-user text-[#23AAC5]"></i>
+          <i class="iconoir-user text-[#B7C9F2]"></i>
           Uso por Usuario
         </h2>
       </div>
@@ -456,7 +456,7 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
             <tr class="hover:bg-slate-50 transition-colors">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
-                  <div class="h-9 w-9 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c] flex items-center justify-center text-white font-semibold text-sm">
+                  <div class="h-9 w-9 rounded-full bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center text-white font-semibold text-sm">
                     <?= strtoupper(substr($u['first_name'], 0, 1) . substr($u['last_name'], 0, 1)) ?>
                   </div>
                   <span class="font-medium text-slate-800"><?= htmlspecialchars($u['first_name'] . ' ' . $u['last_name']) ?></span>
@@ -497,8 +497,8 @@ $chartData = array_map(fn($d) => (int)$d['messages'], $dailyStats);
         datasets: [{
           label: 'Messages',
           data: <?= json_encode($chartData) ?>,
-          borderColor: '#23AAC5',
-          backgroundColor: 'rgba(35, 170, 197, 0.1)',
+          borderColor: '#B7C9F2',
+          backgroundColor: 'rgba(183, 201, 242, 0.1)',
           fill: true,
           tension: 0.4,
           pointRadius: 3,

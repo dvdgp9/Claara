@@ -6,7 +6,7 @@
  * - $drawerId: ID único del drawer (default: 'mobile-drawer')
  * - $drawerTitle: Título del drawer
  * - $drawerIcon: Icono del título
- * - $drawerIconColor: Color del icono (default: 'text-[#23AAC5]')
+ * - $drawerIconColor: Color del icono (default: 'text-[#B7C9F2]')
  * - $drawerContent: Contenido HTML del drawer (si no se usa slot)
  * - $drawerShowNewButton: Si mostrar botón "New" (default: false)
  * - $drawerNewButtonId: ID del botón nuevo
@@ -15,7 +15,7 @@
 $drawerId = $drawerId ?? 'mobile-drawer';
 $drawerTitle = $drawerTitle ?? 'History';
 $drawerIcon = $drawerIcon ?? 'iconoir-clock';
-$drawerIconColor = $drawerIconColor ?? 'text-[#23AAC5]';
+$drawerIconColor = $drawerIconColor ?? 'text-[#B7C9F2]';
 $drawerShowNewButton = $drawerShowNewButton ?? false;
 $drawerNewButtonId = $drawerNewButtonId ?? 'drawer-new-btn';
 $drawerNewButtonText = $drawerNewButtonText ?? 'New';

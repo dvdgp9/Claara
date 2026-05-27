@@ -1,3 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+  --brand-primary: #B7C9F2;
+  --brand-secondary: #E3ECFB;
+  --brand-coral: #FF8B73;
+  --brand-warm: #FFF6F1;
+  --brand-soft: #F3F6FA;
+  --brand-ink: #2F3440;
+}
+
+body {
+  font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--brand-ink);
+}
+
+.brand-logo {
+  object-fit: contain;
+  object-position: left center;
+}
+
+.brand-logo-compact {
+  object-fit: contain;
+}
+
+.claara-login-page {
+  background:
+    radial-gradient(circle at 12% 12%, rgba(183, 201, 242, .22), transparent 28%),
+    radial-gradient(circle at 88% 18%, rgba(255, 139, 115, .13), transparent 24%),
+    linear-gradient(135deg, #ffffff 0%, #F3F6FA 52%, #FFF6F1 100%);
+}
+
+.claara-login-hero {
+  background:
+    radial-gradient(circle at 24% 25%, rgba(183, 201, 242, .42), transparent 28%),
+    radial-gradient(circle at 76% 72%, rgba(255, 139, 115, .22), transparent 24%),
+    linear-gradient(135deg, #ffffff 0%, #F3F6FA 54%, #FFF6F1 100%);
+  border-right: 1px solid rgba(183, 201, 242, .32);
+}
+
+.claara-logo-on-hero {
+  filter: drop-shadow(0 18px 34px rgba(47, 52, 64, .08));
+}
+
+.claara-kicker {
+  color: #6f86bc;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #F3F6FA 0%, #FFF6F1 100%);
+}
+
+.btn-gradient,
+.gradient-brand-btn {
+  background: linear-gradient(90deg, #B7C9F2 0%, #FF8B73 100%);
+  color: #2F3440;
+}
+
+.gradient-brand {
+  background: linear-gradient(135deg, #B7C9F2 0%, #FF8B73 100%);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+textarea,
+select {
+  accent-color: var(--brand-coral);
+}
+
+.claara-login-page input[type="text"],
+.claara-login-page input[type="password"] {
+  border: 2px solid #E3ECFB;
+  border-radius: 999px;
+  padding: 12px 24px;
+  transition: border-color .24s ease, box-shadow .24s ease;
+}
+
+.claara-login-page input[type="text"]:focus,
+.claara-login-page input[type="password"]:focus {
+  outline: none;
+  border-color: #B7C9F2;
+  box-shadow: 0 0 0 4px rgba(183, 201, 242, .26);
+}
+
 /* Lead Finder gesture */
 .lead-finder-accent {
   --lf-accent: #0f9f7a;

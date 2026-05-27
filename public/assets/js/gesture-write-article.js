@@ -368,9 +368,9 @@ Write ONLY the press release, with no comments or explanations.`;
       
       return `
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2" data-id="${item.id}">
-          <i class="${icon} text-[#23AAC5] mt-0.5"></i>
+          <i class="${icon} text-[#B7C9F2] mt-0.5"></i>
           <div class="flex-1 min-w-0 cursor-pointer history-item-main">
-            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-[#115c6c]">${escapeHtml(item.title)}</p>
+            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-[#2F3440]">${escapeHtml(item.title)}</p>
             <div class="flex items-center gap-2 mt-1">
               ${businessLabel ? `<span class="text-[10px] px-1.5 py-0.5 rounded ${businessClass}">${businessLabel}</span>` : ''}
               <span class="text-[10px] text-slate-400">${timeAgo}</span>

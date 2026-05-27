@@ -1,11 +1,11 @@
 {
-  "name": "iaiaPRO",
-  "short_name": "iaiaPRO",
+  "name": "Claara",
+  "short_name": "Claara",
   "description": "A friendly, professional AI workspace for teams",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#23AAC5",
+  "theme_color": "#B7C9F2",
   "orientation": "portrait-primary",
   "categories": ["productivity", "business"],
   "icons": [

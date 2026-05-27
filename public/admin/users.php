@@ -22,22 +22,22 @@ if (!$isSuperadmin) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>User Management — iaiaPRO</title>
+  <title>User Management — Claara</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
   <style>
     /* Estilos base para el layout */
-    .gradient-brand { background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%); }
+    .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .sidebar-rail {
       background:
-        radial-gradient(120% 50% at 50% 0%, rgba(35,170,197,0.18), transparent 60%),
-        radial-gradient(90% 40% at 50% 100%, rgba(35,170,197,0.08), transparent 65%),
+        radial-gradient(120% 50% at 50% 0%, rgba(183, 201, 242,0.18), transparent 60%),
+        radial-gradient(90% 40% at 50% 100%, rgba(183, 201, 242,0.08), transparent 65%),
         linear-gradient(180deg, #0f1b22 0%, #0a1418 100%);
       position: relative;
       isolation: isolate;
@@ -47,7 +47,7 @@ if (!$isSuperadmin) {
       position: absolute;
       top: 0; right: 0; bottom: 0;
       width: 1px;
-      background: linear-gradient(180deg, transparent 0%, rgba(35,170,197,0.28) 50%, transparent 100%);
+      background: linear-gradient(180deg, transparent 0%, rgba(183, 201, 242,0.28) 50%, transparent 100%);
       pointer-events: none;
     }
     .tab-item {
@@ -61,9 +61,9 @@ if (!$isSuperadmin) {
       color: rgba(255,255,255,0.95);
     }
     .tab-item.active {
-      background: rgba(35,170,197,0.18);
+      background: rgba(183, 201, 242,0.18);
       color: #ffffff;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -12px rgba(35,170,197,0.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -12px rgba(183, 201, 242,0.55);
     }
     .tab-item.active::before {
       content: '';
@@ -73,9 +73,9 @@ if (!$isSuperadmin) {
       transform: translateY(-50%);
       width: 3px;
       height: 22px;
-      background: #23AAC5;
+      background: #B7C9F2;
       border-radius: 0 3px 3px 0;
-      box-shadow: 0 0 14px rgba(35,170,197,0.75);
+      box-shadow: 0 0 14px rgba(183, 201, 242,0.75);
     }
     /* Toggle switch moderno */
     .toggle-switch {
@@ -109,7 +109,7 @@ if (!$isSuperadmin) {
       box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
     .toggle-switch input:checked + .toggle-slider {
-      background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%);
+      background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%);
     }
     .toggle-switch input:checked + .toggle-slider:before {
       transform: translateX(20px);
@@ -144,7 +144,7 @@ if (!$isSuperadmin) {
                 <i class="iconoir-community"></i>
                 <span>Departments</span>
               </a>
-              <button id="create-user-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
+              <button id="create-user-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
                 <i class="iconoir-plus-circle"></i>
                 <span>New user</span>
               </button>
@@ -156,9 +156,9 @@ if (!$isSuperadmin) {
       <div class="flex items-center gap-4">
         <div class="flex-1 relative">
           <i class="iconoir-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-          <input type="text" id="search-input" placeholder="Search by name, email..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors">
+          <input type="text" id="search-input" placeholder="Search by name, email..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors">
         </div>
-        <select id="status-filter" class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors">
+        <select id="status-filter" class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors">
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="disabled">Disabled</option>
@@ -169,7 +169,7 @@ if (!$isSuperadmin) {
     <!-- Lista de usuarios -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div id="users-loading" class="text-center py-12">
-        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
+        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#B7C9F2] border-r-transparent"></div>
         <p class="text-sm text-slate-500 mt-3">Loading users...</p>
       </div>
 
@@ -249,22 +249,22 @@ if (!$isSuperadmin) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-medium text-slate-700 block mb-2">First name *</label>
-            <input type="text" id="user-first-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required>
+            <input type="text" id="user-first-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
           </div>
           <div>
             <label class="text-sm font-medium text-slate-700 block mb-2">Last name *</label>
-            <input type="text" id="user-last-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required>
+            <input type="text" id="user-last-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
           </div>
         </div>
 
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Email *</label>
-          <input type="email" id="user-email" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required>
+          <input type="email" id="user-email" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
         </div>
 
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Department</label>
-          <select id="user-department" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors">
+          <select id="user-department" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors">
             <option value="">Unassigned</option>
             <!-- Se llena dinámicamente -->
           </select>
@@ -275,7 +275,7 @@ if (!$isSuperadmin) {
             <span id="password-label">Password *</span>
           </label>
           <div class="relative">
-            <input type="password" id="user-password" class="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" minlength="8">
+            <input type="password" id="user-password" class="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" minlength="8">
             <button type="button" id="toggle-password-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
               <i class="iconoir-eye text-lg" id="toggle-password-icon"></i>
             </button>
@@ -285,12 +285,12 @@ if (!$isSuperadmin) {
 
         <div class="flex items-center gap-4 pt-2 border-t border-slate-100">
           <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" id="user-superadmin" class="w-4 h-4 text-[#23AAC5] border-slate-300 rounded focus:ring-[#23AAC5]">
+            <input type="checkbox" id="user-superadmin" class="w-4 h-4 text-[#B7C9F2] border-slate-300 rounded focus:ring-[#B7C9F2]">
             <span class="text-sm font-medium text-slate-700">Superadmin</span>
           </label>
           
           <label class="flex items-center gap-2 cursor-pointer" id="status-toggle-container">
-            <input type="checkbox" id="user-status" class="w-4 h-4 text-[#23AAC5] border-slate-300 rounded focus:ring-[#23AAC5]" checked>
+            <input type="checkbox" id="user-status" class="w-4 h-4 text-[#B7C9F2] border-slate-300 rounded focus:ring-[#B7C9F2]" checked>
             <span class="text-sm font-medium text-slate-700">Active account</span>
           </label>
         </div>
@@ -298,7 +298,7 @@ if (!$isSuperadmin) {
         <div id="user-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
 
         <div class="flex gap-3 pt-2">
-          <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
+          <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
             <span id="submit-text">Create user</span>
           </button>
           <button type="button" id="cancel-modal-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
@@ -314,7 +314,7 @@ if (!$isSuperadmin) {
     <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 max-h-[90vh] overflow-hidden flex flex-col">
       <div class="flex items-center justify-between mb-6 flex-shrink-0">
         <div class="flex items-center gap-4">
-          <div id="perm-user-avatar" class="h-12 w-12 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c] flex items-center justify-center text-white font-bold text-lg"></div>
+          <div id="perm-user-avatar" class="h-12 w-12 rounded-full bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center text-white font-bold text-lg"></div>
           <div>
             <h3 class="text-lg font-semibold text-slate-800" id="perm-user-name">User permissions</h3>
             <p id="perm-user-email" class="text-sm text-slate-500"></p>
@@ -336,10 +336,10 @@ if (!$isSuperadmin) {
           <div class="bg-slate-50 rounded-xl p-4">
             <div class="flex items-center justify-between mb-4">
               <h4 class="font-bold text-slate-800 flex items-center gap-2">
-                <i class="iconoir-magic-wand text-[#23AAC5]"></i> Gestures
+                <i class="iconoir-magic-wand text-[#B7C9F2]"></i> Gestures
               </h4>
               <div class="flex gap-1">
-                <button onclick="toggleAllOfType('gesture', true)" class="text-[10px] px-1.5 py-0.5 bg-[#23AAC5]/10 text-[#23AAC5] rounded-md hover:bg-[#23AAC5]/20 font-medium">All</button>
+                <button onclick="toggleAllOfType('gesture', true)" class="text-[10px] px-1.5 py-0.5 bg-[#B7C9F2]/10 text-[#B7C9F2] rounded-md hover:bg-[#B7C9F2]/20 font-medium">All</button>
                 <button onclick="toggleAllOfType('gesture', false)" class="text-[10px] px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded-md hover:bg-slate-300 font-medium">None</button>
               </div>
             </div>
@@ -501,14 +501,14 @@ if (!$isSuperadmin) {
           : '<span class="text-slate-400">Nunca</span>';
         
         const superadminBadge = u.is_superadmin 
-          ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#23AAC5]/10 text-[#23AAC5] ml-2">Admin</span>'
+          ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#B7C9F2]/10 text-[#B7C9F2] ml-2">Admin</span>'
           : '';
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c] flex items-center justify-center text-white font-semibold text-sm">
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center text-white font-semibold text-sm">
                   ${escapeHtml(u.first_name[0] + u.last_name[0]).toUpperCase()}
                 </div>
                 <div>
@@ -530,7 +530,7 @@ if (!$isSuperadmin) {
                   <i class="iconoir-lock"></i>
                   <span>Permisos</span>
                 </button>
-                <button onclick="editUser(${u.id})" class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-[#23AAC5] hover:text-[#115c6c] hover:bg-[#23AAC5]/5 rounded-lg transition-colors">
+                <button onclick="editUser(${u.id})" class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-[#B7C9F2] hover:text-[#2F3440] hover:bg-[#B7C9F2]/5 rounded-lg transition-colors">
                   <i class="iconoir-edit-pencil"></i>
                   <span>Edit</span>
                 </button>

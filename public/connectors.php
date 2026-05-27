@@ -12,9 +12,9 @@ if (!$user) {
 }
 
 $activeTab = 'connectors';
-$pageTitle = 'Connectors - iaiaPRO';
+$pageTitle = 'Connectors - Claara';
 $headerTitle = 'Connectors';
-$headerSubtitle = 'Connect selected sources to iaiaPRO context';
+$headerSubtitle = 'Connect selected sources to Claara context';
 $headerIcon = 'iconoir-cloud-sync';
 $headerIconColor = 'from-cyan-500 to-teal-700';
 $headerBackUrl = '/';

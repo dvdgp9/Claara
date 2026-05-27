@@ -119,7 +119,7 @@ $tabs = [
     <?php foreach ($tabs as $tabId => $tab): ?>
       <?php 
         $isActive = ($activeTab === $tabId);
-        $colorClass = $isActive ? 'text-[#23AAC5]' : 'text-slate-400';
+        $colorClass = $isActive ? 'text-[#B7C9F2]' : 'text-slate-400';
         $iconClass = $isActive ? ($tab['iconActive'] ?? $tab['icon']) : $tab['icon'];
         $hasModal = !empty($tab['modal']);
       ?>
@@ -130,7 +130,7 @@ $tabs = [
           <i class="<?php echo $iconClass; ?> text-xl mb-0.5"></i>
           <span class="text-[10px] font-medium"><?php echo htmlspecialchars($tab['label']); ?></span>
           <?php if ($isActive): ?>
-            <div class="absolute bottom-1 w-1 h-1 rounded-full bg-[#23AAC5]"></div>
+            <div class="absolute bottom-1 w-1 h-1 rounded-full bg-[#B7C9F2]"></div>
           <?php endif; ?>
         </button>
       <?php else: ?>
@@ -139,7 +139,7 @@ $tabs = [
           <i class="<?php echo $iconClass; ?> text-xl mb-0.5"></i>
           <span class="text-[10px] font-medium"><?php echo htmlspecialchars($tab['label']); ?></span>
           <?php if ($isActive): ?>
-            <div class="absolute bottom-1 w-1 h-1 rounded-full bg-[#23AAC5]"></div>
+            <div class="absolute bottom-1 w-1 h-1 rounded-full bg-[#B7C9F2]"></div>
           <?php endif; ?>
         </a>
       <?php endif; ?>

@@ -25,7 +25,7 @@ class Session {
         // Solo usar dominio si no es localhost/IP (para que funcione en desarrollo)
         $cookieDomain = '';
         if ($host && !preg_match('/^(localhost|127\.|192\.|10\.|172\.)/', $host)) {
-            // Extraer dominio base (e.g., ebonia.es) si hay subdominio
+            // Extraer dominio base (e.g., claara.tech) si hay subdominio
             $parts = explode('.', $host);
             if (count($parts) >= 2) {
                 $cookieDomain = $parts[count($parts)-2] . '.' . $parts[count($parts)-1];
@@ -50,14 +50,14 @@ class Session {
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
-        session_name('ebonia_session');
+        session_name('claara_session');
         session_start();
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
         
         // Si no hay usuario en sesión pero hay cookie de remember, intentar restaurar
-        if (empty($_SESSION['user']) && !empty($_COOKIE['ebonia_remember'])) {
+        if (empty($_SESSION['user']) && !empty($_COOKIE['claara_remember'])) {
             self::tryRestoreFromRemember();
         }
     }
@@ -141,7 +141,7 @@ class Session {
         ]);
         
         // Necesitamos setear el nombre antes de iniciar
-        session_name('ebonia_session');
+        session_name('claara_session');
         
         // Reiniciar sesión
         session_start();

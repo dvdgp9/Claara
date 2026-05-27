@@ -939,7 +939,7 @@
     const link = document.createElement('a');
     link.href = currentImageSrc;
     const extension = currentImageSrc.startsWith('data:image/jpeg') ? 'jpg' : (currentImageSrc.startsWith('data:image/webp') ? 'webp' : 'png');
-    link.download = `ebonia-image-${Date.now()}.${extension}`;
+    link.download = `claara-image-${Date.now()}.${extension}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

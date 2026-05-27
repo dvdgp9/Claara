@@ -38,9 +38,9 @@ $headerShowLogo = true;
     <aside id="conversations-sidebar" class="hidden lg:flex w-80 bg-white border-r border-slate-200 flex-col shadow-sm">
       <div class="p-5 border-b border-slate-200">
         <div class="flex items-center gap-3 mb-6">
-          <img src="/assets/images/logo.png" alt="iaiaPRO" class="h-9">
+          <img src="/assets/images/logo.png" alt="Claara" class="h-9">
         </div>
-        <button id="new-conv-btn" class="w-full py-2.5 px-4 rounded-lg gradient-brand-btn text-white font-medium shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2">
+        <button id="new-conv-btn" class="w-full py-2.5 px-4 rounded-lg gradient-brand-btn text-[#2F3440] font-medium shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2">
           <span class="text-lg">+</span> New conversation
         </button>
       </div>
@@ -49,7 +49,7 @@ $headerShowLogo = true;
         <div class="mb-4">
           <div class="flex items-center justify-between mb-2 px-2">
             <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Folders</div>
-            <button id="new-folder-btn" class="p-1 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors" title="New folder">
+            <button id="new-folder-btn" class="p-1 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded transition-colors" title="New folder">
               <i class="iconoir-folder-plus text-sm"></i>
             </button>
           </div>
@@ -57,7 +57,7 @@ $headerShowLogo = true;
             <!-- "All" is always visible -->
             <li>
               <button data-folder-id="-1" class="folder-item w-full text-left p-2 rounded-lg transition-all duration-200 flex items-center gap-2 hover:bg-slate-50 group">
-                <i class="iconoir-folder text-[#23AAC5]"></i>
+                <i class="iconoir-folder text-[#B7C9F2]"></i>
                 <span class="flex-1 text-sm text-slate-700">All</span>
                 <span class="text-xs text-slate-400" id="all-count">0</span>
               </button>
@@ -65,7 +65,7 @@ $headerShowLogo = true;
             <!-- "No folder" -->
             <li>
               <button data-folder-id="0" class="folder-item w-full text-left p-2 rounded-lg transition-all duration-200 flex items-center gap-2 hover:bg-slate-50 group">
-                <i class="iconoir-folder text-[#23AAC5]"></i>
+                <i class="iconoir-folder text-[#B7C9F2]"></i>
                 <span class="flex-1 text-sm text-slate-700">No folder</span>
                 <span class="text-xs text-slate-400" id="root-count">0</span>
               </button>
@@ -78,7 +78,7 @@ $headerShowLogo = true;
         <div>
           <div class="flex items-center justify-between mb-2 px-2">
             <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Conversations</div>
-            <select id="sort-select" class="text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:border-[#23AAC5]">
+            <select id="sort-select" class="text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:border-[#B7C9F2]">
               <option value="updated_at">Recent</option>
               <option value="favorite">Favorites</option>
               <option value="created_at">Created</option>
@@ -97,7 +97,7 @@ $headerShowLogo = true;
     $drawerId = 'conversations-drawer';
     $drawerTitle = 'Conversations';
     $drawerIcon = 'iconoir-chat-bubble';
-    $drawerIconColor = 'text-[#23AAC5]';
+    $drawerIconColor = 'text-[#B7C9F2]';
     $drawerShowNewButton = true;
     $drawerNewButtonId = 'mobile-new-conv-btn';
     $drawerNewButtonText = 'New conversation';
@@ -148,7 +148,7 @@ $headerShowLogo = true;
                   <!-- Top row: textarea + submit button -->
                   <div class="flex items-start gap-3 mb-3">
                     <textarea id="chat-input-empty" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Ask me anything" style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
-                    <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-xl transition-smooth shrink-0" title="Send">
+                    <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-xl transition-smooth shrink-0" title="Send">
                       <i class="iconoir-arrow-up text-xl"></i>
                     </button>
                   </div>
@@ -156,7 +156,7 @@ $headerShowLogo = true;
                   <div class="flex items-center justify-between px-1">
                     <!-- Bottom row: action buttons -->
                     <div class="flex items-center gap-1">
-                      <button type="button" id="attach-btn-empty" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Attach file (PDF, image, CSV, or Excel)">
+                      <button type="button" id="attach-btn-empty" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-lg transition-smooth" title="Attach file (PDF, image, CSV, or Excel)">
                         <i class="iconoir-attachment text-lg"></i>
                       </button>
                       <button type="button" id="image-mode-btn-empty" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generate image">
@@ -166,10 +166,10 @@ $headerShowLogo = true;
                         <i class="iconoir-globe text-lg"></i>
                       </button>
                       <?php if ($user['is_superadmin']): ?>
-                      <select id="model-select-empty" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Select model (Superadmin only)">
+                      <select id="model-select-empty" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#B7C9F2] transition-colors" title="Select model (Superadmin only)">
                         <option value="google/gemini-3-flash-preview">Loading models...</option>
                       </select>
-                      <button type="button" id="manage-models-btn-empty" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-smooth" title="Manage models (Superadmin only)">
+                      <button type="button" id="manage-models-btn-empty" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-smooth" title="Manage models (Superadmin only)">
                         <i class="iconoir-settings text-lg"></i>
                       </button>
                       <?php endif; ?>
@@ -268,16 +268,16 @@ $headerShowLogo = true;
                 
                 <div class="space-y-2.5">
                   <?php if ($accessRepo->hasGestureAccess($userId, 'write-article')): ?>
-                  <button class="gesture-option w-full p-4 bg-white/60 hover:bg-white border border-slate-200/80 hover:border-[#23AAC5]/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="write-article">
+                  <button class="gesture-option w-full p-4 bg-white/60 hover:bg-white border border-slate-200/80 hover:border-[#B7C9F2]/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="write-article">
                     <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#23AAC5] to-[#115c6c] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
+                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
                         <i class="iconoir-page-edit text-lg text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-800 group-hover:text-[#115c6c] transition-smooth">Write Content</div>
+                        <div class="font-semibold text-slate-800 group-hover:text-[#2F3440] transition-smooth">Write Content</div>
                         <div class="text-xs text-slate-500">Blogs, updates, press notes</div>
                       </div>
-                      <i class="iconoir-arrow-right text-slate-300 group-hover:text-[#23AAC5] group-hover:translate-x-1 transition-smooth"></i>
+                      <i class="iconoir-arrow-right text-slate-300 group-hover:text-[#B7C9F2] group-hover:translate-x-1 transition-smooth"></i>
                     </div>
                   </button>
                   <?php endif; ?>
@@ -314,8 +314,8 @@ $headerShowLogo = true;
 
                   
 
-                  <button id="view-all-gestures" class="w-full p-3 mt-1 hover:bg-[#23AAC5]/5 border-2 border-dashed border-slate-200 hover:border-[#23AAC5]/50 rounded-2xl transition-smooth text-center group">
-                    <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-[#23AAC5] transition-smooth">
+                  <button id="view-all-gestures" class="w-full p-3 mt-1 hover:bg-[#B7C9F2]/5 border-2 border-dashed border-slate-200 hover:border-[#B7C9F2]/50 rounded-2xl transition-smooth text-center group">
+                    <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-[#B7C9F2] transition-smooth">
                       <span>View all gestures</span>
                       <i class="iconoir-arrow-right group-hover:translate-x-1 transition-smooth"></i>
                     </div>
@@ -340,9 +340,9 @@ $headerShowLogo = true;
           </div>
         </div>
         <div id="drop-overlay" class="hidden fixed inset-0 z-[65] pointer-events-none p-4 lg:p-8">
-          <div class="w-full h-full rounded-2xl border-2 border-dashed border-[#23AAC5] bg-[#23AAC5]/10 flex items-center justify-center">
+          <div class="w-full h-full rounded-2xl border-2 border-dashed border-[#B7C9F2] bg-[#B7C9F2]/10 flex items-center justify-center">
             <div class="px-5 py-3 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm text-center">
-              <div class="text-sm font-medium text-[#115c6c]">Drop files here to attach them</div>
+              <div class="text-sm font-medium text-[#2F3440]">Drop files here to attach them</div>
               <div class="mt-1 text-[11px] text-slate-400">PDF, PNG, JPG, GIF, WEBP, CSV, XLS, XLSX (max. 30MB)</div>
             </div>
           </div>
@@ -365,7 +365,7 @@ $headerShowLogo = true;
             <!-- Top row: textarea + submit button -->
             <div class="flex items-start gap-3 mb-2">
               <textarea id="chat-input" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Write a message..." style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
-              <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-xl transition-smooth shrink-0" title="Send">
+              <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-xl transition-smooth shrink-0" title="Send">
                 <i class="iconoir-arrow-up text-xl"></i>
               </button>
             </div>
@@ -373,7 +373,7 @@ $headerShowLogo = true;
             <div class="flex items-center justify-between px-1">
               <!-- Bottom row: action buttons -->
               <div class="flex items-center gap-1">
-                <button type="button" id="attach-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-smooth" title="Attach file (PDF, image, CSV, or Excel)">
+                <button type="button" id="attach-btn" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-lg transition-smooth" title="Attach file (PDF, image, CSV, or Excel)">
                   <i class="iconoir-attachment text-lg"></i>
                 </button>
                 <button type="button" id="image-mode-btn" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generate image">
@@ -383,10 +383,10 @@ $headerShowLogo = true;
                   <i class="iconoir-globe text-lg"></i>
                 </button>
                 <?php if ($user['is_superadmin']): ?>
-                <select id="model-select-chat" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#23AAC5] transition-colors" title="Select model (Superadmin only)">
+                <select id="model-select-chat" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#B7C9F2] transition-colors" title="Select model (Superadmin only)">
                   <option value="google/gemini-3-flash-preview">Loading models...</option>
                 </select>
-                <button type="button" id="manage-models-btn-chat" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-smooth" title="Manage models (Superadmin only)">
+                <button type="button" id="manage-models-btn-chat" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-smooth" title="Manage models (Superadmin only)">
                   <i class="iconoir-settings text-lg"></i>
                 </button>
                 <?php endif; ?>
@@ -438,7 +438,7 @@ $headerShowLogo = true;
             <i class="iconoir-edit-pencil text-base"></i>
             Edit
           </button>
-          <button id="mobile-regenerate-btn" class="flex items-center gap-1.5 px-3 py-2 bg-[#23AAC5] active:bg-[#1d8fa6] rounded-xl transition-colors text-sm font-semibold shadow-lg shadow-cyan-500/20">
+          <button id="mobile-regenerate-btn" class="flex items-center gap-1.5 px-3 py-2 bg-[#B7C9F2] active:bg-[#FF8B73] rounded-xl transition-colors text-sm font-semibold shadow-lg shadow-[#B7C9F2]/30">
             <i class="iconoir-refresh text-base"></i>
             Regen
           </button>
@@ -472,7 +472,7 @@ $headerShowLogo = true;
           </label>
           <textarea 
             id="edit-modal-instructions" 
-            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-all text-sm resize-none"
+            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-all text-sm resize-none"
             rows="3"
             placeholder="Example: Make it more formal, add more detail about..., simplify this explanation..."
           ></textarea>
@@ -524,16 +524,16 @@ $headerShowLogo = true;
       <div class="flex-1 overflow-y-auto p-6">
         <div class="space-y-2" id="folder-options">
           <!-- "No folder" option -->
-          <button data-target-folder="0" class="folder-option w-full p-4 bg-slate-50 hover:bg-[#23AAC5]/5 border-2 border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-left group">
+          <button data-target-folder="0" class="folder-option w-full p-4 bg-slate-50 hover:bg-[#B7C9F2]/5 border-2 border-slate-200 hover:border-[#B7C9F2] rounded-xl transition-all text-left group">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0 group-hover:bg-[#23AAC5]/10">
-                <i class="iconoir-folder-minus text-xl text-slate-500 group-hover:text-[#23AAC5]"></i>
+              <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0 group-hover:bg-[#B7C9F2]/10">
+                <i class="iconoir-folder-minus text-xl text-slate-500 group-hover:text-[#B7C9F2]"></i>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="font-semibold text-slate-800 group-hover:text-[#23AAC5] transition-colors">No folder</div>
+                <div class="font-semibold text-slate-800 group-hover:text-[#B7C9F2] transition-colors">No folder</div>
                 <div class="text-xs text-slate-500">Move to root</div>
               </div>
-              <i class="iconoir-nav-arrow-right text-slate-300 group-hover:text-[#23AAC5] transition-colors"></i>
+              <i class="iconoir-nav-arrow-right text-slate-300 group-hover:text-[#B7C9F2] transition-colors"></i>
             </div>
           </button>
           
@@ -878,7 +878,7 @@ $headerShowLogo = true;
       // Avatar
       const avatar = document.createElement('div');
       avatar.className = role === 'user'
-        ? 'w-9 h-9 rounded-full gradient-brand flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm'
+        ? 'w-9 h-9 rounded-full gradient-brand flex items-center justify-center text-[#2F3440] text-sm font-semibold flex-shrink-0 shadow-sm'
         : 'w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-sm font-semibold flex-shrink-0';
       avatar.textContent = role === 'user' 
         ? (currentUser ? currentUser.first_name[0] + currentUser.last_name[0] : '?')
@@ -1699,7 +1699,7 @@ $headerShowLogo = true;
           body: {
             content: content,
             format: format,
-            title: currentConvTitle || 'iaiaPRO document'
+            title: currentConvTitle || 'Claara document'
           }
         });
         
@@ -1826,11 +1826,11 @@ $headerShowLogo = true;
         btn.tabIndex = 0;
         btn.className = 'folder-item w-full text-left p-2 rounded-lg transition-all duration-200 flex items-center gap-2 hover:bg-slate-50 whitespace-nowrap min-w-0';
         if (currentFolderId === folder.id) {
-          btn.classList.add('bg-gradient-to-r', 'from-[#23AAC5]/10', 'to-[#115c6c]/10', 'shadow-sm');
+          btn.classList.add('bg-gradient-to-r', 'from-[#B7C9F2]/10', 'to-[#2F3440]/10', 'shadow-sm');
         }
         
         const iconEl = document.createElement('i');
-        iconEl.className = 'iconoir-folder text-[#23AAC5] flex-shrink-0';
+        iconEl.className = 'iconoir-folder text-[#B7C9F2] flex-shrink-0';
         
         const nameEl = document.createElement('span');
         nameEl.className = 'flex-1 text-sm text-slate-700 truncate min-w-0';
@@ -1854,7 +1854,7 @@ $headerShowLogo = true;
         actions.className = 'flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0';
         
         const renameBtn = document.createElement('button');
-        renameBtn.className = 'flex items-center justify-center p-1 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors';
+        renameBtn.className = 'flex items-center justify-center p-1 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded transition-colors';
         renameBtn.style.lineHeight = '0';
         renameBtn.setAttribute('data-action-folder', 'rename');
         renameBtn.innerHTML = '<i class="iconoir-edit-pencil text-xs"></i>';
@@ -1908,9 +1908,9 @@ $headerShowLogo = true;
       const allFolderItems = document.querySelectorAll('.folder-item');
       allFolderItems.forEach(item => {
         const folderId = parseInt(item.dataset.folderId);
-        item.classList.remove('bg-gradient-to-r', 'from-[#23AAC5]/10', 'to-[#115c6c]/10', 'shadow-sm');
+        item.classList.remove('bg-gradient-to-r', 'from-[#B7C9F2]/10', 'to-[#2F3440]/10', 'shadow-sm');
         if (folderId === currentFolderId) {
-          item.classList.add('bg-gradient-to-r', 'from-[#23AAC5]/10', 'to-[#115c6c]/10', 'shadow-sm');
+          item.classList.add('bg-gradient-to-r', 'from-[#B7C9F2]/10', 'to-[#2F3440]/10', 'shadow-sm');
         }
         
         // Add event listeners only for "All" (-1) and "No folder" (0).
@@ -1940,23 +1940,23 @@ $headerShowLogo = true;
         allFolders.forEach(folder => {
           const btn = document.createElement('button');
           btn.dataset.targetFolder = folder.id;
-          btn.className = 'folder-option dynamic-folder-option w-full p-4 bg-slate-50 hover:bg-[#23AAC5]/5 border-2 border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-left group';
+          btn.className = 'folder-option dynamic-folder-option w-full p-4 bg-slate-50 hover:bg-[#B7C9F2]/5 border-2 border-slate-200 hover:border-[#B7C9F2] rounded-xl transition-all text-left group';
           
           // Mark current folder.
           if (conversation.folder_id && conversation.folder_id == folder.id) {
-            btn.classList.add('border-[#23AAC5]', 'bg-[#23AAC5]/5');
+            btn.classList.add('border-[#B7C9F2]', 'bg-[#B7C9F2]/5');
           }
           
           btn.innerHTML = `
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#23AAC5]/20 to-[#115c6c]/20 flex items-center justify-center flex-shrink-0">
-                <i class="iconoir-folder text-xl text-[#23AAC5]"></i>
+              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#B7C9F2]/20 to-[#2F3440]/20 flex items-center justify-center flex-shrink-0">
+                <i class="iconoir-folder text-xl text-[#B7C9F2]"></i>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="font-semibold text-slate-800 group-hover:text-[#23AAC5] transition-colors">${folder.name}</div>
+                <div class="font-semibold text-slate-800 group-hover:text-[#B7C9F2] transition-colors">${folder.name}</div>
                 <div class="text-xs text-slate-500">${folder.conversation_count} conversation${folder.conversation_count !== 1 ? 's' : ''}</div>
               </div>
-              <i class="iconoir-nav-arrow-right text-slate-300 group-hover:text-[#23AAC5] transition-colors"></i>
+              <i class="iconoir-nav-arrow-right text-slate-300 group-hover:text-[#B7C9F2] transition-colors"></i>
             </div>
           `;
           
@@ -1973,11 +1973,11 @@ $headerShowLogo = true;
         rootBtn.parentNode.replaceChild(newRootBtn, rootBtn);
         
         // Reset classes defensively.
-        newRootBtn.classList.remove('border-[#23AAC5]', 'bg-[#23AAC5]/5');
+        newRootBtn.classList.remove('border-[#B7C9F2]', 'bg-[#B7C9F2]/5');
         
         // Mark if in root.
         if (!conversation.folder_id || conversation.folder_id === 0 || conversation.folder_id === "0") {
-          newRootBtn.classList.add('border-[#23AAC5]', 'bg-[#23AAC5]/5');
+          newRootBtn.classList.add('border-[#B7C9F2]', 'bg-[#B7C9F2]/5');
         }
         
         newRootBtn.addEventListener('click', () => handleMoveConversation(null));
@@ -2021,7 +2021,7 @@ $headerShowLogo = true;
       for(const c of items){
         const li = document.createElement('li');
         const isActive = currentConversationId === c.id;
-        li.className = 'group rounded-lg transition-all duration-200 ' + (isActive ? 'bg-gradient-to-r from-[#23AAC5]/10 to-[#115c6c]/10 shadow-sm' : 'hover:bg-slate-50');
+        li.className = 'group rounded-lg transition-all duration-200 ' + (isActive ? 'bg-gradient-to-r from-[#B7C9F2]/10 to-[#2F3440]/10 shadow-sm' : 'hover:bg-slate-50');
         li.setAttribute('data-conv-id', c.id);
         li.style.minHeight = '48px';
 
@@ -2053,7 +2053,7 @@ $headerShowLogo = true;
         const textContainer = document.createElement('div');
         textContainer.className = 'flex-1 min-w-0 max-w-[180px]';
         const titleEl = document.createElement('div');
-        titleEl.className = 'font-medium text-sm truncate ' + (isActive ? 'text-[#115c6c]' : 'text-slate-700 group-hover:text-slate-900');
+        titleEl.className = 'font-medium text-sm truncate ' + (isActive ? 'text-[#2F3440]' : 'text-slate-700 group-hover:text-slate-900');
         titleEl.textContent = c.title || `Conversation ${c.id}`;
         const timeEl = document.createElement('div');
         timeEl.className = 'text-xs text-slate-400';
@@ -2076,7 +2076,7 @@ $headerShowLogo = true;
         const actions = document.createElement('div');
         actions.className = 'flex items-center gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity flex-shrink-0 whitespace-nowrap';
         const renameBtn = document.createElement('button');
-        renameBtn.className = 'p-1.5 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors';
+        renameBtn.className = 'p-1.5 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded transition-colors';
         renameBtn.setAttribute('data-action', 'rename');
         renameBtn.innerHTML = '<i class="iconoir-edit-pencil"></i>';
         renameBtn.title = 'Rename';
@@ -2096,7 +2096,7 @@ $headerShowLogo = true;
         });
 
         const moveBtn = document.createElement('button');
-        moveBtn.className = 'p-1.5 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded transition-colors';
+        moveBtn.className = 'p-1.5 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded transition-colors';
         moveBtn.setAttribute('data-action', 'move');
         moveBtn.innerHTML = '<i class="iconoir-folder-settings"></i>';
         moveBtn.title = 'Move to folder';
@@ -2502,9 +2502,9 @@ $headerShowLogo = true;
       
       filesPreview.classList.remove('hidden');
       filesList.innerHTML = currentFiles.map((file, idx) => {
-        let iconClass = 'iconoir-page text-[#23AAC5]';
+        let iconClass = 'iconoir-page text-[#B7C9F2]';
         if (file.type === 'application/pdf') iconClass = 'iconoir-page text-red-500';
-        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#23AAC5]';
+        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#B7C9F2]';
         else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
         
         return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
@@ -2671,9 +2671,9 @@ $headerShowLogo = true;
       
       filesPreviewEmpty.classList.remove('hidden');
       filesListEmpty.innerHTML = currentFilesEmpty.map((file, idx) => {
-        let iconClass = 'iconoir-page text-[#23AAC5]';
+        let iconClass = 'iconoir-page text-[#B7C9F2]';
         if (file.type === 'application/pdf') iconClass = 'iconoir-page text-red-500';
-        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#23AAC5]';
+        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#B7C9F2]';
         else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
         
         return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
@@ -2774,7 +2774,7 @@ $headerShowLogo = true;
     }
   </script>
   
-  <!-- Nana Quick Answers Modal -->
+  <!-- Claara Quick Answers Modal -->
   <div id="faq-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
       <!-- Header -->
@@ -2784,7 +2784,7 @@ $headerShowLogo = true;
             <i class="iconoir-help-circle text-xl text-white"></i>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-slate-900">Ask Nana</h3>
+            <h3 class="text-lg font-semibold text-slate-900">Ask Claara</h3>
             <p class="text-xs text-slate-500">Quick answers from your workspace</p>
           </div>
         </div>
@@ -2804,16 +2804,16 @@ $headerShowLogo = true;
         <div id="faq-suggestions" class="space-y-3">
           <p class="text-sm text-slate-600 text-center mb-4">What would you like to know? Try one of these:</p>
           <div class="grid grid-cols-1 gap-2">
-            <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#23AAC5]/5 border border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-sm text-slate-700 hover:text-[#23AAC5]">
-              What can iaiaPRO help me with?
+            <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#B7C9F2]/5 border border-slate-200 hover:border-[#B7C9F2] rounded-xl transition-all text-sm text-slate-700 hover:text-[#B7C9F2]">
+              What can Claara help me with?
             </button>
-            <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#23AAC5]/5 border border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-sm text-slate-700 hover:text-[#23AAC5]">
+            <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#B7C9F2]/5 border border-slate-200 hover:border-[#B7C9F2] rounded-xl transition-all text-sm text-slate-700 hover:text-[#B7C9F2]">
               How do I get better answers from the assistant?
             </button>
-            <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#23AAC5]/5 border border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-sm text-slate-700 hover:text-[#23AAC5]">
+            <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#B7C9F2]/5 border border-slate-200 hover:border-[#B7C9F2] rounded-xl transition-all text-sm text-slate-700 hover:text-[#B7C9F2]">
               What kind of documents can I upload?
             </button>
-            <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#23AAC5]/5 border border-slate-200 hover:border-[#23AAC5] rounded-xl transition-all text-sm text-slate-700 hover:text-[#23AAC5]">
+            <button class="faq-suggestion p-3 text-left bg-slate-50 hover:bg-[#B7C9F2]/5 border border-slate-200 hover:border-[#B7C9F2] rounded-xl transition-all text-sm text-slate-700 hover:text-[#B7C9F2]">
               How should I use Voices and Gestures?
             </button>
           </div>
@@ -2838,11 +2838,11 @@ $headerShowLogo = true;
           <input 
             id="faq-input" 
             type="text" 
-            class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-all text-sm" 
-            placeholder="Ask Nana..."
+            class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-all text-sm" 
+            placeholder="Ask Claara..."
             autocomplete="off"
           />
-          <button type="submit" class="px-5 py-3 gradient-brand-btn text-white rounded-xl font-medium shadow-md hover:shadow-lg hover:opacity-90 transition-all">
+          <button type="submit" class="px-5 py-3 gradient-brand-btn text-[#2F3440] rounded-xl font-medium shadow-md hover:shadow-lg hover:opacity-90 transition-all">
             <i class="iconoir-send text-lg"></i>
           </button>
         </form>
@@ -2851,7 +2851,7 @@ $headerShowLogo = true;
   </div>
   
   <script>
-    // Nana modal logic.
+    // Claara modal logic.
     (function() {
       const faqBtn = document.getElementById('faq-btn');
       const faqModal = document.getElementById('faq-modal');
@@ -2984,7 +2984,7 @@ $headerShowLogo = true;
         const userInitials = document.getElementById('user-avatar')?.textContent?.trim() || '?';
         
         const avatar = role === 'user' 
-          ? `<div class="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">${userInitials}</div>`
+          ? `<div class="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-[#2F3440] text-xs font-semibold flex-shrink-0">${userInitials}</div>`
           : `<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs font-semibold flex-shrink-0">N</div>`;
         
         const bubbleClass = role === 'user'

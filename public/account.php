@@ -16,14 +16,14 @@ if (!$user) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>My account — iaiaPRO</title>
+  <title>My account — Claara</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
   <style>
     /* Base layout styles */
-    .gradient-brand { background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%); }
+    .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -48,7 +48,7 @@ if (!$user) {
           <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6 mt-6">
             <div class="flex items-center justify-between mb-6">
               <div class="flex items-center gap-4">
-                <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#23AAC5] to-[#115c6c] flex items-center justify-center text-white text-2xl font-bold shadow-lg" id="avatar-big">
+                <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center text-white text-2xl font-bold shadow-lg" id="avatar-big">
                   <?php 
                     $initials = strtoupper(substr($user['first_name'], 0, 1) . substr($user['last_name'], 0, 1));
                     echo htmlspecialchars($initials);
@@ -59,7 +59,7 @@ if (!$user) {
                   <p class="text-slate-500 text-sm">Manage your details and preferences</p>
                 </div>
               </div>
-              <button id="edit-toggle-btn" class="text-sm text-[#23AAC5] hover:text-[#115c6c] font-medium flex items-center gap-1">
+              <button id="edit-toggle-btn" class="text-sm text-[#B7C9F2] hover:text-[#2F3440] font-medium flex items-center gap-1">
                 <i class="iconoir-edit-pencil"></i>
                 <span>Edit</span>
               </button>
@@ -90,11 +90,11 @@ if (!$user) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">First name</label>
-            <input type="text" id="edit-first-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required>
+            <input type="text" id="edit-first-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
           </div>
           <div>
             <label class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">Last name</label>
-            <input type="text" id="edit-last-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required>
+            <input type="text" id="edit-last-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
           </div>
           <div>
             <label class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">Email</label>
@@ -112,7 +112,7 @@ if (!$user) {
           </p>
         </div>
         <div class="flex gap-3 pt-2">
-          <button type="submit" class="px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
+          <button type="submit" class="px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
             Save changes
           </button>
           <button type="button" id="cancel-edit-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
@@ -142,14 +142,14 @@ if (!$user) {
       <h2 class="text-lg font-semibold text-slate-800 mb-6">Recent activity</h2>
       
       <div id="activity-loading" class="text-center py-8">
-        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
+        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#B7C9F2] border-r-transparent"></div>
         <p class="text-sm text-slate-500 mt-3">Loading stats...</p>
       </div>
 
       <div id="activity-content" class="hidden space-y-4">
         <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
-          <div class="h-10 w-10 rounded-lg bg-[#23AAC5]/10 flex items-center justify-center flex-shrink-0">
-            <i class="iconoir-chat-bubble text-[#23AAC5]"></i>
+          <div class="h-10 w-10 rounded-lg bg-[#B7C9F2]/10 flex items-center justify-center flex-shrink-0">
+            <i class="iconoir-chat-bubble text-[#B7C9F2]"></i>
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-slate-800">Conversations created</div>
@@ -211,7 +211,7 @@ if (!$user) {
 
     <!-- Footer -->
     <div class="mt-8 text-center text-sm text-slate-500">
-      <p>© 2025 iaiaPRO. All rights reserved.</p>
+      <p>© 2025 Claara. All rights reserved.</p>
     </div>
   </div>
 </div>
@@ -234,25 +234,25 @@ if (!$user) {
       <form id="password-form" class="space-y-4">
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Current password</label>
-          <input type="password" id="current-password" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required>
+          <input type="password" id="current-password" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
         </div>
 
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">New password</label>
-          <input type="password" id="new-password" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required minlength="8">
+          <input type="password" id="new-password" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required minlength="8">
           <p class="text-xs text-slate-500 mt-1">Minimum 8 characters</p>
         </div>
 
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Confirm password</label>
-          <input type="password" id="confirm-password" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" required>
+          <input type="password" id="confirm-password" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
         </div>
 
         <div id="password-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
         <div id="password-success" class="hidden text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg px-3 py-2"></div>
 
         <div class="flex gap-3 pt-2">
-          <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
+          <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
             Change password
           </button>
           <button type="button" id="cancel-password-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">

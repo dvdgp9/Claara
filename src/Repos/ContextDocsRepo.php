@@ -10,7 +10,7 @@ use Throwable;
  * 
  * Supports three targets:
  * - lex: indexed documents for the legal voice
- * - eboniato: Nana quick-answer documents
+ * - eboniato: Claara quick-answer documents
  * - ebonia: general chat context documents
  */
 class ContextDocsRepo

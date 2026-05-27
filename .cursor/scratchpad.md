@@ -1402,6 +1402,18 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 
 # Current Status / Progress Tracking
 
+- 2026-05-27 (Executor): Iniciada migración de marca/repositorio de iaiaPRO a Claara (`claara.tech`) en modo inventario, sin cambiar todavía remotos ni producción.
+- 2026-05-27 (Executor): Inventario local: repo en `/Users/dvdgp/Documents/Codeapps/iaiapro`, rama `codex/iaiapro-full`, `origin` todavía apunta a `https://github.com/dvdgp9/iaia.git`; el árbol local ya tiene cambios previos no relacionados: borrados en `docs/translations/pages/public__aplicaciones__index.php.md` y `docs/translations/pages/public__connectors.php.md`.
+- 2026-05-27 (Executor): Inventario servidor: SSH alias `iaiapro` funciona; host reporta `mail.claara.tech`, usuario `codex`; producción actual en `/home/dvdgp/web/iaiapro.com/public_html`, rama `main`, remoto `git@github.com:dvdgp9/iaia.git`.
+- 2026-05-27 (Executor): Inventario repo nuevo: `git ls-remote --heads https://github.com/dvdgp9/Claara.git` responde sin ramas, por lo que parece ser un repositorio GitHub vacío listo para recibir el historial.
+- 2026-05-27 (Executor): Repo nuevo inicializado: push local de `HEAD` a `https://github.com/dvdgp9/Claara.git` como rama `main` completado. El servidor no pudo hacer push porque su clave GitHub es read-only.
+- 2026-05-27 (Executor): Desplegada copia de producción actual desde `/home/dvdgp/web/iaiapro.com/public_html` a `/home/dvdgp/web/claara.tech/public_html`; el placeholder original de Hestia quedó guardado en `/home/dvdgp/web/claara.tech/public_html.hestia-placeholder-20260527-165627`.
+- 2026-05-27 (Executor): Ajustado `APP_URL=https://claara.tech` en la copia de producción de Claara y cambiado el remoto `origin` de esa copia a `git@github.com:dvdgp9/Claara.git`; `git fetch origin` funciona y el checkout queda limpio en `main...origin/main`.
+- 2026-05-27 (Executor): Hestia actualizado para que `claara.tech` use document root `/home/dvdgp/web/claara.tech/public_html/public`, igual que iaiaPRO usa su subcarpeta `public`.
+- 2026-05-27 (Executor): Verificación HTTP desde servidor con `Host: claara.tech`: `/` devuelve redirect a `/login.php`; `/login.php` devuelve 200 y HTML de login, con cookie de sesión en dominio `claara.tech`. La resolución DNS desde el sandbox local fue intermitente durante la verificación.
+- 2026-05-27 (Executor): Repo local actualizado para apuntar `origin` a `https://github.com/dvdgp9/Claara.git`; rama local `codex/iaiapro-full` ahora trackea `origin/main`. Se preservan cambios locales previos no relacionados.
+- 2026-05-27 (Executor): Rebranding visual Claara iniciado. Generados assets desde `/Users/dvdgp/Downloads/Claara-logo.png` (`public/assets/images/logo.png`, `claara-logo.png`, `isotipo.png` y PWA icons), actualizados nombres visibles principales de iaiaPRO/Nana a Claara, paleta base a `#B7C9F2`, `#E3ECFB`, `#FF8B73`, `#FFF6F1`, `#F3F6FA`, `#2F3440`, y headers/títulos de proveedor a Claara. Se mantienen claves internas `ebonia`/`eboniato` donde son identificadores técnicos de contexto/API para no romper compatibilidad.
+- 2026-05-27 (Executor): Validación rebranding local: `php -l` en PHP modificado sin errores, `node --check` en JS modificado sin errores, y QA visual del login con servidor local `php -S 127.0.0.1:8788 -t public` correcto.
 - 2026-04-13 (Executor): Iniciada implementación de catálogo de modelos editable para superadmin.
 - 2026-04-13 (Executor): Añadida migración `docs/migrations/015_llm_models.sql` con tabla `llm_models` + seed inicial.
 - 2026-04-13 (Executor): Añadido repositorio `src/Repos/LlmModelsRepo.php`.
@@ -1427,6 +1439,9 @@ MVP recomendado: implementar hasta Task 8 con provider mock. Esto permite cerrar
 
 # Executor's Feedback or Assistance Requests
 
+- Migración Claara: hito de inventario completado. Siguiente paso propuesto para validar manualmente: cambiar el remoto local a `dvdgp9/Claara.git` y empujar la rama actual como `main`, preservando los dos borrados locales no relacionados sin revertirlos. Después se podrá actualizar el remoto del checkout de producción y revisar si Hestia ya tiene configurado el dominio `claara.tech` apuntando al nuevo docroot.
+- Migración Claara: despliegue base completado. Pendiente de validación manual del usuario: abrir `https://claara.tech/login.php`, iniciar sesión y confirmar que la app funciona igual que en `iaiapro.com`. Pendiente opcional para una fase posterior: rebranding visible de textos/logos `iaiaPRO` a `Claara`.
+- Rebranding Claara: primer corte local validado y listo para desplegar. Pendiente tras despliegue: revisar visualmente `https://claara.tech/login.php` y hacer login manual para confirmar header/sidebar dentro de la app.
 - Milestone completado: ya puedes añadir y eliminar modelos sin tocar código, desde el chat como superadmin.
 - Pendiente validación manual por parte del usuario:
   1. Ejecutar migración `015_llm_models.sql` en la BD.

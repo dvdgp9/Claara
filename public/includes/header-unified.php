@@ -13,7 +13,7 @@
  * - $headerCustomButtons: custom HTML before profile actions
  * - $headerShowConvTitle: if true, shows the dynamic conversation title
  * - $headerShowSearch: if true, shows the search button
- * - $headerShowFaq: if true, shows the Nana quick answers button
+ * - $headerShowFaq: if true, shows the Claara quick answers button
  * - $headerDrawerId: mobile drawer ID opened by hamburger
  * - $headerShowLogo: if true, shows the logo on mobile
  */
@@ -48,20 +48,20 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
     <?php if ($headerDrawerId): ?>
       <!-- Hamburger button (mobile only) -->
       <button onclick="openMobileDrawer('<?php echo htmlspecialchars($headerDrawerId); ?>')" 
-              class="lg:hidden p-2 -ml-2 text-slate-600 hover:text-[#23AAC5] hover:bg-slate-50 rounded-lg transition-colors tap-highlight-none">
+              class="lg:hidden p-2 -ml-2 text-slate-600 hover:text-[#B7C9F2] hover:bg-slate-50 rounded-lg transition-colors tap-highlight-none">
         <i class="iconoir-menu text-xl"></i>
       </button>
     <?php endif; ?>
     
     <?php if ($headerShowLogo): ?>
       <!-- Logo (mobile) -->
-      <img src="/assets/images/logo.png" alt="iaiaPRO" class="h-7 lg:hidden">
+      <img src="/assets/images/logo.png" alt="Claara" class="h-7 lg:hidden">
     <?php endif; ?>
     
     <?php if ($headerShowConvTitle): ?>
       <!-- Dynamic conversation title (chat) -->
       <div id="conv-title" class="hidden flex items-center gap-2 min-w-0">
-        <i class="iconoir-chat-bubble text-[#23AAC5] hidden lg:block"></i>
+        <i class="iconoir-chat-bubble text-[#B7C9F2] hidden lg:block"></i>
         <span class="text-sm font-medium leading-tight text-slate-700 truncate max-w-[60vw] lg:max-w-md"></span>
       </div>
     <?php else: ?>
@@ -107,8 +107,8 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
     <?php endif; ?>
     
     <?php if ($headerShowFaq): ?>
-      <!-- Nana quick answers (desktop only) -->
-      <button id="faq-btn" class="hidden lg:flex p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-[#23AAC5]/10 rounded-lg transition-colors" title="Ask Nana">
+      <!-- Claara quick answers (desktop only) -->
+      <button id="faq-btn" class="hidden lg:flex p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-lg transition-colors" title="Ask Claara">
         <i class="iconoir-help-circle text-xl"></i>
       </button>
     <?php endif; ?>
@@ -121,7 +121,7 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
     <!-- Avatar + Dropdown -->
     <div class="relative" id="profile-dropdown-container">
       <button id="profile-btn" class="flex items-center gap-1 lg:gap-2 p-1 lg:p-1.5 hover:bg-slate-50 rounded-lg transition-colors tap-highlight-none">
-        <div class="h-7 w-7 lg:h-8 lg:w-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs lg:text-sm font-semibold" id="user-avatar">
+        <div class="h-7 w-7 lg:h-8 lg:w-8 rounded-full gradient-brand flex items-center justify-center text-[#2F3440] text-xs lg:text-sm font-semibold" id="user-avatar">
           <?php 
             if (isset($user)) {
               echo strtoupper(substr($user['first_name'] ?? 'U', 0, 1) . substr($user['last_name'] ?? '', 0, 1));

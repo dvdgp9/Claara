@@ -86,6 +86,6 @@ class ContextBuilder
      */
     private function getDefaultPrompt(): string
     {
-        return "You are iaiaPRO, a friendly and professional AI assistant for everyday work.";
+        return "You are Claara, a friendly and professional AI assistant for everyday work.";
     }
 }

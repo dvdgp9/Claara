@@ -90,8 +90,8 @@ Responde de forma estructurada y detallada. El objetivo es poder reconstruir las
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey,
-                'HTTP-Referer: ' . (Env::get('APP_URL') ?? 'https://ebonia.es'),
-                'X-Title: iaiaPRO SOP Generator'
+                'HTTP-Referer: ' . (Env::get('APP_URL') ?? 'https://claara.tech'),
+                'X-Title: Claara SOP Generator'
             ],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             CURLOPT_TIMEOUT => 120,

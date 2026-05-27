@@ -1,4 +1,4 @@
-# PWA Setup - iaiaPRO
+# PWA Setup - Claara
 
 ## Files
 
@@ -34,8 +34,8 @@ If screenshots are not provided, remove the `screenshots` section from `manifest
 
 ## Current Configuration
 
-- **Name**: iaiaPRO
-- **Theme color**: `#23AAC5`
+- **Name**: Claara
+- **Theme color**: `#B7C9F2`
 - **Orientation**: Portrait
 - **Display**: Standalone
 - **Start URL**: `/`

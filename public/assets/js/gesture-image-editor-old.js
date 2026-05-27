@@ -85,7 +85,7 @@
     '': '',
     'warm': 'Warm cinematic color grading, golden hour hues, soft oranges and ambers',
     'cool': 'Cool professional color palette, crisp teals and blues, modern aesthetic',
-    'corporate': 'iaiaPRO corporate color scheme (#23AAC5 accent), professional blue-teal tones',
+    'corporate': 'Claara corporate color scheme (#B7C9F2 accent), professional blue-teal tones',
     'monochrome': 'Fine art monochromatic scheme, rich tonal range',
     'pastel': 'Soft sophisticated pastel tones, muted and gentle professional colors',
     'bw': 'Classic black and white film photography, high dynamic range',
@@ -370,7 +370,7 @@
     if (!currentImageBase64) return;
     const link = document.createElement('a');
     link.href = `data:image/png;base64,${currentImageBase64}`;
-    link.download = `ebonia-image-${Date.now()}.png`;
+    link.download = `claara-image-${Date.now()}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

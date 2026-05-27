@@ -20,7 +20,7 @@ if (!$accessRepo->hasGestureAccess((int)$user['id'], 'lead-finder')) {
 
 $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = 'gestures';
-$pageTitle = 'Lead Finder - iaiaPRO';
+$pageTitle = 'Lead Finder - Claara';
 
 $headerBackUrl = '/gestos/';
 $headerBackText = 'All gestures';

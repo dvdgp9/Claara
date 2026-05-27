@@ -1,6 +1,6 @@
 <?php
 /**
- * Nana quick answers endpoint
+ * Claara quick answers endpoint
  * 
  * Quick answers chatbot using Qwen.
  * It does not persist to the database, but receives history for conversation continuity.
@@ -45,7 +45,7 @@ if (count($history) > 20) {
     $history = array_slice($history, -20);
 }
 
-// Load Nana-specific context from docs/context_faq/.
+// Load Claara-specific context from docs/context_faq/.
 // Separate from the main chat to allow specific instructions.
 $faqContextDir = dirname(dirname(__DIR__)) . '/docs/context_faq';
 $contextBuilder = new ContextBuilder($faqContextDir);

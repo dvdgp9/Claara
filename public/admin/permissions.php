@@ -22,21 +22,21 @@ if (!$isSuperadmin) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Feature Permissions — iaiaPRO</title>
+  <title>Feature Permissions — Claara</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
   <style>
-    .gradient-brand { background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%); }
+    .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .sidebar-rail {
       background:
-        radial-gradient(120% 50% at 50% 0%, rgba(35,170,197,0.18), transparent 60%),
-        radial-gradient(90% 40% at 50% 100%, rgba(35,170,197,0.08), transparent 65%),
+        radial-gradient(120% 50% at 50% 0%, rgba(183, 201, 242,0.18), transparent 60%),
+        radial-gradient(90% 40% at 50% 100%, rgba(183, 201, 242,0.08), transparent 65%),
         linear-gradient(180deg, #0f1b22 0%, #0a1418 100%);
       position: relative;
       isolation: isolate;
@@ -46,7 +46,7 @@ if (!$isSuperadmin) {
       position: absolute;
       top: 0; right: 0; bottom: 0;
       width: 1px;
-      background: linear-gradient(180deg, transparent 0%, rgba(35,170,197,0.28) 50%, transparent 100%);
+      background: linear-gradient(180deg, transparent 0%, rgba(183, 201, 242,0.28) 50%, transparent 100%);
       pointer-events: none;
     }
     .tab-item {
@@ -60,9 +60,9 @@ if (!$isSuperadmin) {
       color: rgba(255,255,255,0.95);
     }
     .tab-item.active {
-      background: rgba(35,170,197,0.18);
+      background: rgba(183, 201, 242,0.18);
       color: #ffffff;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -12px rgba(35,170,197,0.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px -12px rgba(183, 201, 242,0.55);
     }
     .tab-item.active::before {
       content: '';
@@ -72,9 +72,9 @@ if (!$isSuperadmin) {
       transform: translateY(-50%);
       width: 3px;
       height: 22px;
-      background: #23AAC5;
+      background: #B7C9F2;
       border-radius: 0 3px 3px 0;
-      box-shadow: 0 0 14px rgba(35,170,197,0.75);
+      box-shadow: 0 0 14px rgba(183, 201, 242,0.75);
     }
     
     /* Toggle switch moderno */
@@ -109,7 +109,7 @@ if (!$isSuperadmin) {
       box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
     .toggle-switch input:checked + .toggle-slider {
-      background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%);
+      background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%);
     }
     .toggle-switch input:checked + .toggle-slider:before {
       transform: translateX(20px);
@@ -152,7 +152,7 @@ if (!$isSuperadmin) {
 
           <!-- Loading -->
           <div id="loading" class="text-center py-12">
-            <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
+            <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#B7C9F2] border-r-transparent"></div>
             <p class="text-sm text-slate-500 mt-3">Loading permissions...</p>
           </div>
 
@@ -161,7 +161,7 @@ if (!$isSuperadmin) {
             <!-- Selector de usuario -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
               <label class="text-sm font-medium text-slate-700 block mb-3">Select a user to manage permissions</label>
-              <select id="user-select" class="w-full max-w-md px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors text-base">
+              <select id="user-select" class="w-full max-w-md px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors text-base">
                 <option value="">-- Select a user --</option>
               </select>
             </div>
@@ -171,12 +171,12 @@ if (!$isSuperadmin) {
               <!-- Info del usuario seleccionado -->
               <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6">
                 <div class="flex items-center gap-4">
-                  <div id="user-avatar" class="h-14 w-14 rounded-full bg-gradient-to-br from-[#23AAC5] to-[#115c6c] flex items-center justify-center text-white font-bold text-lg"></div>
+                  <div id="user-avatar" class="h-14 w-14 rounded-full bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center text-white font-bold text-lg"></div>
                   <div class="flex-1">
                     <h2 id="user-name" class="text-lg font-semibold text-slate-800"></h2>
                     <p id="user-email" class="text-sm text-slate-500"></p>
                   </div>
-                  <div id="superadmin-badge" class="hidden px-3 py-1.5 rounded-full bg-gradient-to-r from-[#23AAC5]/10 to-[#115c6c]/10 text-[#23AAC5] text-sm font-medium">
+                  <div id="superadmin-badge" class="hidden px-3 py-1.5 rounded-full bg-gradient-to-r from-[#B7C9F2]/10 to-[#2F3440]/10 text-[#B7C9F2] text-sm font-medium">
                     <i class="iconoir-crown mr-1"></i> Superadmin
                   </div>
                 </div>
@@ -191,10 +191,10 @@ if (!$isSuperadmin) {
                 
                 <!-- Gestures section -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div class="p-5 border-b border-slate-100 bg-gradient-to-r from-[#23AAC5]/5 to-transparent">
+                  <div class="p-5 border-b border-slate-100 bg-gradient-to-r from-[#B7C9F2]/5 to-transparent">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#23AAC5] to-[#115c6c] flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center">
                           <i class="iconoir-magic-wand text-white text-lg"></i>
                         </div>
                         <div>
@@ -203,7 +203,7 @@ if (!$isSuperadmin) {
                         </div>
                       </div>
                       <div class="flex gap-2">
-                        <button onclick="toggleAllOfType('gesture', true)" class="text-xs px-2.5 py-1 bg-[#23AAC5]/10 text-[#23AAC5] rounded-lg hover:bg-[#23AAC5]/20 transition-colors font-medium">
+                        <button onclick="toggleAllOfType('gesture', true)" class="text-xs px-2.5 py-1 bg-[#B7C9F2]/10 text-[#B7C9F2] rounded-lg hover:bg-[#B7C9F2]/20 transition-colors font-medium">
                           All
                         </button>
                         <button onclick="toggleAllOfType('gesture', false)" class="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors font-medium">

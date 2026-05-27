@@ -3,10 +3,10 @@
  * Partial: shared <head> for all pages
  * 
  * Variables esperadas:
- * - $pageTitle (optional): page title, default "iaiaPRO — AI Workspace"
+ * - $pageTitle (optional): page title, default "Claara — AI Workspace"
  * - $csrfToken: session CSRF token
  */
-$pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
+$pageTitle = $pageTitle ?? 'Claara — AI Workspace';
 ?>
 <head>
   <meta charset="utf-8" />
@@ -15,11 +15,11 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
   
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#23AAC5">
+  <meta name="theme-color" content="#B7C9F2">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="iaiaPRO">
+  <meta name="apple-mobile-web-app-title" content="Claara">
   
   <!-- Icons -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -61,13 +61,14 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
   </script>
   <style>
     :root {
-      --brand-primary: #23AAC5;
-      --brand-dark: #115c6c;
+      --brand-primary: #B7C9F2;
+      --brand-dark: #2F3440;
+      --brand-coral: #FF8B73;
     }
     
     /* Animated mesh gradient background */
     .bg-mesh {
-      background: linear-gradient(135deg, #f0f9ff 0%, #e8f7fa 25%, #fff 50%, #f0fdf4 75%, #fefce8 100%);
+      background: linear-gradient(135deg, #F3F6FA 0%, #EFF4FF 28%, #fff 52%, #FFF6F1 76%, #F3F6FA 100%);
       background-size: 400% 400%;
       animation: meshMove 20s ease infinite;
     }
@@ -89,14 +90,14 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
     }
     
     .gradient-brand {
-      background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%);
+      background: linear-gradient(135deg, #B7C9F2 0%, #FF8B73 100%);
     }
     .gradient-brand-btn {
-      background: linear-gradient(90deg, #23AAC5 0%, #115c6c 100%);
+      background: linear-gradient(90deg, #B7C9F2 0%, #FF8B73 100%);
     }
     
     /* Glow effects */
-    .glow-soft { box-shadow: 0 20px 50px -15px rgba(35,170,197,0.2); }
+    .glow-soft { box-shadow: 0 20px 50px -15px rgba(183,201,242,0.32); }
     
     /* Smooth transitions */
     .transition-smooth { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -107,7 +108,7 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
     }
     .card-hover:hover {
       transform: translateY(-4px);
-      box-shadow: 0 20px 40px -15px rgba(35,170,197,0.25);
+      box-shadow: 0 20px 40px -15px rgba(183,201,242,0.35);
     }
     
     /* Floating animation */
@@ -119,17 +120,17 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
     
     /* Pulse glow */
     @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 20px rgba(35,170,197,0.2); }
-      50% { box-shadow: 0 0 30px rgba(35,170,197,0.4); }
+      0%, 100% { box-shadow: 0 0 20px rgba(183,201,242,0.25); }
+      50% { box-shadow: 0 0 30px rgba(255,139,115,0.28); }
     }
     .animate-pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
     
     /* Modern left rail surface */
     .sidebar-rail {
       background:
-        radial-gradient(120% 50% at 50% 0%, rgba(35,170,197,0.18), transparent 60%),
-        radial-gradient(90% 40% at 50% 100%, rgba(35,170,197,0.08), transparent 65%),
-        linear-gradient(180deg, #0f1b22 0%, #0a1418 100%);
+        radial-gradient(120% 50% at 50% 0%, rgba(183,201,242,0.22), transparent 60%),
+        radial-gradient(90% 40% at 50% 100%, rgba(255,139,115,0.10), transparent 65%),
+        linear-gradient(180deg, #2F3440 0%, #202531 100%);
       position: relative;
       isolation: isolate;
     }
@@ -138,7 +139,7 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
       position: absolute;
       top: 0; right: 0; bottom: 0;
       width: 1px;
-      background: linear-gradient(180deg, transparent 0%, rgba(35,170,197,0.28) 50%, transparent 100%);
+      background: linear-gradient(180deg, transparent 0%, rgba(183,201,242,0.36) 50%, transparent 100%);
       pointer-events: none;
     }
 
@@ -155,11 +156,11 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
     .tab-item:hover i { transform: translateY(-1px); }
     .tab-item:active { transform: scale(0.97); }
     .tab-item.active {
-      background: rgba(35,170,197,0.18);
+      background: rgba(183,201,242,0.22);
       color: #ffffff;
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.08),
-        0 10px 26px -12px rgba(35,170,197,0.55);
+        0 10px 26px -12px rgba(183,201,242,0.65);
     }
     .tab-item.active::before {
       content: '';
@@ -169,16 +170,16 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
       transform: translateY(-50%);
       width: 3px;
       height: 22px;
-      background: #23AAC5;
+      background: #FF8B73;
       border-radius: 0 3px 3px 0;
-      box-shadow: 0 0 14px rgba(35,170,197,0.75);
+      box-shadow: 0 0 14px rgba(255,139,115,0.52);
     }
     
     /* Input focus */
     .input-focus:focus {
       outline: none;
       border-color: var(--brand-primary);
-      box-shadow: 0 0 0 4px rgba(35,170,197,0.15);
+      box-shadow: 0 0 0 4px rgba(183,201,242,0.25);
     }
     
     /* Custom font sizes */
@@ -294,7 +295,7 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
     .streaming-indicator span {
       width: 6px;
       height: 6px;
-      background: #23AAC5;
+      background: #B7C9F2;
       border-radius: 50%;
       animation: streamPulse 1.4s ease-in-out infinite;
     }
@@ -314,7 +315,7 @@ $pageTitle = $pageTitle ?? 'iaiaPRO — AI Workspace';
       </div>
       <h3 class="text-2xl font-bold text-slate-900 mb-3">Acceso restringido</h3>
       <p class="text-slate-600 mb-8">
-        No tienes permiso para acceder a esta funcionalidad. Si crees que se trata de un error, contacta con <a href="mailto:it@ebone.es" class="text-[#23AAC5] font-semibold hover:underline">it@ebone.es</a>.
+        No tienes permiso para acceder a esta funcionalidad. Si crees que se trata de un error, contacta con <a href="mailto:it@ebone.es" class="text-[#B7C9F2] font-semibold hover:underline">it@ebone.es</a>.
       </p>
       <button onclick="closeAccessModal()" class="w-full py-3.5 px-6 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-smooth shadow-lg">
         Entendido

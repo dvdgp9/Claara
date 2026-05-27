@@ -422,7 +422,7 @@
     wrap.className = `flex gap-3 ${role === 'user' ? 'justify-end' : 'justify-start'}`;
     
     const avatar = role === 'user'
-      ? `<div class="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">${initials}</div>`
+      ? `<div class="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center text-[#2F3440] text-sm font-semibold flex-shrink-0">${initials}</div>`
       : `<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">L</div>`;
     
     const bubbleClass = role === 'user'

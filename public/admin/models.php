@@ -42,7 +42,7 @@ $headerBackText = 'Chat';
               <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Available Models</h1>
               <p class="text-slate-600 text-sm lg:text-base mt-1">Enable, reorder, and edit the models shown in the chat selector.</p>
             </div>
-            <button id="new-model-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#23AAC5] to-[#115c6c] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
+            <button id="new-model-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
               <i class="iconoir-plus-circle"></i>
               <span>New model</span>
             </button>
@@ -55,13 +55,13 @@ $headerBackText = 'Chat';
                   <h2 class="font-semibold text-slate-800">Catalog</h2>
                   <p id="models-count" class="text-xs text-slate-500 mt-0.5">Loading models...</p>
                 </div>
-                <button id="refresh-models-btn" class="p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" title="Refresh">
+                <button id="refresh-models-btn" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-colors" title="Refresh">
                   <i class="iconoir-refresh"></i>
                 </button>
               </div>
 
               <div id="models-loading" class="text-center py-12">
-                <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#23AAC5] border-r-transparent"></div>
+                <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#B7C9F2] border-r-transparent"></div>
                 <p class="text-sm text-slate-500 mt-3">Loading models...</p>
               </div>
 
@@ -116,19 +116,19 @@ $headerBackText = 'Chat';
         <input type="hidden" id="model-id">
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Display name *</label>
-          <input type="text" id="model-label" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" placeholder="Gemini 3 Flash" required>
+          <input type="text" id="model-label" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="Gemini 3 Flash" required>
         </div>
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Model key *</label>
-          <input type="text" id="model-key" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors font-mono text-sm" placeholder="provider/model" required>
+          <input type="text" id="model-key" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors font-mono text-sm" placeholder="provider/model" required>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-medium text-slate-700 block mb-2">Order</label>
-            <input type="number" id="model-sort" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#23AAC5] focus:ring-2 focus:ring-[#23AAC5]/20 transition-colors" value="10">
+            <input type="number" id="model-sort" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" value="10">
           </div>
           <label class="flex items-center gap-3 mt-0 sm:mt-8">
-            <input type="checkbox" id="model-active" class="h-4 w-4 rounded border-slate-300 text-[#23AAC5] focus:ring-[#23AAC5]" checked>
+            <input type="checkbox" id="model-active" class="h-4 w-4 rounded border-slate-300 text-[#B7C9F2] focus:ring-[#B7C9F2]" checked>
             <span class="text-sm font-medium text-slate-700">Active in chat</span>
           </label>
         </div>
@@ -211,7 +211,7 @@ $headerBackText = 'Chat';
           </td>
           <td class="px-5 py-4">
             <div class="flex items-center justify-end gap-1">
-              <button type="button" class="edit-model-btn p-2 text-slate-400 hover:text-[#23AAC5] hover:bg-cyan-50 rounded-lg transition-colors" data-id="${escapeHtml(model.id)}" title="Edit">
+              <button type="button" class="edit-model-btn p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-colors" data-id="${escapeHtml(model.id)}" title="Edit">
                 <i class="iconoir-edit-pencil"></i>
               </button>
               <button type="button" class="delete-model-btn p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-id="${escapeHtml(model.id)}" title="Delete">
