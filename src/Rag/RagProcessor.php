@@ -70,7 +70,7 @@ class RagProcessor
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
         
         // 1. Extraer texto
-        $text = $this->extractText($filePath, $extension);
+        $text = $this->normalizeExtractedText($this->extractText($filePath, $extension));
         if (empty(trim($text))) {
             throw new \Exception("No se pudo extraer texto del archivo");
         }
@@ -205,6 +205,28 @@ class RagProcessor
         } catch (\Exception $e) {
             throw new \Exception("Error al extraer texto del PDF: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Normaliza caracteres basura habituales de extracción PDF antes de indexar.
+     */
+    private function normalizeExtractedText(string $text): string
+    {
+        $text = str_replace(["\0", "\u{FFFD}", "\u{FFFF}"], ' ', $text);
+
+        if (function_exists('mb_check_encoding') && !mb_check_encoding($text, 'UTF-8')) {
+            $converted = @mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+            if (is_string($converted)) {
+                $text = $converted;
+            }
+        }
+
+        $text = preg_replace('/[\p{C}]+/u', ' ', $text);
+        if ($text === null) {
+            return '';
+        }
+
+        return trim(preg_replace('/[ \t]+/', ' ', $text) ?? $text);
     }
 
     /**
