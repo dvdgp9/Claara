@@ -3,7 +3,7 @@
         "file": "/public/account.php",
         "line": 19,
         "type": "html_text",
-        "text": "My account — iaiaPRO"
+        "text": "My account — Claara"
     },
     {
         "file": "/public/account.php",
@@ -123,7 +123,7 @@
         "file": "/public/account.php",
         "line": 214,
         "type": "html_text",
-        "text": "© 2025 iaiaPRO. All rights reserved."
+        "text": "© 2025 Claara. All rights reserved."
     },
     {
         "file": "/public/account.php",
@@ -4419,7 +4419,7 @@
         "file": "/public/index.php",
         "line": 1694,
         "type": "html_text",
-        "text": "Generando Word...'; buttonElement.style.opacity = '0.6'; const response = await api('/api/chat/generate-document.php', { method: 'POST', body: { content: content, format: format, title: currentConvTitle || 'iaiaPRO document' } }); if (response.success && response.content) { // Decodificar base64 y crear blob const binaryString = atob(response.content); const bytes = new Uint8Array(binaryString.length); for (let i = 0; i"
+        "text": "Generando Word...'; buttonElement.style.opacity = '0.6'; const response = await api('/api/chat/generate-document.php', { method: 'POST', body: { content: content, format: format, title: currentConvTitle || 'Claara document' } }); if (response.success && response.content) { // Decodificar base64 y crear blob const binaryString = atob(response.content); const bytes = new Uint8Array(binaryString.length); for (let i = 0; i"
     },
     {
         "file": "/public/index.php",
@@ -4431,7 +4431,7 @@
         "file": "/public/index.php",
         "line": 1702,
         "type": "script_string",
-        "text": "iaiaPRO document"
+        "text": "Claara document"
     },
     {
         "file": "/public/index.php",
@@ -5307,7 +5307,7 @@
         "file": "/public/index.php",
         "line": 2787,
         "type": "html_text",
-        "text": "Ask Nana"
+        "text": "Ask Claara"
     },
     {
         "file": "/public/index.php",
@@ -5331,7 +5331,7 @@
         "file": "/public/index.php",
         "line": 2807,
         "type": "html_text",
-        "text": "What can iaiaPRO help me with?"
+        "text": "What can Claara help me with?"
     },
     {
         "file": "/public/index.php",
@@ -5355,13 +5355,13 @@
         "file": "/public/index.php",
         "line": 2842,
         "type": "attribute",
-        "text": "Ask Nana..."
+        "text": "Ask Claara..."
     },
     {
         "file": "/public/index.php",
         "line": 2853,
         "type": "html_text",
-        "text": "// Nana modal logic. (function() { const faqBtn = document.getElementById('faq-btn'); const faqModal = document.getElementById('faq-modal'); const faqCloseBtn = document.getElementById('faq-close-btn'); const faqClearBtn = document.getElementById('faq-clear-btn'); const faqForm = document.getElementById('faq-form'); const faqInput = document.getElementById('faq-input'); const faqMessages = document.getElementById('faq-messages'); const faqSuggestions = document.getElementById('faq-suggestions'); const faqTyping = document.getElementById('faq-typing'); let faqHistory = []; // In-memory history // Local helpers function escapeHtml(str) { return str.replace(/[&"
+        "text": "// Claara modal logic. (function() { const faqBtn = document.getElementById('faq-btn'); const faqModal = document.getElementById('faq-modal'); const faqCloseBtn = document.getElementById('faq-close-btn'); const faqClearBtn = document.getElementById('faq-clear-btn'); const faqForm = document.getElementById('faq-form'); const faqInput = document.getElementById('faq-input'); const faqMessages = document.getElementById('faq-messages'); const faqSuggestions = document.getElementById('faq-suggestions'); const faqTyping = document.getElementById('faq-typing'); let faqHistory = []; // In-memory history // Local helpers function escapeHtml(str) { return str.replace(/[&"
     },
     {
         "file": "/public/index.php",
@@ -5739,7 +5739,7 @@
         "file": "/public/login.php",
         "line": 16,
         "type": "html_text",
-        "text": "iaiaPRO — Login"
+        "text": "Claara — Login"
     },
     {
         "file": "/public/login.php",

@@ -5,7 +5,7 @@
 
 | Line | Type | Text |
 |---:|---|---|
-| 19 | html_text | My account — iaiaPRO |
+| 19 | html_text | My account — Claara |
 | 24 | html_text | /* Base layout styles */ .gradient-brand { background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%); } ::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; } ::-webkit-scrollbar-thumb:hover { background: #94a3b8; } |
 | 58 | html_text | Personal information |
 | 59 | html_text | Manage your details and preferences |
@@ -25,7 +25,7 @@
 | 181 | html_text | Last login |
 | 188 | php_string | First session |
 | 200 | html_text | Account created |
-| 214 | html_text | © 2025 iaiaPRO. All rights reserved. |
+| 214 | html_text | © 2025 Claara. All rights reserved. |
 | 228 | html_text | Change password |
 | 236 | html_text | Current password |
 | 241 | html_text | New password |

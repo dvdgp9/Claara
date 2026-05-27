@@ -4,8 +4,8 @@ This folder contains Claara logos and visual resources.
 
 Recommended files:
 
-- `logo.png` - Main Claara logo used in navigation.
+- `logo.png` / `logo-claara.png` - Main Claara logo used in navigation.
 - `claara-logo.png` - Full Claara logo lockup with tagline.
-- `isotipo.png` - App icon or compact mark.
+- `isotipo.png` / `isotipo-claara.png` - App icon or compact mark.
 
 Prefer SVG for new brand assets when possible. PNG files should be exported at high resolution.

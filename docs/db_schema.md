@@ -1,4 +1,4 @@
-# Ebonia - Esquema de Base de Datos (MVP)
+# Claara - Esquema de Base de Datos (MVP)
 
 Este documento es la fuente de verdad del modelo de datos. Cualquier cambio debe reflejarse aquí antes de aplicarse a la BD.
 

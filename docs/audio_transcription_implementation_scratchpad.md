@@ -2,7 +2,7 @@
 
 ## Goal
 
-Upgrade iaiaPRO's Audio Transcriber gesture so it can process long recordings, including 40-45 minute meetings, without HTTP timeouts, memory-heavy base64 uploads, truncated output, or missing speaker structure.
+Upgrade Claara's Audio Transcriber gesture so it can process long recordings, including 40-45 minute meetings, without HTTP timeouts, memory-heavy base64 uploads, truncated output, or missing speaker structure.
 
 The server already has:
 

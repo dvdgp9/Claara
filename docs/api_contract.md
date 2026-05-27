@@ -1,4 +1,4 @@
-# Ebonia - Contratos de API (MVP)
+# Claara - Contratos de API (MVP)
 
 Autenticación por sesión. Las respuestas son JSON UTF-8. Errores con `{ "error": { "code", "message" } }`.
 

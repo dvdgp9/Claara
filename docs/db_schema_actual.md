@@ -1,4 +1,4 @@
-# Ebonia - Esquema de Base de Datos (Estado Real)
+# Claara - Esquema de Base de Datos (Estado Real)
 
 **Fecha de auditoría:** 2025-12-01  
 **Base de datos:** `ebonia_db`  
@@ -9,7 +9,7 @@
 
 ## Resumen Ejecutivo
 
-Este documento refleja el **estado real** de la base de datos de Ebonia tras la aplicación de migraciones:
+Este documento refleja el **estado real** de la base de datos de Claara tras la aplicación de migraciones:
 - ✅ **Migración 001_init.sql** aplicada (estructura base)
 - ✅ **Migración 002_seed_core.sql** aplicada (datos iniciales)
 - ✅ **Migración 003_add_favorites.sql** aplicada (campo is_favorite)
@@ -104,7 +104,7 @@ CREATE TABLE departments (
 ## 2. Tablas de Usuarios y Autenticación
 
 ### 2.1. `users`
-Usuarios internos de Ebonia.
+Usuarios internos de Claara.
 
 **Estructura:**
 ```sql

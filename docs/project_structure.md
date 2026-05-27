@@ -1,4 +1,4 @@
-# Ebonia - Estructura de Proyecto (Propuesta MVP)
+# Claara - Estructura de Proyecto (Propuesta MVP)
 
 Objetivo: estructura simple y escalable sin dependencias externas (sin Composer en MVP). El front usa Tailwind CDN y JS vanilla. El backend expone endpoints PHP simples en `/api/*` con sesiones.
 
@@ -60,7 +60,7 @@ Notas:
 - PHP 8.2+.
 - Estricto con tipos donde aplique.
 - Respuestas JSON en API con `Content-Type: application/json; charset=utf-8`.
-- Sesión: cookie `HttpOnly`, `Secure`, `SameSite=Lax`, nombre `ebonia_session`.
+- Sesión: cookie `HttpOnly`, `Secure`, `SameSite=Lax`, nombre `claara_session`.
 - CSRF: token por sesión; header `X-CSRF-Token` en peticiones mutadoras (login, chat, etc.).
 - Errores JSON: `{ "error": { "code":"...", "message":"..." } }`.
 - Timezone: UTC (convertir en UI si se requiere).
@@ -68,7 +68,7 @@ Notas:
 ## Variables de entorno (`.env`)
 - `APP_ENV=local|production`
 - `APP_DEBUG=0|1`
-- `APP_URL=https://ebonia.es` (o http://localhost:8000 en dev)
+- `APP_URL=https://claara.tech` (o http://localhost:8000 en dev)
 - `DB_HOST=localhost`
 - `DB_PORT=3306`
 - `DB_NAME=ebonia`
@@ -77,7 +77,7 @@ Notas:
 - `GEMINI_API_KEY=...` (no se versiona)
 - `GEMINI_MODEL=gemini-1.5-flash`
 
-## Seguridad HTTP (dominio ebonia.es)
+## Seguridad HTTP (dominio claara.tech)
 - HTTPS obligatorio (HSTS). 
 - CSP básica (ajustar según CDN):
   - `default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:`

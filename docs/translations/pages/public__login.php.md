@@ -5,7 +5,7 @@
 
 | Line | Type | Text |
 |---:|---|---|
-| 16 | html_text | iaiaPRO — Login |
+| 16 | html_text | Claara — Login |
 | 20 | html_text | @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'); body { font-family: 'Inter', system-ui, -apple-system, sans-serif; } .gradient-bg { background: linear-gradient(135deg, #23AAC5 0%, #115c6c 100%); } .btn-gradient { background: linear-gradient(90deg, #23AAC5 0%, #115c6c 100%); } input[type="text"], input[type="password"] { border: 2px solid #23AAC5; border-radius: 50px; padding: 12px 24px; transition: all 0.3s ease; } input[type="text"]:focus, input[type="password"]:focus { outline: none; border-color: #115c6c; box-shadow: 0 0 0 3px rgba(35, 170, 197, 0.1); } |
 | 59 | html_text | Friendly AI assistance for focused, everyday work. |
 | 73 | html_text | Log in |
