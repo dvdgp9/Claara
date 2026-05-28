@@ -329,6 +329,16 @@ $pageTitle = $pageTitle ?? 'Claara — AI Workspace';
       color: #fff;
     }
 
+    /* Scroll-to-bottom floating button (display toggled via .is-visible) */
+    .scroll-bottom-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .scroll-bottom-btn.is-visible {
+      display: flex;
+    }
+
     /* Per-message action bar (copy / regenerate) */
     .msg-actions {
       opacity: 0;

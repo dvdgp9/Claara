@@ -349,7 +349,7 @@ $headerShowLogo = true;
         </div>
       </section>
       <!-- Scroll-to-bottom floating button -->
-      <button id="scroll-to-bottom" class="hidden fixed bottom-32 lg:bottom-28 right-4 lg:right-8 z-40 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center text-slate-500 hover:text-[#2F3440] hover:shadow-xl transition-all" title="Scroll to latest">
+      <button id="scroll-to-bottom" class="scroll-bottom-btn fixed bottom-32 lg:bottom-28 right-4 lg:right-8 z-40 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg text-slate-500 hover:text-[#2F3440] hover:shadow-xl transition-all" title="Scroll to latest" aria-label="Scroll to latest">
         <i class="iconoir-arrow-down text-xl"></i>
       </button>
       <!-- Chat footer: fixed on mobile above the bottom nav -->
@@ -580,13 +580,13 @@ $headerShowLogo = true;
       const updateScrollBtn = () => {
         // Solo relevante en modo conversación (mensajes visibles)
         const inChat = !messagesEl.classList.contains('hidden');
-        if (inChat && !isNearBottom()) {
-          scrollToBottomBtn.classList.remove('hidden');
-        } else {
-          scrollToBottomBtn.classList.add('hidden');
-        }
+        scrollToBottomBtn.classList.toggle('is-visible', inChat && !isNearBottom());
       };
       messagesContainer.addEventListener('scroll', updateScrollBtn, { passive: true });
+      // Recalcular cuando el contenido crece (streaming) o cambia el modo
+      const scrollBtnObserver = new MutationObserver(updateScrollBtn);
+      scrollBtnObserver.observe(messagesEl, { childList: true, subtree: true, characterData: true });
+      window.addEventListener('resize', updateScrollBtn);
       scrollToBottomBtn.addEventListener('click', () => {
         messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
       });
