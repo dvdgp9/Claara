@@ -339,6 +339,36 @@ $pageTitle = $pageTitle ?? 'Claara — AI Workspace';
       display: flex;
     }
 
+    /* Empty conversation state */
+    .empty-shell {
+      animation: emptyRise .5s cubic-bezier(.16, 1, .3, 1) both;
+    }
+    .empty-command {
+      box-shadow: 0 28px 70px -36px rgba(47, 52, 64, 0.42);
+      transition: transform .28s cubic-bezier(.16, 1, .3, 1), box-shadow .28s cubic-bezier(.16, 1, .3, 1);
+    }
+    .empty-command:focus-within {
+      transform: translateY(-2px);
+      box-shadow: 0 34px 80px -38px rgba(47, 52, 64, 0.48);
+    }
+    .empty-option-panel {
+      transition: transform .28s cubic-bezier(.16, 1, .3, 1), border-color .28s cubic-bezier(.16, 1, .3, 1), box-shadow .28s cubic-bezier(.16, 1, .3, 1);
+    }
+    .empty-option-panel:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 24px 60px -42px rgba(47, 52, 64, 0.35);
+    }
+    .empty-action {
+      min-height: 4.35rem;
+    }
+    .empty-action:active {
+      transform: scale(0.99);
+    }
+    @keyframes emptyRise {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     /* Per-message action bar (copy / regenerate) */
     .msg-actions {
       opacity: 0;

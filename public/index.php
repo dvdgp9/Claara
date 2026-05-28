@@ -116,24 +116,26 @@ $headerShowLogo = true;
             <div class="text-amber-700 mt-0.5">To keep performance stable, only the most recent messages are sent to the assistant. The full history remains saved.</div>
           </div>
         </div>
-        <div id="empty-state" class="absolute inset-0 overflow-auto p-6 pb-36 lg:pb-6">
-          <div class="max-w-6xl mx-auto py-8">
+        <div id="empty-state" class="absolute inset-0 overflow-auto px-4 py-5 pb-36 sm:px-6 lg:px-8 lg:pb-8">
+          <div class="empty-shell max-w-6xl mx-auto py-4 lg:py-8">
             
             <!-- Hero Input Section -->
-            <div class="text-center mb-10">
-              <!-- Status indicator -->
-              <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-slate-200/50 shadow-sm mb-6">
-                <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                <span class="text-sm text-slate-600">Ready to help</span>
+            <div class="grid grid-cols-1 lg:grid-cols-[0.78fr_1.22fr] gap-6 lg:gap-10 items-end mb-8 lg:mb-10">
+              <div class="text-left">
+                <!-- Status indicator -->
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-slate-200/50 shadow-sm mb-5">
+                  <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                  <span class="text-sm text-slate-600">Ready to help</span>
+                </div>
+
+                <h2 class="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 mb-3">
+                  <span id="empty-greeting">Hi</span>, <span class="text-[#2F3440]"><?php echo $userName; ?></span>
+                </h2>
+                <p class="text-base text-slate-500 leading-relaxed max-w-xl">Start with a question, attach a file, or jump into a focused workspace.</p>
               </div>
               
-              <h2 class="text-3xl font-bold text-slate-900 mb-3">
-                Hi, <span class="text-transparent bg-clip-text gradient-brand"><?php echo $userName; ?></span>
-              </h2>
-              <p class="text-base text-slate-500 mb-8 max-w-lg mx-auto">What can I help you with today? Ask a question or choose an option below.</p>
-              
               <!-- Main input -->
-              <div class="bg-white rounded-3xl p-4 lg:p-5 border border-slate-200 shadow-lg max-w-2xl mx-auto">
+              <div class="empty-command bg-white rounded-[1.75rem] p-4 lg:p-5 border border-slate-200/80 max-w-3xl w-full lg:justify-self-end">
                 <form id="chat-form-empty" class="w-full">
                   <!-- Attached files preview in empty state (multiple) -->
                   <div id="files-preview-empty" class="hidden mb-3 space-y-2">
@@ -147,8 +149,8 @@ $headerShowLogo = true;
                   
                   <!-- Top row: textarea + submit button -->
                   <div class="flex items-start gap-3 mb-3">
-                    <textarea id="chat-input-empty" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Ask me anything" style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
-                    <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-xl transition-smooth shrink-0" title="Send">
+                    <textarea id="chat-input-empty" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-[1.05rem] lg:text-lg text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Ask Claara anything" style="min-height: 34px; max-height: 180px; overflow-y: hidden;"></textarea>
+                    <button type="submit" class="w-11 h-11 flex items-center justify-center text-slate-500 hover:text-[#2F3440] hover:bg-[#B7C9F2]/15 active:scale-[0.98] rounded-2xl transition-smooth shrink-0" title="Send">
                       <i class="iconoir-arrow-up text-xl"></i>
                     </button>
                   </div>
@@ -185,19 +187,19 @@ $headerShowLogo = true;
             </div>
 
             <!-- "Or" divider -->
-            <div class="flex items-center gap-4 max-w-2xl mx-auto mb-8">
+            <div class="flex items-center gap-4 max-w-4xl mx-auto mb-6 lg:mb-8">
               <div class="flex-1 h-px bg-slate-200"></div>
               <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Or choose an option</span>
               <div class="flex-1 h-px bg-slate-200"></div>
             </div>
 
             <!-- Options grid: Voices and Gestures -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            <div class="grid grid-cols-1 xl:grid-cols-[0.92fr_1.08fr] gap-4 lg:gap-5 max-w-6xl mx-auto">
               
               <!-- Voices -->
-              <div class="glass-strong rounded-3xl border border-slate-200/50 p-6 card-hover">
+              <div class="empty-option-panel glass-strong rounded-[1.75rem] border border-slate-200/50 p-5 lg:p-6">
                 <div class="flex items-center gap-3 mb-5">
-                  <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg animate-float" style="animation-delay: 0s">
+                  <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-[#2F3440] flex items-center justify-center shadow-lg animate-float" style="animation-delay: 0s">
                     <i class="iconoir-voice-square text-2xl text-white"></i>
                   </div>
                   <div>
@@ -209,7 +211,7 @@ $headerShowLogo = true;
                 <div class="space-y-2.5">
                   <?php if ($accessRepo->hasVoiceAccess($userId, 'lex')): ?>
                   <!-- Lex - Active -->
-                  <button class="voice-option w-full p-4 bg-white/60 hover:bg-white border border-slate-200/80 hover:border-rose-300 rounded-2xl transition-smooth text-left group hover:shadow-md" data-voice="lex">
+                  <button class="voice-option empty-action w-full p-4 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-rose-300 rounded-2xl transition-smooth text-left group hover:shadow-md" data-voice="lex">
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">L</div>
                       <div class="flex-1 min-w-0">
@@ -222,7 +224,7 @@ $headerShowLogo = true;
                   <?php endif; ?>
 
                   <!-- Placeholder - Coming soon -->
-                  <div class="w-full p-4 bg-white/40 border border-slate-200/80 rounded-2xl opacity-60">
+                  <div class="empty-action w-full p-4 bg-white/40 border border-slate-200/80 rounded-2xl opacity-60">
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-sm flex-shrink-0">C</div>
                       <div class="flex-1 min-w-0">
@@ -234,7 +236,7 @@ $headerShowLogo = true;
                   </div>
 
                   <!-- Placeholder - Coming soon -->
-                  <div class="w-full p-4 bg-white/40 border border-slate-200/80 rounded-2xl opacity-60">
+                  <div class="empty-action w-full p-4 bg-white/40 border border-slate-200/80 rounded-2xl opacity-60">
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-sm flex-shrink-0">U</div>
                       <div class="flex-1 min-w-0">
@@ -245,8 +247,8 @@ $headerShowLogo = true;
                     </div>
                   </div>
 
-                  <button id="view-all-voices" class="w-full p-3 mt-1 hover:bg-violet-50 border-2 border-dashed border-slate-200 hover:border-violet-300 rounded-2xl transition-smooth text-center group">
-                    <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-violet-600 transition-smooth">
+                  <button id="view-all-voices" class="w-full p-3 mt-1 hover:bg-rose-50 border-2 border-dashed border-slate-200 hover:border-rose-300 rounded-2xl transition-smooth text-center group">
+                    <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-rose-600 transition-smooth">
                       <span>View all voices</span>
                       <i class="iconoir-arrow-right group-hover:translate-x-1 transition-smooth"></i>
                     </div>
@@ -255,7 +257,7 @@ $headerShowLogo = true;
               </div>
 
               <!-- Gestures -->
-              <div class="glass-strong rounded-3xl border border-slate-200/50 p-6 card-hover">
+              <div class="empty-option-panel glass-strong rounded-[1.75rem] border border-slate-200/50 p-5 lg:p-6">
                 <div class="flex items-center gap-3 mb-5">
                   <div class="w-12 h-12 rounded-2xl gradient-brand flex items-center justify-center shadow-lg animate-float" style="animation-delay: 0.5s">
                     <i class="iconoir-magic-wand text-2xl text-white"></i>
@@ -268,7 +270,7 @@ $headerShowLogo = true;
                 
                 <div class="space-y-2.5">
                   <?php if ($accessRepo->hasGestureAccess($userId, 'write-article')): ?>
-                  <button class="gesture-option w-full p-4 bg-white/60 hover:bg-white border border-slate-200/80 hover:border-[#B7C9F2]/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="write-article">
+                  <button class="gesture-option empty-action w-full p-4 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-[#B7C9F2]/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="write-article">
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
                         <i class="iconoir-page-edit text-lg text-white"></i>
@@ -283,22 +285,22 @@ $headerShowLogo = true;
                   <?php endif; ?>
 
                   <?php if ($accessRepo->hasGestureAccess($userId, 'social-media')): ?>
-                  <button class="gesture-option w-full p-4 bg-white/60 hover:bg-white border border-slate-200/80 hover:border-violet-400/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="social-media">
+                  <button class="gesture-option empty-action w-full p-4 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-slate-300 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="social-media">
                     <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
+                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-[#2F3440] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
                         <i class="iconoir-send-diagonal text-lg text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-800 group-hover:text-violet-600 transition-smooth">Social Media</div>
+                        <div class="font-semibold text-slate-800 group-hover:text-[#2F3440] transition-smooth">Social Media</div>
                         <div class="text-xs text-slate-500">Posts for social channels</div>
                       </div>
-                      <i class="iconoir-arrow-right text-slate-300 group-hover:text-violet-500 group-hover:translate-x-1 transition-smooth"></i>
+                      <i class="iconoir-arrow-right text-slate-300 group-hover:text-[#2F3440] group-hover:translate-x-1 transition-smooth"></i>
                     </div>
                   </button>
                   <?php endif; ?>
 
                   <?php if ($accessRepo->hasGestureAccess($userId, 'podcast-from-article')): ?>
-                  <button class="gesture-option w-full p-4 bg-white/60 hover:bg-white border border-slate-200/80 hover:border-rose-400/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="podcast-from-article">
+                  <button class="gesture-option empty-action w-full p-4 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-rose-400/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="podcast-from-article">
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
                         <i class="iconoir-podcast text-lg text-white"></i>
@@ -712,6 +714,27 @@ $headerShowLogo = true;
       return !emptyState.classList.contains('hidden');
     }
 
+    function updateEmptyGreeting() {
+      const greetingEl = document.getElementById('empty-greeting');
+      if (!greetingEl) return;
+
+      const hour = new Date().getHours();
+      if (hour < 12) {
+        greetingEl.textContent = 'Good morning';
+      } else if (hour < 18) {
+        greetingEl.textContent = 'Good afternoon';
+      } else {
+        greetingEl.textContent = 'Good evening';
+      }
+    }
+
+    function focusEmptyComposer() {
+      updateEmptyGreeting();
+      if (!inputEmptyEl || !isEmptyStateVisible()) return;
+      if (!window.matchMedia('(min-width: 768px)').matches) return;
+      window.requestAnimationFrame(() => inputEmptyEl.focus({ preventScroll: true }));
+    }
+
     function validateAndAddFiles(files, targetArray, renderFn) {
       let addedCount = 0;
       for (const file of files) {
@@ -807,7 +830,7 @@ $headerShowLogo = true;
       messagesEl.innerHTML = '';
       document.getElementById('context-warning').classList.add('hidden');
       convTitleEl.classList.add('hidden');
-      inputEmptyEl?.focus();
+      focusEmptyComposer();
     }
 
     // Delete empty conversations to avoid accumulation.
@@ -851,7 +874,7 @@ $headerShowLogo = true;
         const idx = codeBlocks.length;
         const trimmed = code.replace(/\n$/, '');
         codeBlocks.push({ lang: (lang || '').trim(), code: trimmed });
-        return ` CODEBLOCK${idx} `;
+        return `%%CODEBLOCK${idx}%%`;
       });
 
       // Markdown links: [text](url)
@@ -905,7 +928,7 @@ $headerShowLogo = true;
       s = s.replace(/\n/g, '<br>');
 
       // Restore fenced code blocks (code is already HTML-escaped)
-      s = s.replace(/ ?CODEBLOCK(\d+) ?/g, function(_m, i){
+      s = s.replace(/%%CODEBLOCK(\d+)%%/g, function(_m, i){
         const block = codeBlocks[parseInt(i, 10)];
         if (!block) return '';
         const label = block.lang ? `<span class="code-lang">${escapeHtml(block.lang)}</span>` : '';
@@ -2530,7 +2553,7 @@ $headerShowLogo = true;
     const chatInput = document.getElementById('chat-input');
     const chatInputEmpty = document.getElementById('chat-input-empty');
     const defaultPlaceholder = 'Write a message...';
-    const defaultPlaceholderEmpty = 'Ask me anything';
+    const defaultPlaceholderEmpty = 'Ask Claara anything';
     const imagePlaceholder = 'Describe the image you want to create...';
     const webSearchPlaceholder = 'Ask something and I will search the web...';
 
@@ -2882,10 +2905,10 @@ $headerShowLogo = true;
           return;
         }
         
-        // Mostrar mensaje temporal (próximamente) para voces sin implementar
+        // Show a temporary message for voices that are not implemented yet.
         const tempMsg = document.createElement('div');
-        tempMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-violet-600 text-white px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2';
-        tempMsg.innerHTML = `<i class="iconoir-voice-square"></i><span>Voz <strong>${voiceName}</strong> disponible próximamente</span>`;
+        tempMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-[#2F3440] text-white px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2';
+        tempMsg.innerHTML = `<i class="iconoir-voice-square"></i><span><strong>${voiceName}</strong> will be available soon</span>`;
         document.body.appendChild(tempMsg);
         
         setTimeout(() => {
@@ -3214,9 +3237,11 @@ $headerShowLogo = true;
         const hints = ['shortcut-hint-empty', 'shortcut-hint-chat'];
         hints.forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.textContent = 'Ctrl + Enter para enviar';
+          if (el) el.textContent = 'Ctrl + Enter to send';
         });
       }
+      updateEmptyGreeting();
+      focusEmptyComposer();
 
       // Sincronizar selectores de modelos (Solo Superadmin)
       const modelSelectEmpty = document.getElementById('model-select-empty');
