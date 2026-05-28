@@ -573,22 +573,32 @@ $headerShowLogo = true;
     // Scroll-to-bottom floating button
     const scrollToBottomBtn = document.getElementById('scroll-to-bottom');
     if (scrollToBottomBtn && messagesContainer) {
+      // Determinamos cercanía al final mirando la posición real del último
+      // mensaje respecto al viewport, así no dependemos de qué elemento es el
+      // contenedor con overflow real (puede variar entre desktop/mobile).
       const isNearBottom = () => {
-        const gap = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
-        return gap < 120;
+        const last = messagesEl.lastElementChild;
+        if (!last) return true;
+        const rect = last.getBoundingClientRect();
+        const viewportBottom = window.innerHeight || document.documentElement.clientHeight;
+        return rect.bottom <= viewportBottom + 120;
       };
       const updateScrollBtn = () => {
-        // Solo relevante en modo conversación (mensajes visibles)
         const inChat = !messagesEl.classList.contains('hidden');
         scrollToBottomBtn.classList.toggle('is-visible', inChat && !isNearBottom());
       };
       messagesContainer.addEventListener('scroll', updateScrollBtn, { passive: true });
-      // Recalcular cuando el contenido crece (streaming) o cambia el modo
+      window.addEventListener('scroll', updateScrollBtn, { passive: true });
       const scrollBtnObserver = new MutationObserver(updateScrollBtn);
       scrollBtnObserver.observe(messagesEl, { childList: true, subtree: true, characterData: true });
       window.addEventListener('resize', updateScrollBtn);
       scrollToBottomBtn.addEventListener('click', () => {
-        messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
+        const last = messagesEl.lastElementChild;
+        if (last) {
+          last.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        } else {
+          messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
+        }
       });
     }
 
