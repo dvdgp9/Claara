@@ -187,33 +187,33 @@ $headerShowLogo = true;
             </div>
 
             <!-- "Or" divider -->
-            <div class="flex items-center gap-4 max-w-4xl mx-auto mb-6 lg:mb-8">
+            <div class="flex items-center gap-4 max-w-3xl mx-auto mb-4 lg:mb-5">
               <div class="flex-1 h-px bg-slate-200"></div>
               <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Or choose an option</span>
               <div class="flex-1 h-px bg-slate-200"></div>
             </div>
 
             <!-- Options grid: Voices and Gestures -->
-            <div class="grid grid-cols-1 xl:grid-cols-[0.92fr_1.08fr] gap-4 lg:gap-5 max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 xl:grid-cols-[0.86fr_1.14fr] gap-3 lg:gap-4 max-w-5xl mx-auto">
               
               <!-- Voices -->
-              <div class="empty-option-panel glass-strong rounded-[1.75rem] border border-slate-200/50 p-5 lg:p-6">
-                <div class="flex items-center gap-3 mb-5">
-                  <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-[#2F3440] flex items-center justify-center shadow-lg animate-float" style="animation-delay: 0s">
-                    <i class="iconoir-voice-square text-2xl text-white"></i>
+              <div class="empty-option-panel glass-strong rounded-3xl border border-slate-200/50 p-4 lg:p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-[#2F3440] flex items-center justify-center shadow-md animate-float" style="animation-delay: 0s">
+                    <i class="iconoir-voice-square text-xl text-white"></i>
                   </div>
                   <div>
-                    <h3 class="text-lg font-bold text-slate-900">Voices</h3>
-                    <p class="text-sm text-slate-500">Specialized assistants for focused work</p>
+                    <h3 class="text-base font-bold text-slate-900">Voices</h3>
+                    <p class="text-xs text-slate-500">Specialized assistants</p>
                   </div>
                 </div>
                 
-                <div class="space-y-2.5">
+                <div class="space-y-2">
                   <?php if ($accessRepo->hasVoiceAccess($userId, 'lex')): ?>
                   <!-- Lex - Active -->
-                  <button class="voice-option empty-action w-full p-4 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-rose-300 rounded-2xl transition-smooth text-left group hover:shadow-md" data-voice="lex">
+                  <button class="voice-option empty-action w-full p-3 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-rose-300 rounded-2xl transition-smooth text-left group hover:shadow-md" data-voice="lex">
                     <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">L</div>
+                      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">L</div>
                       <div class="flex-1 min-w-0">
                         <div class="font-semibold text-slate-800 group-hover:text-rose-600 transition-smooth">Lex</div>
                         <div class="text-xs text-slate-500">Your legal assistant</div>
@@ -223,31 +223,14 @@ $headerShowLogo = true;
                   </button>
                   <?php endif; ?>
 
-                  <!-- Placeholder - Coming soon -->
-                  <div class="empty-action w-full p-4 bg-white/40 border border-slate-200/80 rounded-2xl opacity-60">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-sm flex-shrink-0">C</div>
-                      <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-500">Operations</div>
-                        <div class="text-xs text-slate-400">Coming soon</div>
-                      </div>
-                      <span class="px-2 py-0.5 text-xs bg-slate-100 text-slate-400 rounded-full">Soon</span>
+                  <div class="w-full px-3 py-2 bg-white/35 border border-slate-200/70 rounded-2xl">
+                    <div class="flex items-center justify-between gap-3 text-xs text-slate-400">
+                      <span class="truncate">Operations and Knowledge</span>
+                      <span class="px-2 py-0.5 bg-slate-100 rounded-full shrink-0">2 more soon</span>
                     </div>
                   </div>
 
-                  <!-- Placeholder - Coming soon -->
-                  <div class="empty-action w-full p-4 bg-white/40 border border-slate-200/80 rounded-2xl opacity-60">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-sm flex-shrink-0">U</div>
-                      <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-500">Knowledge</div>
-                        <div class="text-xs text-slate-400">Coming soon</div>
-                      </div>
-                      <span class="px-2 py-0.5 text-xs bg-slate-100 text-slate-400 rounded-full">Soon</span>
-                    </div>
-                  </div>
-
-                  <button id="view-all-voices" class="w-full p-3 mt-1 hover:bg-rose-50 border-2 border-dashed border-slate-200 hover:border-rose-300 rounded-2xl transition-smooth text-center group">
+                  <button id="view-all-voices" class="w-full p-2 mt-0.5 hover:bg-rose-50 border border-dashed border-slate-200 hover:border-rose-300 rounded-2xl transition-smooth text-center group">
                     <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-rose-600 transition-smooth">
                       <span>View all voices</span>
                       <i class="iconoir-arrow-right group-hover:translate-x-1 transition-smooth"></i>
@@ -257,23 +240,23 @@ $headerShowLogo = true;
               </div>
 
               <!-- Gestures -->
-              <div class="empty-option-panel glass-strong rounded-[1.75rem] border border-slate-200/50 p-5 lg:p-6">
-                <div class="flex items-center gap-3 mb-5">
-                  <div class="w-12 h-12 rounded-2xl gradient-brand flex items-center justify-center shadow-lg animate-float" style="animation-delay: 0.5s">
-                    <i class="iconoir-magic-wand text-2xl text-white"></i>
+              <div class="empty-option-panel glass-strong rounded-3xl border border-slate-200/50 p-4 lg:p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 rounded-2xl gradient-brand flex items-center justify-center shadow-md animate-float" style="animation-delay: 0.5s">
+                    <i class="iconoir-magic-wand text-xl text-white"></i>
                   </div>
                   <div>
-                    <h3 class="text-lg font-bold text-slate-900">Gestures</h3>
-                    <p class="text-sm text-slate-500">Optimized quick actions</p>
+                    <h3 class="text-base font-bold text-slate-900">Gestures</h3>
+                    <p class="text-xs text-slate-500">Quick actions</p>
                   </div>
                 </div>
                 
-                <div class="space-y-2.5">
+                <div class="space-y-2">
                   <?php if ($accessRepo->hasGestureAccess($userId, 'write-article')): ?>
-                  <button class="gesture-option empty-action w-full p-4 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-[#B7C9F2]/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="write-article">
+                  <button class="gesture-option empty-action w-full p-3 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-[#B7C9F2]/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="write-article">
                     <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
-                        <i class="iconoir-page-edit text-lg text-white"></i>
+                      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
+                        <i class="iconoir-page-edit text-base text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="font-semibold text-slate-800 group-hover:text-[#2F3440] transition-smooth">Write Content</div>
@@ -285,10 +268,10 @@ $headerShowLogo = true;
                   <?php endif; ?>
 
                   <?php if ($accessRepo->hasGestureAccess($userId, 'social-media')): ?>
-                  <button class="gesture-option empty-action w-full p-4 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-slate-300 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="social-media">
+                  <button class="gesture-option empty-action w-full p-3 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-slate-300 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="social-media">
                     <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-[#2F3440] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
-                        <i class="iconoir-send-diagonal text-lg text-white"></i>
+                      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-500 to-[#2F3440] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
+                        <i class="iconoir-send-diagonal text-base text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="font-semibold text-slate-800 group-hover:text-[#2F3440] transition-smooth">Social Media</div>
@@ -300,10 +283,10 @@ $headerShowLogo = true;
                   <?php endif; ?>
 
                   <?php if ($accessRepo->hasGestureAccess($userId, 'podcast-from-article')): ?>
-                  <button class="gesture-option empty-action w-full p-4 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-rose-400/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="podcast-from-article">
+                  <button class="gesture-option empty-action w-full p-3 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-rose-400/50 rounded-2xl transition-smooth text-left group hover:shadow-md" data-gesture="podcast-from-article">
                     <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
-                        <i class="iconoir-podcast text-lg text-white"></i>
+                      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">
+                        <i class="iconoir-podcast text-base text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="font-semibold text-slate-800 group-hover:text-rose-600 transition-smooth">Article to Podcast</div>
@@ -316,7 +299,7 @@ $headerShowLogo = true;
 
                   
 
-                  <button id="view-all-gestures" class="w-full p-3 mt-1 hover:bg-[#B7C9F2]/5 border-2 border-dashed border-slate-200 hover:border-[#B7C9F2]/50 rounded-2xl transition-smooth text-center group">
+                  <button id="view-all-gestures" class="w-full p-2 mt-0.5 hover:bg-[#B7C9F2]/5 border border-dashed border-slate-200 hover:border-[#B7C9F2]/50 rounded-2xl transition-smooth text-center group">
                     <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-[#B7C9F2] transition-smooth">
                       <span>View all gestures</span>
                       <i class="iconoir-arrow-right group-hover:translate-x-1 transition-smooth"></i>

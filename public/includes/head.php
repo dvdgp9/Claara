@@ -355,11 +355,11 @@ $pageTitle = $pageTitle ?? 'Claara — AI Workspace';
       transition: transform .28s cubic-bezier(.16, 1, .3, 1), border-color .28s cubic-bezier(.16, 1, .3, 1), box-shadow .28s cubic-bezier(.16, 1, .3, 1);
     }
     .empty-option-panel:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 24px 60px -42px rgba(47, 52, 64, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 18px 44px -36px rgba(47, 52, 64, 0.3);
     }
     .empty-action {
-      min-height: 4.35rem;
+      min-height: 3.35rem;
     }
     .empty-action:active {
       transform: scale(0.99);
