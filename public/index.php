@@ -347,11 +347,11 @@ $headerShowLogo = true;
             </div>
           </div>
         </div>
-      </section>
-      <!-- Scroll-to-bottom floating button -->
-      <button id="scroll-to-bottom" class="scroll-bottom-btn fixed bottom-32 lg:bottom-28 right-4 lg:right-8 z-40 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg text-slate-500 hover:text-[#2F3440] hover:shadow-xl transition-all" title="Scroll to latest" aria-label="Scroll to latest">
+        <!-- Scroll-to-bottom floating button (anchored to conversation area) -->
+        <button id="scroll-to-bottom" class="scroll-bottom-btn absolute bottom-28 lg:bottom-6 right-4 lg:right-6 z-40 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg text-slate-500 hover:text-[#2F3440] hover:shadow-xl transition-all" title="Scroll to latest" aria-label="Scroll to latest">
         <i class="iconoir-arrow-down text-xl"></i>
-      </button>
+        </button>
+      </section>
       <!-- Chat footer: fixed on mobile above the bottom nav -->
       <footer id="chat-footer" class="hidden fixed lg:relative bottom-16 lg:bottom-0 left-0 right-0 p-3 lg:p-4 bg-gradient-to-t from-white via-white to-white/80 z-40">
         <form id="chat-form" class="max-w-3xl mx-auto">
@@ -573,33 +573,23 @@ $headerShowLogo = true;
     // Scroll-to-bottom floating button
     const scrollToBottomBtn = document.getElementById('scroll-to-bottom');
     if (scrollToBottomBtn && messagesContainer) {
-      // Determinamos cercanía al final mirando la posición real del último
-      // mensaje respecto al viewport, así no dependemos de qué elemento es el
-      // contenedor con overflow real (puede variar entre desktop/mobile).
       const isNearBottom = () => {
-        const last = messagesEl.lastElementChild;
-        if (!last) return true;
-        const rect = last.getBoundingClientRect();
-        const viewportBottom = window.innerHeight || document.documentElement.clientHeight;
-        return rect.bottom <= viewportBottom + 120;
+        const remaining = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
+        return remaining <= 120;
       };
       const updateScrollBtn = () => {
         const inChat = !messagesEl.classList.contains('hidden');
         scrollToBottomBtn.classList.toggle('is-visible', inChat && !isNearBottom());
       };
       messagesContainer.addEventListener('scroll', updateScrollBtn, { passive: true });
-      window.addEventListener('scroll', updateScrollBtn, { passive: true });
       const scrollBtnObserver = new MutationObserver(updateScrollBtn);
       scrollBtnObserver.observe(messagesEl, { childList: true, subtree: true, characterData: true });
       window.addEventListener('resize', updateScrollBtn);
       scrollToBottomBtn.addEventListener('click', () => {
-        const last = messagesEl.lastElementChild;
-        if (last) {
-          last.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        } else {
-          messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
-        }
+        messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
+        updateScrollBtn();
       });
+      updateScrollBtn();
     }
 
     function handleCommandEnter(e, form) {
