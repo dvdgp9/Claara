@@ -608,6 +608,11 @@ Incluye la sección/página del documento donde se encuentra cada dato.
 
 # Current Status / Progress Tracking
 
+- 2026-05-28: **CHAT UX/UI Fase 1** implementada (pendiente verificación en navegador del usuario):
+  - F1.1 Barra de acciones por mensaje en respuestas del asistente: botón **Copiar** (con feedback ✓) y **Regenerar** respuesta completa. Función única `buildMessageActions()` reusada en carga de historial (`append`), streaming (`finalizeStreamingMessage`) y tras regenerar. Visible al hover en desktop, semivisible en táctil.
+  - Nuevo endpoint `public/api/chat-regenerate-full.php`: regenera la respuesta completa reusando el historial previo (solo texto; no reintenta archivos/imágenes/web del turno original). Reusa `OpenRouterClient::generateWithMessages()`, `ContextBuilder`, ownership + CSRF como `chat-regenerate.php`.
+  - F1.2 Soporte de **fenced code blocks** (```) en `mdToHtml()` (antes se rompían) + botón **copiar código** por bloque vía `enhanceCodeBlocks()`.
+  - CSS nuevo en `public/includes/head.php` (`.code-block`, `.code-copy-btn`, `.msg-actions`, `.msg-action-btn`).
 - 2025-11-03: `index.php` creado. Repo inicializado en `main` y push a remoto realizado.
 - 2025-11-03: Borrador de `docs/db_schema.md` creado para revisión.
 - 2025-11-03: Scaffolding y endpoints mínimos creados. `.env` configurado con credenciales locales.
@@ -1497,6 +1502,69 @@ Petición del compañero: cuando una voz responde, debe mostrar (1) un porcentaj
 - Lead Finder: Tasks 6-8 completadas. Siguiente paso sugerido: Task 10, QA manual en producción con provider mock; Task 9 queda bloqueada hasta elegir API real y revisar documentación actualizada.
 - Lead Finder: Task 9 (Apify) implementada en código (`ApifyLeadSearchProvider` + `buildLeadSearchProvider()`), pendiente validación end-to-end con una búsqueda real desde UI y revisión del actor elegido.
 - Translation extraction milestone: paquete listo para traductores en `docs/translations/`. Solicitud al usuario/planner: validar si en esta fase se exporta solo páginas públicas (`php scripts/extract_page_texts.php`) o también admin (`php scripts/extract_page_texts.php --include-admin`).
+
+---
+
+## Feature: Mejora UX/UI del Chat (estado vacío + conversación)
+
+### Background and Motivation
+El chat principal (`public/index.php`) funciona, pero la UX/UI tiene carencias frente a chats modernos. Objetivo: hacerlo mejor sin rediseño disruptivo. Decisiones acordadas con el usuario (2026-05-28):
+- **Mantener estilo de burbujas** (puliendo), NO migrar a estilo plano tipo ChatGPT.
+- Priorizar: (1) acciones por mensaje, (2) pulido del estado vacío, (3) detalles de conversación.
+- Fuera de alcance por ahora: prompts sugeridos en estado vacío.
+- Modo de trabajo: documentar plan y, tras OK del usuario, ejecutar por fases con verificación.
+
+### Key Challenges and Analysis
+- Todo el JS del chat es inline en `public/index.php` (~3228 líneas). Hay un renderizador `append()` (no-streaming) y `finalizeStreamingMessage()` (streaming) con **lógica duplicada** (imágenes, citas, botones de descarga). Cualquier acción por mensaje debe añadirse en ambos caminos o unificarse.
+- Estilos: clases utilitarias Tailwind (CDN) + bloque `<style>` en `public/includes/head.php` + `public/assets/css/styles.css`. CSS nuevo va en head.php o styles.css (regla del usuario: nada inline).
+- Ya existe barra de selección para editar/regenerar **por selección de texto** (`#selection-toolbar` desktop / `#selection-bar-mobile`). Las nuevas acciones por mensaje (copiar/regenerar completo) deben convivir sin colisionar con esa selección.
+- Funciones existentes reutilizables: `mdToHtml()`, `escapeHtml()`, `api()`, endpoint `/api/chat-regenerate.php` (ya usado en regeneración por selección).
+- Riesgo: el avatar+timestamp en cada mensaje se genera en `append()`. Agrupar mensajes consecutivos requiere comprobar el rol del último `wrap` insertado.
+
+### High-level Task Breakdown
+
+**Fase 1 — Acciones por mensaje (mayor impacto funcional)**
+1. [ ] Añadir barra de acciones al pie de cada burbuja del asistente (visible al hover en desktop, siempre en móvil):
+   - **Copiar** respuesta (texto plano del markdown).
+   - **Regenerar** respuesta completa (reusar flujo de `/api/chat-regenerate.php`).
+   - Implementar como función única `buildMessageActions(bubble, content, messageId)` y llamarla desde `append()` y `finalizeStreamingMessage()` (evitar duplicar).
+   - Success: en una respuesta del asistente aparecen los botones; "Copiar" copia y muestra feedback ("Copiado"); "Regenerar" relanza y sustituye la respuesta.
+2. [ ] Botón **"Copiar"** en bloques de código (`<pre>`) dentro del markdown renderizado.
+   - Success: cada bloque de código muestra botón al hover que copia su contenido.
+
+**Fase 2 — Detalles de conversación (pulido visual/UX)**
+3. [ ] **Agrupar mensajes consecutivos** del mismo rol: ocultar avatar repetido y reducir separación cuando el mensaje anterior es del mismo rol.
+   - Success: dos mensajes seguidos del asistente no repiten avatar; el espaciado es menor entre ellos que entre turnos.
+4. [ ] **Timestamps menos intrusivos**: mostrar la hora al hover del mensaje en vez de siempre visible (mantener accesible).
+   - Success: la hora aparece al pasar el ratón; en móvil se mantiene discreta.
+5. [ ] **Botón "bajar al final"** flotante que aparece cuando el usuario ha hecho scroll hacia arriba (útil durante streaming largo).
+   - Success: aparece al alejarse del fondo, desaparece al volver, y baja suavemente al pulsarlo.
+6. [ ] **Estilo de markdown/código** en burbuja del asistente: mejorar `pre`/`code`, listas, tablas y citas para mejor legibilidad (CSS en head.php/styles.css).
+   - Success: bloques de código con fondo y monoespaciado claros; listas y tablas legibles dentro de la burbuja.
+7. [ ] **Consistencia de idioma**: cambiar "Fuentes" (citas web) a inglés "Sources" para alinear con el resto de la UI.
+   - Success: no quedan textos mezclados ES/EN en la conversación.
+
+**Fase 3 — Pulido del estado vacío**
+8. [ ] **Saludo según la hora** ("Good morning/afternoon/evening, {nombre}") en vez de "Hi" estático.
+   - Success: el saludo cambia según la franja horaria del cliente.
+9. [ ] **Jerarquía visual**: dar protagonismo al input (foco automático, refinar tarjetas Voices/Gestures para que no compitan) y revisar espaciados/responsive.
+   - Success: al cargar el estado vacío el cursor está en el input; en móvil el input es lo primero visible sin scroll.
+
+### Success Criteria (global)
+- Sin regresiones en streaming, adjuntos, imágenes generadas, citas web, descargas y selección/edición existente.
+- Verificación manual en navegador (desktop + móvil) al cierre de cada fase.
+- CSS nuevo en `head.php`/`styles.css`, nunca inline.
+
+### Project Status Board — Chat UX/UI
+- [x] F1.1 Acciones por mensaje (copiar / regenerar) — implementado, pendiente verificación usuario
+- [x] F1.2 Copiar bloque de código (+ render de fenced code) — implementado, pendiente verificación usuario
+- [ ] F2.3 Agrupar mensajes consecutivos
+- [ ] F2.4 Timestamps al hover
+- [ ] F2.5 Botón bajar al final
+- [ ] F2.6 Estilo markdown/código
+- [ ] F2.7 Consistencia de idioma (Sources)
+- [ ] F3.8 Saludo según hora
+- [ ] F3.9 Jerarquía/foco estado vacío
 
 # Lessons
 

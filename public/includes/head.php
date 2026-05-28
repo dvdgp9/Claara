@@ -275,7 +275,91 @@ $pageTitle = $pageTitle ?? 'Claara — AI Workspace';
     table.md-table tr:last-child td {
       border-bottom: none;
     }
-    
+
+    /* Fenced code blocks in chat */
+    .code-block {
+      position: relative;
+      margin: 0.85rem 0;
+      border-radius: 0.75rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      overflow: hidden;
+    }
+    .code-block pre {
+      margin: 0;
+      padding: 0.9rem 1rem;
+      overflow-x: auto;
+    }
+    .code-block code {
+      background: transparent;
+      padding: 0;
+      color: #e2e8f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      white-space: pre;
+    }
+    .code-block .code-lang {
+      display: block;
+      padding: 0.4rem 1rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      background: rgba(148, 163, 184, 0.08);
+      border-bottom: 1px solid #334155;
+    }
+    .code-copy-btn {
+      position: absolute;
+      top: 0.45rem;
+      right: 0.45rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.9rem;
+      height: 1.9rem;
+      border-radius: 0.5rem;
+      color: #cbd5e1;
+      background: rgba(15, 23, 42, 0.6);
+      transition: background-color .2s ease, color .2s ease;
+    }
+    .code-copy-btn:hover {
+      background: rgba(148, 163, 184, 0.25);
+      color: #fff;
+    }
+
+    /* Per-message action bar (copy / regenerate) */
+    .msg-actions {
+      opacity: 0;
+      transition: opacity .18s ease;
+    }
+    .group:hover .msg-actions {
+      opacity: 1;
+    }
+    .msg-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.9rem;
+      height: 1.9rem;
+      border-radius: 0.5rem;
+      color: #94a3b8;
+      transition: background-color .2s ease, color .2s ease;
+    }
+    .msg-action-btn:hover {
+      color: var(--brand-ink);
+      background: rgba(183, 201, 242, 0.18);
+    }
+    .msg-action-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    /* Touch devices have no hover: keep actions visible */
+    @media (hover: none) {
+      .msg-actions { opacity: 0.85; }
+    }
+
     /* Toast animations */
     @keyframes slideIn {
       from { transform: translateX(100%); opacity: 0; }

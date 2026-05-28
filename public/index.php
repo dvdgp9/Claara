@@ -809,7 +809,16 @@ $headerShowLogo = true;
     function mdToHtml(md){
       // escape first
       let s = escapeHtml(md);
-      
+
+      // Fenced code blocks: ```lang\n...```  (protect from other rules)
+      const codeBlocks = [];
+      s = s.replace(/```([\w-]*)\r?\n([\s\S]*?)```/g, function(_m, lang, code){
+        const idx = codeBlocks.length;
+        const trimmed = code.replace(/\n$/, '');
+        codeBlocks.push({ lang: (lang || '').trim(), code: trimmed });
+        return ` CODEBLOCK${idx} `;
+      });
+
       // Markdown links: [text](url)
       s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline break-all">$1</a>');
 
@@ -859,7 +868,113 @@ $headerShowLogo = true;
       });
       // line breaks
       s = s.replace(/\n/g, '<br>');
+
+      // Restore fenced code blocks (code is already HTML-escaped)
+      s = s.replace(/ ?CODEBLOCK(\d+) ?/g, function(_m, i){
+        const block = codeBlocks[parseInt(i, 10)];
+        if (!block) return '';
+        const label = block.lang ? `<span class="code-lang">${escapeHtml(block.lang)}</span>` : '';
+        return `<div class="code-block">${label}<pre><code>${block.code}</code></pre></div>`;
+      });
+
       return s;
+    }
+
+    // Add a "copy" button to each fenced code block inside a rendered container
+    function enhanceCodeBlocks(containerEl){
+      if (!containerEl) return;
+      containerEl.querySelectorAll('.code-block:not([data-enhanced])').forEach(block => {
+        block.dataset.enhanced = '1';
+        const codeEl = block.querySelector('code');
+        if (!codeEl) return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'code-copy-btn';
+        btn.innerHTML = '<i class="iconoir-copy"></i>';
+        btn.title = 'Copy code';
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(codeEl.innerText);
+            btn.innerHTML = '<i class="iconoir-check"></i>';
+            setTimeout(() => { btn.innerHTML = '<i class="iconoir-copy"></i>'; }, 1500);
+          } catch (e) {}
+        });
+        block.appendChild(btn);
+      });
+    }
+
+    // Build per-message action bar (copy + regenerate) for assistant messages
+    function buildMessageActions(bubble, content, messageId){
+      if (!bubble) return;
+      const msgContainer = bubble.parentElement;
+      const wrap = msgContainer ? msgContainer.parentElement : null;
+      if (!wrap) return;
+      wrap.classList.add('group');
+
+      // Remove a previous actions bar (e.g. after regenerate)
+      const existing = wrap.querySelector('.msg-actions');
+      if (existing) existing.remove();
+
+      const cleanContent = (content || '').replace(/\[DOC_START\]|\[DOC_END\]|\[DOWNLOAD_INTENT\]/g, '').trim();
+
+      const actions = document.createElement('div');
+      actions.className = 'msg-actions flex items-center gap-1 mt-1 ml-12';
+
+      // Copy
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'msg-action-btn';
+      copyBtn.title = 'Copy response';
+      copyBtn.innerHTML = '<i class="iconoir-copy"></i>';
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(cleanContent);
+          copyBtn.innerHTML = '<i class="iconoir-check text-emerald-500"></i>';
+          setTimeout(() => { copyBtn.innerHTML = '<i class="iconoir-copy"></i>'; }, 1500);
+        } catch (e) {}
+      });
+      actions.appendChild(copyBtn);
+
+      // Regenerate (needs a persisted message id + conversation)
+      if (messageId) {
+        const regenBtn = document.createElement('button');
+        regenBtn.type = 'button';
+        regenBtn.className = 'msg-action-btn';
+        regenBtn.title = 'Regenerate response';
+        regenBtn.innerHTML = '<i class="iconoir-refresh-double"></i>';
+        regenBtn.addEventListener('click', () => regenerateMessage(messageId, bubble, regenBtn));
+        actions.appendChild(regenBtn);
+      }
+
+      wrap.appendChild(actions);
+    }
+
+    async function regenerateMessage(messageId, bubble, btn){
+      if (!messageId || !currentConversationId || isGenerating) return;
+      const originalIcon = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="iconoir-refresh-double animate-spin"></i>';
+      bubble.classList.add('opacity-50', 'pointer-events-none');
+      try {
+        const result = await api('/api/chat-regenerate-full.php', {
+          method: 'POST',
+          body: { message_id: parseInt(messageId), conversation_id: currentConversationId }
+        });
+        if (result.success && result.message) {
+          const clean = (result.message.content || '').replace(/\[DOC_START\]|\[DOC_END\]|\[DOWNLOAD_INTENT\]/g, '');
+          bubble.innerHTML = mdToHtml(clean);
+          enhanceCodeBlocks(bubble);
+          buildMessageActions(bubble, result.message.content, messageId);
+          bubble.classList.add('ring-2', 'ring-emerald-400', 'ring-opacity-75');
+          setTimeout(() => bubble.classList.remove('ring-2', 'ring-emerald-400', 'ring-opacity-75'), 2000);
+        }
+      } catch (error) {
+        alert('Error regenerating: ' + error.message);
+        btn.innerHTML = originalIcon;
+      } finally {
+        btn.disabled = false;
+        bubble.classList.remove('opacity-50', 'pointer-events-none');
+      }
     }
 
     function append(role, content, file = null, images = null, annotations = null, options = {}){
@@ -1051,13 +1166,21 @@ $headerShowLogo = true;
       wrap.appendChild(timestamp);
       messagesEl.appendChild(wrap);
       
+      // Para mensajes del asistente ya completos (carga de historial), añadir
+      // mejoras de código y barra de acciones. Los mensajes en streaming las
+      // reciben en finalizeStreamingMessage().
+      if (role === 'assistant' && !isStreaming) {
+        enhanceCodeBlocks(bubble);
+        buildMessageActions(bubble, content, messageId);
+      }
+
       if (role === 'user') {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       } else {
         // Para el asistente, nos desplazamos al inicio del nuevo mensaje
         wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-      
+
       // Devolver la burbuja para actualización en streaming
       return { wrap, bubble };
     }
@@ -1085,7 +1208,8 @@ $headerShowLogo = true;
       contentEl.className = 'markdown-content prose prose-slate prose-sm max-w-none';
       contentEl.innerHTML = mdToHtml(displayContent);
       bubble.appendChild(contentEl);
-      
+      enhanceCodeBlocks(contentEl);
+
       // Añadir data attributes para selección
       if (messageId) {
         bubble.dataset.messageId = messageId;
@@ -1194,8 +1318,11 @@ $headerShowLogo = true;
           bubble.appendChild(citationsContainer);
         }
       }
+
+      // Barra de acciones por mensaje (copiar / regenerar)
+      buildMessageActions(bubble, content, messageId);
     }
-    
+
     // Función de streaming SSE
     async function streamChat(params, onChunk, onComplete, onError) {
       abortController = new AbortController();
