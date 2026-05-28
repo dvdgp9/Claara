@@ -348,6 +348,10 @@ $headerShowLogo = true;
           </div>
         </div>
       </section>
+      <!-- Scroll-to-bottom floating button -->
+      <button id="scroll-to-bottom" class="hidden fixed bottom-32 lg:bottom-28 right-4 lg:right-8 z-40 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center text-slate-500 hover:text-[#2F3440] hover:shadow-xl transition-all" title="Scroll to latest">
+        <i class="iconoir-arrow-down text-xl"></i>
+      </button>
       <!-- Chat footer: fixed on mobile above the bottom nav -->
       <footer id="chat-footer" class="hidden fixed lg:relative bottom-16 lg:bottom-0 left-0 right-0 p-3 lg:p-4 bg-gradient-to-t from-white via-white to-white/80 z-40">
         <form id="chat-form" class="max-w-3xl mx-auto">
@@ -565,6 +569,28 @@ $headerShowLogo = true;
 
     const formEl = document.getElementById('chat-form');
     const formEmptyEl = document.getElementById('chat-form-empty');
+
+    // Scroll-to-bottom floating button
+    const scrollToBottomBtn = document.getElementById('scroll-to-bottom');
+    if (scrollToBottomBtn && messagesContainer) {
+      const isNearBottom = () => {
+        const gap = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
+        return gap < 120;
+      };
+      const updateScrollBtn = () => {
+        // Solo relevante en modo conversación (mensajes visibles)
+        const inChat = !messagesEl.classList.contains('hidden');
+        if (inChat && !isNearBottom()) {
+          scrollToBottomBtn.classList.remove('hidden');
+        } else {
+          scrollToBottomBtn.classList.add('hidden');
+        }
+      };
+      messagesContainer.addEventListener('scroll', updateScrollBtn, { passive: true });
+      scrollToBottomBtn.addEventListener('click', () => {
+        messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
+      });
+    }
 
     function handleCommandEnter(e, form) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -981,23 +1007,31 @@ $headerShowLogo = true;
       if(messagesEl.children.length === 0) showChatMode();
       
       const { messageId, isStreaming } = options;
-      
+
+      // Agrupar mensajes consecutivos del mismo rol
+      const prevWrap = messagesEl.lastElementChild;
+      const sameAsPrev = !!(prevWrap && prevWrap.dataset.role === role);
+
       const wrap = document.createElement('div');
-      wrap.className = 'mb-6 flex flex-col ' + (role === 'user' ? 'items-end' : 'items-start');
+      const topMargin = !prevWrap ? '' : (sameAsPrev ? 'mt-1' : 'mt-6');
+      wrap.className = ('group flex flex-col ' + topMargin + ' ' + (role === 'user' ? 'items-end' : 'items-start')).trim();
+      wrap.dataset.role = role;
       if (messageId) wrap.dataset.messageWrap = messageId;
-      
+
       // Avatar + burbuja container
       const msgContainer = document.createElement('div');
       msgContainer.className = 'flex gap-3 max-w-3xl ' + (role === 'user' ? 'flex-row-reverse' : 'flex-row');
-      
+
       // Avatar
       const avatar = document.createElement('div');
       avatar.className = role === 'user'
         ? 'w-9 h-9 rounded-full gradient-brand flex items-center justify-center text-[#2F3440] text-sm font-semibold flex-shrink-0 shadow-sm'
         : 'w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-sm font-semibold flex-shrink-0';
-      avatar.textContent = role === 'user' 
+      avatar.textContent = role === 'user'
         ? (currentUser ? currentUser.first_name[0] + currentUser.last_name[0] : '?')
         : 'E';
+      // En mensajes agrupados, el avatar queda como espaciador invisible
+      if (sameAsPrev) avatar.style.visibility = 'hidden';
       
       // Burbuja
       const bubble = document.createElement('div');
@@ -1015,7 +1049,15 @@ $headerShowLogo = true;
       if (role === 'assistant') {
         // Ocultar marcadores de documento e intención de descarga
         const cleanContent = content.replace(/\[DOC_START\]|\[DOC_END\]|\[DOWNLOAD_INTENT\]/g, '');
-        bubble.innerHTML = mdToHtml(cleanContent);
+        if (isStreaming) {
+          // Durante streaming se escribe directo en la burbuja (updateStreamingMessage)
+          bubble.innerHTML = mdToHtml(cleanContent);
+        } else {
+          const contentEl = document.createElement('div');
+          contentEl.className = 'markdown-content prose prose-slate prose-sm max-w-none';
+          contentEl.innerHTML = mdToHtml(cleanContent);
+          bubble.appendChild(contentEl);
+        }
         // Si está en streaming, añadir indicador
         if (isStreaming) {
           const indicator = document.createElement('span');
@@ -1115,7 +1157,7 @@ $headerShowLogo = true;
         
         const citationsTitle = document.createElement('div');
         citationsTitle.className = 'text-xs font-medium text-slate-500 mb-2 flex items-center gap-1.5';
-        citationsTitle.innerHTML = '<i class="iconoir-globe text-cyan-500"></i> Fuentes';
+        citationsTitle.innerHTML = '<i class="iconoir-globe text-cyan-500"></i> Sources';
         citationsContainer.appendChild(citationsTitle);
         
         const citationsList = document.createElement('div');
@@ -1156,9 +1198,9 @@ $headerShowLogo = true;
       msgContainer.appendChild(avatar);
       msgContainer.appendChild(bubble);
       
-      // Timestamp
+      // Timestamp (se revela al hover del mensaje)
       const timestamp = document.createElement('div');
-      timestamp.className = 'text-xs text-slate-400 mt-1 px-3';
+      timestamp.className = 'msg-time text-xs text-slate-400 mt-1 ' + (role === 'user' ? 'px-3' : 'ml-12');
       const now = new Date();
       timestamp.textContent = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
       
@@ -1283,7 +1325,7 @@ $headerShowLogo = true;
         
         const citationsTitle = document.createElement('div');
         citationsTitle.className = 'text-xs font-medium text-slate-500 mb-2 flex items-center gap-1.5';
-        citationsTitle.innerHTML = '<i class="iconoir-globe text-cyan-500"></i> Fuentes';
+        citationsTitle.innerHTML = '<i class="iconoir-globe text-cyan-500"></i> Sources';
         citationsContainer.appendChild(citationsTitle);
         
         const citationsList = document.createElement('div');

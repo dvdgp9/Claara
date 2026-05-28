@@ -613,6 +613,13 @@ Incluye la sección/página del documento donde se encuentra cada dato.
   - Nuevo endpoint `public/api/chat-regenerate-full.php`: regenera la respuesta completa reusando el historial previo (solo texto; no reintenta archivos/imágenes/web del turno original). Reusa `OpenRouterClient::generateWithMessages()`, `ContextBuilder`, ownership + CSRF como `chat-regenerate.php`.
   - F1.2 Soporte de **fenced code blocks** (```) en `mdToHtml()` (antes se rompían) + botón **copiar código** por bloque vía `enhanceCodeBlocks()`.
   - CSS nuevo en `public/includes/head.php` (`.code-block`, `.code-copy-btn`, `.msg-actions`, `.msg-action-btn`).
+- 2026-05-28: **CHAT UX/UI Fase 2** implementada (pendiente verificación en navegador del usuario):
+  - F2.3 Agrupado de mensajes consecutivos del mismo rol: avatar repetido oculto (espaciador invisible) y menor separación (`mt-1` vs `mt-6` entre turnos). Se trackea con `wrap.dataset.role`.
+  - F2.4 Timestamps con revelado al hover (`.msg-time` + `.group:hover`); alineados bajo la burbuja.
+  - F2.5 Botón flotante "bajar al final" (`#scroll-to-bottom`): aparece al alejarse >120px del fondo en modo chat, scroll suave al pulsarlo.
+  - F2.6 Consistencia de render: los mensajes del asistente cargados del historial ahora usan `.markdown-content .prose` (antes solo los de streaming); junto al estilo de `code-block` de Fase 1.
+  - F2.7 "Fuentes" → "Sources" en el bloque de citas web.
+  - Nota: `grep` trata `public/index.php` como binario (contiene emojis 🍌/🌐); usar `grep -a`.
 - 2025-11-03: `index.php` creado. Repo inicializado en `main` y push a remoto realizado.
 - 2025-11-03: Borrador de `docs/db_schema.md` creado para revisión.
 - 2025-11-03: Scaffolding y endpoints mínimos creados. `.env` configurado con credenciales locales.
@@ -1558,11 +1565,11 @@ El chat principal (`public/index.php`) funciona, pero la UX/UI tiene carencias f
 ### Project Status Board — Chat UX/UI
 - [x] F1.1 Acciones por mensaje (copiar / regenerar) — implementado, pendiente verificación usuario
 - [x] F1.2 Copiar bloque de código (+ render de fenced code) — implementado, pendiente verificación usuario
-- [ ] F2.3 Agrupar mensajes consecutivos
-- [ ] F2.4 Timestamps al hover
-- [ ] F2.5 Botón bajar al final
-- [ ] F2.6 Estilo markdown/código
-- [ ] F2.7 Consistencia de idioma (Sources)
+- [x] F2.3 Agrupar mensajes consecutivos — implementado, pendiente verificación usuario
+- [x] F2.4 Timestamps al hover — implementado, pendiente verificación usuario
+- [x] F2.5 Botón bajar al final — implementado, pendiente verificación usuario
+- [x] F2.6 Estilo markdown/código (+ .prose en historial) — implementado, pendiente verificación usuario
+- [x] F2.7 Consistencia de idioma (Sources) — implementado, pendiente verificación usuario
 - [ ] F3.8 Saludo según hora
 - [ ] F3.9 Jerarquía/foco estado vacío
 
