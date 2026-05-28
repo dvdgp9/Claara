@@ -347,8 +347,8 @@ $headerShowLogo = true;
             </div>
           </div>
         </div>
-        <!-- Scroll-to-bottom floating button (anchored to conversation area) -->
-        <button id="scroll-to-bottom" class="scroll-bottom-btn absolute bottom-28 lg:bottom-6 right-4 lg:right-6 z-40 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg text-slate-500 hover:text-[#2F3440] hover:shadow-xl transition-all" title="Scroll to latest" aria-label="Scroll to latest">
+        <!-- Scroll-to-bottom floating button (positioned by JS inside the conversation viewport) -->
+        <button id="scroll-to-bottom" class="scroll-bottom-btn fixed z-40 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg text-slate-500 hover:text-[#2F3440] hover:shadow-xl transition-all" title="Scroll to latest" aria-label="Scroll to latest">
         <i class="iconoir-arrow-down text-xl"></i>
         </button>
       </section>
@@ -577,8 +577,17 @@ $headerShowLogo = true;
         const remaining = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
         return remaining <= 120;
       };
+      const positionScrollBtn = () => {
+        const containerRect = messagesContainer.getBoundingClientRect();
+        const footerRect = chatFooter && !chatFooter.classList.contains('hidden') ? chatFooter.getBoundingClientRect() : null;
+        const right = Math.max(16, window.innerWidth - containerRect.right + 24);
+        const bottomLimit = footerRect ? window.innerHeight - footerRect.top + 16 : window.innerHeight - containerRect.bottom + 24;
+        scrollToBottomBtn.style.right = `${right}px`;
+        scrollToBottomBtn.style.bottom = `${Math.max(24, bottomLimit)}px`;
+      };
       const updateScrollBtn = () => {
         const inChat = !messagesEl.classList.contains('hidden');
+        positionScrollBtn();
         scrollToBottomBtn.classList.toggle('is-visible', inChat && !isNearBottom());
       };
       messagesContainer.addEventListener('scroll', updateScrollBtn, { passive: true });
