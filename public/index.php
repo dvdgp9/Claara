@@ -717,6 +717,8 @@ $headerShowLogo = true;
       if (!window.matchMedia('(min-width: 768px)').matches) return;
       window.requestAnimationFrame(() => inputEmptyEl.focus({ preventScroll: true }));
     }
+    window.updateEmptyGreeting = updateEmptyGreeting;
+    window.focusEmptyComposer = focusEmptyComposer;
 
     function validateAndAddFiles(files, targetArray, renderFn) {
       let addedCount = 0;
@@ -3223,8 +3225,8 @@ $headerShowLogo = true;
           if (el) el.textContent = 'Ctrl + Enter to send';
         });
       }
-      updateEmptyGreeting();
-      focusEmptyComposer();
+      window.updateEmptyGreeting?.();
+      window.focusEmptyComposer?.();
 
       // Sincronizar selectores de modelos (Solo Superadmin)
       const modelSelectEmpty = document.getElementById('model-select-empty');
@@ -3240,9 +3242,17 @@ $headerShowLogo = true;
         if (!modelSelectEmpty || !modelSelectChat) return;
 
         try {
-          const response = await window.appApi('/api/models/list.php');
+          const response = window.appApi
+            ? await window.appApi('/api/models/list.php')
+            : await fetch('/api/models/list.php', { credentials: 'include' }).then(async (res) => {
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data?.error?.message || res.statusText);
+                return data;
+              });
           const models = Array.isArray(response.models) ? response.models : [];
           if (models.length === 0) {
+            modelSelectEmpty.innerHTML = '<option value="google/gemini-3-flash-preview">Gemini 3 Flash</option>';
+            modelSelectChat.innerHTML = modelSelectEmpty.innerHTML;
             return;
           }
 
@@ -3250,7 +3260,7 @@ $headerShowLogo = true;
 
           const options = models.map((m) => {
             const value = escapeModelHtml(m.model_key || '');
-            const label = escapeModelHtml(m.label || m.model_key || 'Modelo');
+            const label = escapeModelHtml(m.label || m.model_key || 'Model');
             return `<option value="${value}">${label}</option>`;
           }).join('');
 
@@ -3263,6 +3273,8 @@ $headerShowLogo = true;
           modelSelectChat.value = selected;
         } catch (error) {
           console.warn('Could not load model catalog:', error);
+          modelSelectEmpty.innerHTML = '<option value="google/gemini-3-flash-preview">Gemini 3 Flash</option>';
+          modelSelectChat.innerHTML = modelSelectEmpty.innerHTML;
         }
       }
 
