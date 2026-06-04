@@ -154,6 +154,130 @@ Actualmente `claara.tech/` carga directamente el workspace autenticado (`public/
 - 2026-06-04 (Executor): Landing ampliada tras revisar funcionalidad real de la app. Se añadió posicionamiento B2B para empresas, explicación de chat con archivos/web/PDF-DOCX, voces especializadas (Lex con RAG/citas/source match/conflictos), gestos operativos, conectores, permisos, usuarios/departamentos, admin de contexto, modelos y uso. También se corrigieron `headerBackUrl` restantes hacia `/app/` en páginas internas.
 - Verificación técnica adicional: `php -l` OK en `public/index.php`, `public/gestos/index.php`, `public/voices/index.php`, `public/connectors.php`, `public/voices/lex.php` y `public/admin/models.php`; búsqueda sin referencias obvias a `/` como ruta de chat; navegador integrado confirma contenido de landing y `scrollWidth === clientWidth` en móvil (390px) en hero y sección de biblioteca de gestos.
 
+---
+
+## Feature: Voces RAG administrables desde frontend
+
+### Background and Motivation
+Las voces deben convertirse en una capacidad B2B central de Claara: cada empresa o área puede necesitar asistentes especializados para RRHH, legal, operaciones, comercial, prevención, IT interno, licitaciones, soporte, etc. El usuario aclara que, en Claara, una voz significa siempre un asistente RAG con base documental propia; otros comportamientos no documentales se resolverán mediante gestos o chat general.
+
+Hoy las voces están parcialmente hardcodeadas en `src/Voices/VoiceContextBuilder.php` (`lex`, `cubo`, `uniges`) y la UI pública de voces solo muestra Lex real + placeholders. El gestor de contexto ya gestiona documentos e indexación RAG, pero está orientado a targets fijos (`lex`, `eboniato`, `ebonia`). Para escalar voces de empresa hay que hacerlas dinámicas, administrables y visibles para el chat general.
+
+### Key Challenges and Analysis
+- **Modelo actual hardcodeado:** `VoiceContextBuilder::$voices` impide crear voces desde frontend sin tocar código.
+- **RAG como contrato obligatorio:** cada voz debe tener colección Qdrant propia, documentos asociados, estado de indexación y prueba antes de publicarse.
+- **Permisos:** ya existe `available_features` + `user_feature_access` para `voice:{slug}`. Hay que reutilizarlo para publicar voces y permitir acceso por usuario/departamento. El acceso a edición de voces debe ser solo para superadmin o usuarios con un permiso explícito tipo `feature:voice-editor`.
+- **Gestor documental existente:** `context_documents.target` usa ENUM fijo; conviene migrarlo a un identificador flexible (`voice:{slug}` o `voice_slug`) para no crear migraciones por cada voz.
+- **UX admin:** debe ser muy simple: crear voz, añadir conocimiento, procesar índice, probar, publicar. No exponer Qdrant/embeddings como conceptos principales; mostrar estados humanos: “Sin documentos”, “Indexando”, “Lista para probar”, “Publicada”, “Error”.
+- **Integración futura con chat general:** toda voz publicada debe tener un manifiesto/catálogo legible por Claara: nombre, descripción, cuándo usarla, permisos, estado RAG, y endpoint de invocación.
+- **Diseño:** aplicar `design-taste-frontend` dentro del stack actual (PHP + Tailwind CDN + JS vanilla). CSS nuevo en `styles.css`, no inline. UI de administración densa pero tranquila: tablas/listas limpias, panel lateral de edición, estados inline, botones con iconos, nada de landing/marketing dentro del admin.
+
+### Concepto de producto
+Una voz es:
+- Un asistente especializado.
+- Siempre RAG.
+- Con instrucciones propias.
+- Con documentos indexados propios.
+- Con permisos de uso.
+- Con estado de publicación.
+- Invocable por su página específica y, en una fase posterior, por el chat general.
+
+### High-level Task Breakdown
+
+**Fase 1 — Base de datos y repositorio dinámico**
+1. [ ] Crear migración para tabla `voices`.
+   - Campos mínimos: `id`, `slug`, `name`, `role`, `description`, `instructions`, `trigger_guidance`, `status` (`draft|published|archived`), `rag_collection`, `icon`, `color`, `created_by`, timestamps.
+   - Success: se puede guardar Lex como registro inicial sin perder compatibilidad.
+2. [ ] Crear migración para documentos por voz.
+   - Opción simple recomendada: cambiar/acompañar `context_documents` para soportar `target_type='voice'` + `target_slug`, manteniendo compatibilidad temporal con `target='lex'`.
+   - Success: una voz nueva puede tener documentos sin modificar ENUMs cada vez.
+3. [ ] Crear `VoicesRepo`.
+   - Métodos: `list`, `findBySlug`, `create`, `update`, `archive`, `publish`, `getPublishedForUser`, `getEditableForUser`.
+   - Success: no depende de `VoiceContextBuilder::$voices`.
+4. [ ] Refactor mínimo de `VoiceContextBuilder`.
+   - Leer configuración desde BD; fallback temporal a Lex hardcodeado hasta completar migración.
+   - Colección RAG por voz: `voice_{slug}` o campo `rag_collection`.
+   - Success: Lex sigue respondiendo; una voz BD puede construir prompt y retrieval.
+
+**Fase 2 — Permiso de edición y seguridad**
+5. [ ] Añadir permiso `feature:voice-editor`.
+   - Superadmins siempre pueden editar; usuarios no-superadmin solo si tienen este permiso.
+   - Success: `/admin/voices.php` y APIs rechazan usuarios sin permiso.
+6. [ ] Integrar voces dinámicas con `available_features`.
+   - Al publicar una voz, crear/actualizar `available_features(feature_type='voice', feature_slug=slug)`.
+   - Al archivar, desactivar feature sin borrar historial.
+   - Success: el panel de permisos puede asignar voces nuevas sin tocar código.
+
+**Fase 3 — API admin de voces**
+7. [ ] Crear endpoints CRUD:
+   - `GET /api/admin/voices/list.php`
+   - `POST /api/admin/voices/create.php`
+   - `POST /api/admin/voices/update.php`
+   - `POST /api/admin/voices/archive.php`
+   - `POST /api/admin/voices/publish.php`
+   - Success: operaciones cubiertas con CSRF, validación y errores claros.
+8. [ ] Crear endpoints documentales por voz reutilizando contexto:
+   - Listar/subir/eliminar/procesar documentos de una voz.
+   - Success: una voz muestra documentos, chunks, estado RAG y errores.
+9. [ ] Crear endpoint de prueba:
+   - `POST /api/admin/voices/test.php` con una pregunta, devuelve respuesta RAG + fuentes + source match + conflictos.
+   - Success: admin puede comprobar calidad antes de publicar.
+
+**Fase 4 — Panel admin UX**
+10. [ ] Crear `/admin/voices.php`.
+   - Vista recomendada:
+     - Columna/lista de voces con estado.
+     - Panel detalle con tabs: “Profile”, “Knowledge”, “Test”, “Access”.
+     - CTA principal contextual: `Create voice`, `Process documents`, `Publish`.
+   - Success: un admin puede entender en 10 segundos qué voces existen y qué falta para publicarlas.
+11. [ ] Flujo “Crear voz” con wizard simple.
+   - Paso 1: identidad (nombre, área, descripción).
+   - Paso 2: instrucciones y “cuándo usar esta voz”.
+   - Paso 3: documentos.
+   - Paso 4: probar y publicar.
+   - Success: no se publica una voz sin nombre, instrucciones y al menos un documento procesado.
+12. [ ] Estados UX completos.
+   - Loading skeletons, empty state (“Create the first voice”), error inline, indexación en progreso, éxito de publicación.
+   - Success: no hay spinners genéricos ni estados muertos; todo indica siguiente acción.
+
+**Fase 5 — Frontend de voces dinámicas**
+13. [ ] Actualizar `/voices/`.
+   - Listar voces publicadas y accesibles para el usuario.
+   - Success: voces nuevas aparecen automáticamente.
+14. [ ] Crear página genérica `/voices/view.php?voice={slug}` o ruta equivalente.
+   - Reutilizar UX de Lex pero con datos dinámicos.
+   - Success: una voz nueva tiene chat RAG, historial y documentos sin crear un PHP nuevo.
+
+**Fase 6 — Catálogo para chat general**
+15. [ ] Crear `CapabilityCatalogService`.
+   - Devuelve usuario + voces publicadas accesibles + gestos accesibles, con descripciones breves y `trigger_guidance`.
+   - Success: el chat principal puede recibir el catálogo sin hardcodear voces.
+16. [ ] Añadir voces dinámicas al contexto del chat principal.
+   - Solo como conocimiento de plataforma en esta fase, sin invocación automática todavía.
+   - Success: Claara puede decir “Para esto existe la voz X” con datos reales.
+
+### Success Criteria global
+- Un usuario con permiso `feature:voice-editor` puede crear una voz RAG desde frontend sin tocar código.
+- Una voz solo puede publicarse cuando tiene documentos procesados correctamente.
+- Una voz publicada aparece en `/voices/` y puede asignarse desde permisos.
+- Lex sigue funcionando durante y después de la migración.
+- La base queda preparada para que el chat general sugiera/invoque voces dinámicas en la siguiente feature.
+- UI admin clara, responsive, sin CSS inline nuevo, sin emojis y con estados completos.
+
+### Project Status Board — Voces RAG administrables
+- [x] Planner: validar alcance MVP con el usuario.
+- [x] Executor: migraciones `voices` + documentos por voz.
+- [ ] Executor: `VoicesRepo` + refactor mínimo de `VoiceContextBuilder`.
+- [ ] Executor: permiso `feature:voice-editor`.
+- [ ] Executor: APIs admin de voces.
+- [ ] Executor: `/admin/voices.php` con wizard y estados.
+- [ ] Executor: `/voices/` dinámico + página genérica de voz.
+- [ ] Executor: catálogo inicial para chat general.
+
+### Current Status / Progress Tracking — Voces RAG administrables
+- 2026-06-04 (Executor): Hito de migraciones preparado en `docs/migrations/019_dynamic_rag_voices.sql`. La migración extiende `voices` de forma aditiva (`slug`, `role`, `instructions`, `trigger_guidance`, `status`, `rag_collection`, `icon`, `color`, `created_by`, `published_at`), añade target flexible a `context_documents` (`target_type`, `target_slug`, `voice_id`, `indexed_at`), siembra Lex como voz publicada, registra `feature:voice-editor` y mantiene `voice:lex` en `available_features`. No se ha aplicado a producción ni a la BD local.
+- Verificación realizada: revisión estática, `git diff --check` OK. No se pudo validar en base temporal local porque MySQL local rechaza acceso root sin credenciales (`Access denied for user 'root'@'localhost'`). Antes de ejecutar en producción, conviene aplicarla primero en entorno controlado o confirmar credenciales locales.
+
 ## Feature: Audio Transcriber para audios largos
 
 ### Motivación
@@ -1551,6 +1675,8 @@ Petición del compañero: cuando una voz responde, debe mostrar (1) un porcentaj
 - 2026-05-27 (Executor): Tarea 4 (frontend) completada. `voice-lex.js`: nuevo `renderMeta()` que pinta badge "Source match" coloreado por banda (con tooltip honesto), chips de `sources` y aviso "Sources disagree" solo cuando hay `conflicts`. `appendMessage()` acepta `meta`; `sendMessage()` y el restore de historial lo propagan. `node --check` OK.
 
 # Executor's Feedback or Assistance Requests
+
+- Voces RAG administrables: hito de migraciones listo para revisión. Solicito validación antes de pasar al siguiente hito (`VoicesRepo` + refactor de `VoiceContextBuilder`). Punto importante: la migración es aditiva, pero toca tablas sensibles (`voices`, `context_documents`, `available_features`, `user_feature_access`), así que no la he ejecutado en producción. Si el usuario aprueba, el siguiente paso será implementar el repositorio dinámico y mantener Lex funcionando con fallback.
 
 - Landing pública Claara: primer hito listo para validación manual. Solicito revisar:
   1. Abrir `/` y confirmar que la landing se ve bien en desktop y móvil.
