@@ -277,6 +277,8 @@ Una voz es:
 ### Current Status / Progress Tracking — Voces RAG administrables
 - 2026-06-04 (Executor): Hito de migraciones preparado en `docs/migrations/019_dynamic_rag_voices.sql`. La migración extiende `voices` de forma aditiva (`slug`, `role`, `instructions`, `trigger_guidance`, `status`, `rag_collection`, `icon`, `color`, `created_by`, `published_at`), añade target flexible a `context_documents` (`target_type`, `target_slug`, `voice_id`, `indexed_at`), siembra Lex como voz publicada, registra `feature:voice-editor` y mantiene `voice:lex` en `available_features`. No se ha aplicado a producción ni a la BD local.
 - Verificación realizada: revisión estática, `git diff --check` OK. No se pudo validar en base temporal local porque MySQL local rechaza acceso root sin credenciales (`Access denied for user 'root'@'localhost'`). Antes de ejecutar en producción, conviene aplicarla primero en entorno controlado o confirmar credenciales locales.
+- 2026-06-04 (Executor): Migración `019_dynamic_rag_voices.sql` desplegada a `main`, pull en servidor y aplicada manualmente en producción con script PHP específico para evitar ejecutar migraciones históricas pendientes en `schema_migrations`. Backup previo creado en servidor: `storage/db-backups/pre_019_dynamic_rag_voices_20260604_163256.sql`.
+- Verificación producción: `schema_migrations` registra `019_dynamic_rag_voices.sql`; `voices` tiene columnas nuevas; `context_documents` tiene `target_type`, `target_slug`, `voice_id`, `indexed_at`; existe voz `lex` publicada con `rag_collection=lex_knowledge_base`; existen `available_features` para `voice:lex` y `feature:voice-editor`.
 
 ## Feature: Audio Transcriber para audios largos
 
@@ -1676,7 +1678,7 @@ Petición del compañero: cuando una voz responde, debe mostrar (1) un porcentaj
 
 # Executor's Feedback or Assistance Requests
 
-- Voces RAG administrables: hito de migraciones listo para revisión. Solicito validación antes de pasar al siguiente hito (`VoicesRepo` + refactor de `VoiceContextBuilder`). Punto importante: la migración es aditiva, pero toca tablas sensibles (`voices`, `context_documents`, `available_features`, `user_feature_access`), así que no la he ejecutado en producción. Si el usuario aprueba, el siguiente paso será implementar el repositorio dinámico y mantener Lex funcionando con fallback.
+- Voces RAG administrables: hito de migraciones aplicado en producción y verificado. Nota operativa: el servidor tiene varias migraciones antiguas sin registrar en `schema_migrations`; por eso se aplicó solo la `019` de forma manual y no se ejecutó `scripts/migrate.php` completo. Siguiente hito recomendado: `VoicesRepo` + refactor mínimo de `VoiceContextBuilder`, manteniendo Lex funcionando con fallback.
 
 - Landing pública Claara: primer hito listo para validación manual. Solicito revisar:
   1. Abrir `/` y confirmar que la landing se ve bien en desktop y móvil.
