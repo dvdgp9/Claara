@@ -24,12 +24,12 @@ $tabs = [
     'conversations' => [
         'icon' => 'iconoir-chat-bubble',
         'label' => 'Chat',
-        'href' => '/',
+        'href' => '/app/',
         'title' => 'Conversations',
         'hoverTitle' => 'Recent conversations',
         'hoverIcon' => 'iconoir-chat-bubble',
         'newLabel' => 'New conversation',
-        'newHref' => '/'
+        'newHref' => '/app/'
     ],
     'voices' => [
         'icon' => 'iconoir-voice-square',

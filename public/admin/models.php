@@ -12,7 +12,7 @@ if (!$user) {
 }
 
 if (empty($user['is_superadmin'])) {
-    header('Location: /');
+    header('Location: /app/');
     exit;
 }
 
@@ -22,7 +22,7 @@ $pageTitle = 'Available Models';
 $headerTitle = 'Available Models';
 $headerSubtitle = 'Catalog visible in the chat selector';
 $headerIcon = 'iconoir-settings';
-$headerBackUrl = '/';
+$headerBackUrl = '/app/';
 $headerBackText = 'Chat';
 ?><!DOCTYPE html>
 <html lang="en">

@@ -16,7 +16,7 @@ $activeTab = 'gestures';
 $userId = (int)$user['id'];
 $accessRepo = new UserFeatureAccessRepo();
 
-$headerBackUrl = '/';
+$headerBackUrl = '/app/';
 $headerBackText = 'Home';
 $headerTitle = 'Gestures';
 $headerSubtitle = 'Automated workflows';

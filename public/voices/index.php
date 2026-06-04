@@ -13,7 +13,7 @@ $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = 'voices';
 
 // Shared header configuration
-$headerBackUrl = '/';
+$headerBackUrl = '/app/';
 $headerBackText = 'Home';
 $headerTitle = 'Voices';
 $headerSubtitle = 'Specialized assistants';

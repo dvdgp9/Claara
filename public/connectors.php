@@ -17,7 +17,7 @@ $headerTitle = 'Connectors';
 $headerSubtitle = 'Connect selected sources to Claara context';
 $headerIcon = 'iconoir-cloud-sync';
 $headerIconColor = 'from-cyan-500 to-teal-700';
-$headerBackUrl = '/';
+$headerBackUrl = '/app/';
 $headerBackText = 'Chat';
 ?><!DOCTYPE html>
 <html lang="en">
@@ -79,4 +79,3 @@ $headerBackText = 'Chat';
   <script src="/assets/js/connectors.js"></script>
 </body>
 </html>
-

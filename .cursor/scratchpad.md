@@ -86,6 +86,74 @@ Chatbot ligero para preguntas rápidas sobre el Grupo Ebone. Usa QWEN Turbo (`qw
 - [x] `.env` local configurado.
 - [x] SOP Generator: historial con eliminación y edición de título.
 
+---
+
+## Feature: Landing pública en `claara.tech` + acceso a app
+
+### Background and Motivation
+Actualmente `claara.tech/` carga directamente el workspace autenticado (`public/index.php`) y redirige a `/login.php` cuando no hay sesión. El usuario propone que `claara.tech` sea una landing pública que represente bien Claara, y que el acceso a la plataforma se haga desde un botón del menú. La dirección es razonable: separa marketing/explicación del producto de la experiencia de uso, mejora la primera impresión para visitantes externos y mantiene la app como espacio autenticado.
+
+### Key Challenges and Analysis
+- Arquitectura actual: PHP + Tailwind CDN + JS vanilla. No hay `package.json`, así que no se deben introducir librerías de React/Framer/Phosphor sin instalar y reestructurar el proyecto. Para este cambio conviene usar PHP/HTML/CSS/JS existente.
+- Ruta crítica: `/` está ocupado por la app principal. La opción más limpia es mover el workspace a una ruta explícita como `/app/` y dejar `/` para la landing.
+- Compatibilidad: muchas rutas internas apuntan a `/` como "Conversations/Home" y `login.php` redirige a `/`. Habrá que actualizar esas referencias a `/app/` para evitar que usuarios autenticados vuelvan a la landing al pulsar inicio.
+- Sesión: la landing debe ser pública. Si el usuario ya está logueado, el CTA principal puede apuntar directamente a `/app/`; si no, a `/login.php` o a `/login.php?next=/app/` si se implementa redirect seguro.
+- Diseño: aplicar `design-taste-frontend` sin caer en patrones genéricos. Landing asimétrica, left-aligned, con señal visual real de producto en primer viewport. Evitar hero centrado, paleta lila/azul AI, emojis, cards anidadas, inline CSS y glows excesivos.
+- Assets: existen logos Claara y símbolo en `public/assets/images/`. No se han identificado capturas reales de producto; se puede construir un mock visual fiel con HTML/CSS o generar/guardar una imagen si el Planner lo aprueba.
+- Documentación externa: antes de desarrollar, pedir al usuario que permita/taguee `@web` si hace falta consultar documentación actualizada. Para una landing estática sobre el stack existente no parece necesario usar APIs externas.
+
+### High-level Task Breakdown
+
+1. [ ] Definir routing objetivo y redirecciones.
+   - Propuesta: conservar `public/index.php` como landing pública y mover/copiar el workspace actual a `public/app/index.php` o `public/app.php`.
+   - Actualizar login post-success de `/` a `/app/`.
+   - Success: visitante no logueado ve landing en `/`; usuario logueado puede abrir `/app/` y usar el chat como antes.
+
+2. [ ] Actualizar navegación interna a la nueva ruta de app.
+   - Cambiar enlaces "Conversations/Home" de `/` a `/app/` en desktop/mobile nav.
+   - Revisar redirecciones JS/PHP que asumen `/` como workspace.
+   - Success: desde cualquier pantalla autenticada, volver al chat principal lleva a `/app/`, no a la landing.
+
+3. [ ] Crear landing pública de Claara en `/`.
+   - Estructura recomendada:
+     - Header sobrio con logo, secciones, CTA "Entrar".
+     - Hero asimétrico con Claara como primer foco, copy concreto sobre chat, voces, gestos y contexto corporativo.
+     - Visual de producto no genérico: panel/mock de workspace con chat, gestos y Lex.
+     - Bloques de capacidades en layout asimétrico, no una fila genérica de 3 tarjetas.
+     - Cierre con CTA a login/app.
+   - Success: `/` comunica qué es Claara en menos de 5 segundos y el botón principal conduce al acceso.
+
+4. [ ] Añadir estilos en `public/assets/css/styles.css`.
+   - Cumplir regla del usuario: CSS en `styles.css`, no inline.
+   - Usar `Outfit` ya existente, paleta controlada, `min-h-[100dvh]`, responsive estricto y motion CSS solo con `transform`/`opacity`.
+   - Success: no hay CSS nuevo inline; móvil no tiene scroll horizontal ni solapes.
+
+5. [ ] Estados y accesibilidad mínimos.
+   - CTA con estado activo/focus visible.
+   - Header responsive.
+   - Alt text correcto para logos; sin emojis; navegación por teclado razonable.
+   - Success: flujo usable en desktop y móvil, con textos legibles y botones claros.
+
+6. [ ] QA manual y técnica.
+   - `php -l` de archivos PHP tocados.
+   - Revisar con navegador `/`, `/login.php`, `/app/`, y rutas de gestos/voces.
+   - Verificar usuario no autenticado: landing pública y `/app/` redirige a login.
+   - Verificar usuario autenticado: CTA abre app y login no queda atrapado en bucles.
+   - Success: no hay regresiones de acceso ni navegación principal.
+
+### Project Status Board — Landing pública Claara
+- [ ] Planner: validar enfoque `/` landing + `/app/` workspace con el usuario.
+- [ ] Executor: implementar routing `/app/` sin cambiar comportamiento funcional del chat.
+- [ ] Executor: construir landing pública en `/`.
+- [ ] Executor: actualizar navegación/login/redirecciones.
+- [ ] Executor: QA responsive y flujo auth.
+
+### Current Status / Progress Tracking — Landing pública Claara
+- 2026-06-04 (Executor): Primer hito implementado localmente, pendiente de validación manual del usuario. `/` ahora renderiza una landing pública inicial; `/app/` carga el workspace anterior mediante `public/app.php`; login y navegación principal apuntan a `/app/`; redirecciones de admin no autorizado y accesos secundarios se han actualizado para no volver a `/`.
+- Verificación técnica realizada: `php -l` OK en archivos PHP tocados; `curl` local confirma `/` = 200 con landing, `/app/` = 302 a `/login.php` sin sesión, `/login.php` = 200. Playwright no está instalado en este entorno, así que queda pendiente QA visual manual en navegador.
+- 2026-06-04 (Executor): Landing ampliada tras revisar funcionalidad real de la app. Se añadió posicionamiento B2B para empresas, explicación de chat con archivos/web/PDF-DOCX, voces especializadas (Lex con RAG/citas/source match/conflictos), gestos operativos, conectores, permisos, usuarios/departamentos, admin de contexto, modelos y uso. También se corrigieron `headerBackUrl` restantes hacia `/app/` en páginas internas.
+- Verificación técnica adicional: `php -l` OK en `public/index.php`, `public/gestos/index.php`, `public/voices/index.php`, `public/connectors.php`, `public/voices/lex.php` y `public/admin/models.php`; búsqueda sin referencias obvias a `/` como ruta de chat; navegador integrado confirma contenido de landing y `scrollWidth === clientWidth` en móvil (390px) en hero y sección de biblioteca de gestos.
+
 ## Feature: Audio Transcriber para audios largos
 
 ### Motivación
@@ -1483,6 +1551,14 @@ Petición del compañero: cuando una voz responde, debe mostrar (1) un porcentaj
 - 2026-05-27 (Executor): Tarea 4 (frontend) completada. `voice-lex.js`: nuevo `renderMeta()` que pinta badge "Source match" coloreado por banda (con tooltip honesto), chips de `sources` y aviso "Sources disagree" solo cuando hay `conflicts`. `appendMessage()` acepta `meta`; `sendMessage()` y el restore de historial lo propagan. `node --check` OK.
 
 # Executor's Feedback or Assistance Requests
+
+- Landing pública Claara: primer hito listo para validación manual. Solicito revisar:
+  1. Abrir `/` y confirmar que la landing se ve bien en desktop y móvil.
+  2. Pulsar "Log in" desde la landing y confirmar que abre `/login.php`.
+  3. Iniciar sesión y confirmar que entra a `/app/`.
+  4. Desde la app, pulsar el tab "Chat" en desktop/móvil y confirmar que vuelve a `/app/`.
+  5. Si un usuario sin sesión abre `/app/`, debe redirigir a `/login.php`.
+  Cuando el usuario confirme este hito, el Planner puede marcar como completadas las tareas de routing/landing inicial y autorizar el siguiente refinamiento visual si hace falta.
 
 - Voice Trust: Tareas 1-4 implementadas (backend + frontend) y validadas a nivel de sintaxis. No puedo verificar end-to-end desde aquí porque requiere sesión, OpenRouter, BD y Qdrant en marcha. Solicito QA manual del usuario (Tarea 5) en la voz `lex`:
   1. Pregunta bien cubierta por la KB → debe aparecer badge "Source match" (idealmente High/Medium) y chips de fuentes.

@@ -80,7 +80,7 @@ $tabs = [
         'icon' => 'iconoir-chat-bubble',
         'iconActive' => 'iconoir-chat-bubble-solid',
         'label' => 'Chat',
-        'href' => '/',
+        'href' => '/app/',
         'modal' => false
     ],
     'voices' => [

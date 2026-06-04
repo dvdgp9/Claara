@@ -15,7 +15,7 @@ if (!$user) {
 // Verificar si es superadmin
 $isSuperadmin = in_array('admin', $user['roles'] ?? [], true);
 if (!$isSuperadmin) {
-    header('Location: /');
+    header('Location: /app/');
     exit;
 }
 

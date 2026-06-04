@@ -15,7 +15,7 @@ if (!$user) {
 // Verificar acceso a esta voz
 $accessRepo = new UserFeatureAccessRepo();
 if (!$accessRepo->hasVoiceAccess((int)$user['id'], 'lex')) {
-    header('Location: /?error=no_access');
+    header('Location: /app/?error=no_access');
     exit;
 }
 
@@ -24,7 +24,7 @@ $activeTab = 'voices';
 $userName = htmlspecialchars($user['first_name'] ?? 'there');
 
 // Shared header configuration
-$headerBackUrl = '/';
+$headerBackUrl = '/app/';
 $headerBackText = 'Home';
 $headerTitle = 'Lex';
 $headerSubtitle = 'Legal Assistant';

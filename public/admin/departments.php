@@ -12,7 +12,7 @@ if (!$user) {
 }
 
 if (empty($user['is_superadmin']) && !in_array('admin', $user['roles'] ?? [], true)) {
-    header('Location: /');
+    header('Location: /app/');
     exit;
 }
 

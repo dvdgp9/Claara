@@ -14,7 +14,7 @@ if (!$user) {
 // Verificar si es superadmin (soporta sesiones antiguas sin is_superadmin)
 $isSuperadmin = !empty($user['is_superadmin']) || in_array('admin', $user['roles'] ?? [], true);
 if (!$isSuperadmin) {
-    header('Location: /');
+    header('Location: /app/');
     exit;
 }
 ?><!DOCTYPE html>

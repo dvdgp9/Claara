@@ -711,3 +711,827 @@ select {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Public Claara landing */
+.claara-landing-page {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background:
+    linear-gradient(135deg, rgba(243, 246, 250, .96) 0%, rgba(255, 255, 255, .98) 46%, rgba(255, 246, 241, .88) 100%);
+}
+
+.claara-landing-nav {
+  width: min(100% - 32px, 1320px);
+  margin: 0 auto;
+  padding: 22px 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+}
+
+.claara-landing-brand {
+  width: fit-content;
+}
+
+.claara-landing-link {
+  position: relative;
+  transition: color .24s cubic-bezier(.16, 1, .3, 1);
+}
+
+.claara-landing-link:hover {
+  color: var(--brand-ink);
+}
+
+.claara-landing-login,
+.claara-landing-primary,
+.claara-landing-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  transition: transform .24s cubic-bezier(.16, 1, .3, 1), border-color .24s ease, background-color .24s ease;
+}
+
+.claara-landing-login {
+  justify-self: end;
+  min-height: 44px;
+  padding: 0 18px;
+  color: var(--brand-ink);
+  background: rgba(255, 255, 255, .74);
+  border: 1px solid rgba(47, 52, 64, .1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .72), 0 18px 42px -34px rgba(47, 52, 64, .48);
+}
+
+.claara-landing-login:hover,
+.claara-landing-secondary:hover {
+  border-color: rgba(47, 52, 64, .22);
+}
+
+.claara-landing-login:active,
+.claara-landing-primary:active,
+.claara-landing-secondary:active {
+  transform: translateY(1px) scale(.99);
+}
+
+.claara-landing-hero {
+  width: min(100% - 32px, 1320px);
+  min-height: calc(100dvh - 96px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, .82fr) minmax(620px, 1.18fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 76px);
+  padding: 32px 0 72px;
+}
+
+.claara-landing-hero-copy {
+  max-width: 620px;
+}
+
+.claara-landing-kicker {
+  margin-bottom: 16px;
+  color: #7b5a50;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.claara-landing-hero h1,
+.claara-section-heading h2,
+.claara-landing-access h2 {
+  color: #252a34;
+  letter-spacing: 0;
+  line-height: .98;
+}
+
+.claara-landing-hero h1 {
+  font-size: clamp(42px, 5.4vw, 78px);
+  font-weight: 800;
+}
+
+.claara-landing-lede {
+  max-width: 58ch;
+  margin-top: 24px;
+  color: #586172;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.claara-landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.claara-hero-proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.claara-hero-proof span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #596374;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, .62);
+  border: 1px solid rgba(226, 232, 240, .86);
+}
+
+.claara-landing-primary {
+  min-height: 50px;
+  padding: 0 22px;
+  color: #252a34;
+  background: linear-gradient(90deg, #B7C9F2 0%, #FF8B73 100%);
+  box-shadow: 0 22px 48px -34px rgba(47, 52, 64, .58);
+}
+
+.claara-landing-secondary {
+  min-height: 50px;
+  padding: 0 20px;
+  color: #485264;
+  background: rgba(255, 255, 255, .58);
+  border: 1px solid rgba(47, 52, 64, .1);
+}
+
+.claara-product-frame {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 180px;
+  min-height: 540px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, .82);
+  border: 1px solid rgba(255, 255, 255, .72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .86), 0 34px 82px -58px rgba(47, 52, 64, .62);
+  overflow: hidden;
+  animation: claaraLandingFloat 8s ease-in-out infinite;
+}
+
+.claara-product-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 10px;
+  background: linear-gradient(180deg, #2F3440 0%, #242935 100%);
+}
+
+.claara-product-rail span {
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, .62);
+}
+
+.claara-product-rail .is-active {
+  color: #fff;
+  background: rgba(183, 201, 242, .22);
+}
+
+.claara-product-main {
+  min-width: 0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.claara-product-topbar,
+.claara-product-dock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.claara-product-eyebrow,
+.claara-product-side span {
+  display: block;
+  color: #8791a1;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.claara-product-status {
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #25685b;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(232, 249, 244, .92);
+}
+
+.claara-product-chat {
+  flex: 1;
+  display: grid;
+  align-content: center;
+  gap: 18px;
+}
+
+.claara-product-bubble {
+  max-width: 78%;
+  padding: 18px 20px;
+  border-radius: 24px;
+  color: #394150;
+  line-height: 1.55;
+}
+
+.claara-product-bubble.user {
+  justify-self: end;
+  color: #252a34;
+  background: #E3ECFB;
+  border-bottom-right-radius: 8px;
+}
+
+.claara-product-bubble.assistant {
+  justify-self: start;
+  background: #fff;
+  border: 1px solid rgba(226, 232, 240, .9);
+  border-bottom-left-radius: 8px;
+}
+
+.claara-product-lines {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.claara-product-lines span {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(183, 201, 242, .78), rgba(255, 139, 115, .38), rgba(226, 232, 240, .82));
+  background-size: 220% 100%;
+  animation: claaraLandingShimmer 2.8s ease-in-out infinite;
+}
+
+.claara-product-lines span:nth-child(2) {
+  width: 78%;
+}
+
+.claara-product-lines span:nth-child(3) {
+  width: 52%;
+}
+
+.claara-product-dock {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.claara-product-dock span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  color: #6b7484;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(248, 250, 252, .92);
+  border: 1px solid rgba(226, 232, 240, .9);
+}
+
+.claara-product-side {
+  padding: 24px 18px;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  background: rgba(248, 250, 252, .72);
+  border-left: 1px solid rgba(226, 232, 240, .86);
+}
+
+.claara-product-side div {
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .7);
+  border: 1px solid rgba(226, 232, 240, .8);
+}
+
+.claara-product-side strong {
+  display: block;
+  margin-top: 8px;
+  color: #252a34;
+}
+
+.claara-product-side small {
+  display: block;
+  margin-top: 4px;
+  color: #687385;
+}
+
+.claara-landing-capabilities,
+.claara-landing-access,
+.claara-b2b-section,
+.claara-operating-section,
+.claara-library-section,
+.claara-knowledge-section {
+  width: min(100% - 32px, 1320px);
+  margin: 0 auto;
+}
+
+.claara-landing-capabilities {
+  padding: 72px 0;
+}
+
+.claara-section-heading {
+  max-width: 720px;
+  margin-left: clamp(0px, 14vw, 190px);
+}
+
+.claara-section-heading.compact {
+  max-width: 620px;
+  margin-left: 0;
+}
+
+.claara-section-heading h2,
+.claara-landing-access h2 {
+  font-size: clamp(34px, 4.2vw, 58px);
+  font-weight: 800;
+}
+
+.claara-capability-grid {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: 1.4fr .8fr;
+  gap: 16px;
+}
+
+.claara-capability-block {
+  min-height: 250px;
+  padding: 30px;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: rgba(255, 255, 255, .72);
+  border: 1px solid rgba(226, 232, 240, .86);
+  box-shadow: 0 24px 58px -48px rgba(47, 52, 64, .5);
+}
+
+.claara-capability-block.block-wide {
+  grid-row: span 2;
+  min-height: 516px;
+}
+
+.claara-capability-block i {
+  width: 44px;
+  height: 44px;
+  margin-bottom: auto;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: #2F3440;
+  background: #E3ECFB;
+}
+
+.claara-capability-block h3 {
+  color: #252a34;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.claara-capability-block p {
+  max-width: 48ch;
+  margin-top: 10px;
+  color: #5d6676;
+  line-height: 1.65;
+}
+
+.claara-b2b-section {
+  padding: 52px 0 82px;
+  display: grid;
+  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: start;
+}
+
+.claara-b2b-copy {
+  position: sticky;
+  top: 24px;
+  max-width: 560px;
+}
+
+.claara-b2b-copy h2,
+.claara-library-head h2,
+.claara-knowledge-panel h2 {
+  color: #252a34;
+  font-size: clamp(34px, 4vw, 56px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.claara-b2b-copy p,
+.claara-library-head p,
+.claara-knowledge-panel p,
+.claara-landing-access p {
+  margin-top: 18px;
+  color: #5d6676;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.claara-b2b-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.claara-b2b-item {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 14px 18px;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .7);
+  border: 1px solid rgba(226, 232, 240, .86);
+  box-shadow: 0 22px 54px -48px rgba(47, 52, 64, .45);
+}
+
+.claara-b2b-item i {
+  grid-row: span 2;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: #252a34;
+  background: #FFF1EC;
+}
+
+.claara-b2b-item strong {
+  color: #252a34;
+  font-size: 18px;
+}
+
+.claara-b2b-item span {
+  color: #626c7d;
+  line-height: 1.58;
+}
+
+.claara-operating-section {
+  padding: 72px 0;
+  display: grid;
+  grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr);
+  gap: clamp(28px, 5vw, 74px);
+  border-top: 1px solid rgba(226, 232, 240, .9);
+}
+
+.claara-operating-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid rgba(203, 213, 225, .8);
+}
+
+.claara-operating-grid article {
+  display: grid;
+  grid-template-columns: 64px 180px 1fr;
+  gap: 20px;
+  padding: 28px 0;
+  border-bottom: 1px solid rgba(203, 213, 225, .8);
+}
+
+.claara-operating-grid span {
+  color: #FF8B73;
+  font-weight: 800;
+}
+
+.claara-operating-grid h3 {
+  color: #252a34;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.claara-operating-grid p {
+  color: #5d6676;
+  line-height: 1.7;
+}
+
+.claara-library-section {
+  padding: 76px 0;
+}
+
+.claara-library-head {
+  display: grid;
+  grid-template-columns: minmax(0, .95fr) minmax(320px, .55fr);
+  gap: 42px;
+  align-items: end;
+}
+
+.claara-library-grid {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.claara-library-grid article {
+  min-height: 190px;
+  padding: 20px;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: rgba(255, 255, 255, .72);
+  border: 1px solid rgba(226, 232, 240, .86);
+  transition: transform .24s cubic-bezier(.16, 1, .3, 1), background-color .24s ease;
+}
+
+.claara-library-grid article:nth-child(1),
+.claara-library-grid article:nth-child(6),
+.claara-library-grid article:nth-child(10) {
+  grid-column: span 2;
+}
+
+.claara-library-grid article:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, .94);
+}
+
+.claara-library-grid i {
+  width: 40px;
+  height: 40px;
+  margin-bottom: auto;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #2F3440;
+  background: #E3ECFB;
+}
+
+.claara-library-grid h3 {
+  margin-top: 22px;
+  color: #252a34;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.claara-library-grid p {
+  margin-top: 8px;
+  color: #616b7c;
+  line-height: 1.58;
+}
+
+.claara-knowledge-section {
+  padding: 72px 0 84px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  gap: 18px;
+}
+
+.claara-knowledge-panel {
+  min-height: 420px;
+  padding: 38px;
+  border-radius: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background:
+    linear-gradient(135deg, rgba(47, 52, 64, .96), rgba(37, 42, 52, .96)),
+    linear-gradient(90deg, rgba(183, 201, 242, .18), rgba(255, 139, 115, .16));
+}
+
+.claara-knowledge-panel .claara-landing-kicker {
+  color: #FFB39F;
+}
+
+.claara-knowledge-panel h2,
+.claara-knowledge-panel p {
+  color: #fff;
+}
+
+.claara-knowledge-panel p {
+  color: rgba(255, 255, 255, .72);
+}
+
+.claara-knowledge-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.claara-knowledge-list div {
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .74);
+  border: 1px solid rgba(226, 232, 240, .86);
+}
+
+.claara-knowledge-list strong,
+.claara-knowledge-list span {
+  display: block;
+}
+
+.claara-knowledge-list strong {
+  color: #252a34;
+  font-size: 18px;
+}
+
+.claara-knowledge-list span {
+  margin-top: 8px;
+  color: #5d6676;
+  line-height: 1.62;
+}
+
+.claara-landing-access {
+  margin-bottom: 34px;
+  padding: 38px;
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: #2F3440;
+}
+
+.claara-landing-access .claara-landing-kicker {
+  color: #FFB39F;
+}
+
+.claara-landing-access h2 {
+  color: #fff;
+}
+
+.claara-landing-access p {
+  max-width: 62ch;
+  color: rgba(255, 255, 255, .7);
+}
+
+@keyframes claaraLandingFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes claaraLandingShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@media (max-width: 1100px) {
+  .claara-landing-hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-top: 24px;
+  }
+
+  .claara-landing-hero-copy,
+  .claara-section-heading {
+    max-width: 760px;
+    margin-left: 0;
+  }
+
+  .claara-product-frame {
+    min-height: 500px;
+  }
+
+  .claara-b2b-section,
+  .claara-operating-section,
+  .claara-library-head,
+  .claara-knowledge-section {
+    grid-template-columns: 1fr;
+  }
+
+  .claara-b2b-copy {
+    position: static;
+  }
+
+  .claara-library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .claara-landing-nav {
+    width: min(100% - 24px, 1320px);
+    grid-template-columns: 1fr auto;
+    padding: 16px 0;
+  }
+
+  .claara-landing-login {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+
+  .claara-landing-hero,
+  .claara-landing-capabilities,
+  .claara-landing-access,
+  .claara-b2b-section,
+  .claara-operating-section,
+  .claara-library-section,
+  .claara-knowledge-section {
+    width: min(100% - 24px, 1320px);
+  }
+
+  .claara-landing-hero {
+    gap: 28px;
+    padding-bottom: 44px;
+  }
+
+  .claara-landing-hero h1 {
+    font-size: 42px;
+  }
+
+  .claara-landing-lede {
+    font-size: 16px;
+  }
+
+  .claara-landing-actions,
+  .claara-landing-primary,
+  .claara-landing-secondary {
+    width: 100%;
+  }
+
+  .claara-product-frame {
+    grid-template-columns: 52px minmax(0, 1fr);
+    min-height: 460px;
+    border-radius: 24px;
+  }
+
+  .claara-product-side {
+    display: none;
+  }
+
+  .claara-product-main {
+    padding: 18px;
+  }
+
+  .claara-product-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .claara-product-bubble {
+    max-width: 100%;
+  }
+
+  .claara-capability-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .claara-capability-block,
+  .claara-capability-block.block-wide {
+    min-height: 240px;
+    grid-row: auto;
+  }
+
+  .claara-b2b-section,
+  .claara-operating-section,
+  .claara-library-section,
+  .claara-knowledge-section {
+    padding: 44px 0;
+  }
+
+  .claara-b2b-copy h2,
+  .claara-library-head h2,
+  .claara-knowledge-panel h2 {
+    font-size: 34px;
+  }
+
+  .claara-operating-grid article {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 24px 0;
+  }
+
+  .claara-library-head {
+    gap: 18px;
+  }
+
+  .claara-library-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .claara-library-grid article:nth-child(1),
+  .claara-library-grid article:nth-child(6),
+  .claara-library-grid article:nth-child(10) {
+    grid-column: auto;
+  }
+
+  .claara-knowledge-panel {
+    min-height: 360px;
+    padding: 28px;
+  }
+
+  .claara-landing-access {
+    padding: 28px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

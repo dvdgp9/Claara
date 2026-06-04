@@ -5,7 +5,7 @@ use App\Session;
 
 $user = Session::user();
 if ($user) {
-    header('Location: /');
+    header('Location: /app/');
     exit;
 }
 ?><!DOCTYPE html>
@@ -128,7 +128,7 @@ if ($user) {
             remember: rememberEl.checked
           } 
         });
-        window.location.href = '/';
+        window.location.href = '/app/';
       } catch(err){
         errorEl.textContent = err.message;
         errorEl.classList.remove('hidden');
