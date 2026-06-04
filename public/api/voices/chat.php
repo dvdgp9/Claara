@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../../src/Chat/LlmProviderFactory.php';
 require_once __DIR__ . '/../../../src/Voices/VoiceExecutionsRepo.php';
 require_once __DIR__ . '/../../../src/Voices/VoiceContextBuilder.php';
 require_once __DIR__ . '/../../../src/Repos/UsageLogRepo.php';
+require_once __DIR__ . '/../../../src/Repos/UserFeatureAccessRepo.php';
 require_once __DIR__ . '/../../../src/Rag/QdrantClient.php';
 require_once __DIR__ . '/../../../src/Rag/EmbeddingService.php';
 require_once __DIR__ . '/../../../src/Rag/LexRetriever.php';
@@ -25,6 +26,7 @@ use Chat\OpenRouterClient;
 use Voices\VoiceExecutionsRepo;
 use Voices\VoiceContextBuilder;
 use Repos\UsageLogRepo;
+use Repos\UserFeatureAccessRepo;
 
 /**
  * Parses the LLM reply into answer + metadata.
@@ -165,6 +167,11 @@ if (!$voiceId) {
 }
 if (!$message) {
     Response::error('missing_message', 'message is required', 400);
+}
+
+$accessRepo = new UserFeatureAccessRepo();
+if (!$accessRepo->hasVoiceAccess((int)$user['id'], $voiceId)) {
+    Response::error('forbidden', 'No tienes acceso a esta voz', 403);
 }
 
 // Obtener contexto especializado de la voz

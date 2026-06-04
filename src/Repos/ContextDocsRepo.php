@@ -42,15 +42,39 @@ class ContextDocsRepo
      */
     public function listByTarget(string $target): array
     {
+        $slugFilter = '';
+        $params = [$target];
+        if ($this->contextDocsHasColumn('target_slug')) {
+            $slugFilter = ' AND (cd.target_slug = ? OR cd.target_slug IS NULL)';
+            $params[] = $target;
+        }
+
         $stmt = $this->pdo->prepare('
             SELECT cd.*, u.first_name, u.last_name, u.email as created_by_email
             FROM context_documents cd
             LEFT JOIN users u ON u.id = cd.created_by
-            WHERE cd.target = ?
+            WHERE cd.target = ?' . $slugFilter . '
             ORDER BY cd.filename ASC
         ');
-        $stmt->execute([$target]);
+        $stmt->execute($params);
         return $stmt->fetchAll() ?: [];
+    }
+
+    public function listByVoice(string $slug): array
+    {
+        if ($this->contextDocsHasColumn('target_type') && $this->contextDocsHasColumn('target_slug')) {
+            $stmt = $this->pdo->prepare('
+                SELECT cd.*, u.first_name, u.last_name, u.email as created_by_email
+                FROM context_documents cd
+                LEFT JOIN users u ON u.id = cd.created_by
+                WHERE cd.target_type = "voice" AND cd.target_slug = ?
+                ORDER BY cd.filename ASC
+            ');
+            $stmt->execute([$slug]);
+            return $stmt->fetchAll() ?: [];
+        }
+
+        return $slug === 'lex' ? $this->listByTarget('lex') : [];
     }
 
     /**
@@ -75,12 +99,19 @@ class ContextDocsRepo
      */
     public function getByFilename(string $target, string $filename): ?array
     {
+        $slugFilter = '';
+        $params = [$target, $filename];
+        if ($this->contextDocsHasColumn('target_slug')) {
+            $slugFilter = ' AND (target_slug = ? OR target_slug IS NULL)';
+            $params[] = $target;
+        }
+
         $stmt = $this->pdo->prepare('
             SELECT * FROM context_documents
-            WHERE target = ? AND filename = ?
+            WHERE target = ? AND filename = ?' . $slugFilter . '
             LIMIT 1
         ');
-        $stmt->execute([$target, $filename]);
+        $stmt->execute($params);
         $row = $stmt->fetch();
         return $row ?: null;
     }
@@ -92,7 +123,8 @@ class ContextDocsRepo
     {
         $now = date('Y-m-d H:i:s');
 
-        $ragStatus = $data['target'] === 'lex' ? 'pending' : 'not_applicable';
+        $isVoice = ($data['target_type'] ?? '') === 'voice' || ($data['target'] ?? '') === 'lex';
+        $ragStatus = $isVoice ? 'pending' : 'not_applicable';
 
         $fields = ['target', 'filename', 'original_filename', 'file_extension', 'file_size', 'status', 'rag_status', 'description'];
         $values = [
@@ -111,6 +143,19 @@ class ContextDocsRepo
                 $fields[] = $field;
                 $values[] = $data[$field] ?? ($field === 'is_official_source' ? 0 : null);
             }
+        }
+
+        if ($this->contextDocsHasColumn('target_type')) {
+            $fields[] = 'target_type';
+            $values[] = $data['target_type'] ?? $this->inferTargetType((string)$data['target']);
+        }
+        if ($this->contextDocsHasColumn('target_slug')) {
+            $fields[] = 'target_slug';
+            $values[] = $data['target_slug'] ?? (string)$data['target'];
+        }
+        if ($this->contextDocsHasColumn('voice_id')) {
+            $fields[] = 'voice_id';
+            $values[] = $data['voice_id'] ?? null;
         }
 
         $fields[] = 'created_by';
@@ -224,15 +269,28 @@ class ContextDocsRepo
         ];
 
         try {
+            $slugFilter = '';
+            $params = [$target];
+            if ($this->contextDocsHasColumn('target_slug')) {
+                $slugFilter = ' AND (target_slug = ? OR target_slug IS NULL)';
+                $params[] = $target;
+            }
+
             $stmt = $this->pdo->prepare('
                 SELECT
                     ' . implode(",\n                    ", $selectParts) . '
                 FROM context_documents
-                WHERE target = ?
+                WHERE target = ?' . $slugFilter . '
             ');
-            $stmt->execute([$target]);
+            $stmt->execute($params);
             $row = $stmt->fetch();
         } catch (Throwable $e) {
+            $slugFilter = '';
+            $params = [$target];
+            if ($this->contextDocsHasColumn('target_slug')) {
+                $slugFilter = ' AND (target_slug = ? OR target_slug IS NULL)';
+                $params[] = $target;
+            }
             $stmt = $this->pdo->prepare('
                 SELECT
                     COUNT(*) as total_documents,
@@ -243,9 +301,9 @@ class ContextDocsRepo
                     0 as rag_pending_count,
                     0 as rag_error_count
                 FROM context_documents
-                WHERE target = ?
+                WHERE target = ?' . $slugFilter . '
             ');
-            $stmt->execute([$target]);
+            $stmt->execute($params);
             $row = $stmt->fetch();
         }
 
@@ -273,11 +331,21 @@ class ContextDocsRepo
         return $basePath . '/' . self::TARGET_PATHS[$target];
     }
 
+    public static function getVoicePath(string $slug): string
+    {
+        $safeSlug = preg_replace('/[^a-z0-9-]/', '', strtolower($slug));
+        $basePath = dirname(dirname(__DIR__));
+        return $basePath . '/docs/context/voices/' . $safeSlug . '/knowledge-base';
+    }
+
     /**
      * Obtiene las extensiones permitidas para un target
      */
     public static function getAllowedExtensions(string $target): array
     {
+        if (str_starts_with($target, 'voice:')) {
+            return ['pdf', 'txt', 'md'];
+        }
         return self::ALLOWED_EXTENSIONS[$target] ?? [];
     }
 
@@ -356,6 +424,9 @@ class ContextDocsRepo
      */
     public static function isValidTarget(string $target): bool
     {
+        if (str_starts_with($target, 'voice:')) {
+            return (bool)preg_match('/^voice:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/', $target);
+        }
         return isset(self::TARGET_PATHS[$target]);
     }
 
@@ -376,5 +447,19 @@ class ContextDocsRepo
         }
 
         return !empty(self::$contextDocsColumns[$column]);
+    }
+
+    private function inferTargetType(string $target): string
+    {
+        if ($target === 'lex') {
+            return 'voice';
+        }
+        if ($target === 'eboniato') {
+            return 'faq';
+        }
+        if ($target === 'ebonia') {
+            return 'chat';
+        }
+        return 'legacy';
     }
 }

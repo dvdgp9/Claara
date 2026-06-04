@@ -271,7 +271,7 @@ Una voz es:
 - [x] Executor: permiso `feature:voice-editor`.
 - [x] Executor: APIs admin de voces.
 - [x] Executor: `/admin/voices.php` con editor, estados y prueba en vivo.
-- [ ] Executor: `/voices/` dinámico + página genérica de voz.
+- [x] Executor: `/voices/` dinámico + página genérica de voz.
 - [ ] Executor: catálogo inicial para chat general.
 
 ### Current Status / Progress Tracking — Voces RAG administrables
@@ -285,6 +285,9 @@ Una voz es:
 - Verificación local y producción: `php -l` OK en `src/Auth/VoiceEditorGuard.php` y todos los endpoints `public/api/admin/voices/*.php`; `curl` sin sesión a `/api/admin/voices/list.php` devuelve 401 JSON esperado; producción lista `voices=1` con `lex:published` desde `VoicesRepo`. Pendiente UI `/admin/voices.php` para consumir estos endpoints.
 - 2026-06-04 (Executor): Primera versión usable de `/admin/voices.php` implementada como Voice Studio. Permite listar voces, crear borradores, editar identidad/instrucciones/guía de activación, publicar, archivar y probar la voz seleccionada en vivo contra `/api/voices/chat.php`. Añadido enlace en el menú de perfil para superadmins y usuarios con `feature:voice-editor`. CSS nuevo ubicado en `public/assets/css/styles.css`; JS en `public/assets/js/admin-voices.js`.
 - Verificación local: `php -l` OK en `public/admin/voices.php` y `public/includes/header-unified.php`; `node --check` OK en `public/assets/js/admin-voices.js`; `git diff --check` OK. La BD local no conecta (`db_connection_failed`), por lo que la prueba de datos queda para producción tras pull.
+- 2026-06-04 (Executor): `/voices/` convertido a catálogo dinámico desde `VoicesRepo`, filtrado por permisos `voice:{slug}`. Añadida página genérica `/voices/view.php?voice={slug}` que reutiliza el cliente de chat de voces mediante `window.CLAARA_VOICE`. El menú lateral de voces también se alimenta de voces publicadas. Las APIs públicas de voces ahora verifican permiso de acceso por slug.
+- 2026-06-04 (Executor): Voice Studio integra conocimiento por voz: endpoints `public/api/admin/voices/documents/` para listar, subir y procesar PDF/TXT/MD en `docs/context/voices/{slug}/knowledge-base`, indexando en la `rag_collection` de la voz. La publicación queda bloqueada si no hay al menos un documento procesado. `ContextDocsRepo` soporta `target_type='voice'`/`target_slug` sin mezclar documentos de voces nuevas en el target legacy de Lex.
+- Verificación local: `php -l` OK en PHP tocado; `node --check` OK en `public/assets/js/admin-voices.js` y `public/assets/js/voice-lex.js`; `git diff --check` OK; llamadas HTTP sin sesión a endpoints nuevos devuelven 401/302 esperado sin fatals. Pendiente validación en producción tras deploy con sesión real.
 
 ## Feature: Audio Transcriber para audios largos
 

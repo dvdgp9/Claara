@@ -131,15 +131,29 @@ $gesturesList = [
 ];
 
 // Available voices
-$voicesList = [
-    [
-        'id' => 'lex',
-        'name' => 'Lex',
-        'icon' => 'iconoir-book-stack',
-        'href' => '/voices/lex.php',
-        'description' => 'Legal assistant'
-    ]
-];
+$voicesList = [];
+try {
+    $voicesRepo = new \Repos\VoicesRepo();
+    foreach ($voicesRepo->listPublished() as $voice) {
+        $voicesList[] = [
+            'id' => $voice['slug'],
+            'name' => $voice['name'],
+            'icon' => $voice['icon'] ?: 'iconoir-voice-square',
+            'href' => $voice['slug'] === 'lex' ? '/voices/lex.php' : '/voices/view.php?voice=' . urlencode($voice['slug']),
+            'description' => $voice['role'] ?: 'Specialized voice',
+        ];
+    }
+} catch (\Throwable $e) {
+    $voicesList = [
+        [
+            'id' => 'lex',
+            'name' => 'Lex',
+            'icon' => 'iconoir-book-stack',
+            'href' => '/voices/lex.php',
+            'description' => 'Legal assistant'
+        ]
+    ];
+}
 ?>
 <!-- Hover menu CSS -->
 <link rel="stylesheet" href="/assets/css/sidebar-hover.css">

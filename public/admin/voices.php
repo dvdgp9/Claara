@@ -149,6 +149,26 @@ $headerBackText = 'Chat';
                   </button>
                 </div>
               </form>
+
+              <section class="voice-knowledge-panel">
+                <div class="voice-panel-head">
+                  <div>
+                    <h2>Knowledge</h2>
+                    <p id="voice-knowledge-summary">Add documents before testing RAG answers.</p>
+                  </div>
+                </div>
+                <form id="voice-document-form" class="voice-document-form">
+                  <input id="voice-document-file" type="file" accept=".pdf,.txt,.md" required>
+                  <input id="voice-document-description" type="text" maxlength="255" placeholder="Optional description">
+                  <button id="voice-document-upload-btn" class="voice-secondary-btn" type="submit">
+                    <i class="iconoir-upload"></i>
+                    <span>Upload</span>
+                  </button>
+                </form>
+                <div id="voice-documents-list" class="voice-documents-list">
+                  <div class="voice-documents-empty">Select a voice to manage its knowledge.</div>
+                </div>
+              </section>
             </section>
 
             <aside class="voice-test-panel">

@@ -1,13 +1,20 @@
 /**
- * Voice: Lex - Legal Assistant
- * Handles the specialized legal-context chat.
+ * Voice chat client.
+ * Defaults to Lex, but can be configured with window.CLAARA_VOICE.
  */
 
 (function() {
   'use strict';
 
   // ===== STATE =====
-  const VOICE_ID = 'lex';
+  const VOICE = window.CLAARA_VOICE || {
+    slug: 'lex',
+    name: 'Lex',
+    role: 'Legal Assistant',
+    description: 'Legal assistant',
+    initial: 'L'
+  };
+  const VOICE_ID = VOICE.slug || 'lex';
   let currentUser = null;
   let currentExecutionId = null;
   let messageHistory = [];
@@ -186,7 +193,7 @@
               <span>Open PDF in a new window</span>
             </a>
             <div class="flex flex-col gap-2 max-w-md mx-auto mt-6">
-              <p class="text-sm text-gray-500">You can ask Lex about this document and it will answer using the indexed information.</p>
+            <p class="text-sm text-gray-500">You can ask ${escapeHtml(VOICE.name || 'this voice')} about this document and it will answer using the indexed information.</p>
             </div>
           </div>
         `;
@@ -263,6 +270,7 @@
   // ===== INIT =====
   // Expose document viewer for external calls, such as the mobile drawer.
   window.lexOpenDocViewer = openDocViewer;
+  window.voiceOpenDocViewer = openDocViewer;
 
   async function init() {
     try {
@@ -494,7 +502,7 @@
     
     const avatar = role === 'user'
       ? `<div class="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center text-[#2F3440] text-sm font-semibold flex-shrink-0">${initials}</div>`
-      : `<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">L</div>`;
+      : `<div class="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">${escapeHtml(VOICE.initial || (VOICE.name || VOICE_ID).slice(0, 1).toUpperCase())}</div>`;
     
     const bubbleClass = role === 'user'
       ? 'gradient-brand text-white rounded-2xl rounded-tr-sm'

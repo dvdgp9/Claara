@@ -3,7 +3,8 @@
     voices: [],
     selectedSlug: null,
     isCreating: true,
-    testHistory: []
+    testHistory: [],
+    documents: []
   };
 
   const $ = (id) => document.getElementById(id);
@@ -119,6 +120,7 @@
     state.selectedSlug = null;
     state.isCreating = true;
     state.testHistory = [];
+    state.documents = [];
     $('voice-form').reset();
     $('voice-slug').disabled = false;
     $('voice-editor-status').textContent = 'Draft';
@@ -130,6 +132,7 @@
     $('voice-form-note').textContent = 'Draft voices can be tested here before publishing.';
     renderList();
     renderTestLog();
+    renderDocuments();
   }
 
   function selectVoice(slug) {
@@ -142,6 +145,7 @@
     state.selectedSlug = slug;
     state.isCreating = false;
     state.testHistory = [];
+    state.documents = [];
     $('voice-name').value = voice.name || '';
     $('voice-slug').value = voice.slug || '';
     $('voice-slug').disabled = true;
@@ -159,6 +163,116 @@
     $('voice-form-note').textContent = `RAG collection: ${voice.rag_collection || `voice_${voice.slug}`}`;
     renderList();
     renderTestLog();
+    loadDocuments().catch((error) => showAlert(error.message, 'error'));
+  }
+
+  async function loadDocuments() {
+    const voice = selectedVoice();
+    if (!voice || state.isCreating) {
+      state.documents = [];
+      renderDocuments();
+      return;
+    }
+    const data = await api(`/api/admin/voices/documents/list.php?slug=${encodeURIComponent(voice.slug)}`);
+    state.documents = data.documents || [];
+    renderDocuments();
+  }
+
+  function renderDocuments() {
+    const list = $('voice-documents-list');
+    const summary = $('voice-knowledge-summary');
+    if (!list || !summary) return;
+
+    if (state.isCreating || !selectedVoice()) {
+      summary.textContent = 'Save the voice before adding knowledge.';
+      list.innerHTML = '<div class="voice-documents-empty">Create or select a voice to manage its knowledge.</div>';
+      return;
+    }
+
+    const processed = state.documents.filter((doc) => doc.rag_status === 'processed').length;
+    summary.textContent = `${state.documents.length} document${state.documents.length === 1 ? '' : 's'}, ${processed} processed`;
+
+    if (!state.documents.length) {
+      list.innerHTML = '<div class="voice-documents-empty">No documents yet. Upload PDF, TXT, or MD files, then process them for RAG.</div>';
+      return;
+    }
+
+    list.innerHTML = state.documents.map((doc) => `
+      <article class="voice-document-row">
+        <div>
+          <strong>${escapeHtml(doc.original_filename || doc.filename)}</strong>
+          <small>${escapeHtml(doc.file_extension || '')} · ${formatBytes(Number(doc.file_size || 0))} · ${escapeHtml(doc.rag_status || 'pending')}</small>
+          ${doc.rag_error_message ? `<p>${escapeHtml(doc.rag_error_message)}</p>` : ''}
+        </div>
+        <button class="voice-secondary-btn voice-document-process-btn" type="button" data-id="${escapeHtml(doc.id)}">
+          <i class="iconoir-database-script"></i>
+          <span>${doc.rag_status === 'processed' ? 'Reprocess' : 'Process'}</span>
+        </button>
+      </article>
+    `).join('');
+
+    list.querySelectorAll('.voice-document-process-btn').forEach((button) => {
+      button.addEventListener('click', () => processDocument(button.dataset.id, button));
+    });
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  }
+
+  async function uploadDocument(event) {
+    event.preventDefault();
+    const voice = selectedVoice();
+    const fileInput = $('voice-document-file');
+    if (!voice || !fileInput.files.length) return;
+
+    const button = $('voice-document-upload-btn');
+    setBusy(button, true, 'Uploading');
+    try {
+      const form = new FormData();
+      form.append('slug', voice.slug);
+      form.append('file', fileInput.files[0]);
+      form.append('description', $('voice-document-description').value.trim());
+
+      const response = await fetch('/api/admin/voices/documents/upload.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: window.CSRF_TOKEN ? { 'X-CSRF-Token': window.CSRF_TOKEN } : {},
+        body: form
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error?.message || response.statusText);
+
+      fileInput.value = '';
+      $('voice-document-description').value = '';
+      showAlert('Document uploaded. Process it before testing.');
+      await loadDocuments();
+    } catch (error) {
+      showAlert(error.message, 'error');
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
+  async function processDocument(id, button) {
+    const voice = selectedVoice();
+    if (!voice || !id) return;
+    setBusy(button, true, 'Processing');
+    try {
+      await api(`/api/admin/voices/documents/process.php?slug=${encodeURIComponent(voice.slug)}&id=${encodeURIComponent(id)}`, {
+        method: 'POST',
+        body: { slug: voice.slug, id }
+      });
+      showAlert('Document processed');
+      await loadDocuments();
+    } catch (error) {
+      showAlert(error.message, 'error');
+      await loadDocuments().catch(() => {});
+    } finally {
+      setBusy(button, false);
+    }
   }
 
   function formPayload() {
@@ -237,11 +351,12 @@
     }
 
     $('voice-test-subtitle').textContent = `Testing ${voice.name || voice.slug}`;
+    const processed = state.documents.filter((doc) => doc.rag_status === 'processed').length;
     if (!state.testHistory.length) {
       log.innerHTML = `
         <div class="voice-test-empty">
           <i class="iconoir-chat-bubble-question"></i>
-          <p>Ask ${escapeHtml(voice.name || voice.slug)} a realistic question.</p>
+          <p>${processed > 0 ? `Ask ${escapeHtml(voice.name || voice.slug)} a realistic question.` : 'Upload and process knowledge before expecting RAG answers.'}</p>
         </div>
       `;
       return;
@@ -292,6 +407,7 @@
     $('voice-new-btn').addEventListener('click', resetForm);
     $('voice-refresh-btn').addEventListener('click', () => loadVoices().catch((error) => showAlert(error.message, 'error')));
     $('voice-form').addEventListener('submit', saveVoice);
+    $('voice-document-form').addEventListener('submit', uploadDocument);
     $('voice-publish-btn').addEventListener('click', publishVoice);
     $('voice-archive-btn').addEventListener('click', archiveVoice);
     $('voice-test-form').addEventListener('submit', testVoice);

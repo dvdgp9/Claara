@@ -1,9 +1,11 @@
 <?php
 require_once __DIR__ . '/_helpers.php';
+require_once __DIR__ . '/../../../../src/Repos/ContextDocsRepo.php';
 
 use App\Response;
 use App\Session;
 use Repos\VoicesRepo;
+use Repos\ContextDocsRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     Response::error('method_not_allowed', 'POST only', 405);
@@ -21,6 +23,14 @@ if (!$voice) {
 }
 if (trim((string)$voice['instructions']) === '') {
     Response::error('publish_blocked', 'Añade instrucciones antes de publicar la voz', 400);
+}
+$docsRepo = new ContextDocsRepo();
+$processedDocs = array_filter(
+    $docsRepo->listByVoice($slug),
+    static fn(array $doc): bool => ($doc['rag_status'] ?? '') === 'processed'
+);
+if (count($processedDocs) === 0) {
+    Response::error('publish_blocked', 'Procesa al menos un documento de conocimiento antes de publicar la voz', 400);
 }
 
 try {

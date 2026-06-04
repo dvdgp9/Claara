@@ -6,10 +6,12 @@
 
 require_once __DIR__ . '/../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../src/Voices/VoiceContextBuilder.php';
+require_once __DIR__ . '/../../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
 use App\Response;
 use Voices\VoiceContextBuilder;
+use Repos\UserFeatureAccessRepo;
 
 Session::start();
 $user = Session::user();
@@ -20,6 +22,9 @@ if (!$user) {
 $voiceId = $_GET['voice_id'] ?? '';
 if (!$voiceId) {
     Response::error('missing_voice', 'voice_id is required', 400);
+}
+if (!(new UserFeatureAccessRepo())->hasVoiceAccess((int)$user['id'], $voiceId)) {
+    Response::error('forbidden', 'No tienes acceso a esta voz', 403);
 }
 
 $builder = new VoiceContextBuilder($voiceId);
