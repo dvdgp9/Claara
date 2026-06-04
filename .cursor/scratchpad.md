@@ -270,7 +270,7 @@ Una voz es:
 - [x] Executor: `VoicesRepo` + refactor mínimo de `VoiceContextBuilder`.
 - [x] Executor: permiso `feature:voice-editor`.
 - [x] Executor: APIs admin de voces.
-- [ ] Executor: `/admin/voices.php` con wizard y estados.
+- [x] Executor: `/admin/voices.php` con editor, estados y prueba en vivo.
 - [ ] Executor: `/voices/` dinámico + página genérica de voz.
 - [ ] Executor: catálogo inicial para chat general.
 
@@ -283,6 +283,8 @@ Una voz es:
 - Verificación local: `php -l` OK en `src/Repos/VoicesRepo.php`, `src/Voices/VoiceContextBuilder.php` y `src/App/bootstrap.php`; `class_exists('Repos\\VoicesRepo')` OK; `git diff --check` OK. Pendiente probar en producción tras despliegue con Lex (`/voices/lex.php`) para confirmar que sigue respondiendo igual leyendo desde BD.
 - 2026-06-04 (Executor): Permiso de edición de voces implementado con `Auth\VoiceEditorGuard`: permite superadmin o usuarios con `feature:voice-editor`. Añadida API admin base en `public/api/admin/voices/` para listar, crear, actualizar, publicar y archivar voces. Los endpoints usan autenticación, CSRF en escritura, validación de slug/campos y sincronizan `available_features` al actualizar/publicar/archivar.
 - Verificación local y producción: `php -l` OK en `src/Auth/VoiceEditorGuard.php` y todos los endpoints `public/api/admin/voices/*.php`; `curl` sin sesión a `/api/admin/voices/list.php` devuelve 401 JSON esperado; producción lista `voices=1` con `lex:published` desde `VoicesRepo`. Pendiente UI `/admin/voices.php` para consumir estos endpoints.
+- 2026-06-04 (Executor): Primera versión usable de `/admin/voices.php` implementada como Voice Studio. Permite listar voces, crear borradores, editar identidad/instrucciones/guía de activación, publicar, archivar y probar la voz seleccionada en vivo contra `/api/voices/chat.php`. Añadido enlace en el menú de perfil para superadmins y usuarios con `feature:voice-editor`. CSS nuevo ubicado en `public/assets/css/styles.css`; JS en `public/assets/js/admin-voices.js`.
+- Verificación local: `php -l` OK en `public/admin/voices.php` y `public/includes/header-unified.php`; `node --check` OK en `public/assets/js/admin-voices.js`; `git diff --check` OK. La BD local no conecta (`db_connection_failed`), por lo que la prueba de datos queda para producción tras pull.
 
 ## Feature: Audio Transcriber para audios largos
 

@@ -31,6 +31,17 @@ $headerShowSearch = $headerShowSearch ?? false;
 $headerShowFaq = $headerShowFaq ?? false;
 $headerDrawerId = $headerDrawerId ?? null;
 $headerShowLogo = $headerShowLogo ?? false;
+$canEditVoices = false;
+if (isset($user)) {
+    $canEditVoices = !empty($user['is_superadmin']);
+    if (!$canEditVoices && class_exists('\Repos\UserFeatureAccessRepo')) {
+        try {
+            $canEditVoices = (new \Repos\UserFeatureAccessRepo())->hasAccess((int)($user['id'] ?? 0), 'feature', 'voice-editor');
+        } catch (\Throwable $e) {
+            $canEditVoices = false;
+        }
+    }
+}
 
 // Determine header style from context.
 $headerStyle = 'h-14 lg:h-[60px] px-4 lg:px-6 border-b border-slate-200';
@@ -157,9 +168,15 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
           <i class="iconoir-cloud-sync"></i>
           <span>Connectors</span>
         </a>
+        <?php if ($canEditVoices): ?>
+          <a href="/admin/voices.php" id="voices-admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
+            <i class="iconoir-voice-square"></i>
+            <span>Voice Studio</span>
+          </a>
+        <?php endif; ?>
         
         <?php if (isset($user) && in_array('admin', $user['roles'] ?? [], true)): ?>
-          <a href="/admin/users.php" id="admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
+          <a href="/admin/users.php" id="admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 <?php echo $canEditVoices ? '' : 'border-t border-slate-100'; ?>">
             <i class="iconoir-settings"></i>
             <span>User management</span>
           </a>
