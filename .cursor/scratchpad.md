@@ -268,8 +268,8 @@ Una voz es:
 - [x] Planner: validar alcance MVP con el usuario.
 - [x] Executor: migraciones `voices` + documentos por voz.
 - [x] Executor: `VoicesRepo` + refactor mínimo de `VoiceContextBuilder`.
-- [ ] Executor: permiso `feature:voice-editor`.
-- [ ] Executor: APIs admin de voces.
+- [x] Executor: permiso `feature:voice-editor`.
+- [x] Executor: APIs admin de voces.
 - [ ] Executor: `/admin/voices.php` con wizard y estados.
 - [ ] Executor: `/voices/` dinámico + página genérica de voz.
 - [ ] Executor: catálogo inicial para chat general.
@@ -281,6 +281,8 @@ Una voz es:
 - Verificación producción: `schema_migrations` registra `019_dynamic_rag_voices.sql`; `voices` tiene columnas nuevas; `context_documents` tiene `target_type`, `target_slug`, `voice_id`, `indexed_at`; existe voz `lex` publicada con `rag_collection=lex_knowledge_base`; existen `available_features` para `voice:lex` y `feature:voice-editor`.
 - 2026-06-04 (Executor): `VoicesRepo` implementado en `src/Repos/VoicesRepo.php` con lectura dinámica por slug, listado, creación, actualización, publicación, archivado y sincronización con `available_features`. `VoiceContextBuilder` ahora intenta cargar la voz desde BD primero y mantiene fallback legacy si el schema no está disponible o la voz no existe en BD. También incluye `instructions` de la voz dinámica en el prompt RAG y no-RAG.
 - Verificación local: `php -l` OK en `src/Repos/VoicesRepo.php`, `src/Voices/VoiceContextBuilder.php` y `src/App/bootstrap.php`; `class_exists('Repos\\VoicesRepo')` OK; `git diff --check` OK. Pendiente probar en producción tras despliegue con Lex (`/voices/lex.php`) para confirmar que sigue respondiendo igual leyendo desde BD.
+- 2026-06-04 (Executor): Permiso de edición de voces implementado con `Auth\VoiceEditorGuard`: permite superadmin o usuarios con `feature:voice-editor`. Añadida API admin base en `public/api/admin/voices/` para listar, crear, actualizar, publicar y archivar voces. Los endpoints usan autenticación, CSRF en escritura, validación de slug/campos y sincronizan `available_features` al actualizar/publicar/archivar.
+- Verificación local: `php -l` OK en `src/Auth/VoiceEditorGuard.php` y todos los endpoints `public/api/admin/voices/*.php`; `curl` sin sesión a `/api/admin/voices/list.php` devuelve 401 JSON esperado. Pendiente UI `/admin/voices.php` para consumir estos endpoints.
 
 ## Feature: Audio Transcriber para audios largos
 
