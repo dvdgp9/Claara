@@ -267,7 +267,7 @@ Una voz es:
 ### Project Status Board — Voces RAG administrables
 - [x] Planner: validar alcance MVP con el usuario.
 - [x] Executor: migraciones `voices` + documentos por voz.
-- [ ] Executor: `VoicesRepo` + refactor mínimo de `VoiceContextBuilder`.
+- [x] Executor: `VoicesRepo` + refactor mínimo de `VoiceContextBuilder`.
 - [ ] Executor: permiso `feature:voice-editor`.
 - [ ] Executor: APIs admin de voces.
 - [ ] Executor: `/admin/voices.php` con wizard y estados.
@@ -279,6 +279,8 @@ Una voz es:
 - Verificación realizada: revisión estática, `git diff --check` OK. No se pudo validar en base temporal local porque MySQL local rechaza acceso root sin credenciales (`Access denied for user 'root'@'localhost'`). Antes de ejecutar en producción, conviene aplicarla primero en entorno controlado o confirmar credenciales locales.
 - 2026-06-04 (Executor): Migración `019_dynamic_rag_voices.sql` desplegada a `main`, pull en servidor y aplicada manualmente en producción con script PHP específico para evitar ejecutar migraciones históricas pendientes en `schema_migrations`. Backup previo creado en servidor: `storage/db-backups/pre_019_dynamic_rag_voices_20260604_163256.sql`.
 - Verificación producción: `schema_migrations` registra `019_dynamic_rag_voices.sql`; `voices` tiene columnas nuevas; `context_documents` tiene `target_type`, `target_slug`, `voice_id`, `indexed_at`; existe voz `lex` publicada con `rag_collection=lex_knowledge_base`; existen `available_features` para `voice:lex` y `feature:voice-editor`.
+- 2026-06-04 (Executor): `VoicesRepo` implementado en `src/Repos/VoicesRepo.php` con lectura dinámica por slug, listado, creación, actualización, publicación, archivado y sincronización con `available_features`. `VoiceContextBuilder` ahora intenta cargar la voz desde BD primero y mantiene fallback legacy si el schema no está disponible o la voz no existe en BD. También incluye `instructions` de la voz dinámica en el prompt RAG y no-RAG.
+- Verificación local: `php -l` OK en `src/Repos/VoicesRepo.php`, `src/Voices/VoiceContextBuilder.php` y `src/App/bootstrap.php`; `class_exists('Repos\\VoicesRepo')` OK; `git diff --check` OK. Pendiente probar en producción tras despliegue con Lex (`/voices/lex.php`) para confirmar que sigue respondiendo igual leyendo desde BD.
 
 ## Feature: Audio Transcriber para audios largos
 
@@ -1678,7 +1680,7 @@ Petición del compañero: cuando una voz responde, debe mostrar (1) un porcentaj
 
 # Executor's Feedback or Assistance Requests
 
-- Voces RAG administrables: hito de migraciones aplicado en producción y verificado. Nota operativa: el servidor tiene varias migraciones antiguas sin registrar en `schema_migrations`; por eso se aplicó solo la `019` de forma manual y no se ejecutó `scripts/migrate.php` completo. Siguiente hito recomendado: `VoicesRepo` + refactor mínimo de `VoiceContextBuilder`, manteniendo Lex funcionando con fallback.
+- Voces RAG administrables: hito `VoicesRepo` + refactor mínimo implementado localmente. Solicito validación antes de pasar a APIs admin. Para validar en producción, desplegar el commit y probar Lex desde `/voices/lex.php`; si responde con fuentes/source match como antes, el siguiente paso será crear el guard de permiso `feature:voice-editor` y endpoints admin de voces.
 
 - Landing pública Claara: primer hito listo para validación manual. Solicito revisar:
   1. Abrir `/` y confirmar que la landing se ve bien en desktop y móvil.

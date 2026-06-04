@@ -1,6 +1,7 @@
 <?php
 namespace Voices;
 
+use Repos\VoicesRepo;
 use Rag\QdrantClient;
 use Rag\EmbeddingService;
 use Rag\LexRetriever;
@@ -15,6 +16,7 @@ class VoiceContextBuilder
     private string $voiceId;
     private string $contextPath;
     private ?LexRetriever $retriever = null;
+    private ?array $voice = null;
     private array $lastChunks = [];
     
     // Available Voice definitions.
@@ -48,6 +50,22 @@ class VoiceContextBuilder
     {
         $this->voiceId = $voiceId;
         $this->contextPath = dirname(dirname(__DIR__)) . '/docs/context/voices/' . $voiceId;
+        $this->voice = $this->loadVoiceDefinition($voiceId);
+    }
+
+    private function loadVoiceDefinition(string $voiceId): ?array
+    {
+        try {
+            $repo = new VoicesRepo();
+            $voice = $repo->findBySlug($voiceId);
+            if ($voice) {
+                return $voice;
+            }
+        } catch (\Throwable $e) {
+            // Keep legacy voices working if the dynamic schema is not available yet.
+        }
+
+        return self::$voices[$voiceId] ?? null;
     }
 
     /**
@@ -55,7 +73,7 @@ class VoiceContextBuilder
      */
     public function voiceExists(): bool
     {
-        return isset(self::$voices[$this->voiceId]);
+        return $this->voice !== null;
     }
 
     /**
@@ -63,7 +81,7 @@ class VoiceContextBuilder
      */
     public function getVoiceInfo(): ?array
     {
-        return self::$voices[$this->voiceId] ?? null;
+        return $this->voice;
     }
 
     /**
@@ -75,13 +93,17 @@ class VoiceContextBuilder
             return null;
         }
 
-        $voice = self::$voices[$this->voiceId];
+        $voice = $this->voice;
         
         // Base system prompt.
         $prompt = "# Identity\n";
         $prompt .= "You are **{$voice['name']}**, {$voice['role']}.\n\n";
         $prompt .= "## Description\n{$voice['description']}\n\n";
         $prompt .= "## Personality\n{$voice['personality']}\n\n";
+        if (!empty($voice['instructions'])) {
+            $prompt .= "## Voice-specific instructions\n";
+            $prompt .= trim((string)$voice['instructions']) . "\n\n";
+        }
         
         // General instructions.
         $prompt .= "## Instructions\n";
@@ -175,6 +197,19 @@ class VoiceContextBuilder
      */
     public static function getAllVoices(): array
     {
+        try {
+            $repo = new VoicesRepo();
+            $voices = [];
+            foreach ($repo->listPublished() as $voice) {
+                $voices[$voice['slug']] = $voice;
+            }
+            if ($voices) {
+                return $voices;
+            }
+        } catch (\Throwable $e) {
+            // Fall back to legacy definitions.
+        }
+
         return self::$voices;
     }
 
@@ -183,7 +218,7 @@ class VoiceContextBuilder
      */
     public function hasRagEnabled(): bool
     {
-        $voice = self::$voices[$this->voiceId] ?? null;
+        $voice = $this->voice;
         return $voice && ($voice['rag_enabled'] ?? false);
     }
 
@@ -196,7 +231,7 @@ class VoiceContextBuilder
             return;
         }
 
-        $voice = self::$voices[$this->voiceId];
+        $voice = $this->voice;
         $collection = $voice['rag_collection'] ?? 'default';
 
         $qdrant = new QdrantClient($qdrantHost, $qdrantPort);
@@ -222,7 +257,7 @@ class VoiceContextBuilder
             return null;
         }
 
-        $voice = self::$voices[$this->voiceId];
+        $voice = $this->voice;
         
         // Get the list of all documents so the assistant knows what is available.
         $allDocs = $this->listDocuments();
@@ -236,6 +271,10 @@ class VoiceContextBuilder
         $prompt .= "You are **{$voice['name']}**, {$voice['role']}.\n\n";
         $prompt .= "## Description\n{$voice['description']}\n\n";
         $prompt .= "## Personality\n{$voice['personality']}\n\n";
+        if (!empty($voice['instructions'])) {
+            $prompt .= "## Voice-specific instructions\n";
+            $prompt .= trim((string)$voice['instructions']) . "\n\n";
+        }
         
         $prompt .= "## Available Documentation\n";
         $prompt .= "You have access to the following documents and collective agreements:\n";

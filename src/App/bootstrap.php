@@ -26,6 +26,7 @@ require_once dirname(__DIR__) . '/Jobs/BackgroundJobsRepo.php';
 // Repos
 require_once dirname(__DIR__) . '/Repos/UsageLogRepo.php';
 require_once dirname(__DIR__) . '/Repos/UserFeatureAccessRepo.php';
+require_once dirname(__DIR__) . '/Repos/VoicesRepo.php';
 
 // Chat (LLM)
 require_once dirname(__DIR__) . '/Chat/OpenRouterClient.php';
