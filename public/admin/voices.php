@@ -158,7 +158,7 @@ $headerBackText = 'Chat';
                   </div>
                 </div>
                 <form id="voice-document-form" class="voice-document-form">
-                  <input id="voice-document-file" type="file" accept=".pdf,.txt,.md" required>
+                  <input id="voice-document-file" type="file" accept=".pdf,.txt,.md" multiple required>
                   <input id="voice-document-description" type="text" maxlength="255" placeholder="Optional description">
                   <button id="voice-document-upload-btn" class="voice-secondary-btn" type="submit">
                     <i class="iconoir-upload"></i>

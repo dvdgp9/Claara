@@ -231,23 +231,28 @@
     const button = $('voice-document-upload-btn');
     setBusy(button, true, 'Uploading');
     try {
-      const form = new FormData();
-      form.append('slug', voice.slug);
-      form.append('file', fileInput.files[0]);
-      form.append('description', $('voice-document-description').value.trim());
+      const files = Array.from(fileInput.files);
+      for (const file of files) {
+        const form = new FormData();
+        form.append('slug', voice.slug);
+        form.append('file', file);
+        form.append('description', $('voice-document-description').value.trim());
 
-      const response = await fetch('/api/admin/voices/documents/upload.php', {
-        method: 'POST',
-        credentials: 'include',
-        headers: window.CSRF_TOKEN ? { 'X-CSRF-Token': window.CSRF_TOKEN } : {},
-        body: form
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.error?.message || response.statusText);
+        const response = await fetch('/api/admin/voices/documents/upload.php', {
+          method: 'POST',
+          credentials: 'include',
+          headers: window.CSRF_TOKEN ? { 'X-CSRF-Token': window.CSRF_TOKEN } : {},
+          body: form
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(`${file.name}: ${data?.error?.message || response.statusText}`);
+        }
+      }
 
       fileInput.value = '';
       $('voice-document-description').value = '';
-      showAlert('Document uploaded. Process it before testing.');
+      showAlert(`${files.length} document${files.length === 1 ? '' : 's'} uploaded. Process before testing.`);
       await loadDocuments();
     } catch (error) {
       showAlert(error.message, 'error');
