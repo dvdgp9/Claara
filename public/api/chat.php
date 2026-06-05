@@ -136,7 +136,7 @@ $convos->autoTitle($conversationId, $message);
 
 // Para generación de imágenes (nanobanana), no enviar contexto corporativo
 $withContext = !$imageMode;
-$provider = LlmProviderFactory::create($modelName, $withContext);
+$provider = LlmProviderFactory::create($modelName, $withContext, $user);
 $svc = new ChatService($provider);
 // Construir historial: incluir todos los mensajes de la conversación (ya incluye el del usuario)
 $allMessages = $msgs->listByConversation($conversationId);

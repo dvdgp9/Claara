@@ -1,6 +1,9 @@
 <?php
 namespace Chat;
 
+use Claara\CapabilityCatalogService;
+use Throwable;
+
 /**
  * Builds the assistant context injected into LLMs.
  * 
@@ -10,10 +13,14 @@ namespace Chat;
 class ContextBuilder
 {
     private string $contextDir;
+    private ?array $user;
+    private bool $includeCapabilities;
 
-    public function __construct(?string $contextDir = null)
+    public function __construct(?string $contextDir = null, ?array $user = null, bool $includeCapabilities = false)
     {
         $this->contextDir = $contextDir ?? dirname(dirname(__DIR__)) . '/docs/context';
+        $this->user = $user;
+        $this->includeCapabilities = $includeCapabilities;
     }
 
     /**
@@ -45,8 +52,16 @@ class ContextBuilder
         $timeStr = date('H:i');
 
         $temporalContext = "\n\n---\n\n## Temporal Context\nCurrent date: " . $dateStr . "\nCurrent time: " . $timeStr;
+        $content .= $temporalContext;
+
+        if ($this->includeCapabilities && $this->user) {
+            $capabilities = $this->buildCapabilityContext();
+            if ($capabilities !== '') {
+                $content .= "\n\n---\n\n" . $capabilities;
+            }
+        }
         
-        return $content . $temporalContext;
+        return $content;
     }
 
     /**
@@ -87,5 +102,15 @@ class ContextBuilder
     private function getDefaultPrompt(): string
     {
         return "You are Claara, a friendly and professional AI assistant for everyday work.";
+    }
+
+    private function buildCapabilityContext(): string
+    {
+        try {
+            $catalogService = new CapabilityCatalogService();
+            return $catalogService->toPromptBlock($catalogService->forUser($this->user ?? []));
+        } catch (Throwable $e) {
+            return '';
+        }
     }
 }

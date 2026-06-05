@@ -73,6 +73,8 @@ Chatbot ligero para preguntas rápidas sobre el Grupo Ebone. Usa QWEN Turbo (`qw
 
 # Project Status Board
 
+- [x] Claara integration step 1: internal per-user capability catalog for accessible voices and gestures.
+- [x] Claara integration step 2: inject capability catalog into general chat context for recommendations only, without automatic execution.
 - [x] Crear `index.php` de placeholder.
 - [x] Inicializar Git con rama `main` y primer commit.
 - [x] Conectar `origin` y hacer `git push -u origin main`.

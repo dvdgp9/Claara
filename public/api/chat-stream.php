@@ -193,7 +193,7 @@ $convos->autoTitle($conversationId, $message);
 
 // Construir contexto
 $withContext = !$imageMode;
-$contextBuilder = $withContext ? new ContextBuilder() : null;
+$contextBuilder = $withContext ? new ContextBuilder(null, $user, true) : null;
 $systemPrompt = $contextBuilder ? $contextBuilder->buildSystemPrompt() : null;
 if ($imageMode) {
     $systemPrompt = 'You are an image generation assistant. Always return at least one generated image for image_mode requests. Text-only responses are not allowed unless image generation is impossible.';

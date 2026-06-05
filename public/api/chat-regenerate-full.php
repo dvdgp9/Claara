@@ -72,7 +72,7 @@ if (empty($history)) {
     Response::error('validation_error', 'No hay contexto previo para regenerar', 400);
 }
 
-$contextBuilder = new ContextBuilder();
+$contextBuilder = new ContextBuilder(null, $user, true);
 $systemPrompt = $contextBuilder->buildSystemPrompt();
 
 try {

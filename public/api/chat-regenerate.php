@@ -66,7 +66,7 @@ if (!$targetMessage) {
 }
 
 // Construir el prompt de regeneración - enfoque directo: pedir mensaje completo editado
-$contextBuilder = new ContextBuilder();
+$contextBuilder = new ContextBuilder(null, $user, true);
 $systemPrompt = $contextBuilder->buildSystemPrompt();
 
 $editPrompt = <<<PROMPT

@@ -17,14 +17,15 @@ class LlmProviderFactory
      *                           Si es null, usa OPENROUTER_MODEL del .env o 'openrouter/auto'
      * @param bool $withContext Si true, incluye contexto corporativo. Default: true.
      *                          Para generación de imágenes (nanobanana), usar false.
+     * @param array|null $user Usuario autenticado para inyectar catálogo de capacidades.
      */
-    public static function create(?string $model = null, bool $withContext = true): LlmProvider
+    public static function create(?string $model = null, bool $withContext = true, ?array $user = null): LlmProvider
     {
         $systemPrompt = null;
         $contextBuilder = null;
         
         if ($withContext) {
-            $contextBuilder = new ContextBuilder();
+            $contextBuilder = new ContextBuilder(null, $user, $user !== null);
             $systemPrompt = $contextBuilder->buildSystemPrompt();
         }
 
