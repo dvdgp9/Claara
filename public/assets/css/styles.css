@@ -775,6 +775,116 @@
   }
 }
 
+.capability-actions {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.capability-actions-title {
+  margin-bottom: 10px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.capability-actions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.capability-action {
+  display: inline-grid;
+  grid-template-columns: 34px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  max-width: min(100%, 360px);
+  padding: 6px 10px 6px 6px;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #243041;
+  text-decoration: none;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.capability-action:hover {
+  border-color: #b7c9f2;
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.capability-action:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.capability-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #eef3ff;
+  color: #2f3440;
+  font-size: 18px;
+}
+
+.capability-action-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.capability-action-label,
+.capability-action-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.capability-action-label {
+  color: #172033;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.capability-action-meta {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.capability-action-arrow {
+  color: #94a3b8;
+  font-size: 15px;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s ease;
+}
+
+.capability-action:hover .capability-action-arrow {
+  color: #2f3440;
+  transform: translateX(2px);
+}
+
+@media (max-width: 640px) {
+  .capability-actions-list {
+    flex-direction: column;
+  }
+
+  .capability-action {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 body {
   font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--brand-ink);

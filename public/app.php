@@ -649,6 +649,7 @@ $headerShowLogo = true;
     let conversationToMove = null; // conversation being moved
     let imageMode = false; // image generation mode
     let webSearchMode = false; // web search mode
+    let capabilityRouteIndex = new Map();
     
     // Streaming state
     let isGenerating = false;
@@ -660,6 +661,8 @@ $headerShowLogo = true;
     let selectedText = null;
     let selectedMessageId = null;
     let dragCounter = 0;
+
+    loadCapabilityCatalog();
 
     const MAX_FILE_SIZE = 30 * 1024 * 1024;
     const VALID_FILE_TYPES = [
@@ -923,6 +926,99 @@ $headerShowLogo = true;
       return s;
     }
 
+    async function loadCapabilityCatalog() {
+      try {
+        const data = await api('/api/capabilities/catalog.php');
+        const catalog = data.catalog || {};
+        const items = [
+          ...(catalog.voices || []).map(item => ({ ...item, type: 'voice' })),
+          ...(catalog.gestures || []).map(item => ({ ...item, type: 'gesture' })),
+        ];
+
+        capabilityRouteIndex = new Map();
+        items.forEach(item => {
+          if (!item.route) return;
+          capabilityRouteIndex.set(normalizeCapabilityRoute(item.route), item);
+        });
+      } catch (error) {
+        console.warn('Could not load capability catalog:', error);
+      }
+    }
+
+    function normalizeCapabilityRoute(route) {
+      return String(route || '').trim().replace(/[.,;:!?]+$/, '');
+    }
+
+    function extractCapabilityRoutes(content) {
+      const routes = new Set();
+      const text = String(content || '');
+      const regex = /\/(?:voices|gestos)\/[^\s`)<\]]+/g;
+      let match;
+
+      while ((match = regex.exec(text)) !== null) {
+        routes.add(normalizeCapabilityRoute(match[0]));
+      }
+
+      return Array.from(routes).filter(route => route.startsWith('/voices/') || route.startsWith('/gestos/'));
+    }
+
+    function capabilityIcon(item, route) {
+      if (item?.icon) return item.icon;
+      return route.startsWith('/voices/') ? 'iconoir-voice-square' : 'iconoir-magic-wand';
+    }
+
+    function capabilityLabel(item, route) {
+      if (item?.name) return item.name;
+      if (route.startsWith('/voices/')) return 'Open voice';
+      return 'Open gesture';
+    }
+
+    function capabilityMeta(item, route) {
+      if (item?.type === 'voice' || route.startsWith('/voices/')) {
+        return item?.role || 'Specialized voice';
+      }
+      return 'Guided workflow';
+    }
+
+    function enhanceCapabilityActions(containerEl, content) {
+      if (!containerEl) return;
+      const existing = containerEl.querySelector(':scope > .capability-actions');
+      if (existing) existing.remove();
+
+      const routes = extractCapabilityRoutes(content);
+      if (!routes.length) return;
+
+      const actions = document.createElement('div');
+      actions.className = 'capability-actions';
+
+      const title = document.createElement('div');
+      title.className = 'capability-actions-title';
+      title.textContent = routes.length === 1 ? 'Recommended workspace' : 'Recommended workspaces';
+      actions.appendChild(title);
+
+      const list = document.createElement('div');
+      list.className = 'capability-actions-list';
+
+      routes.slice(0, 4).forEach(route => {
+        const item = capabilityRouteIndex.get(route);
+        const link = document.createElement('a');
+        link.href = route;
+        link.className = 'capability-action';
+        link.innerHTML = `
+          <span class="capability-action-icon"><i class="${escapeHtml(capabilityIcon(item, route))}"></i></span>
+          <span class="capability-action-copy">
+            <span class="capability-action-label">${escapeHtml(capabilityLabel(item, route))}</span>
+            <span class="capability-action-meta">${escapeHtml(capabilityMeta(item, route))}</span>
+          </span>
+          <i class="iconoir-arrow-right capability-action-arrow"></i>
+        `;
+        list.appendChild(link);
+      });
+
+      actions.appendChild(list);
+      containerEl.appendChild(actions);
+    }
+
     // Add a "copy" button to each fenced code block inside a rendered container
     function enhanceCodeBlocks(containerEl){
       if (!containerEl) return;
@@ -1006,6 +1102,7 @@ $headerShowLogo = true;
         if (result.success && result.message) {
           const clean = (result.message.content || '').replace(/\[DOC_START\]|\[DOC_END\]|\[DOWNLOAD_INTENT\]/g, '');
           bubble.innerHTML = mdToHtml(clean);
+          enhanceCapabilityActions(bubble, result.message.content);
           enhanceCodeBlocks(bubble);
           buildMessageActions(bubble, result.message.content, messageId);
           bubble.classList.add('ring-2', 'ring-emerald-400', 'ring-opacity-75');
@@ -1073,6 +1170,7 @@ $headerShowLogo = true;
           const contentEl = document.createElement('div');
           contentEl.className = 'markdown-content prose prose-slate prose-sm max-w-none';
           contentEl.innerHTML = mdToHtml(cleanContent);
+          enhanceCapabilityActions(contentEl, cleanContent);
           bubble.appendChild(contentEl);
         }
         // Si está en streaming, añadir indicador
@@ -1266,6 +1364,7 @@ $headerShowLogo = true;
       const contentEl = document.createElement('div');
       contentEl.className = 'markdown-content prose prose-slate prose-sm max-w-none';
       contentEl.innerHTML = mdToHtml(displayContent);
+      enhanceCapabilityActions(contentEl, displayContent);
       bubble.appendChild(contentEl);
       enhanceCodeBlocks(contentEl);
 
@@ -1827,6 +1926,8 @@ $headerShowLogo = true;
         if (result.success && result.message) {
           if (bubble) {
             bubble.innerHTML = mdToHtml(result.message.content);
+            enhanceCapabilityActions(bubble, result.message.content);
+            enhanceCodeBlocks(bubble);
             // Green highlight effect.
             bubble.classList.add('ring-2', 'ring-emerald-400', 'ring-opacity-75');
             setTimeout(() => {
