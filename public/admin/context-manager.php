@@ -110,10 +110,7 @@ if (!$isSuperadmin) {
           <!-- Tabs -->
           <div class="bg-white rounded-t-2xl border border-b-0 border-slate-200">
             <div class="flex border-b border-slate-200">
-              <button data-target="lex" class="tab-btn flex-1 px-6 py-4 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors border-b-2 border-transparent tab-active">
-                <i class="iconoir-scale mr-2"></i>Lex (Legal)
-              </button>
-              <button data-target="eboniato" class="tab-btn flex-1 px-6 py-4 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors border-b-2 border-transparent">
+              <button data-target="eboniato" class="tab-btn flex-1 px-6 py-4 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors border-b-2 border-transparent tab-active">
                 <i class="iconoir-chat-bubble-question mr-2"></i>Claara (Quick Answers)
               </button>
               <button data-target="ebonia" class="tab-btn flex-1 px-6 py-4 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors border-b-2 border-transparent">
@@ -202,7 +199,6 @@ if (!$isSuperadmin) {
           <div>
             <label class="text-sm font-medium text-slate-700 block mb-2">Target</label>
             <select id="upload-target" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-700" disabled>
-              <option value="lex">Lex (Legal)</option>
               <option value="eboniato">Claara (Quick Answers)</option>
               <option value="ebonia">Claara (Chat)</option>
             </select>
@@ -267,7 +263,7 @@ if (!$isSuperadmin) {
           </div>
           <div>
             <h3 class="text-lg font-semibold text-slate-800">Create document</h3>
-            <p class="text-xs text-slate-500">New context document for <span id="create-target-name" class="font-medium">Lex</span></p>
+            <p class="text-xs text-slate-500">New context document for <span id="create-target-name" class="font-medium">Claara</span></p>
           </div>
         </div>
         <button id="close-create-modal" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
@@ -352,7 +348,7 @@ if (!$isSuperadmin) {
       <div class="flex items-center gap-4 px-4 py-3 bg-slate-50 rounded-lg mb-4 text-sm flex-shrink-0">
         <div class="flex items-center gap-2">
           <i class="iconoir-folder text-slate-400"></i>
-          <span class="text-slate-600">Target: <strong class="text-slate-800" id="edit-doc-target">lex</strong></span>
+          <span class="text-slate-600">Target: <strong class="text-slate-800" id="edit-doc-target">eboniato</strong></span>
         </div>
         <div class="h-4 w-px bg-slate-300"></div>
         <div class="flex items-center gap-2">
@@ -385,7 +381,7 @@ if (!$isSuperadmin) {
 
       <div id="edit-rag-notice" class="hidden mt-3 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center gap-2 flex-shrink-0">
         <i class="iconoir-info-circle"></i>
-        <span>After saving changes to a Lex document, you must <strong>reprocess the AI index</strong> to refresh vectors.</span>
+        <span>After saving indexed documents, reprocess the AI index to refresh vectors.</span>
       </div>
 
       <div class="grid grid-cols-3 gap-4 mt-3 flex-shrink-0">
@@ -461,13 +457,12 @@ if (!$isSuperadmin) {
 
   <script>
     const csrf = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
-    let currentTarget = 'lex';
+    let currentTarget = 'eboniato';
     let documents = [];
     let selectedDoc = null;
 
     // Allowed formats by target
     const allowedExtensions = {
-      lex: ['pdf', 'txt', 'md'],
       eboniato: ['md'],
       ebonia: ['md']
     };
@@ -554,10 +549,9 @@ if (!$isSuperadmin) {
         document.getElementById('stat-chunks').textContent = stats.total_chunks || 0;
         
         // Show/hide index and type columns
-        const isLex = currentTarget === 'lex';
-        document.getElementById('col-rag').classList.toggle('hidden', !isLex);
-        document.getElementById('col-type').classList.toggle('hidden', !isLex);
-        document.getElementById('stat-chunks-container').classList.toggle('hidden', !isLex);
+      document.getElementById('col-rag').classList.add('hidden');
+      document.getElementById('col-type').classList.add('hidden');
+      document.getElementById('stat-chunks-container').classList.add('hidden');
         
         renderDocuments();
       } catch (err) {
@@ -572,7 +566,7 @@ if (!$isSuperadmin) {
     function renderDocuments() {
       const container = document.getElementById('docs-list');
       const noResults = document.getElementById('no-docs');
-      const isLex = currentTarget === 'lex';
+      const isLex = false;
 
       if (documents.length === 0) {
         container.innerHTML = '';
@@ -810,7 +804,7 @@ if (!$isSuperadmin) {
     });
 
     // Create document modal
-    const targetNames = { lex: 'Lex', eboniato: 'Claara', ebonia: 'Claara' };
+    const targetNames = { eboniato: 'Claara', ebonia: 'Claara' };
     const createContent = document.getElementById('create-content');
 
     document.getElementById('create-btn').addEventListener('click', () => {
@@ -823,8 +817,7 @@ if (!$isSuperadmin) {
       document.getElementById('create-content').value = '';
       document.getElementById('create-error').classList.add('hidden');
       
-      // Set extension based on target (only md for eboniato/ebonia, allow txt/md for lex)
-      const ext = currentTarget === 'lex' ? '.txt' : '.md';
+      const ext = '.md';
       document.getElementById('create-extension').textContent = ext;
       
       updateCreateCharCount('');

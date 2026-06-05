@@ -156,6 +156,10 @@ $headerBackText = 'Chat';
                     <h2>Knowledge</h2>
                     <p id="voice-knowledge-summary">Add documents before testing RAG answers.</p>
                   </div>
+                  <button id="voice-process-all-btn" class="voice-secondary-btn" type="button">
+                    <i class="iconoir-database-script"></i>
+                    <span>Process all</span>
+                  </button>
                 </div>
                 <form id="voice-document-form" class="voice-document-form">
                   <input id="voice-document-file" type="file" accept=".pdf,.txt,.md" multiple required>
@@ -170,31 +174,6 @@ $headerBackText = 'Chat';
                 </div>
               </section>
             </section>
-
-            <aside class="voice-test-panel">
-              <div class="voice-panel-head">
-                <div>
-                  <h2>Live test</h2>
-                  <p id="voice-test-subtitle">Ask the selected voice directly.</p>
-                </div>
-                <button id="voice-test-clear-btn" class="voice-icon-btn" type="button" title="Clear test">
-                  <i class="iconoir-erase"></i>
-                </button>
-              </div>
-              <div id="voice-test-log" class="voice-test-log">
-                <div class="voice-test-empty">
-                  <i class="iconoir-chat-bubble-question"></i>
-                  <p>Select or create a voice, then ask a question.</p>
-                </div>
-              </div>
-              <form id="voice-test-form" class="voice-test-form">
-                <textarea id="voice-test-input" rows="3" placeholder="Ask a realistic internal question..." required></textarea>
-                <button id="voice-test-send-btn" class="voice-primary-btn" type="submit">
-                  <i class="iconoir-send-diagonal"></i>
-                  <span>Test</span>
-                </button>
-              </form>
-            </aside>
           </section>
         </div>
       </div>

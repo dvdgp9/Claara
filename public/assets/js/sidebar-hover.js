@@ -204,9 +204,14 @@
   }
 
   async function loadVoices(panel) {
-    const voices = [
-      { id: 'lex', name: 'Lex', description: 'Legal assistant', icon: 'iconoir-book-stack', href: '/voices/lex.php' }
-    ];
+    const response = await fetch('/api/voices/catalog.php', {
+      credentials: 'include'
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error('Failed to load voices');
+    }
+    const voices = data.voices || [];
 
     cache.voices = voices;
     cache.lastFetch.voices = Date.now();
@@ -308,6 +313,7 @@
   }
 
   function isCacheValid(type) {
+    if (type === 'voices') return false;
     const lastFetch = cache.lastFetch[type];
     return lastFetch && (Date.now() - lastFetch < CACHE_TTL);
   }

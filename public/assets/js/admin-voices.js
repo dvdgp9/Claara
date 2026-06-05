@@ -3,7 +3,6 @@
     voices: [],
     selectedSlug: null,
     isCreating: true,
-    testHistory: [],
     documents: []
   };
 
@@ -119,7 +118,6 @@
   function resetForm() {
     state.selectedSlug = null;
     state.isCreating = true;
-    state.testHistory = [];
     state.documents = [];
     $('voice-form').reset();
     $('voice-slug').disabled = false;
@@ -131,7 +129,6 @@
     $('voice-archive-btn').classList.add('hidden');
     $('voice-form-note').textContent = 'Draft voices can be tested here before publishing.';
     renderList();
-    renderTestLog();
     renderDocuments();
   }
 
@@ -144,7 +141,6 @@
 
     state.selectedSlug = slug;
     state.isCreating = false;
-    state.testHistory = [];
     state.documents = [];
     $('voice-name').value = voice.name || '';
     $('voice-slug').value = voice.slug || '';
@@ -162,7 +158,6 @@
     $('voice-archive-btn').classList.toggle('hidden', voice.status === 'archived');
     $('voice-form-note').textContent = `RAG collection: ${voice.rag_collection || `voice_${voice.slug}`}`;
     renderList();
-    renderTestLog();
     loadDocuments().catch((error) => showAlert(error.message, 'error'));
   }
 
@@ -280,6 +275,37 @@
     }
   }
 
+  async function processAllDocuments() {
+    const voice = selectedVoice();
+    if (!voice) return;
+
+    const queue = state.documents.filter((doc) => doc.rag_status !== 'processed' && doc.rag_status !== 'processing');
+    if (!queue.length) {
+      showAlert('No pending documents to process.');
+      return;
+    }
+
+    const button = $('voice-process-all-btn');
+    setBusy(button, true, 'Processing');
+    try {
+      for (let index = 0; index < queue.length; index += 1) {
+        const doc = queue[index];
+        showAlert(`Processing ${index + 1} of ${queue.length}: ${doc.original_filename || doc.filename}`);
+        await api(`/api/admin/voices/documents/process.php?slug=${encodeURIComponent(voice.slug)}&id=${encodeURIComponent(doc.id)}`, {
+          method: 'POST',
+          body: { slug: voice.slug, id: doc.id }
+        });
+      }
+      showAlert(`${queue.length} document${queue.length === 1 ? '' : 's'} processed`);
+      await loadDocuments();
+    } catch (error) {
+      showAlert(error.message, 'error');
+      await loadDocuments().catch(() => {});
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
   function formPayload() {
     return {
       slug: $('voice-slug').value.trim(),
@@ -342,84 +368,14 @@
     }
   }
 
-  function renderTestLog() {
-    const log = $('voice-test-log');
-    const voice = selectedVoice();
-    if (!voice) {
-      log.innerHTML = `
-        <div class="voice-test-empty">
-          <i class="iconoir-chat-bubble-question"></i>
-          <p>Select or create a voice, then ask a question.</p>
-        </div>
-      `;
-      return;
-    }
-
-    $('voice-test-subtitle').textContent = `Testing ${voice.name || voice.slug}`;
-    const processed = state.documents.filter((doc) => doc.rag_status === 'processed').length;
-    if (!state.testHistory.length) {
-      log.innerHTML = `
-        <div class="voice-test-empty">
-          <i class="iconoir-chat-bubble-question"></i>
-          <p>${processed > 0 ? `Ask ${escapeHtml(voice.name || voice.slug)} a realistic question.` : 'Upload and process knowledge before expecting RAG answers.'}</p>
-        </div>
-      `;
-      return;
-    }
-
-    log.innerHTML = state.testHistory.map((message) => `
-      <article class="voice-test-message" data-role="${escapeHtml(message.role)}">
-        <strong>${message.role === 'user' ? 'You' : escapeHtml(voice.name || 'Voice')}</strong>
-        <p>${escapeHtml(message.content)}</p>
-      </article>
-    `).join('');
-    log.scrollTop = log.scrollHeight;
-  }
-
-  async function testVoice(event) {
-    event.preventDefault();
-    const voice = selectedVoice();
-    const input = $('voice-test-input');
-    const message = input.value.trim();
-    if (!voice || !message) return;
-
-    state.testHistory.push({ role: 'user', content: message });
-    input.value = '';
-    renderTestLog();
-
-    const button = $('voice-test-send-btn');
-    setBusy(button, true, 'Testing');
-    try {
-      const data = await api('/api/voices/chat.php', {
-        method: 'POST',
-        body: {
-          voice_id: voice.slug,
-          message,
-          history: state.testHistory.slice(0, -1)
-        }
-      });
-      state.testHistory.push({ role: 'assistant', content: data.answer || data.reply || 'No answer returned' });
-      renderTestLog();
-    } catch (error) {
-      state.testHistory.push({ role: 'assistant', content: `Test failed: ${error.message}` });
-      renderTestLog();
-    } finally {
-      setBusy(button, false);
-    }
-  }
-
   function bindEvents() {
     $('voice-new-btn').addEventListener('click', resetForm);
     $('voice-refresh-btn').addEventListener('click', () => loadVoices().catch((error) => showAlert(error.message, 'error')));
     $('voice-form').addEventListener('submit', saveVoice);
     $('voice-document-form').addEventListener('submit', uploadDocument);
+    $('voice-process-all-btn').addEventListener('click', processAllDocuments);
     $('voice-publish-btn').addEventListener('click', publishVoice);
     $('voice-archive-btn').addEventListener('click', archiveVoice);
-    $('voice-test-form').addEventListener('submit', testVoice);
-    $('voice-test-clear-btn').addEventListener('click', () => {
-      state.testHistory = [];
-      renderTestLog();
-    });
     $('voice-name').addEventListener('input', () => {
       if (state.isCreating && !$('voice-slug').dataset.touched) {
         $('voice-slug').value = slugify($('voice-name').value);
