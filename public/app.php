@@ -946,13 +946,13 @@ $headerShowLogo = true;
     }
 
     function normalizeCapabilityRoute(route) {
-      return String(route || '').trim().replace(/[.,;:!?]+$/, '');
+      return String(route || '').trim().replace(/[*_~`"'.,;:!?]+$/g, '');
     }
 
     function extractCapabilityRoutes(content) {
       const routes = new Set();
       const text = String(content || '');
-      const regex = /\/(?:voices|gestos)\/[^\s`)<\]]+/g;
+      const regex = /\/(?:voices|gestos)\/[^\s`)<\]*_~"']+/g;
       let match;
 
       while ((match = regex.exec(text)) !== null) {
@@ -981,17 +981,23 @@ $headerShowLogo = true;
     }
 
     function buildCapabilityAction(route) {
+      route = normalizeCapabilityRoute(route);
       const item = capabilityRouteIndex.get(route);
       const link = document.createElement('a');
       link.href = route;
       link.className = 'capability-action';
       link.dataset.capabilityRoute = route;
       link.dataset.capabilityType = item?.type || (route.startsWith('/voices/') ? 'voice' : 'gesture');
-      if (item?.slug) link.dataset.capabilitySlug = item.slug;
+      const inferredVoiceSlug = route.startsWith('/voices/')
+        ? (route.match(/[?&]voice=([^&]+)/)?.[1] || route.match(/\/voices\/([^\/?.]+)\.php/)?.[1] || '')
+        : '';
+      if (item?.slug || inferredVoiceSlug) {
+        link.dataset.capabilitySlug = item?.slug || decodeURIComponent(inferredVoiceSlug);
+      }
       link.innerHTML = `
         <span class="capability-action-icon"><i class="${escapeHtml(capabilityIcon(item, route))}"></i></span>
         <span class="capability-action-copy">
-          <span class="capability-action-label">${escapeHtml(link.dataset.capabilityType === 'voice' ? `Consultar con ${capabilityLabel(item, route)}` : capabilityLabel(item, route))}</span>
+          <span class="capability-action-label">${escapeHtml(link.dataset.capabilityType === 'voice' ? `Ask ${capabilityLabel(item, route)}` : capabilityLabel(item, route))}</span>
           <span class="capability-action-meta">${escapeHtml(capabilityMeta(item, route))}</span>
         </span>
         <i class="iconoir-arrow-right capability-action-arrow"></i>
@@ -1035,11 +1041,11 @@ $headerShowLogo = true;
       button.classList.add('is-loading');
       const label = button.querySelector('.capability-action-label');
       const originalLabel = label ? label.textContent : '';
-      if (label) label.textContent = 'Consultando...';
+      if (label) label.textContent = 'Asking...';
 
       isGenerating = true;
       const { bubble } = append('assistant', '', null, [], null, { isStreaming: true });
-      updateStreamingMessage(bubble, 'Consultando la voz especializada...');
+      updateStreamingMessage(bubble, 'Asking the specialized voice...');
 
       try {
         const result = await api('/api/capabilities/voice-query.php', {
@@ -1052,7 +1058,7 @@ $headerShowLogo = true;
         });
 
         if (!result.success || !result.message) {
-          throw new Error('La voz no devolvió respuesta');
+          throw new Error('The voice did not return a response');
         }
 
         finalizeStreamingMessage(bubble, result.message.content, null, null, result.message.id);
@@ -1075,7 +1081,7 @@ $headerShowLogo = true;
       const cleaned = String(text || '')
         .replace(/route\s*:/ig, '')
         .replace(/ruta\s*:/ig, '')
-        .replace(/[*\-•]/g, '')
+        .replace(/[*_~`\-•]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
 
@@ -1107,7 +1113,7 @@ $headerShowLogo = true;
       if (!textNode) return;
 
       textNode.textContent = textNode.textContent
-        .replace(new RegExp(`(?:[*\\-•]\\s*)?(?:Route|Ruta)\\s*:\\s*${escapeRegExp(route)}`, 'gi'), '')
+        .replace(new RegExp(`(?:[*_~\\-•]\\s*)?(?:Route|Ruta)\\s*:\\s*${escapeRegExp(route)}[*_~]*`, 'gi'), '')
         .replace(route, '')
         .replace(/\s{2,}/g, ' ')
         .trim();
