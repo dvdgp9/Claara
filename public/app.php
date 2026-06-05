@@ -1000,6 +1000,52 @@ $headerShowLogo = true;
       return normalizeCapabilityRoute(node.textContent || '').includes(route);
     }
 
+    function isRouteOnlyText(text, route) {
+      const cleaned = String(text || '')
+        .replace(/route\s*:/ig, '')
+        .replace(/ruta\s*:/ig, '')
+        .replace(/[*\-•]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      return normalizeCapabilityRoute(cleaned) === route;
+    }
+
+    function hideCapabilityRouteText(containerEl, route) {
+      const candidates = Array.from(containerEl.querySelectorAll('li, p, div, code, a'))
+        .filter(node => !node.closest('.capability-actions') && routeAppearsInNode(node, route));
+
+      for (const node of candidates) {
+        if (isRouteOnlyText(node.textContent, route)) {
+          node.classList.add('hidden');
+          return;
+        }
+      }
+
+      const walker = document.createTreeWalker(containerEl, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (node.parentElement?.closest('.capability-actions')) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return normalizeCapabilityRoute(node.textContent || '').includes(route)
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_SKIP;
+        }
+      });
+      const textNode = walker.nextNode();
+      if (!textNode) return;
+
+      textNode.textContent = textNode.textContent
+        .replace(new RegExp(`(?:[*\\-•]\\s*)?(?:Route|Ruta)\\s*:\\s*${escapeRegExp(route)}`, 'gi'), '')
+        .replace(route, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    function escapeRegExp(value) {
+      return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
     function findCapabilityInsertionTarget(containerEl, route) {
       const directNodes = Array.from(containerEl.childNodes);
       for (const node of directNodes) {
@@ -1036,6 +1082,7 @@ $headerShowLogo = true;
       actionWrap.appendChild(buildCapabilityAction(route));
 
       const target = findCapabilityInsertionTarget(containerEl, route);
+      hideCapabilityRouteText(containerEl, route);
       if (target.mode === 'after') {
         target.ref.insertAdjacentElement('afterend', actionWrap);
       } else if (target.mode === 'before') {

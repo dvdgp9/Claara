@@ -864,10 +864,6 @@
 }
 
 @media (max-width: 640px) {
-  .capability-actions-list {
-    flex-direction: column;
-  }
-
   .capability-action {
     width: 100%;
     max-width: 100%;
