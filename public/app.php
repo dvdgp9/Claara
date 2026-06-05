@@ -980,43 +980,78 @@ $headerShowLogo = true;
       return 'Guided workflow';
     }
 
+    function buildCapabilityAction(route) {
+      const item = capabilityRouteIndex.get(route);
+      const link = document.createElement('a');
+      link.href = route;
+      link.className = 'capability-action';
+      link.innerHTML = `
+        <span class="capability-action-icon"><i class="${escapeHtml(capabilityIcon(item, route))}"></i></span>
+        <span class="capability-action-copy">
+          <span class="capability-action-label">${escapeHtml(capabilityLabel(item, route))}</span>
+          <span class="capability-action-meta">${escapeHtml(capabilityMeta(item, route))}</span>
+        </span>
+        <i class="iconoir-arrow-right capability-action-arrow"></i>
+      `;
+      return link;
+    }
+
+    function routeAppearsInNode(node, route) {
+      return normalizeCapabilityRoute(node.textContent || '').includes(route);
+    }
+
+    function findCapabilityInsertionTarget(containerEl, route) {
+      const directNodes = Array.from(containerEl.childNodes);
+      for (const node of directNodes) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          if (normalizeCapabilityRoute(node.textContent || '').includes(route)) {
+            return node.nextSibling ? { mode: 'before', ref: node.nextSibling } : { mode: 'append', ref: containerEl };
+          }
+          continue;
+        }
+
+        if (node.nodeType !== Node.ELEMENT_NODE || node.classList?.contains('capability-actions')) {
+          continue;
+        }
+
+        if (routeAppearsInNode(node, route)) {
+          return { mode: 'after', ref: node };
+        }
+      }
+
+      const nested = Array.from(containerEl.querySelectorAll('p, li, blockquote, div, h1, h2, h3, code, a'))
+        .filter(node => !node.closest('.capability-actions'));
+      for (const node of nested) {
+        if (routeAppearsInNode(node, route)) {
+          return { mode: 'after', ref: node };
+        }
+      }
+
+      return { mode: 'append', ref: containerEl };
+    }
+
+    function insertCapabilityAction(containerEl, route) {
+      const actionWrap = document.createElement('div');
+      actionWrap.className = 'capability-actions capability-actions-inline';
+      actionWrap.appendChild(buildCapabilityAction(route));
+
+      const target = findCapabilityInsertionTarget(containerEl, route);
+      if (target.mode === 'after') {
+        target.ref.insertAdjacentElement('afterend', actionWrap);
+      } else if (target.mode === 'before') {
+        target.ref.parentNode.insertBefore(actionWrap, target.ref);
+      } else {
+        target.ref.appendChild(actionWrap);
+      }
+    }
+
     function enhanceCapabilityActions(containerEl, content) {
       if (!containerEl) return;
-      const existing = containerEl.querySelector(':scope > .capability-actions');
-      if (existing) existing.remove();
-
+      containerEl.querySelectorAll('.capability-actions').forEach(existing => existing.remove());
       const routes = extractCapabilityRoutes(content);
       if (!routes.length) return;
 
-      const actions = document.createElement('div');
-      actions.className = 'capability-actions';
-
-      const title = document.createElement('div');
-      title.className = 'capability-actions-title';
-      title.textContent = routes.length === 1 ? 'Recommended workspace' : 'Recommended workspaces';
-      actions.appendChild(title);
-
-      const list = document.createElement('div');
-      list.className = 'capability-actions-list';
-
-      routes.slice(0, 4).forEach(route => {
-        const item = capabilityRouteIndex.get(route);
-        const link = document.createElement('a');
-        link.href = route;
-        link.className = 'capability-action';
-        link.innerHTML = `
-          <span class="capability-action-icon"><i class="${escapeHtml(capabilityIcon(item, route))}"></i></span>
-          <span class="capability-action-copy">
-            <span class="capability-action-label">${escapeHtml(capabilityLabel(item, route))}</span>
-            <span class="capability-action-meta">${escapeHtml(capabilityMeta(item, route))}</span>
-          </span>
-          <i class="iconoir-arrow-right capability-action-arrow"></i>
-        `;
-        list.appendChild(link);
-      });
-
-      actions.appendChild(list);
-      containerEl.appendChild(actions);
+      routes.slice(0, 4).forEach(route => insertCapabilityAction(containerEl, route));
     }
 
     // Add a "copy" button to each fenced code block inside a rendered container
