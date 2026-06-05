@@ -144,7 +144,7 @@ $headerBackText = 'Chat';
                 <div class="voice-form-footer">
                   <p id="voice-form-note">Draft voices can be tested here before publishing.</p>
                   <button id="voice-save-btn" class="voice-primary-btn" type="submit">
-                    <i class="iconoir-save-action-floppy"></i>
+                    <i class="iconoir-floppy-disk"></i>
                     <span>Save voice</span>
                   </button>
                 </div>
