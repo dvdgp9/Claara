@@ -55,24 +55,27 @@ if (!$doc) {
 $extension = strtolower(pathinfo($doc['path'], PATHINFO_EXTENSION));
 $isDownload = isset($_GET['download']) && $_GET['download'] == '1';
 
+if ($isDownload) {
+    if (!file_exists($doc['path'])) {
+        Response::error('file_not_found', 'File not found on server', 404);
+    }
+
+    $mimeTypes = [
+        'pdf' => 'application/pdf',
+        'txt' => 'text/plain; charset=utf-8',
+        'md' => 'text/markdown; charset=utf-8',
+    ];
+    header('Content-Type: ' . ($mimeTypes[$extension] ?? 'application/octet-stream'));
+    header('Content-Disposition: inline; filename="' . basename($doc['path']) . '"');
+    header('Content-Length: ' . filesize($doc['path']));
+    header('Cache-Control: private, max-age=300');
+
+    readfile($doc['path']);
+    exit;
+}
+
 // Si es PDF u otro binario
 if (in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx'])) {
-    // Si se pide descarga, enviar el archivo
-    if ($isDownload) {
-        if (!file_exists($doc['path'])) {
-            Response::error('file_not_found', 'File not found on server', 404);
-        }
-        
-        // Configurar headers para mostrar PDF en navegador
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="' . basename($doc['path']) . '"');
-        header('Content-Length: ' . filesize($doc['path']));
-        header('Cache-Control: public, max-age=3600');
-        
-        readfile($doc['path']);
-        exit;
-    }
-    
     // Si no es descarga, devolver info JSON
     Response::json([
         'success' => true,

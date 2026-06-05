@@ -865,8 +865,8 @@ $headerShowLogo = true;
         return `%%CODEBLOCK${idx}%%`;
       });
 
-      // Markdown links: [text](url)
-      s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline break-all">$1</a>');
+      // Markdown links: [text](url). Supports external and same-origin internal paths.
+      s = s.replace(/\[([^\]]+)\]\(((?:https?:\/\/|\/)[^\s\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline break-all">$1</a>');
 
       // Auto-links: URLs not already in an <a> tag
       // This is a simple regex that avoids matching URLs already inside href="..."

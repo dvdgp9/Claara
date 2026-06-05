@@ -11,6 +11,7 @@ use Auth\AuthService;
 use Repos\ConversationsRepo;
 use Repos\MessagesRepo;
 use Repos\UsageLogRepo;
+use Voices\VoiceContextBuilder;
 use Voices\VoiceQueryService;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -68,13 +69,32 @@ try {
 $voice = $result['voice'] ?? [];
 $voiceName = (string)($voice['name'] ?? $voiceSlug);
 $answer = trim((string)$result['answer']);
-$content = "### Respuesta de {$voiceName}\n\n" . $answer;
+$content = "### Answer from {$voiceName}\n\n";
+
+$sourceMatch = $result['meta']['source_match'] ?? null;
+if (is_array($sourceMatch) && isset($sourceMatch['percent'])) {
+    $percent = max(0, min(100, (int)$sourceMatch['percent']));
+    $band = trim((string)($sourceMatch['band'] ?? ''));
+    $content .= "**Source match:** {$percent}%";
+    if ($band !== '') {
+        $content .= " ({$band})";
+    }
+    $content .= "\n\n";
+}
+
+$content .= $answer;
 
 $sources = array_values(array_filter((array)($result['meta']['sources'] ?? [])));
 if ($sources) {
-    $content .= "\n\n**Fuentes consultadas:**\n";
+    $content .= "\n\n**Sources consulted:**\n";
     foreach (array_slice($sources, 0, 8) as $source) {
-        $content .= "\n- " . (string)$source;
+        $source = trim((string)$source);
+        $url = resolve_voice_source_url($voiceSlug, $source);
+        if ($url) {
+            $content .= "\n- [" . escape_markdown_link_text($source) . "]({$url})";
+        } else {
+            $content .= "\n- {$source}";
+        }
     }
 }
 
@@ -101,3 +121,60 @@ Response::json([
     ],
     'meta' => $result['meta'],
 ]);
+
+function resolve_voice_source_url(string $voiceSlug, string $source): ?string
+{
+    try {
+        $builder = new VoiceContextBuilder($voiceSlug);
+        $sourceKey = normalize_source_name($source);
+        foreach ($builder->listDocuments() as $doc) {
+            $name = (string)($doc['name'] ?? '');
+            $path = (string)($doc['path'] ?? '');
+            $candidates = [
+                $name,
+                basename($path),
+                pathinfo($name, PATHINFO_FILENAME),
+                pathinfo($path, PATHINFO_FILENAME),
+            ];
+
+            foreach ($candidates as $candidate) {
+                $candidateKey = normalize_source_name($candidate);
+                if ($candidateKey !== '' && source_names_match($sourceKey, $candidateKey)) {
+                    return '/api/voices/doc.php?voice_id=' . rawurlencode($voiceSlug)
+                        . '&doc_id=' . rawurlencode((string)$doc['id'])
+                        . '&download=1';
+                }
+            }
+        }
+    } catch (\Throwable $e) {
+        return null;
+    }
+
+    return null;
+}
+
+function normalize_source_name(string $value): string
+{
+    $value = mb_strtolower(trim($value));
+    $value = preg_replace('/\.[a-z0-9]{2,5}$/i', '', $value) ?? $value;
+    $value = preg_replace('/[^a-z0-9áéíóúüñ]+/iu', ' ', $value) ?? $value;
+    return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
+}
+
+function source_names_match(string $sourceKey, string $candidateKey): bool
+{
+    if ($sourceKey === $candidateKey) {
+        return true;
+    }
+
+    if (mb_strlen($sourceKey) < 6 || mb_strlen($candidateKey) < 6) {
+        return false;
+    }
+
+    return str_contains($sourceKey, $candidateKey) || str_contains($candidateKey, $sourceKey);
+}
+
+function escape_markdown_link_text(string $value): string
+{
+    return str_replace([']', '['], ['\]', '\['], $value);
+}
