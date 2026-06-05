@@ -8,7 +8,7 @@ use Throwable;
 
 class CapabilityCatalogService
 {
-    private const GESTURE_META = [
+    private const FALLBACK_GESTURE_META = [
         'write-article' => [
             'route' => '/gestos/escribir-articulo.php',
             'when_to_use' => 'Drafting or refining long-form articles from a topic, brief, or source material.',
@@ -186,23 +186,64 @@ class CapabilityCatalogService
         $gestures = [];
         foreach ($this->accessRepo->getAccessibleGestures($userId) as $gesture) {
             $slug = (string)($gesture['feature_slug'] ?? '');
-            $meta = self::GESTURE_META[$slug] ?? [
+            $meta = self::FALLBACK_GESTURE_META[$slug] ?? [
                 'route' => '/gestos/',
                 'when_to_use' => (string)($gesture['description'] ?? 'A structured workflow is better than a free-form chat answer.'),
                 'inputs' => 'the request details and any relevant source material',
             ];
+            $inputSchema = $this->decodeInputSchema($gesture['input_schema'] ?? null);
 
             $gestures[] = [
                 'slug' => $slug,
                 'name' => (string)($gesture['name'] ?? $slug),
                 'description' => (string)($gesture['description'] ?? ''),
-                'route' => $meta['route'],
-                'when_to_use' => $meta['when_to_use'],
-                'inputs' => $meta['inputs'],
+                'route' => $this->firstText($gesture['route'] ?? null, $meta['route']),
+                'when_to_use' => $this->firstText($gesture['trigger_guidance'] ?? null, $meta['when_to_use']),
+                'inputs' => $inputSchema ?: $meta['inputs'],
             ];
         }
 
         return $gestures;
+    }
+
+    private function decodeInputSchema($raw): string
+    {
+        if (!is_string($raw) || trim($raw) === '') {
+            return '';
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return trim($raw);
+        }
+
+        if (isset($decoded['summary']) && is_string($decoded['summary'])) {
+            return trim($decoded['summary']);
+        }
+
+        $fields = $decoded['fields'] ?? [];
+        if (is_array($fields) && $fields) {
+            $labels = [];
+            foreach ($fields as $field) {
+                if (is_array($field) && !empty($field['label'])) {
+                    $labels[] = (string)$field['label'];
+                } elseif (is_string($field)) {
+                    $labels[] = $field;
+                }
+            }
+
+            if ($labels) {
+                return implode(', ', array_slice($labels, 0, 8));
+            }
+        }
+
+        return '';
+    }
+
+    private function firstText($primary, string $fallback): string
+    {
+        $primary = is_string($primary) ? trim($primary) : '';
+        return $primary !== '' ? $primary : $fallback;
     }
 
     private function voiceKnowledgeStatus(string $slug): string

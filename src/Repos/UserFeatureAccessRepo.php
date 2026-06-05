@@ -17,6 +17,7 @@ class UserFeatureAccessRepo
     ];
 
     private PDO $pdo;
+    private static ?array $availableFeaturesColumns = null;
 
     public function __construct(?PDO $pdo = null)
     {
@@ -80,7 +81,7 @@ class UserFeatureAccessRepo
     public function getAvailableFeatures(): array
     {
         $stmt = $this->pdo->query('
-            SELECT id, feature_type, feature_slug, name, description, icon, sort_order
+            SELECT ' . $this->availableFeatureSelectColumns() . '
             FROM available_features
             WHERE is_active = 1
             ORDER BY feature_type, sort_order
@@ -255,7 +256,7 @@ class UserFeatureAccessRepo
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         $allGestures = $this->pdo->query('
-            SELECT feature_slug, name, description, icon
+            SELECT ' . $this->availableFeatureSelectColumns() . '
             FROM available_features
             WHERE feature_type = "gesture" AND is_active = 1
             ORDER BY sort_order
@@ -288,7 +289,7 @@ class UserFeatureAccessRepo
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         $allVoices = $this->pdo->query('
-            SELECT feature_slug, name, description, icon
+            SELECT ' . $this->availableFeatureSelectColumns() . '
             FROM available_features
             WHERE feature_type = "voice" AND is_active = 1
             ORDER BY sort_order
@@ -308,5 +309,38 @@ class UserFeatureAccessRepo
         $allowed = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'feature_slug');
 
         return array_filter($allVoices, fn($v) => in_array($v['feature_slug'], $allowed));
+    }
+
+    private function availableFeatureSelectColumns(): string
+    {
+        $baseColumns = ['id', 'feature_type', 'feature_slug', 'name', 'description', 'icon', 'sort_order'];
+        $optionalColumns = [
+            'route' => 'NULL AS route',
+            'trigger_guidance' => 'NULL AS trigger_guidance',
+            'input_schema' => 'NULL AS input_schema',
+        ];
+
+        $available = $this->availableFeaturesColumns();
+        $select = $baseColumns;
+        foreach ($optionalColumns as $column => $fallback) {
+            $select[] = in_array($column, $available, true) ? $column : $fallback;
+        }
+
+        return implode(', ', $select);
+    }
+
+    private function availableFeaturesColumns(): array
+    {
+        if (self::$availableFeaturesColumns !== null) {
+            return self::$availableFeaturesColumns;
+        }
+
+        $stmt = $this->pdo->query('SHOW COLUMNS FROM available_features');
+        self::$availableFeaturesColumns = array_map(
+            fn(array $row): string => (string)$row['Field'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []
+        );
+
+        return self::$availableFeaturesColumns;
     }
 }
