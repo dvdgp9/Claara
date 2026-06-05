@@ -985,15 +985,86 @@ $headerShowLogo = true;
       const link = document.createElement('a');
       link.href = route;
       link.className = 'capability-action';
+      link.dataset.capabilityRoute = route;
+      link.dataset.capabilityType = item?.type || (route.startsWith('/voices/') ? 'voice' : 'gesture');
+      if (item?.slug) link.dataset.capabilitySlug = item.slug;
       link.innerHTML = `
         <span class="capability-action-icon"><i class="${escapeHtml(capabilityIcon(item, route))}"></i></span>
         <span class="capability-action-copy">
-          <span class="capability-action-label">${escapeHtml(capabilityLabel(item, route))}</span>
+          <span class="capability-action-label">${escapeHtml(link.dataset.capabilityType === 'voice' ? `Consultar con ${capabilityLabel(item, route)}` : capabilityLabel(item, route))}</span>
           <span class="capability-action-meta">${escapeHtml(capabilityMeta(item, route))}</span>
         </span>
         <i class="iconoir-arrow-right capability-action-arrow"></i>
       `;
+      if (link.dataset.capabilityType === 'voice') {
+        link.addEventListener('click', handleVoiceCapabilityClick);
+      }
       return link;
+    }
+
+    function getMessageWrapFromElement(element) {
+      return element.closest('[data-role="assistant"], [data-role="user"]')?.closest('.group.flex.flex-col')
+        || element.closest('.group.flex.flex-col');
+    }
+
+    function getPreviousUserPrompt(element) {
+      let wrap = getMessageWrapFromElement(element);
+      while (wrap && wrap.previousElementSibling) {
+        wrap = wrap.previousElementSibling;
+        if (wrap.dataset.role === 'user') {
+          const bubble = wrap.querySelector('.text-conversation');
+          return ((bubble ? bubble.textContent : wrap.textContent) || '').trim();
+        }
+      }
+      return '';
+    }
+
+    async function handleVoiceCapabilityClick(event) {
+      event.preventDefault();
+      const button = event.currentTarget;
+      if (button.dataset.loading === '1' || isGenerating) return;
+
+      const voiceSlug = button.dataset.capabilitySlug;
+      const prompt = getPreviousUserPrompt(button);
+      if (!voiceSlug || !prompt || !currentConversationId) {
+        window.location.href = button.href;
+        return;
+      }
+
+      button.dataset.loading = '1';
+      button.classList.add('is-loading');
+      const label = button.querySelector('.capability-action-label');
+      const originalLabel = label ? label.textContent : '';
+      if (label) label.textContent = 'Consultando...';
+
+      isGenerating = true;
+      const { bubble } = append('assistant', '', null, [], null, { isStreaming: true });
+      updateStreamingMessage(bubble, 'Consultando la voz especializada...');
+
+      try {
+        const result = await api('/api/capabilities/voice-query.php', {
+          method: 'POST',
+          body: {
+            conversation_id: currentConversationId,
+            voice_slug: voiceSlug,
+            message: prompt
+          }
+        });
+
+        if (!result.success || !result.message) {
+          throw new Error('La voz no devolvió respuesta');
+        }
+
+        finalizeStreamingMessage(bubble, result.message.content, null, null, result.message.id);
+        await loadConversations();
+      } catch (error) {
+        bubble.innerHTML = `<span class="text-red-500">Error: ${escapeHtml(error.message)}</span>`;
+      } finally {
+        isGenerating = false;
+        button.dataset.loading = '0';
+        button.classList.remove('is-loading');
+        if (label) label.textContent = originalLabel;
+      }
     }
 
     function routeAppearsInNode(node, route) {

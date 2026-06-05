@@ -863,6 +863,21 @@
   transform: translateX(2px);
 }
 
+.capability-action.is-loading {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.capability-action.is-loading .capability-action-icon i {
+  animation: capabilitySpin 0.9s linear infinite;
+}
+
+@keyframes capabilitySpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 640px) {
   .capability-action {
     width: 100%;

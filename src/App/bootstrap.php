@@ -35,6 +35,15 @@ require_once dirname(__DIR__) . '/Claara/CapabilityCatalogService.php';
 // Chat (LLM)
 require_once dirname(__DIR__) . '/Chat/OpenRouterClient.php';
 
+// RAG
+require_once dirname(__DIR__) . '/Rag/QdrantClient.php';
+require_once dirname(__DIR__) . '/Rag/EmbeddingService.php';
+require_once dirname(__DIR__) . '/Rag/LexRetriever.php';
+
+// Voices
+require_once dirname(__DIR__) . '/Voices/VoiceContextBuilder.php';
+require_once dirname(__DIR__) . '/Voices/VoiceQueryService.php';
+
 // Audio (Podcast)
 require_once dirname(__DIR__) . '/Audio/GeminiTtsClient.php';
 require_once dirname(__DIR__) . '/Audio/ContentExtractor.php';
