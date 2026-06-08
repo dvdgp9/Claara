@@ -103,7 +103,12 @@ $messageId = $msgs->create(
     (int)$user['id'],
     'assistant',
     $content,
-    (string)($result['model'] ?? 'google/gemini-3-flash-preview')
+    (string)($result['model'] ?? 'google/gemini-3-flash-preview'),
+    null,                            // inputTokens
+    null,                            // outputTokens
+    null,                            // fileId
+    null,                            // images
+    ['voice_slug' => $voiceSlug]     // metadata: traza qué voz respondió (para flags)
 );
 $convos->touch($conversationId);
 (new UsageLogRepo())->log((int)$user['id'], 'voice', 1, ['voice_id' => $voiceSlug, 'source' => 'claara_chat']);

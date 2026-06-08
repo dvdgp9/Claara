@@ -1906,3 +1906,75 @@ El chat principal (`public/index.php`) funciona, pero la UX/UI tiene carencias f
 - En migraciones con foreign keys, confirmar que los tipos coinciden exactamente con la tabla referenciada. `users.id` usa `BIGINT UNSIGNED`; usar `INT` en tablas nuevas provoca MySQL errno 150.
 - Evitar foreign keys no esenciales contra tablas antiguas con historial de tipos inconsistente. Para `lead_finder_runs.job_id`, basta índice normal y validación en aplicación.
 - En exportación de textos para traducción, separar por defecto páginas públicas de admin evita ruido para proveedores externos; mantener `--include-admin` como modo explícito.
+
+---
+
+# FEATURE: Sistema de Flags a Responsables de Voces (2026-06-08)
+
+## Background and Motivation — Flags
+
+Cada voz puede tener uno o varios **responsables** (tabla `voice_responsibles`, slug-based). El objetivo es que los usuarios puedan **reportar problemas sobre una voz** ("falta información para esta pregunta", "respuesta incorrecta", etc.) y que esos reportes lleguen a un **panel** donde el responsable de esa voz los gestione. La señal nace en el chat, ligada siempre a una voz concreta, y se enruta al responsable correspondiente.
+
+## Key Challenges and Analysis — Flags
+
+Hallazgos de la exploración del código (commit base `ed4f590`):
+
+1. **Responsabilidades son slug-based.** `voice_responsibles (voice_slug, user_id)` mapea voz→responsables. El chat ya maneja ese mismo `slug` en cliente (`data-capability-slug`, `voice_slug`). El flag puede llevar el slug directo; no hay que mapear `conversation.voice_id`.
+2. **El chat general NO se convierte en voz.** `public/api/chat.php` (asistente general) solo *recomienda* voces con tarjetas "Ask X". Cuando el usuario pulsa "Ask Lex", se llama a `public/api/capabilities/voice-query.php` con `voice_slug`, que devuelve la respuesta real de la voz ("Answer from Lex") y la persiste con `MessagesRepo::create` (línea ~101). **Ese es el punto de anclaje del flag en chat general.**
+3. **Prerrequisito mínimo y aislado:** `MessagesRepo::create` hoy NO escribe `messages.metadata` (la columna existe). Hay que (a) ampliar `create()` para aceptar `?array $metadata`, y (b) que `voice-query.php` selle `{voice_slug}` en el mensaje de la voz. Así cada respuesta de voz (en chat general o en página de voz) tiene su slug rastreable para el flag. No toca el flujo del chat general general.
+4. **Tres orígenes de flag, todos con slug disponible:** (a) chat dentro de una voz → slug de la conversación; (b) "Answer from Lex" en chat general → slug sellado en metadata; (c) tarjeta de recomendación → `data-capability-slug` (secundario).
+5. **Panel:** entrada propia en sidebar, gated por "responsable de ≥1 voz O admin" (NO dentro de /admin, porque el sentido es que un responsable no-admin reciba flags). Responsable ve solo sus voces; admin ve todo + bandeja "sin asignar" (voces sin responsable → fallback admins).
+6. **Notificación:** solo contador en UI (badge de flags abiertos). Sin email en v1.
+7. **Datos en prod:** `voice_responsibles` tiene 0 filas hoy. Hasta que se asignen responsables, todos los flags caen en la bandeja "sin asignar"/admin. Tenerlo en cuenta al probar.
+8. **Restricciones técnicas (lecciones previas):** migración nueva en `docs/migrations/*.sql` (por `.gitignore`); FK a `users`/`conversations`/`messages` con `BIGINT UNSIGNED`; `voice_flags.voice_slug` SIN FK (coherente con patrón slug actual).
+
+## High-level Task Breakdown — Flags
+
+- [ ] **T0 — Prerrequisito metadata en mensajes**
+  - Ampliar `MessagesRepo::create()` con `?array $metadata = null` (INSERT a columna `metadata` JSON).
+  - `voice-query.php`: pasar `['voice_slug' => $voiceSlug]` como metadata al crear el mensaje de la voz.
+  - Success: un mensaje de voz nuevo en chat general guarda `{"voice_slug":"lex"}` en `messages.metadata` (verificable por SQL). Sin regresión en mensajes existentes (metadata NULL permitido).
+
+- [ ] **T1 — Migración `voice_flags`** (`docs/migrations/022_voice_flags.sql`)
+  - Columnas: `id`, `voice_slug VARCHAR(80) NULL`, `raised_by_user_id BIGINT UNSIGNED NULL`, `conversation_id BIGINT UNSIGNED NULL`, `message_id BIGINT UNSIGNED NULL`, `type ENUM('missing_info','incorrect','other')`, `note TEXT`, `status ENUM('open','in_progress','resolved','dismissed') DEFAULT 'open'`, `resolved_by_user_id BIGINT UNSIGNED NULL`, `resolution_note TEXT NULL`, `created_at`, `updated_at`. FKs a users/conversations/messages `ON DELETE SET NULL`. Índices por `voice_slug`, `status`, `raised_by_user_id`.
+  - Success: migración aplica en local sin errores; tabla existe con tipos correctos.
+
+- [ ] **T2 — `VoiceFlagsRepo`** (`src/Repos/VoiceFlagsRepo.php`)
+  - `create()`, `listForResponsible(userId)` (flags de sus voces), `listAll()` (admin), `listUnassigned()`, `updateStatus(id, status, resolvedBy, note)`, `countOpenForUser(userId)`.
+  - Success: métodos cubiertos; enrutado por join con `voice_responsibles`.
+
+- [ ] **T3 — Endpoints API**
+  - `POST /api/flags/create.php` (crea flag; valida slug/tipo/nota).
+  - `GET /api/flags/list.php` (según rol: responsable/admin, filtros estado/voz).
+  - `PATCH/POST /api/flags/update.php` (cambiar estado/resolver; solo responsable de esa voz o admin).
+  - Success: crear+listar+resolver funciona con control de permisos.
+
+- [ ] **T4 — Botón 🚩 reportar en mensajes del asistente** (`public/app.php`)
+  - Botón discreto en mensajes de voz y "answer-from-voice" (con slug disponible) → mini-modal (tipo + nota) → POST a create. CSS en `styles.css`.
+  - Success: el usuario puede reportar desde una respuesta de voz; el flag queda en BD con slug + message_id.
+
+- [ ] **T5 — Panel de flags en sidebar**
+  - Página nueva (p. ej. `public/flags.php`), entrada en sidebar visible si `responsable de ≥1 voz O admin`. Lista filtrable, contexto del mensaje, acciones tomar/resolver/descartar, badge contador de abiertos.
+  - Success: responsable ve solo sus flags; admin ve todo + sin-asignar; resolver actualiza estado.
+
+- [ ] **T6 — Enrutado y fallback**
+  - slug→`voice_responsibles`; sin responsable → bandeja "sin asignar" (admins).
+  - Success: flag de voz con responsable aparece a ese responsable; flag de voz sin responsable aparece a admins.
+
+## Project Status Board — Flags
+- [x] T0 Prerrequisito metadata en mensajes — implementado, pendiente verificación usuario (BD local no accesible para el agente)
+- [ ] T1 Migración voice_flags
+- [ ] T2 VoiceFlagsRepo
+- [ ] T3 Endpoints API
+- [ ] T4 Botón reportar en chat
+- [ ] T5 Panel en sidebar
+- [ ] T6 Enrutado y fallback
+
+## Deploy notes — Flags
+- Prod: `git@github.com:dvdgp9/Claara.git`, rama `main`, deploy por `git pull` (como `dvdgp` vía sudo en `iaiapro:/home/dvdgp/web/claara.tech/public_html`).
+- Flujo acordado: desarrollar/probar en local → desplegar a prod cuando el usuario verifique → aplicar migración en prod.
+- BD prod accesible vía credenciales de `.env` (cliente mysql en el servidor).
+
+## Lessons — Flags
+- (acceso prod) La cuenta `codex` tiene `sudo` root NOPASSWD completo, no limitado. Autolimitarse a lo necesario; señalado al usuario el 2026-06-08.
+- (anclaje de flag) El chat general no ejecuta voces: las respuestas de voz vienen de `voice-query.php`. Para rastrear qué voz respondió, sellar `voice_slug` en `messages.metadata` en ese endpoint.

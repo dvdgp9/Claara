@@ -14,17 +14,18 @@ class MessagesRepo {
 
     public function listByConversation(int $conversationId): array
     {
-        $stmt = $this->pdo->prepare('SELECT id, role, content, file_id, images, model, input_tokens, output_tokens, created_at FROM messages WHERE conversation_id = ? ORDER BY id ASC');
+        $stmt = $this->pdo->prepare('SELECT id, role, content, file_id, images, model, input_tokens, output_tokens, metadata, created_at FROM messages WHERE conversation_id = ? ORDER BY id ASC');
         $stmt->execute([$conversationId]);
         return $stmt->fetchAll() ?: [];
     }
 
-    public function create(int $conversationId, ?int $userId, string $role, string $content, ?string $model = null, ?int $inputTokens = null, ?int $outputTokens = null, ?int $fileId = null, ?array $images = null): int
+    public function create(int $conversationId, ?int $userId, string $role, string $content, ?string $model = null, ?int $inputTokens = null, ?int $outputTokens = null, ?int $fileId = null, ?array $images = null, ?array $metadata = null): int
     {
         $now = date('Y-m-d H:i:s');
         $imagesJson = $images ? json_encode($images) : null;
-        $stmt = $this->pdo->prepare('INSERT INTO messages (conversation_id, user_id, role, content, file_id, images, model, input_tokens, output_tokens, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)');
-        $stmt->execute([$conversationId, $userId, $role, $content, $fileId, $imagesJson, $model, $inputTokens, $outputTokens, $now]);
+        $metadataJson = ($metadata !== null && $metadata !== []) ? json_encode($metadata) : null;
+        $stmt = $this->pdo->prepare('INSERT INTO messages (conversation_id, user_id, role, content, file_id, images, model, input_tokens, output_tokens, metadata, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+        $stmt->execute([$conversationId, $userId, $role, $content, $fileId, $imagesJson, $model, $inputTokens, $outputTokens, $metadataJson, $now]);
         return (int)$this->pdo->lastInsertId();
     }
 
