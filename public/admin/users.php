@@ -185,12 +185,9 @@ if (!$isSuperadmin) {
             <thead class="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Department</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Responsibilities</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Voice access</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last access</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Voices</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Activity</th>
                 <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -519,15 +516,13 @@ if (!$isSuperadmin) {
         const superadminBadge = u.is_superadmin 
           ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#B7C9F2]/10 text-[#B7C9F2] ml-2">Admin</span>'
           : '';
-        const responsibilityChips = [
-          ...(u.department_responsibilities || []).map((item) => `Dept: ${item.name}`),
-          ...(u.voice_responsibilities || []).map((item) => `Voice: ${item.name || item.slug}`)
-        ];
+        const departmentResponsibilities = (u.department_responsibilities || []).map((item) => item.name);
+        const voiceResponsibilities = (u.voice_responsibilities || []).map((item) => item.name || item.slug);
         const voiceAccess = (u.accessible_voices || []).map((voice) => voice.name || voice.feature_slug);
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="px-6 py-4">
+            <td class="px-6 py-4 min-w-[260px]">
               <div class="flex items-center gap-3">
                 <div class="h-10 w-10 rounded-full bg-gradient-to-br from-[#B7C9F2] to-[#2F3440] flex items-center justify-center text-white font-semibold text-sm">
                   ${escapeHtml(u.first_name[0] + u.last_name[0]).toUpperCase()}
@@ -538,15 +533,24 @@ if (!$isSuperadmin) {
                     ${superadminBadge}
                   </div>
                   <div class="text-xs text-slate-500">${escapeHtml(u.email)}</div>
+                  <div class="text-xs text-slate-400 mt-0.5">${escapeHtml(u.job_title || 'No job title')}</div>
                 </div>
               </div>
             </td>
-            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(u.job_title || 'No job title')}</td>
-            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(u.department_name || 'Unassigned')}</td>
-            <td class="px-6 py-4 text-sm text-slate-600">${renderMiniChips(responsibilityChips, 'No responsibilities')}</td>
-            <td class="px-6 py-4 text-sm text-slate-600">${renderMiniChips(voiceAccess, 'No voices')}</td>
-            <td class="px-6 py-4">${statusBadge}</td>
-            <td class="px-6 py-4 text-sm text-slate-600">${lastLogin}</td>
+            <td class="px-6 py-4 min-w-[220px]">
+              <div class="text-sm font-medium text-slate-700">${escapeHtml(u.department_name || 'Unassigned')}</div>
+              <div class="mt-2">${renderLabeledChips('Responsible', departmentResponsibilities, 'Not responsible for a department')}</div>
+            </td>
+            <td class="px-6 py-4 min-w-[300px]">
+              <div class="space-y-2">
+                ${renderLabeledChips('Access', voiceAccess, 'No voice access')}
+                ${renderLabeledChips('Responsible', voiceResponsibilities, 'Not responsible for a voice')}
+              </div>
+            </td>
+            <td class="px-6 py-4 min-w-[150px]">
+              <div>${statusBadge}</div>
+              <div class="text-xs text-slate-500 mt-2">Last access: ${lastLogin}</div>
+            </td>
             <td class="px-6 py-4 text-right">
               <div class="flex items-center justify-end gap-2">
                 <button onclick="openPermissions(${u.id})" class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
@@ -580,6 +584,15 @@ if (!$isSuperadmin) {
         <div class="flex flex-wrap gap-1.5">
           ${visible.map((label) => `<span class="inline-flex items-center max-w-[160px] truncate px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-xs">${escapeHtml(label)}</span>`).join('')}
           ${rest > 0 ? `<span class="inline-flex items-center px-2 py-1 rounded-full bg-slate-900 text-white text-xs">+${rest}</span>` : ''}
+        </div>
+      `;
+    }
+
+    function renderLabeledChips(label, items, emptyLabel) {
+      return `
+        <div class="organization-cell-stack">
+          <span>${escapeHtml(label)}</span>
+          ${renderMiniChips(items, emptyLabel)}
         </div>
       `;
     }
