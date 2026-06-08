@@ -1963,7 +1963,7 @@ Hallazgos de la exploración del código (commit base `ed4f590`):
 
 ## Project Status Board — Flags
 - [x] T0 Prerrequisito metadata en mensajes — COMPLETADO Y VERIFICADO en prod (commit d458f07). Confirmado: msg 346 guardó {"voice_slug":"lex"} tras un "Ask Lex"; la recomendación previa (msg 345) quedó con metadata NULL (correcto).
-- [ ] T1 Migración voice_flags
+- [x] T1 Migración voice_flags — COMPLETADO Y VERIFICADO en prod (commit 101228d). Tabla creada con SHOW CREATE correcto (4 FK ON DELETE SET NULL, enums, índices, BIGINT UNSIGNED). Aplicada directa por mysql + registrada en schema_migrations (el runner scripts/migrate.php se atasca por drift preexistente, ver Lessons).
 - [ ] T2 VoiceFlagsRepo
 - [ ] T3 Endpoints API
 - [ ] T4 Botón reportar en chat
@@ -1978,3 +1978,4 @@ Hallazgos de la exploración del código (commit base `ed4f590`):
 ## Lessons — Flags
 - (acceso prod) La cuenta `codex` tiene `sudo` root NOPASSWD completo, no limitado. Autolimitarse a lo necesario; señalado al usuario el 2026-06-08.
 - (anclaje de flag) El chat general no ejecuta voces: las respuestas de voz vienen de `voice-query.php`. Para rastrear qué voz respondió, sellar `voice_slug` en `messages.metadata` en ese endpoint.
+- (drift de migraciones en prod) `schema_migrations` en prod NO refleja la realidad: hay migraciones aplicadas a mano sin registrar (p.ej. `004_gesture_executions.sql` → su tabla existe pero no está en la tabla de control), así que `scripts/migrate.php` se detiene con "table already exists" antes de llegar a las nuevas. Workaround para migraciones nuevas: aplicar el `.sql` a mano vía cliente mysql (usar `CREATE TABLE IF NOT EXISTS`) y luego `INSERT IGNORE INTO schema_migrations`. Pendiente: reconciliar el estado completo de schema_migrations (tarea aparte, requiere revisar migración por migración).
