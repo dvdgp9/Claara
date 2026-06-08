@@ -78,6 +78,29 @@ class VoiceFlagsRepo
     }
 
     /**
+     * Flags de voces que SÍ tienen responsable asignado (lista principal del admin,
+     * para no duplicar con la bandeja "sin asignar").
+     */
+    public function listAssigned(array $filters = []): array
+    {
+        [$where, $params] = $this->buildFilters($filters);
+        $sql = '
+            SELECT ' . $this->selectColumns() . '
+            FROM voice_flags f
+            ' . $this->joins() . '
+            WHERE 1=1 ' . $where . '
+              AND f.voice_slug IS NOT NULL
+              AND EXISTS (
+                  SELECT 1 FROM voice_responsibles vr WHERE vr.voice_slug = f.voice_slug
+              )
+            ORDER BY (f.status = "open") DESC, f.created_at DESC
+        ';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $this->normalizeRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
+    }
+
+    /**
      * Flags de voces sin responsable asignado (o sin voz). Bandeja "sin asignar" para admins.
      */
     public function listUnassigned(array $filters = []): array
@@ -198,7 +221,7 @@ class VoiceFlagsRepo
             COALESCE(v.name, f.voice_slug) AS voice_name,
             ru.first_name AS raiser_first_name, ru.last_name AS raiser_last_name, ru.email AS raiser_email,
             su.first_name AS solver_first_name, su.last_name AS solver_last_name,
-            LEFT(m.content, 280) AS message_excerpt
+            m.content AS message_content
         ';
     }
 
@@ -245,7 +268,7 @@ class VoiceFlagsRepo
             'status' => (string)$row['status'],
             'conversation_id' => $row['conversation_id'] !== null ? (int)$row['conversation_id'] : null,
             'message_id' => $row['message_id'] !== null ? (int)$row['message_id'] : null,
-            'message_excerpt' => $row['message_excerpt'] !== null ? (string)$row['message_excerpt'] : '',
+            'message_content' => $row['message_content'] !== null ? (string)$row['message_content'] : '',
             'raised_by' => [
                 'id' => $row['raised_by_user_id'] !== null ? (int)$row['raised_by_user_id'] : null,
                 'name' => $raiserName !== '' ? $raiserName : (string)($row['raiser_email'] ?? 'Unknown'),

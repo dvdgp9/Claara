@@ -31,6 +31,7 @@ if (!$canSee) {
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
   <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="/assets/css/sidebar-hover.css">
   <style>
     .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -144,8 +145,13 @@ if (!$canSee) {
         actions.push(`<button onclick="updateFlag(${f.id}, 'open')" class="flag-act px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 rounded-lg">Reopen</button>`);
       }
 
-      const excerpt = f.message_excerpt
-        ? `<div class="mt-3 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-28 overflow-auto whitespace-pre-wrap">${escapeHtml(f.message_excerpt)}</div>`
+      const excerpt = f.message_content
+        ? `<details open class="mt-3 group">
+             <summary class="cursor-pointer text-xs font-medium text-[#B7C9F2] hover:text-[#2F3440] select-none list-none flex items-center gap-1">
+               <i class="iconoir-nav-arrow-right transition-transform group-open:rotate-90"></i> Flagged answer
+             </summary>
+             <div class="mt-2 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-80 overflow-auto whitespace-pre-wrap">${escapeHtml(f.message_content)}</div>
+           </details>`
         : '';
       const resolution = (f.resolved_by && f.resolution_note)
         ? `<div class="mt-2 text-xs text-emerald-700"><i class="iconoir-check"></i> ${escapeHtml(f.resolved_by.name)}: ${escapeHtml(f.resolution_note)}</div>`

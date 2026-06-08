@@ -32,7 +32,7 @@ if (!empty($_GET['voice_slug'])) {
 
 try {
     if ($isAdmin) {
-        $assigned = $repo->listAll($filters);
+        $assigned = $repo->listAssigned($filters);
         $unassigned = $repo->listUnassigned($filters);
         $openCount = $repo->countOpenAll();
     } else {
