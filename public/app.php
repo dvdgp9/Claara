@@ -482,6 +482,42 @@ $headerShowLogo = true;
     </div>
   </div>
   
+  <!-- Report / flag modal -->
+  <div id="flag-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div class="p-5 border-b border-slate-200">
+        <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+          <i class="iconoir-flag text-[#FF8B73]"></i> Report an issue
+        </h3>
+        <p class="text-sm text-slate-500 mt-1">This goes to the people responsible for <span id="flag-modal-voice" class="font-medium text-slate-700"></span>.</p>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">What's wrong?</label>
+          <div id="flag-modal-types" class="flex flex-wrap gap-2">
+            <button type="button" data-flag-type="missing_info" class="flag-type-btn px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600 hover:border-[#B7C9F2] transition-colors">Missing information</button>
+            <button type="button" data-flag-type="incorrect" class="flag-type-btn px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600 hover:border-[#B7C9F2] transition-colors">Incorrect answer</button>
+            <button type="button" data-flag-type="other" class="flag-type-btn px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600 hover:border-[#B7C9F2] transition-colors">Other</button>
+          </div>
+        </div>
+        <div>
+          <label for="flag-modal-note" class="block text-sm font-medium text-slate-700 mb-2">Details <span class="text-slate-400 font-normal">(optional)</span></label>
+          <textarea id="flag-modal-note" rows="3" maxlength="2000"
+            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-all text-sm resize-none"
+            placeholder="What information is missing or wrong?"></textarea>
+        </div>
+      </div>
+
+      <div class="p-5 border-t border-slate-200 flex items-center justify-end gap-3 bg-slate-50">
+        <button id="flag-modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+        <button id="flag-modal-submit" class="px-5 py-2 text-sm font-medium text-white gradient-brand-btn rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
+          <i class="iconoir-flag"></i> Send report
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Lightbox for generated images -->
   <div id="image-lightbox" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onclick="closeLightbox()">
     <button onclick="closeLightbox()" class="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors">
@@ -1044,7 +1080,7 @@ $headerShowLogo = true;
       if (label) label.textContent = 'Asking...';
 
       isGenerating = true;
-      const { bubble } = append('assistant', '', null, [], null, { isStreaming: true });
+      const { wrap, bubble } = append('assistant', '', null, [], null, { isStreaming: true, voiceSlug: voiceSlug });
       updateStreamingMessage(bubble, 'Asking the specialized voice...');
 
       try {
@@ -1244,7 +1280,90 @@ $headerShowLogo = true;
         actions.appendChild(regenBtn);
       }
 
+      // Report / flag (solo en respuestas de una voz, donde conocemos el slug)
+      const voiceSlug = wrap.dataset.voiceSlug;
+      if (voiceSlug) {
+        const flagBtn = document.createElement('button');
+        flagBtn.type = 'button';
+        flagBtn.className = 'msg-action-btn';
+        flagBtn.title = 'Report an issue with this answer';
+        flagBtn.innerHTML = '<i class="iconoir-flag"></i>';
+        flagBtn.addEventListener('click', () => openFlagModal(voiceSlug, messageId || null));
+        actions.appendChild(flagBtn);
+      }
+
       wrap.appendChild(actions);
+    }
+
+    // ---- Report / flag modal ----
+    let flagModalState = { voiceSlug: null, messageId: null, type: 'missing_info' };
+
+    function openFlagModal(voiceSlug, messageId){
+      flagModalState = { voiceSlug, messageId, type: 'missing_info' };
+      const modal = document.getElementById('flag-modal');
+      document.getElementById('flag-modal-voice').textContent = voiceSlug;
+      document.getElementById('flag-modal-note').value = '';
+      // reset type selection (default missing_info)
+      document.querySelectorAll('.flag-type-btn').forEach(b => {
+        const active = b.dataset.flagType === 'missing_info';
+        b.classList.toggle('is-active', active);
+      });
+      modal.classList.remove('hidden');
+      setTimeout(() => document.getElementById('flag-modal-note').focus(), 50);
+    }
+
+    function closeFlagModal(){
+      document.getElementById('flag-modal').classList.add('hidden');
+    }
+
+    function flagToast(message){
+      const t = document.createElement('div');
+      t.className = 'flag-toast';
+      t.innerHTML = '<i class="iconoir-check-circle"></i> ' + message;
+      document.body.appendChild(t);
+      requestAnimationFrame(() => t.classList.add('is-visible'));
+      setTimeout(() => { t.classList.remove('is-visible'); setTimeout(() => t.remove(), 300); }, 2600);
+    }
+
+    function initFlagModal(){
+      const modal = document.getElementById('flag-modal');
+      if (!modal) return;
+      document.querySelectorAll('.flag-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          flagModalState.type = btn.dataset.flagType;
+          document.querySelectorAll('.flag-type-btn').forEach(b => b.classList.toggle('is-active', b === btn));
+        });
+      });
+      document.getElementById('flag-modal-cancel').addEventListener('click', closeFlagModal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeFlagModal(); });
+      document.getElementById('flag-modal-submit').addEventListener('click', submitFlag);
+    }
+    window.initFlagModal = initFlagModal;
+
+    async function submitFlag(){
+      const btn = document.getElementById('flag-modal-submit');
+      btn.disabled = true;
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="iconoir-flag"></i> Sending...';
+      try {
+        await api('/api/flags/create.php', {
+          method: 'POST',
+          body: {
+            voice_slug: flagModalState.voiceSlug,
+            message_id: flagModalState.messageId ? parseInt(flagModalState.messageId) : null,
+            conversation_id: currentConversationId || null,
+            type: flagModalState.type,
+            note: document.getElementById('flag-modal-note').value.trim()
+          }
+        });
+        closeFlagModal();
+        flagToast('Report sent. Thanks!');
+      } catch (e) {
+        alert('Could not send report: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
     }
 
     async function regenerateMessage(messageId, bubble, btn){
@@ -1279,7 +1398,7 @@ $headerShowLogo = true;
     function append(role, content, file = null, images = null, annotations = null, options = {}){
       if(messagesEl.children.length === 0) showChatMode();
       
-      const { messageId, isStreaming } = options;
+      const { messageId, isStreaming, voiceSlug } = options;
 
       // Agrupar mensajes consecutivos del mismo rol
       const prevWrap = messagesEl.lastElementChild;
@@ -1290,6 +1409,7 @@ $headerShowLogo = true;
       wrap.className = ('group flex flex-col ' + topMargin + ' ' + (role === 'user' ? 'items-end' : 'items-start')).trim();
       wrap.dataset.role = role;
       if (messageId) wrap.dataset.messageWrap = messageId;
+      if (voiceSlug) wrap.dataset.voiceSlug = voiceSlug;
 
       // Avatar + burbuja container
       const msgContainer = document.createElement('div');
@@ -2602,7 +2722,7 @@ $headerShowLogo = true;
         showChatMode();
         for(const m of items){
           // Pass messageId so history messages support selection.
-          append(m.role, m.content, m.file || null, m.images || null, null, { messageId: m.id });
+          append(m.role, m.content, m.file || null, m.images || null, null, { messageId: m.id, voiceSlug: m.voice_slug || null });
         }
         emptyConversationId = null;
       } else {
@@ -3476,6 +3596,7 @@ $headerShowLogo = true;
   <script>
     // Sincronizar contenido del drawer móvil con sidebar desktop
     document.addEventListener('DOMContentLoaded', () => {
+      window.initFlagModal?.();
       // Detectar OS y actualizar hints de teclado
       const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
       if (!isMac) {

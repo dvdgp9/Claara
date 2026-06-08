@@ -43,6 +43,31 @@ if (isset($user)) {
     }
 }
 
+// Acceso al panel de reportes (admin o responsable de alguna voz) + contador de abiertos.
+$canSeeFlags = false;
+$flagsOpenCount = 0;
+if (isset($user)) {
+    $flagsUid = (int)($user['id'] ?? 0);
+    $flagsRepoFile = dirname(__DIR__, 2) . '/src/Repos/VoiceFlagsRepo.php';
+    if (is_file($flagsRepoFile)) {
+        require_once $flagsRepoFile;
+    }
+    if (class_exists('\Repos\VoiceFlagsRepo')) {
+        try {
+            $flagsRepo = new \Repos\VoiceFlagsRepo();
+            if (!empty($user['is_superadmin'])) {
+                $canSeeFlags = true;
+                $flagsOpenCount = $flagsRepo->countOpenAll();
+            } elseif ($flagsRepo->isResponsibleForAnyVoice($flagsUid)) {
+                $canSeeFlags = true;
+                $flagsOpenCount = $flagsRepo->countOpenForResponsible($flagsUid);
+            }
+        } catch (\Throwable $e) {
+            $canSeeFlags = false;
+        }
+    }
+}
+
 // Determine header style from context.
 $headerStyle = 'h-14 lg:h-[60px] px-4 lg:px-6 border-b border-slate-200';
 if (isset($activeTab) && in_array($activeTab, ['gestures', 'voices'])) {
@@ -168,6 +193,15 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
           <i class="iconoir-cloud-sync"></i>
           <span>Connectors</span>
         </a>
+        <?php if ($canSeeFlags): ?>
+          <a href="/flags.php" id="flags-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
+            <i class="iconoir-flag"></i>
+            <span>Reports</span>
+            <?php if ($flagsOpenCount > 0): ?>
+              <span class="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#FF8B73] text-white text-xs font-semibold"><?php echo (int)$flagsOpenCount; ?></span>
+            <?php endif; ?>
+          </a>
+        <?php endif; ?>
         <?php if ($canEditVoices): ?>
           <a href="/admin/voices.php" id="voices-admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
             <i class="iconoir-voice-square"></i>

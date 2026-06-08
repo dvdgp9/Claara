@@ -1964,11 +1964,11 @@ Hallazgos de la exploración del código (commit base `ed4f590`):
 ## Project Status Board — Flags
 - [x] T0 Prerrequisito metadata en mensajes — COMPLETADO Y VERIFICADO en prod (commit d458f07). Confirmado: msg 346 guardó {"voice_slug":"lex"} tras un "Ask Lex"; la recomendación previa (msg 345) quedó con metadata NULL (correcto).
 - [x] T1 Migración voice_flags — COMPLETADO Y VERIFICADO en prod (commit 101228d). Tabla creada con SHOW CREATE correcto (4 FK ON DELETE SET NULL, enums, índices, BIGINT UNSIGNED). Aplicada directa por mysql + registrada en schema_migrations (el runner scripts/migrate.php se atasca por drift preexistente, ver Lessons).
-- [ ] T2 VoiceFlagsRepo
-- [ ] T3 Endpoints API
-- [ ] T4 Botón reportar en chat
-- [ ] T5 Panel en sidebar
-- [ ] T6 Enrutado y fallback
+- [x] T2 VoiceFlagsRepo — COMPLETADO Y VERIFICADO en prod (commit 0d5704e). Smoke test: create/listAll/listUnassigned/updateStatus/get correctos, joins a voices/messages/users OK, cleanup sin residuos.
+- [x] T3 Endpoints API — COMPLETADO (commit 0d5704e). create.php (auth), list.php (admin o responsable, 403 si no), update.php (admin o responsable de la voz, CSRF). Lint OK + repo verificado por smoke test. Pendiente prueba HTTP con sesión real al integrar UI.
+- [x] T4 Botón reportar en chat — implementado, pendiente verificación navegador. Icono bandera en acciones del mensaje (solo respuestas de voz, leyendo wrap.dataset.voiceSlug), modal tipo+nota → POST /api/flags/create.php. messages/list.php expone voice_slug desde metadata; append() y loadMessages() lo propagan. CSS en styles.css. Init via window.initFlagModal (módulo) llamado desde DOMContentLoaded.
+- [x] T5 Panel en sidebar — implementado, pendiente verificación navegador. public/flags.php (gated admin o responsable), enlace "Reports" + badge contador en header-unified.php. Filtros por estado, acciones take/resolve/dismiss/reopen → /api/flags/update.php.
+- [x] T6 Enrutado y fallback — implementado vía repo: listForResponsible (responsable ve sus voces), listUnassigned + listAll (admin ve todo + bandeja sin asignar). Cubierto por el smoke test de T2.
 
 ## Deploy notes — Flags
 - Prod: `git@github.com:dvdgp9/Claara.git`, rama `main`, deploy por `git pull` (como `dvdgp` vía sudo en `iaiapro:/home/dvdgp/web/claara.tech/public_html`).

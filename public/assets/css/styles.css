@@ -2373,6 +2373,44 @@ select {
   box-shadow: inset 0 0 0 1px rgba(183, 201, 242, .7);
 }
 
+/* Flag / report modal */
+.flag-type-btn.is-active {
+  color: #1f2937;
+  background: #eaf1ff;
+  border-color: rgba(183, 201, 242, .9);
+  font-weight: 600;
+}
+
+.flag-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate(-50%, 16px);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #2F3440;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 12px 30px rgba(47, 52, 64, .28);
+  opacity: 0;
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.flag-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.flag-toast i {
+  color: #B7C9F2;
+}
+
 @media (max-width: 1100px) {
   .claara-landing-hero {
     grid-template-columns: 1fr;

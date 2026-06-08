@@ -49,6 +49,16 @@ foreach ($items as &$item) {
     if (!empty($item['images'])) {
         $item['images'] = json_decode($item['images'], true);
     }
+
+    // Exponer la voz que generó el mensaje (para el botón de reportar)
+    $item['voice_slug'] = null;
+    if (!empty($item['metadata'])) {
+        $meta = json_decode($item['metadata'], true);
+        if (is_array($meta) && !empty($meta['voice_slug'])) {
+            $item['voice_slug'] = $meta['voice_slug'];
+        }
+    }
+    unset($item['metadata']);
 }
 
 Response::json(['items' => $items]);
