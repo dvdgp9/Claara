@@ -73,6 +73,7 @@ Chatbot ligero para preguntas rápidas sobre el Grupo Ebone. Usa QWEN Turbo (`qw
 
 # Project Status Board
 
+- [ ] Planner: mejorar el módulo de organización integrando usuarios/departamentos/voces con puesto de usuario, responsables many-to-many y visibilidad de accesos/responsabilidades.
 - [x] Claara integration step 1: internal per-user capability catalog for accessible voices and gestures.
 - [x] Claara integration step 2: inject capability catalog into general chat context for recommendations only, without automatic execution.
 - [x] Claara integration follow-up: move gesture routing metadata into `available_features` so the chat capability catalog is database-driven.
@@ -90,6 +91,107 @@ Chatbot ligero para preguntas rápidas sobre el Grupo Ebone. Usa QWEN Turbo (`qw
 - [x] Endpoints mínimos auth/login, auth/logout y chat.
 - [x] `.env` local configurado.
 - [x] SOP Generator: historial con eliminación y edición de título.
+
+---
+
+## Feature: Organization Management integrado (users, departments, voice responsibility)
+
+### Background and Motivation
+Claara ya tiene usuarios, departamentos, permisos por feature y voces RAG dinámicas. El siguiente paso es convertir esos datos en una capa de organización útil para admins y para el propio chat general: saber qué puesto tiene cada persona, qué departamentos coordina, qué voces puede usar y de qué voces es responsable. El usuario corrigió el modelo inicial de “un responsable por departamento”: la solución correcta debe ser many-to-many, porque una persona puede responsabilizarse de varios departamentos y un departamento puede tener varios responsables.
+
+### Key Challenges and Analysis
+- **Responsibility is not the same as access.** Un usuario puede tener acceso a una voz sin ser responsable de ella. Si alguien se marca como responsable de una voz, conviene garantizarle acceso automáticamente, pero al quitarle la responsabilidad no deberíamos quitar el acceso sin confirmación porque podría tenerlo por otro motivo.
+- **Many-to-many desde el principio.** Evita bloqueos futuros y encaja mejor con equipos B2B reales. Tablas propuestas: `department_responsibles` y `voice_responsibles`.
+- **User position as profile data.** Añadir `users.job_title` como campo simple y visible en listados/detalle. No crear una tabla de puestos hasta que haya necesidad real de reporting estructurado.
+- **Integrated admin UX.** No conviene mantener “Users” y “Departments” como pantallas aisladas. La experiencia debería sentirse como un módulo “Organization” con tabs compactas, detalle lateral y edición contextual.
+- **Voice ownership belongs in Voice Studio too.** Los responsables de voces deben poder verse/asignarse desde el editor de voces, pero también verse desde el perfil de usuario.
+- **Claara chat context.** Más adelante, el catálogo de capacidades debe poder incluir `job_title`, departamento, responsabilidades de departamento y responsabilidades de voces para recomendaciones más precisas.
+- **Diseño:** UI de herramienta B2B, en inglés, densa pero legible. Evitar cards grandes por fila; usar tablas compactas, chips, drawers y estados inline. CSS nuevo en `public/assets/css/styles.css`, no inline.
+
+### Proposed Data Model
+- `users.job_title VARCHAR(120) NULL`
+- `department_responsibles`
+  - `department_id BIGINT UNSIGNED NOT NULL`
+  - `user_id BIGINT UNSIGNED NOT NULL`
+  - `created_at TIMESTAMP`
+  - unique key `(department_id, user_id)`
+- `voice_responsibles`
+  - `voice_slug VARCHAR(80) NOT NULL`
+  - `user_id BIGINT UNSIGNED NOT NULL`
+  - `created_at TIMESTAMP`
+  - unique key `(voice_slug, user_id)`
+
+> Nota: usar `voice_slug` es pragmático porque Claara ya usa slugs en rutas, permisos (`user_feature_access`) y catálogo. Si antes de implementar vemos que la tabla `voices` tiene garantías fuertes de `id` en producción, se puede usar `voice_id`, pero el contrato frontend/API debería seguir hablando en `slug`.
+
+### UX Proposal
+- Convertir el admin actual en un módulo **Organization** con dos tabs principales: **Users** y **Departments**.
+- **Users tab:** tabla compacta con `Name`, `Job title`, `Department`, `Responsibilities`, `Voice access`, `Status`, acciones. Al abrir un usuario, drawer lateral con:
+  - Profile: nombre, email, job title, status, superadmin.
+  - Department: departamento actual.
+  - Responsibilities: departamentos donde es responsable y voces donde es responsable.
+  - Voice access: voces accesibles, diferenciando “access” vs “responsible”.
+- **Departments tab:** tabla compacta con `Department`, `Members`, `Responsible users`, acciones. Al abrir un departamento, drawer con miembros y selector de responsables.
+- **Voice Studio:** añadir selector de **Responsible users** en el editor de voz. Mostrar chips compactos y nota funcional: “Responsible users keep access to this voice.”
+- Mantener todo el copy en inglés: `Job title`, `Responsible for`, `Voice access`, `Responsible users`, `No responsible users yet`, `Add responsible user`.
+
+### High-level Task Breakdown
+
+1. [ ] **Inspect current schema and create migration plan**
+   - Revisar columnas reales de `users`, `departments`, `voices`, `user_feature_access` en local/producción antes de tocar BD.
+   - Crear migración SQL versionada con `users.job_title`, `department_responsibles`, `voice_responsibles`, índices y tipos compatibles con `users.id`.
+   - Success: migración es idempotente o segura de ejecutar una vez; no rompe usuarios/departamentos/voces existentes.
+
+2. [ ] **Repository layer**
+   - Extender `UsersRepo` para leer/escribir `job_title`.
+   - Extender `DepartmentsRepo` o crear repo específico para responsables.
+   - Crear métodos `setDepartmentResponsibles`, `getDepartmentResponsibles`, `setVoiceResponsibles`, `getVoiceResponsibles`, `getUserResponsibilitySummary`.
+   - Success: repositorios devuelven datos normalizados sin lógica SQL duplicada en endpoints.
+
+3. [ ] **Admin APIs**
+   - Actualizar create/update/list de usuarios para incluir `job_title`, responsabilidades y voces accesibles.
+   - Actualizar list/update de departamentos para incluir responsables.
+   - Añadir o ampliar APIs de voces para guardar/listar responsables.
+   - Al guardar responsables de voz, asegurar acceso en `user_feature_access` para esas voces sin revocar accesos al quitar responsabilidad.
+   - Revisar bug existente en `public/api/admin/users/update.php`: usa `$currentUser['id']` sin definir.
+   - Success: CRUD completo vía API, con errores claros y validación de permisos admin.
+
+4. [ ] **Organization UI**
+   - Reorganizar `public/admin/users.php` como hub de Organization con tabs `Users` y `Departments`, o crear `public/admin/organization.php` y dejar enlaces antiguos apuntando ahí.
+   - Implementar tabla compacta, filtros, chips de responsabilidad/acceso y drawer de edición.
+   - Reutilizar endpoints existentes cuando sea posible.
+   - Success: un admin puede editar puesto, departamento, responsables y accesos sin saltar entre tres pantallas desconectadas.
+
+5. [ ] **Voice Studio integration**
+   - Añadir campo `Responsible users` en `public/admin/voices.php` y `public/assets/js/admin-voices.js`.
+   - Mostrar responsables en el listado compacto de voces si cabe sin ruido.
+   - Success: al crear/editar una voz se pueden asignar responsables y estos aparecen también en el perfil del usuario.
+
+6. [ ] **User-facing visibility**
+   - En el panel/perfil de usuario, mostrar `Job title`, departamento, si es responsable de departamentos y voces accesibles.
+   - Success: un usuario entiende qué rol ocupa en Claara y a qué voces tiene acceso.
+
+7. [ ] **Claara context integration**
+   - Extender el contexto interno/catálogo de capacidades con job title, departamento, responsabilidades y voces accesibles/responsables.
+   - Success: el chat general puede usar esta información para recomendar voces de forma más contextual, sin exponer datos técnicos al usuario final.
+
+8. [ ] **QA, migration and deploy**
+   - `php -l` en PHP tocados, `node --check` en JS tocado.
+   - Probar migración en servidor con cuidado, sin `git reset --hard`.
+   - Verificar flujos: crear usuario con job title, asignar responsable de departamento, asignar responsable de voz, confirmar acceso automático a voz, revisar panel de usuario.
+   - Success: producción lista para pruebas reales sin regresión en permisos ni Voice Studio.
+
+### Project Status Board — Organization Management
+- [ ] Planner: validar enfoque de Organization hub + relaciones many-to-many.
+- [ ] Executor: inspeccionar schema real y preparar migración.
+- [ ] Executor: implementar repositorios y APIs.
+- [ ] Executor: implementar UI integrada de usuarios/departamentos.
+- [ ] Executor: integrar responsables de voces en Voice Studio.
+- [ ] Executor: exponer datos en panel de usuario y contexto de Claara.
+- [ ] Executor: QA, push y pull en servidor.
+
+### Current Status / Progress Tracking — Organization Management
+- 2026-06-08 (Planner): Plan inicial documentado. Se propone una implementación incremental y pragmática: `job_title` simple en usuarios, responsabilidad many-to-many para departamentos y voces, UX integrada en un módulo Organization y sincronización de acceso cuando alguien es responsable de una voz.
+- 2026-06-08 (Executor): Primer corte funcional implementado. Añadida migración `021_organization_responsibilities.sql`; aplicada en producción antes del deploy con `users.job_title`, `department_responsibles` y `voice_responsibles`. Backend actualizado para usuarios, departamentos, voces, sesión/auth-me y catálogo interno de Claara. UI actualizada en User Management, Departments, Voice Studio y My Account para mostrar/editar puesto, responsables, acceso a voces y responsabilidades.
 
 ---
 

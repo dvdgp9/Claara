@@ -27,6 +27,7 @@ if (!$isSuperadmin) {
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
+  <link rel="stylesheet" href="/assets/css/styles.css">
   <style>
     /* Estilos base para el layout */
     .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
@@ -179,8 +180,10 @@ if (!$isSuperadmin) {
             <thead class="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Department</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Responsibilities</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Voice access</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last access</th>
                 <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
@@ -260,6 +263,12 @@ if (!$isSuperadmin) {
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Email *</label>
           <input type="email" id="user-email" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
+        </div>
+
+        <div>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Job title</label>
+          <input type="text" id="user-job-title" maxlength="120" placeholder="Operations Director" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors">
+          <p class="text-xs text-slate-500 mt-1">Shown in Organization and used as profile context.</p>
         </div>
 
         <div>
@@ -364,7 +373,7 @@ if (!$isSuperadmin) {
           <div class="bg-slate-50 rounded-xl p-4">
             <div class="mb-4">
               <h4 class="font-bold text-slate-800 flex items-center gap-2">
-                <i class="iconoir-sparks text-amber-500"></i> Funcionalidades
+                <i class="iconoir-sparks text-amber-500"></i> Features
               </h4>
             </div>
             <div id="features-list" class="space-y-3"></div>
@@ -383,7 +392,7 @@ if (!$isSuperadmin) {
   <!-- Toast de guardado -->
   <div id="save-toast" class="hidden fixed bottom-6 right-6 bg-slate-800 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 z-[100]">
     <div class="h-5 w-5 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
-    <span class="text-sm font-medium">Guardando...</span>
+    <span class="text-sm font-medium">Saving...</span>
   </div>
 
   <script>
@@ -457,7 +466,7 @@ if (!$isSuperadmin) {
     function renderDepartmentOptions() {
       const select = document.getElementById('user-department');
       const currentOptions = select.innerHTML;
-      const firstOption = '<option value="">Sin asignar</option>';
+      const firstOption = '<option value="">Unassigned</option>';
       
       const options = allDepartments.map(d => 
         `<option value="${d.id}">${escapeHtml(d.name)}</option>`
@@ -477,7 +486,9 @@ if (!$isSuperadmin) {
         const matchesSearch = !searchTerm || 
           u.first_name.toLowerCase().includes(searchTerm) ||
           u.last_name.toLowerCase().includes(searchTerm) ||
-          u.email.toLowerCase().includes(searchTerm);
+          u.email.toLowerCase().includes(searchTerm) ||
+          String(u.job_title || '').toLowerCase().includes(searchTerm) ||
+          String(u.department_name || '').toLowerCase().includes(searchTerm);
         
         const matchesStatus = !statusFilter || u.status === statusFilter;
         
@@ -493,16 +504,21 @@ if (!$isSuperadmin) {
       noResults.classList.add('hidden');
       container.innerHTML = filtered.map(u => {
         const statusBadge = u.status === 'active'
-          ? '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200"><span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>Activo</span>'
-          : '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200"><span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>Deshabilitado</span>';
+          ? '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200"><span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>Active</span>'
+          : '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200"><span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>Disabled</span>';
         
         const lastLogin = u.last_login_at 
-          ? new Date(u.last_login_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
-          : '<span class="text-slate-400">Nunca</span>';
+          ? new Date(u.last_login_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+          : '<span class="text-slate-400">Never</span>';
         
         const superadminBadge = u.is_superadmin 
           ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#B7C9F2]/10 text-[#B7C9F2] ml-2">Admin</span>'
           : '';
+        const responsibilityChips = [
+          ...(u.department_responsibilities || []).map((item) => `Dept: ${item.name}`),
+          ...(u.voice_responsibilities || []).map((item) => `Voice: ${item.name || item.slug}`)
+        ];
+        const voiceAccess = (u.accessible_voices || []).map((voice) => voice.name || voice.feature_slug);
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
@@ -516,19 +532,21 @@ if (!$isSuperadmin) {
                     ${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}
                     ${superadminBadge}
                   </div>
-                  <div class="text-xs text-slate-500">ID: ${u.id}</div>
+                  <div class="text-xs text-slate-500">${escapeHtml(u.email)}</div>
                 </div>
               </div>
             </td>
-            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(u.email)}</td>
-            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(u.department_name || 'Sin asignar')}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(u.job_title || 'No job title')}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(u.department_name || 'Unassigned')}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${renderMiniChips(responsibilityChips, 'No responsibilities')}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${renderMiniChips(voiceAccess, 'No voices')}</td>
             <td class="px-6 py-4">${statusBadge}</td>
             <td class="px-6 py-4 text-sm text-slate-600">${lastLogin}</td>
             <td class="px-6 py-4 text-right">
               <div class="flex items-center justify-end gap-2">
                 <button onclick="openPermissions(${u.id})" class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
                   <i class="iconoir-lock"></i>
-                  <span>Permisos</span>
+                  <span>Access</span>
                 </button>
                 <button onclick="editUser(${u.id})" class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-[#B7C9F2] hover:text-[#2F3440] hover:bg-[#B7C9F2]/5 rounded-lg transition-colors">
                   <i class="iconoir-edit-pencil"></i>
@@ -543,6 +561,22 @@ if (!$isSuperadmin) {
           </tr>
         `;
       }).join('');
+    }
+
+    function renderMiniChips(items, emptyLabel) {
+      const cleanItems = (items || []).filter(Boolean);
+      if (!cleanItems.length) {
+        return `<span class="text-xs text-slate-400">${escapeHtml(emptyLabel)}</span>`;
+      }
+
+      const visible = cleanItems.slice(0, 2);
+      const rest = cleanItems.length - visible.length;
+      return `
+        <div class="flex flex-wrap gap-1.5">
+          ${visible.map((label) => `<span class="inline-flex items-center max-w-[160px] truncate px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-xs">${escapeHtml(label)}</span>`).join('')}
+          ${rest > 0 ? `<span class="inline-flex items-center px-2 py-1 rounded-full bg-slate-900 text-white text-xs">+${rest}</span>` : ''}
+        </div>
+      `;
     }
 
     // Abrir modal crear
@@ -573,6 +607,7 @@ if (!$isSuperadmin) {
       document.getElementById('user-first-name').value = user.first_name;
       document.getElementById('user-last-name').value = user.last_name;
       document.getElementById('user-email').value = user.email;
+      document.getElementById('user-job-title').value = user.job_title || '';
       document.getElementById('user-department').value = user.department_id || '';
       document.getElementById('user-superadmin').checked = !!user.is_superadmin;
       document.getElementById('user-status').checked = user.status === 'active';
@@ -627,6 +662,7 @@ if (!$isSuperadmin) {
       const firstName = document.getElementById('user-first-name').value.trim();
       const lastName = document.getElementById('user-last-name').value.trim();
       const email = document.getElementById('user-email').value.trim();
+      const jobTitle = document.getElementById('user-job-title').value.trim();
       const departmentId = document.getElementById('user-department').value || null;
       const password = document.getElementById('user-password').value;
       const isSuperadmin = document.getElementById('user-superadmin').checked;
@@ -634,7 +670,7 @@ if (!$isSuperadmin) {
 
       const submitBtn = e.target.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      submitBtn.textContent = isEditMode ? 'Guardando...' : 'Creando...';
+      submitBtn.textContent = isEditMode ? 'Saving...' : 'Creating...';
 
       try {
         if (isEditMode) {
@@ -645,6 +681,7 @@ if (!$isSuperadmin) {
               first_name: firstName,
               last_name: lastName,
               email: email,
+              job_title: jobTitle,
               department_id: departmentId,
               status: isActive ? 'active' : 'disabled',
               is_superadmin: isSuperadmin,
@@ -658,6 +695,7 @@ if (!$isSuperadmin) {
               first_name: firstName,
               last_name: lastName,
               email: email,
+              job_title: jobTitle,
               password: password,
               department_id: departmentId,
               is_superadmin: isSuperadmin
@@ -703,7 +741,7 @@ if (!$isSuperadmin) {
 
       const btn = document.getElementById('confirm-delete-btn');
       btn.disabled = true;
-      btn.textContent = 'Eliminando...';
+      btn.textContent = 'Deleting...';
 
       try {
         await api('/api/admin/users/delete.php', {
@@ -733,7 +771,7 @@ if (!$isSuperadmin) {
       return div.innerHTML;
     }
 
-    // Permisos
+    // Access
     window.openPermissions = function(userId) {
       selectedUser = allUsers.find(u => u.id === userId);
       if (!selectedUser) return;
@@ -760,7 +798,7 @@ if (!$isSuperadmin) {
       const isSuperadmin = !!selectedUser.is_superadmin;
 
       if (features.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No disponible</p>';
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Not available</p>';
         return;
       }
 
@@ -860,7 +898,7 @@ if (!$isSuperadmin) {
 
     function showSaveToast() {
       const toast = document.getElementById('save-toast');
-      toast.innerHTML = `<div class="h-5 w-5 animate-spin rounded-full border-2 border-white border-r-transparent"></div><span class="text-sm font-medium">Guardando...</span>`;
+      toast.innerHTML = `<div class="h-5 w-5 animate-spin rounded-full border-2 border-white border-r-transparent"></div><span class="text-sm font-medium">Saving...</span>`;
       toast.classList.remove('hidden', 'bg-green-600', 'bg-red-600');
       toast.classList.add('bg-slate-800');
     }
@@ -868,7 +906,7 @@ if (!$isSuperadmin) {
     function hideSaveToast(success, message = '') {
       const toast = document.getElementById('save-toast');
       if (success) {
-        toast.innerHTML = `<i class="iconoir-check text-lg"></i><span class="text-sm font-medium">Guardado</span>`;
+        toast.innerHTML = `<i class="iconoir-check text-lg"></i><span class="text-sm font-medium">Saved</span>`;
         toast.classList.replace('bg-slate-800', 'bg-green-600');
       } else {
         toast.innerHTML = `<i class="iconoir-warning-circle text-lg"></i><span class="text-sm font-medium">Error: ${escapeHtml(message)}</span>`;

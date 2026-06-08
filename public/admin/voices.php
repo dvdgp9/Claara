@@ -141,6 +141,12 @@ $headerBackText = 'Chat';
                   <small>Future chat routing will use this guidance to recommend the voice.</small>
                 </label>
 
+                <label>
+                  <span>Responsible users</span>
+                  <select id="voice-responsibles" name="responsible_user_ids" multiple size="5"></select>
+                  <small>Responsible users keep access to this voice. Hold Cmd/Ctrl to select more than one person.</small>
+                </label>
+
                 <div class="voice-form-footer">
                   <p id="voice-form-note">Draft voices can be tested here before publishing.</p>
                   <button id="voice-save-btn" class="voice-primary-btn" type="submit">

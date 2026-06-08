@@ -15,7 +15,7 @@ class UsersRepo {
     public function findByEmail(string $email): ?array
     {
         $stmt = $this->pdo->prepare('
-            SELECT u.id, u.email, u.password_hash, u.first_name, u.last_name, u.status, u.is_superadmin, u.department_id, d.name as department_name
+            SELECT u.id, u.email, u.password_hash, u.first_name, u.last_name, u.job_title, u.status, u.is_superadmin, u.department_id, d.name as department_name
             FROM users u
             LEFT JOIN departments d ON d.id = u.department_id
             WHERE u.email = ? 
@@ -87,7 +87,7 @@ class UsersRepo {
     {
         $stmt = $this->pdo->prepare('
             SELECT u.id, u.email, u.first_name, u.last_name, u.status, u.is_superadmin, 
-                   u.department_id, d.name as department_name, u.last_login_at, u.created_at
+                   u.job_title, u.department_id, d.name as department_name, u.last_login_at, u.created_at
             FROM users u
             LEFT JOIN departments d ON d.id = u.department_id
             ORDER BY u.created_at DESC
@@ -100,7 +100,7 @@ class UsersRepo {
     {
         $stmt = $this->pdo->prepare('
             SELECT u.id, u.email, u.first_name, u.last_name, u.status, u.is_superadmin, 
-                   u.department_id, d.name as department_name, u.last_login_at, u.created_at, u.updated_at
+                   u.job_title, u.department_id, d.name as department_name, u.last_login_at, u.created_at, u.updated_at
             FROM users u
             LEFT JOIN departments d ON d.id = u.department_id
             WHERE u.id = ?
@@ -111,26 +111,32 @@ class UsersRepo {
         return $row ?: null;
     }
 
-    public function create(string $email, string $passwordHash, string $firstName, string $lastName, ?int $departmentId = null, bool $isSuperadmin = false): int
+    public function create(string $email, string $passwordHash, string $firstName, string $lastName, ?int $departmentId = null, bool $isSuperadmin = false, ?string $jobTitle = null): int
     {
         $now = date('Y-m-d H:i:s');
         $stmt = $this->pdo->prepare('
-            INSERT INTO users (email, password_hash, first_name, last_name, department_id, is_superadmin, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, "active", ?, ?)
+            INSERT INTO users (email, password_hash, first_name, last_name, job_title, department_id, is_superadmin, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, "active", ?, ?)
         ');
-        $stmt->execute([$email, $passwordHash, $firstName, $lastName, $departmentId, $isSuperadmin ? 1 : 0, $now, $now]);
+        $stmt->execute([$email, $passwordHash, $firstName, $lastName, $jobTitle, $departmentId, $isSuperadmin ? 1 : 0, $now, $now]);
         return (int)$this->pdo->lastInsertId();
     }
 
-    public function update(int $userId, string $firstName, string $lastName, ?int $departmentId, string $status, bool $isSuperadmin): void
+    public function update(int $userId, string $firstName, string $lastName, ?int $departmentId, string $status, bool $isSuperadmin, ?string $jobTitle = null): void
     {
         $now = date('Y-m-d H:i:s');
         $stmt = $this->pdo->prepare('
             UPDATE users 
-            SET first_name = ?, last_name = ?, department_id = ?, status = ?, is_superadmin = ?, updated_at = ?
+            SET first_name = ?, last_name = ?, job_title = ?, department_id = ?, status = ?, is_superadmin = ?, updated_at = ?
             WHERE id = ?
         ');
-        $stmt->execute([$firstName, $lastName, $departmentId, $status, $isSuperadmin ? 1 : 0, $now, $userId]);
+        $stmt->execute([$firstName, $lastName, $jobTitle, $departmentId, $status, $isSuperadmin ? 1 : 0, $now, $userId]);
+    }
+
+    public function countActiveSuperadmins(): int
+    {
+        $stmt = $this->pdo->query('SELECT COUNT(*) FROM users WHERE is_superadmin = 1 AND status = "active"');
+        return (int)$stmt->fetchColumn();
     }
 
     public function updateEmail(int $userId, string $email): void

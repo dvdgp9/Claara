@@ -23,6 +23,7 @@ $email = trim($input['email'] ?? '');
 $password = (string)($input['password'] ?? '');
 $firstName = trim($input['first_name'] ?? '');
 $lastName = trim($input['last_name'] ?? '');
+$jobTitle = trim((string)($input['job_title'] ?? ''));
 $departmentId = isset($input['department_id']) && $input['department_id'] !== '' ? (int)$input['department_id'] : null;
 $isSuperadmin = !empty($input['is_superadmin']);
 
@@ -39,6 +40,10 @@ if (strlen($password) < 8) {
     Response::error('validation_error', 'La contraseña debe tener al menos 8 caracteres', 400);
 }
 
+if (mb_strlen($jobTitle, 'UTF-8') > 120) {
+    Response::error('validation_error', 'Job title cannot exceed 120 characters', 400);
+}
+
 $pdo = DB::pdo();
 
 // Verificar si el email ya existe
@@ -52,7 +57,7 @@ if ($existing) {
 $pdo->beginTransaction();
 try {
     $passwordHash = password_hash($password, PASSWORD_ARGON2ID);
-    $userId = $repo->create($email, $passwordHash, $firstName, $lastName, $departmentId, $isSuperadmin);
+    $userId = $repo->create($email, $passwordHash, $firstName, $lastName, $departmentId, $isSuperadmin, $jobTitle !== '' ? $jobTitle : null);
 
     $accessRepo = new UserFeatureAccessRepo($pdo);
     if (!$accessRepo->grantDefaultAccessForNewUser($userId)) {

@@ -13,13 +13,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 Session::requireCsrf();
-AdminGuard::requireSuperadmin();
+$currentUser = AdminGuard::requireSuperadmin();
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $userId = isset($input['id']) ? (int)$input['id'] : 0;
 $email = trim($input['email'] ?? '');
 $firstName = trim($input['first_name'] ?? '');
 $lastName = trim($input['last_name'] ?? '');
+$jobTitle = trim((string)($input['job_title'] ?? ''));
 $departmentId = isset($input['department_id']) && $input['department_id'] !== '' ? (int)$input['department_id'] : null;
 $status = (string)($input['status'] ?? 'active');
 $isSuperadmin = !empty($input['is_superadmin']);
@@ -46,6 +47,10 @@ if ($newPassword !== '' && strlen($newPassword) < 8) {
     Response::error('validation_error', 'La contraseña debe tener al menos 8 caracteres', 400);
 }
 
+if (mb_strlen($jobTitle, 'UTF-8') > 120) {
+    Response::error('validation_error', 'Job title cannot exceed 120 characters', 400);
+}
+
 $repo = new UsersRepo();
 
 // Verificar que el usuario existe
@@ -61,11 +66,7 @@ if ($userId === (int)$currentUser['id'] && $user['is_superadmin'] && !$isSuperad
 
 // Proteger al último superadmin activo
 if ($user['is_superadmin'] && !$isSuperadmin) {
-    $stmt = $repo->pdo->prepare('SELECT COUNT(*) FROM users WHERE is_superadmin = 1 AND status = "active"');
-    $stmt->execute();
-    $superadminCount = (int)$stmt->fetchColumn();
-    
-    if ($superadminCount <= 1) {
+    if ($repo->countActiveSuperadmins() <= 1) {
         Response::error('validation_error', 'No puedes quitar el rol de superadministrador al último admin del sistema', 400);
     }
 }
@@ -80,7 +81,7 @@ if ($email !== $user['email']) {
 }
 
 // Actualizar datos del usuario
-$repo->update($userId, $firstName, $lastName, $departmentId, $status, $isSuperadmin);
+$repo->update($userId, $firstName, $lastName, $departmentId, $status, $isSuperadmin, $jobTitle !== '' ? $jobTitle : null);
 
 // Actualizar contraseña si se proporcionó
 if ($newPassword !== '') {

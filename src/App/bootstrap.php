@@ -28,6 +28,7 @@ require_once dirname(__DIR__) . '/Repos/UsageLogRepo.php';
 require_once dirname(__DIR__) . '/Repos/UserFeatureAccessRepo.php';
 require_once dirname(__DIR__) . '/Repos/VoicesRepo.php';
 require_once dirname(__DIR__) . '/Repos/ContextDocsRepo.php';
+require_once dirname(__DIR__) . '/Repos/OrganizationResponsibilityRepo.php';
 
 // Claara internal capabilities
 require_once dirname(__DIR__) . '/Claara/CapabilityCatalogService.php';

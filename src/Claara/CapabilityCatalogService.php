@@ -2,6 +2,7 @@
 namespace Claara;
 
 use Repos\ContextDocsRepo;
+use Repos\OrganizationResponsibilityRepo;
 use Repos\UserFeatureAccessRepo;
 use Repos\VoicesRepo;
 use Throwable;
@@ -64,15 +65,18 @@ class CapabilityCatalogService
     private UserFeatureAccessRepo $accessRepo;
     private VoicesRepo $voicesRepo;
     private ?ContextDocsRepo $docsRepo;
+    private ?OrganizationResponsibilityRepo $responsibilityRepo;
 
     public function __construct(
         ?UserFeatureAccessRepo $accessRepo = null,
         ?VoicesRepo $voicesRepo = null,
-        ?ContextDocsRepo $docsRepo = null
+        ?ContextDocsRepo $docsRepo = null,
+        ?OrganizationResponsibilityRepo $responsibilityRepo = null
     ) {
         $this->accessRepo = $accessRepo ?? new UserFeatureAccessRepo();
         $this->voicesRepo = $voicesRepo ?? new VoicesRepo();
         $this->docsRepo = $docsRepo ?? new ContextDocsRepo();
+        $this->responsibilityRepo = $responsibilityRepo ?? new OrganizationResponsibilityRepo();
     }
 
     public function forUser(array $user): array
@@ -101,11 +105,20 @@ class CapabilityCatalogService
         $userSummary = trim(implode(', ', array_filter([
             (string)($user['name'] ?? ''),
             (string)($user['email'] ?? ''),
+            (string)($user['job_title'] ?? ''),
             (string)($user['department'] ?? ''),
             !empty($user['is_superadmin']) ? 'superadmin' : '',
         ])));
         if ($userSummary !== '') {
             $lines[] = 'Current user: ' . $userSummary;
+            if (!empty($user['department_responsibilities'])) {
+                $departmentNames = array_map(static fn(array $department): string => (string)($department['name'] ?? ''), $user['department_responsibilities']);
+                $lines[] = 'Department responsibility: ' . implode(', ', array_filter($departmentNames));
+            }
+            if (!empty($user['voice_responsibilities'])) {
+                $voiceNames = array_map(static fn(array $voice): string => (string)($voice['name'] ?? $voice['slug'] ?? ''), $user['voice_responsibilities']);
+                $lines[] = 'Voice responsibility: ' . implode(', ', array_filter($voiceNames));
+            }
             $lines[] = '';
         }
 
@@ -155,7 +168,14 @@ class CapabilityCatalogService
             'name' => $name,
             'email' => (string)($user['email'] ?? ''),
             'department' => (string)($user['department_name'] ?? $user['department'] ?? ''),
+            'job_title' => (string)($user['job_title'] ?? ''),
             'is_superadmin' => !empty($user['is_superadmin']),
+            'department_responsibilities' => $this->responsibilityRepo && isset($user['id'])
+                ? ($this->responsibilityRepo->getUserDepartmentResponsibilitiesMap()[(int)$user['id']] ?? [])
+                : [],
+            'voice_responsibilities' => $this->responsibilityRepo && isset($user['id'])
+                ? ($this->responsibilityRepo->getUserVoiceResponsibilitiesMap()[(int)$user['id']] ?? [])
+                : [],
         ];
     }
 

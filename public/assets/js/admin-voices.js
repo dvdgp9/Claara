@@ -1,6 +1,7 @@
 (function () {
   const state = {
     voices: [],
+    users: [],
     selectedSlug: null,
     isCreating: true,
     documents: []
@@ -75,6 +76,8 @@
 
     const data = await api('/api/admin/voices/list.php?include_archived=1');
     state.voices = data.voices || [];
+    state.users = data.users || [];
+    renderResponsibleOptions();
     renderList();
 
     const nextSlug = selectSlug || state.selectedSlug || state.voices[0]?.slug || null;
@@ -99,16 +102,19 @@
 
     $('voice-empty').classList.add('hidden');
     list.classList.remove('hidden');
-    list.innerHTML = state.voices.map((voice) => `
+    list.innerHTML = state.voices.map((voice) => {
+      const responsibleCount = (voice.responsible_users || []).length;
+      return `
       <button class="voice-list-item ${voice.slug === state.selectedSlug ? 'is-active' : ''}" type="button" data-slug="${escapeHtml(voice.slug)}">
         <span class="voice-list-icon">${escapeHtml((voice.name || voice.slug).slice(0, 1).toUpperCase())}</span>
         <span class="voice-list-copy">
           <strong>${escapeHtml(voice.name || voice.slug)}</strong>
-          <small>${escapeHtml(voice.description || voice.role || 'RAG voice')}</small>
+          <small>${escapeHtml(responsibleCount ? `${responsibleCount} responsible user${responsibleCount === 1 ? '' : 's'}` : (voice.description || voice.role || 'RAG voice'))}</small>
         </span>
         <span class="voice-list-status" data-status="${escapeHtml(voice.status || 'draft')}">${escapeHtml(voice.status || 'draft')}</span>
       </button>
-    `).join('');
+    `;
+    }).join('');
 
     list.querySelectorAll('[data-slug]').forEach((button) => {
       button.addEventListener('click', () => selectVoice(button.dataset.slug));
@@ -132,6 +138,27 @@
     renderDocuments();
   }
 
+  function renderResponsibleOptions() {
+    const select = $('voice-responsibles');
+    if (!select) return;
+    select.innerHTML = state.users.map((user) => `
+      <option value="${escapeHtml(user.id)}">${escapeHtml(`${user.first_name} ${user.last_name}${user.job_title ? ` · ${user.job_title}` : ''}`)}</option>
+    `).join('');
+  }
+
+  function selectResponsibleUsers(users = []) {
+    const ids = new Set(users.map((user) => Number(user.id)));
+    Array.from($('voice-responsibles')?.options || []).forEach((option) => {
+      option.selected = ids.has(Number(option.value));
+    });
+  }
+
+  function selectedResponsibleUserIds() {
+    return Array.from($('voice-responsibles')?.selectedOptions || [])
+      .map((option) => Number(option.value))
+      .filter(Boolean);
+  }
+
   function selectVoice(slug) {
     const voice = state.voices.find((item) => item.slug === slug);
     if (!voice) {
@@ -150,6 +177,7 @@
     $('voice-description').value = voice.description || '';
     $('voice-instructions').value = voice.instructions || '';
     $('voice-trigger').value = voice.trigger_guidance || '';
+    selectResponsibleUsers(voice.responsible_users || []);
     $('voice-editor-status').textContent = voice.status || 'draft';
     $('voice-editor-status').dataset.status = voice.status || 'draft';
     $('voice-editor-title').textContent = voice.name || voice.slug;
@@ -314,7 +342,8 @@
       color: $('voice-color').value,
       description: $('voice-description').value.trim(),
       instructions: $('voice-instructions').value.trim(),
-      trigger_guidance: $('voice-trigger').value.trim()
+      trigger_guidance: $('voice-trigger').value.trim(),
+      responsible_user_ids: selectedResponsibleUserIds()
     };
   }
 

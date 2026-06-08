@@ -62,7 +62,7 @@ class RememberService
         $db = DB::pdo();
         $stmt = $db->prepare('
             SELECT rt.id, rt.user_id, 
-                   u.id as uid, u.email, u.first_name, u.last_name, 
+                   u.id as uid, u.email, u.first_name, u.last_name, u.job_title,
                    u.department_id, u.is_superadmin, u.status,
                    d.name as department_name
             FROM remember_tokens rt
@@ -97,6 +97,7 @@ class RememberService
             'email' => $row['email'],
             'first_name' => $row['first_name'],
             'last_name' => $row['last_name'],
+            'job_title' => $row['job_title'] ?? null,
             'department_id' => $row['department_id'] ? (int)$row['department_id'] : null,
             'department_name' => $row['department_name'] ?? null,
             'is_superadmin' => (bool)$row['is_superadmin'],

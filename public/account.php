@@ -1,9 +1,15 @@
 <?php
 require_once __DIR__ . '/../src/App/bootstrap.php';
 require_once __DIR__ . '/../src/Auth/AuthService.php';
+require_once __DIR__ . '/../src/Repos/UsersRepo.php';
+require_once __DIR__ . '/../src/Repos/UserFeatureAccessRepo.php';
+require_once __DIR__ . '/../src/Repos/OrganizationResponsibilityRepo.php';
 
 use App\Session;
 use Auth\AuthService;
+use Repos\UsersRepo;
+use Repos\UserFeatureAccessRepo;
+use Repos\OrganizationResponsibilityRepo;
 
 Session::start();
 $user = Session::user();
@@ -11,6 +17,17 @@ if (!$user) {
     header('Location: /login.php');
     exit;
 }
+
+$usersRepo = new UsersRepo();
+$freshUser = $usersRepo->findById((int)$user['id']);
+if ($freshUser) {
+    $user = array_merge($user, $freshUser);
+}
+$accessRepo = new UserFeatureAccessRepo();
+$responsibilityRepo = new OrganizationResponsibilityRepo();
+$departmentResponsibilities = $responsibilityRepo->getUserDepartmentResponsibilitiesMap()[(int)$user['id']] ?? [];
+$voiceResponsibilities = $responsibilityRepo->getUserVoiceResponsibilitiesMap()[(int)$user['id']] ?? [];
+$accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,6 +38,7 @@ if (!$user) {
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
+  <link rel="stylesheet" href="/assets/css/styles.css">
   <style>
     /* Base layout styles */
     .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
@@ -80,8 +98,51 @@ if (!$user) {
           <div class="mt-1 text-slate-800 font-medium"><?php echo htmlspecialchars($user['email']); ?></div>
         </div>
         <div>
+          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider">Job title</label>
+          <div class="mt-1 text-slate-800 font-medium"><?php echo htmlspecialchars($user['job_title'] ?? 'Not set'); ?></div>
+        </div>
+        <div>
           <label class="text-xs font-medium text-slate-500 uppercase tracking-wider">Department</label>
           <div class="mt-1 text-slate-800 font-medium"><?php echo htmlspecialchars($user['department_name'] ?? 'Unassigned'); ?></div>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Department responsibility</div>
+          <?php if ($departmentResponsibilities): ?>
+            <div class="flex flex-wrap gap-2">
+              <?php foreach ($departmentResponsibilities as $department): ?>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-slate-200 text-xs font-medium text-slate-700"><?php echo htmlspecialchars($department['name']); ?></span>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <p class="text-sm text-slate-500">No department responsibility.</p>
+          <?php endif; ?>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Voice responsibility</div>
+          <?php if ($voiceResponsibilities): ?>
+            <div class="flex flex-wrap gap-2">
+              <?php foreach ($voiceResponsibilities as $voice): ?>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-slate-200 text-xs font-medium text-slate-700"><?php echo htmlspecialchars($voice['name'] ?: $voice['slug']); ?></span>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <p class="text-sm text-slate-500">No voice responsibility.</p>
+          <?php endif; ?>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Voice access</div>
+          <?php if ($accessibleVoices): ?>
+            <div class="flex flex-wrap gap-2">
+              <?php foreach ($accessibleVoices as $voice): ?>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-slate-200 text-xs font-medium text-slate-700"><?php echo htmlspecialchars($voice['name'] ?? $voice['feature_slug']); ?></span>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <p class="text-sm text-slate-500">No voice access yet.</p>
+          <?php endif; ?>
         </div>
       </div>
 

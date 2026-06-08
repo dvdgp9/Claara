@@ -33,6 +33,7 @@ class AuthService {
             'email' => $row['email'],
             'first_name' => $row['first_name'],
             'last_name' => $row['last_name'],
+            'job_title' => $row['job_title'] ?? null,
             'department_id' => $row['department_id'] ? (int)$row['department_id'] : null,
             'department_name' => $row['department_name'] ?? null,
             'is_superadmin' => (bool)$row['is_superadmin'],

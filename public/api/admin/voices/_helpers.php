@@ -88,3 +88,30 @@ function respond_voice_not_found(): void
 {
     Response::error('voice_not_found', 'Voz no encontrada', 404);
 }
+
+function clean_user_id_list(mixed $value): array
+{
+    if (!is_array($value)) {
+        return [];
+    }
+
+    $ids = [];
+    foreach ($value as $userId) {
+        $id = (int)$userId;
+        if ($id > 0) {
+            $ids[$id] = $id;
+        }
+    }
+    return array_values($ids);
+}
+
+function save_voice_responsibles(\PDO $pdo, string $slug, array $userIds): void
+{
+    $responsibilityRepo = new \Repos\OrganizationResponsibilityRepo($pdo);
+    $responsibilityRepo->setVoiceResponsibles($slug, $userIds);
+
+    $accessRepo = new \Repos\UserFeatureAccessRepo($pdo);
+    foreach ($userIds as $userId) {
+        $accessRepo->setAccess((int)$userId, 'voice', $slug, true);
+    }
+}

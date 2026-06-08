@@ -23,9 +23,9 @@ $headerTitle = 'Departments';
 $headerSubtitle = 'Internal areas management';
 $headerIcon = 'iconoir-community';
 $headerBackUrl = '/admin/users.php';
-$headerBackText = 'Usuarios';
+$headerBackText = 'Users';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-slate-50 text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
@@ -52,13 +52,13 @@ $headerBackText = 'Usuarios';
             <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div class="px-4 lg:px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 class="font-semibold text-slate-800">Listado</h2>
+                  <h2 class="font-semibold text-slate-800">Directory</h2>
                   <p id="departments-count" class="text-xs text-slate-500 mt-0.5">Loading departments...</p>
                 </div>
                 <div class="flex items-center gap-2">
                   <div class="relative">
                     <i class="iconoir-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="search-input" placeholder="Buscar..." class="w-full sm:w-56 pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors text-sm">
+                    <input type="text" id="search-input" placeholder="Search..." class="w-full sm:w-56 pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors text-sm">
                   </div>
                   <button id="refresh-departments-btn" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-colors" title="Refresh">
                     <i class="iconoir-refresh"></i>
@@ -80,10 +80,11 @@ $headerBackText = 'Usuarios';
                 <table class="w-full min-w-[680px]">
                   <thead class="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Departamento</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Department</th>
                       <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Slug</th>
-                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Usuarios</th>
-                      <th class="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Users</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Responsible users</th>
+                      <th class="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="departments-list" class="divide-y divide-slate-200"></tbody>
@@ -121,8 +122,14 @@ $headerBackText = 'Usuarios';
         <input type="hidden" id="department-id">
         <div>
           <label class="text-sm font-medium text-slate-700 block mb-2">Name *</label>
-          <input type="text" id="department-name" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="Operaciones" required>
+          <input type="text" id="department-name" maxlength="120" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" placeholder="Operations" required>
           <p class="text-xs text-slate-500 mt-1">Slug is generated automatically to keep consistency.</p>
+        </div>
+
+        <div>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Responsible users</label>
+          <select id="department-responsibles" multiple size="6" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors text-sm"></select>
+          <p class="text-xs text-slate-500 mt-1">Hold Cmd/Ctrl to select more than one person.</p>
         </div>
 
         <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
@@ -135,11 +142,12 @@ $headerBackText = 'Usuarios';
 
   <div id="save-toast" class="hidden fixed bottom-6 right-6 bg-slate-800 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 z-[100]">
     <i class="iconoir-check text-lg"></i>
-    <span class="text-sm font-medium">Guardado</span>
+    <span class="text-sm font-medium">Saved</span>
   </div>
 
   <script>
     let departments = [];
+    let organizationUsers = [];
     let editingDepartment = null;
 
     async function api(path, opts = {}) {
@@ -172,8 +180,23 @@ $headerBackText = 'Usuarios';
       if (!term) return departments;
       return departments.filter(department =>
         String(department.name || '').toLowerCase().includes(term) ||
-        String(department.slug || '').toLowerCase().includes(term)
+        String(department.slug || '').toLowerCase().includes(term) ||
+        (department.responsible_users || []).some(user => `${user.first_name} ${user.last_name}`.toLowerCase().includes(term))
       );
+    }
+
+    function renderResponsibleChips(users) {
+      if (!users || users.length === 0) {
+        return '<span class="text-xs text-slate-400">No responsible users</span>';
+      }
+      const visible = users.slice(0, 3);
+      const rest = users.length - visible.length;
+      return `
+        <div class="flex flex-wrap gap-1.5">
+          ${visible.map(user => `<span class="inline-flex items-center max-w-[170px] truncate px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-xs">${escapeHtml(`${user.first_name} ${user.last_name}`)}</span>`).join('')}
+          ${rest > 0 ? `<span class="inline-flex items-center px-2 py-1 rounded-full bg-slate-900 text-white text-xs">+${rest}</span>` : ''}
+        </div>
+      `;
     }
 
     function renderDepartments() {
@@ -211,6 +234,7 @@ $headerBackText = 'Usuarios';
               ${escapeHtml(department.user_count || 0)}
             </span>
           </td>
+          <td class="px-5 py-4">${renderResponsibleChips(department.responsible_users || [])}</td>
           <td class="px-5 py-4">
             <div class="flex items-center justify-end gap-1">
               <button type="button" class="edit-department-btn p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-colors" data-id="${escapeHtml(department.id)}" title="Edit">
@@ -231,7 +255,24 @@ $headerBackText = 'Usuarios';
       document.getElementById('departments-table-wrap').classList.add('hidden');
       const data = await api('/api/admin/departments/list.php');
       departments = data.departments || [];
+      organizationUsers = data.users || [];
+      renderResponsibleOptions();
       renderDepartments();
+    }
+
+    function renderResponsibleOptions() {
+      const select = document.getElementById('department-responsibles');
+      if (!select) return;
+      const activeUsers = organizationUsers.filter(user => user.status === 'active');
+      select.innerHTML = activeUsers.map(user => `
+        <option value="${escapeHtml(user.id)}">${escapeHtml(`${user.first_name} ${user.last_name}${user.job_title ? ` · ${user.job_title}` : ''}`)}</option>
+      `).join('');
+    }
+
+    function selectedResponsibleIds() {
+      return Array.from(document.getElementById('department-responsibles').selectedOptions)
+        .map(option => Number(option.value))
+        .filter(Boolean);
     }
 
     function openModal(department = null) {
@@ -239,6 +280,10 @@ $headerBackText = 'Usuarios';
       document.getElementById('modal-title').textContent = department ? 'Edit department' : 'New department';
       document.getElementById('department-id').value = department?.id || '';
       document.getElementById('department-name').value = department?.name || '';
+      const responsibleIds = new Set((department?.responsible_users || []).map(user => Number(user.id)));
+      Array.from(document.getElementById('department-responsibles').options).forEach(option => {
+        option.selected = responsibleIds.has(Number(option.value));
+      });
       document.getElementById('department-modal').classList.remove('hidden');
       document.getElementById('department-name').focus();
     }
@@ -259,7 +304,10 @@ $headerBackText = 'Usuarios';
 
     async function saveDepartment(event) {
       event.preventDefault();
-      const payload = { name: document.getElementById('department-name').value.trim() };
+      const payload = {
+        name: document.getElementById('department-name').value.trim(),
+        responsible_user_ids: selectedResponsibleIds()
+      };
 
       if (!payload.name) {
         showToast('Enter a department name.', true);
@@ -268,7 +316,7 @@ $headerBackText = 'Usuarios';
 
       const saveBtn = document.getElementById('save-department-btn');
       saveBtn.disabled = true;
-      saveBtn.textContent = 'Guardando...';
+      saveBtn.textContent = 'Saving...';
 
       try {
         if (editingDepartment) {
@@ -284,7 +332,7 @@ $headerBackText = 'Usuarios';
         }
         closeModal();
         await loadDepartments();
-        showToast('Departamento guardado');
+        showToast('Department saved');
       } catch (error) {
         showToast(error.message || 'Could not save department.', true);
       } finally {
@@ -308,7 +356,7 @@ $headerBackText = 'Usuarios';
           body: { id: department.id }
         });
         await loadDepartments();
-        showToast('Departamento eliminado');
+        showToast('Department deleted');
       } catch (error) {
         showToast(error.message || 'Could not delete department.', true);
       }
