@@ -18,9 +18,9 @@ if (empty($user['is_superadmin']) && !in_array('admin', $user['roles'] ?? [], tr
 
 $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = '';
-$pageTitle = 'Departments';
-$headerTitle = 'Departments';
-$headerSubtitle = 'Internal areas management';
+$pageTitle = 'Organization';
+$headerTitle = 'Organization';
+$headerSubtitle = 'People, departments, and responsibilities';
 $headerIcon = 'iconoir-community';
 $headerBackUrl = '/admin/users.php';
 $headerBackText = 'Users';
@@ -35,12 +35,12 @@ $headerBackText = 'Users';
       <?php include __DIR__ . '/../includes/header-unified.php'; ?>
 
       <div class="flex-1 overflow-auto bg-slate-50 pb-16 lg:pb-0">
-        <div class="max-w-6xl mx-auto p-4 lg:p-6">
-          <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mt-4 lg:mt-6 mb-6">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-cyan-700 mb-2">Administration</p>
-              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">Departments</h1>
-              <p class="text-slate-600 text-sm lg:text-base mt-1">Create and maintain areas assigned to users.</p>
+        <div class="max-w-7xl mx-auto p-4 lg:p-6">
+          <div class="organization-topbar">
+            <div class="organization-titleblock">
+              <p>Administration</p>
+              <h1>Organization</h1>
+              <span>Manage people, departments, responsibilities, and workspace access from one place.</span>
             </div>
             <button id="new-department-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
               <i class="iconoir-plus-circle"></i>
@@ -48,11 +48,22 @@ $headerBackText = 'Users';
             </button>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
+          <nav class="organization-tabs" aria-label="Organization sections">
+            <a href="/admin/users.php" class="organization-tab">
+              <i class="iconoir-user"></i>
+              <span>Users</span>
+            </a>
+            <a href="/admin/departments.php" class="organization-tab is-active">
+              <i class="iconoir-community"></i>
+              <span>Departments</span>
+            </a>
+          </nav>
+
+          <div>
             <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div class="px-4 lg:px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 class="font-semibold text-slate-800">Directory</h2>
+                  <h2 class="font-semibold text-slate-800">Departments</h2>
                   <p id="departments-count" class="text-xs text-slate-500 mt-0.5">Loading departments...</p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -91,18 +102,6 @@ $headerBackText = 'Users';
                 </table>
               </div>
             </section>
-
-            <aside class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 h-fit">
-              <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-700 flex items-center justify-center mb-4">
-                <i class="iconoir-info-circle text-xl"></i>
-              </div>
-              <h2 class="font-semibold text-slate-800 mb-2">Usage in users</h2>
-              <p class="text-sm text-slate-600 leading-relaxed">These departments appear in the user create and edit selector. If you delete one, related users will be left without a department due to database relation.</p>
-              <a href="/admin/users.php" class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-cyan-700 hover:text-cyan-900">
-                <i class="iconoir-arrow-right"></i>
-                Manage users
-              </a>
-            </aside>
           </div>
         </div>
       </div>

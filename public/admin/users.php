@@ -134,25 +134,30 @@ if (!$isSuperadmin) {
 
       <div class="flex-1 overflow-auto bg-slate-50 pb-16 lg:pb-0">
         <div class="max-w-7xl mx-auto p-4 lg:p-6">
-          <!-- Header -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8 mt-4 lg:mt-6">
-            <div>
-              <h1 class="text-2xl lg:text-3xl font-bold text-slate-800">User Management</h1>
-              <p class="text-slate-600 text-sm lg:text-base mt-1">Create, edit, and manage user accounts</p>
+          <div class="organization-topbar">
+            <div class="organization-titleblock">
+              <p>Administration</p>
+              <h1>Organization</h1>
+              <span>Manage people, departments, responsibilities, and workspace access from one place.</span>
             </div>
-            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <a href="/admin/departments.php" class="w-full sm:w-auto px-4 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                <i class="iconoir-community"></i>
-                <span>Departments</span>
-              </a>
-              <button id="create-user-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
-                <i class="iconoir-plus-circle"></i>
-                <span>New user</span>
-              </button>
-            </div>
+            <button id="create-user-btn" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-md">
+              <i class="iconoir-plus-circle"></i>
+              <span>New user</span>
+            </button>
           </div>
 
-          <!-- Búsqueda y filtros -->
+          <nav class="organization-tabs" aria-label="Organization sections">
+            <a href="/admin/users.php" class="organization-tab is-active">
+              <i class="iconoir-user"></i>
+              <span>Users</span>
+            </a>
+            <a href="/admin/departments.php" class="organization-tab">
+              <i class="iconoir-community"></i>
+              <span>Departments</span>
+            </a>
+          </nav>
+
+          <!-- Search and filters -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-6">
       <div class="flex items-center gap-4">
         <div class="flex-1 relative">

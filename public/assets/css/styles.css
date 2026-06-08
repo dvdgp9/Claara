@@ -2293,6 +2293,86 @@ select {
   50% { background-position: 100% 50%; }
 }
 
+.organization-topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 18px 0 14px;
+}
+
+.organization-titleblock {
+  min-width: 0;
+}
+
+.organization-titleblock p {
+  margin: 0 0 8px;
+  color: #36707a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.organization-titleblock h1 {
+  margin: 0;
+  color: #1f2937;
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.organization-titleblock span {
+  display: block;
+  max-width: 68ch;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.organization-tabs {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0 0 22px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 14px 28px -24px rgba(47, 52, 64, .45);
+}
+
+.organization-tab {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+.organization-tab:hover {
+  color: #2f3440;
+  background: #f8fafc;
+}
+
+.organization-tab:active {
+  transform: translateY(1px);
+}
+
+.organization-tab.is-active {
+  color: #1f2937;
+  background: #eaf1ff;
+  box-shadow: inset 0 0 0 1px rgba(183, 201, 242, .7);
+}
+
 @media (max-width: 1100px) {
   .claara-landing-hero {
     grid-template-columns: 1fr;
@@ -2327,6 +2407,20 @@ select {
 }
 
 @media (max-width: 760px) {
+  .organization-topbar {
+    align-items: stretch;
+    flex-direction: column;
+    margin-top: 14px;
+  }
+
+  .organization-tabs {
+    width: 100%;
+  }
+
+  .organization-tab {
+    padding: 0 12px;
+  }
+
   .claara-landing-nav {
     width: min(100% - 24px, 1320px);
     grid-template-columns: 1fr auto;

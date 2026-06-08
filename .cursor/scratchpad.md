@@ -192,6 +192,7 @@ Claara ya tiene usuarios, departamentos, permisos por feature y voces RAG dinám
 ### Current Status / Progress Tracking — Organization Management
 - 2026-06-08 (Planner): Plan inicial documentado. Se propone una implementación incremental y pragmática: `job_title` simple en usuarios, responsabilidad many-to-many para departamentos y voces, UX integrada en un módulo Organization y sincronización de acceso cuando alguien es responsable de una voz.
 - 2026-06-08 (Executor): Primer corte funcional implementado. Añadida migración `021_organization_responsibilities.sql`; aplicada en producción antes del deploy con `users.job_title`, `department_responsibles` y `voice_responsibles`. Backend actualizado para usuarios, departamentos, voces, sesión/auth-me y catálogo interno de Claara. UI actualizada en User Management, Departments, Voice Studio y My Account para mostrar/editar puesto, responsables, acceso a voces y responsabilidades.
+- 2026-06-08 (Executor): Ajuste UX de integración Users/Departments. Ambas rutas admin comparten ahora cabecera `Organization`, tabs `Users`/`Departments` con estado activo claro y copy común. `Departments` deja de verse como entidad aislada: se elimina el aside explicativo y se presenta como una sección del mismo módulo.
 
 ---
 
