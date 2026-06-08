@@ -185,8 +185,7 @@ if (!$isSuperadmin) {
             <thead class="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Department</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Voices</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Roles &amp; access</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Activity</th>
                 <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -516,9 +515,21 @@ if (!$isSuperadmin) {
         const superadminBadge = u.is_superadmin 
           ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#B7C9F2]/10 text-[#B7C9F2] ml-2">Admin</span>'
           : '';
-        const departmentResponsibilities = (u.department_responsibilities || []).map((item) => item.name);
-        const voiceResponsibilities = (u.voice_responsibilities || []).map((item) => item.name || item.slug);
-        const voiceAccess = (u.accessible_voices || []).map((voice) => voice.name || voice.feature_slug);
+        const departmentResponsibilities = (u.department_responsibilities || []).map((item) => item.name).filter(Boolean);
+        const voiceResponsibilities = (u.voice_responsibilities || []).map((item) => item.name || item.slug).filter(Boolean);
+        const voiceAccess = (u.accessible_voices || []).map((voice) => voice.name || voice.feature_slug).filter(Boolean);
+
+        // Merge access + responsibility into one set of voice chips.
+        // A voice the user leads is marked, instead of listing it twice.
+        const respSet = new Set(voiceResponsibilities.map((s) => String(s).toLowerCase()));
+        const voiceMap = new Map();
+        voiceAccess.forEach((label) => {
+          voiceMap.set(label.toLowerCase(), { label, lead: respSet.has(label.toLowerCase()) });
+        });
+        voiceResponsibilities.forEach((label) => {
+          if (!voiceMap.has(label.toLowerCase())) voiceMap.set(label.toLowerCase(), { label, lead: true });
+        });
+        const voices = Array.from(voiceMap.values()).sort((a, b) => (b.lead - a.lead));
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
@@ -537,15 +548,17 @@ if (!$isSuperadmin) {
                 </div>
               </div>
             </td>
-            <td class="px-6 py-4 min-w-[220px]">
-              <div class="text-sm font-medium text-slate-700">${escapeHtml(u.department_name || 'Unassigned')}</div>
-              <div class="mt-2">${renderLabeledChips('Responsible', departmentResponsibilities, 'Not responsible for a department')}</div>
-            </td>
-            <td class="px-6 py-4 min-w-[300px]">
-              <div class="space-y-2">
-                ${renderLabeledChips('Access', voiceAccess, 'No voice access')}
-                ${renderLabeledChips('Responsible', voiceResponsibilities, 'Not responsible for a voice')}
+            <td class="px-6 py-4 min-w-[320px]">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="inline-flex items-center gap-1.5 text-sm ${u.department_name ? 'font-medium text-slate-700' : 'text-slate-400'}">
+                  <i class="iconoir-building text-slate-400"></i>${escapeHtml(u.department_name || 'Unassigned')}
+                </span>
+                ${departmentResponsibilities.map((name) => `
+                  <span title="Department lead" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FF8B73]/10 text-[#c2410c] ring-1 ring-[#FF8B73]/25 text-xs font-medium">
+                    <i class="iconoir-crown text-[11px]"></i>${escapeHtml(name)}
+                  </span>`).join('')}
               </div>
+              <div class="mt-2">${renderVoiceChips(voices)}</div>
             </td>
             <td class="px-6 py-4 min-w-[150px]">
               <div>${statusBadge}</div>
@@ -572,27 +585,24 @@ if (!$isSuperadmin) {
       }).join('');
     }
 
-    function renderMiniChips(items, emptyLabel) {
-      const cleanItems = (items || []).filter(Boolean);
-      if (!cleanItems.length) {
-        return `<span class="text-xs text-slate-400">${escapeHtml(emptyLabel)}</span>`;
+    // Voice chips: neutral chip = access, coral crown chip = responsible (lead).
+    // Empty access stays silent (a single muted dash), never a verbose negative.
+    function renderVoiceChips(voices) {
+      const items = (voices || []).filter((v) => v && v.label);
+      if (!items.length) {
+        return '<span class="text-xs text-slate-300">No voice access</span>';
       }
 
-      const visible = cleanItems.slice(0, 2);
-      const rest = cleanItems.length - visible.length;
-      return `
-        <div class="flex flex-wrap gap-1.5">
-          ${visible.map((label) => `<span class="inline-flex items-center max-w-[160px] truncate px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-xs">${escapeHtml(label)}</span>`).join('')}
-          ${rest > 0 ? `<span class="inline-flex items-center px-2 py-1 rounded-full bg-slate-900 text-white text-xs">+${rest}</span>` : ''}
-        </div>
-      `;
-    }
+      const visible = items.slice(0, 3);
+      const rest = items.length - visible.length;
+      const chip = (v) => v.lead
+        ? `<span title="Responsible" class="inline-flex items-center gap-1 max-w-[150px] truncate px-2 py-0.5 rounded-full bg-[#FF8B73]/10 text-[#c2410c] ring-1 ring-[#FF8B73]/25 text-xs font-medium"><i class="iconoir-crown text-[11px]"></i>${escapeHtml(v.label)}</span>`
+        : `<span class="inline-flex items-center max-w-[150px] truncate px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">${escapeHtml(v.label)}</span>`;
 
-    function renderLabeledChips(label, items, emptyLabel) {
       return `
-        <div class="organization-cell-stack">
-          <span>${escapeHtml(label)}</span>
-          ${renderMiniChips(items, emptyLabel)}
+        <div class="flex flex-wrap items-center gap-1.5">
+          ${visible.map(chip).join('')}
+          ${rest > 0 ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 text-xs font-medium">+${rest}</span>` : ''}
         </div>
       `;
     }
