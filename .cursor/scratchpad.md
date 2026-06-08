@@ -1962,7 +1962,7 @@ Hallazgos de la exploración del código (commit base `ed4f590`):
   - Success: flag de voz con responsable aparece a ese responsable; flag de voz sin responsable aparece a admins.
 
 ## Project Status Board — Flags
-- [x] T0 Prerrequisito metadata en mensajes — implementado, pendiente verificación usuario (BD local no accesible para el agente)
+- [x] T0 Prerrequisito metadata en mensajes — COMPLETADO Y VERIFICADO en prod (commit d458f07). Confirmado: msg 346 guardó {"voice_slug":"lex"} tras un "Ask Lex"; la recomendación previa (msg 345) quedó con metadata NULL (correcto).
 - [ ] T1 Migración voice_flags
 - [ ] T2 VoiceFlagsRepo
 - [ ] T3 Endpoints API
