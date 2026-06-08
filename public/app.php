@@ -487,7 +487,7 @@ $headerShowLogo = true;
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
       <div class="p-5 border-b border-slate-200">
         <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
-          <i class="iconoir-flag text-[#FF8B73]"></i> Report an issue
+          <i class="iconoir-warning-triangle text-[#FF8B73]"></i> Report an issue
         </h3>
         <p class="text-sm text-slate-500 mt-1">This goes to the people responsible for <span id="flag-modal-voice" class="font-medium text-slate-700"></span>.</p>
       </div>
@@ -512,7 +512,7 @@ $headerShowLogo = true;
       <div class="p-5 border-t border-slate-200 flex items-center justify-end gap-3 bg-slate-50">
         <button id="flag-modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
         <button id="flag-modal-submit" class="px-5 py-2 text-sm font-medium text-white gradient-brand-btn rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
-          <i class="iconoir-flag"></i> Send report
+          <i class="iconoir-warning-triangle"></i> Send report
         </button>
       </div>
     </div>
@@ -1287,7 +1287,7 @@ $headerShowLogo = true;
         flagBtn.type = 'button';
         flagBtn.className = 'msg-action-btn';
         flagBtn.title = 'Report an issue with this answer';
-        flagBtn.innerHTML = '<i class="iconoir-flag"></i>';
+        flagBtn.innerHTML = '<i class="iconoir-warning-triangle"></i>';
         flagBtn.addEventListener('click', () => openFlagModal(voiceSlug, messageId || null));
         actions.appendChild(flagBtn);
       }
@@ -1344,7 +1344,7 @@ $headerShowLogo = true;
       const btn = document.getElementById('flag-modal-submit');
       btn.disabled = true;
       const original = btn.innerHTML;
-      btn.innerHTML = '<i class="iconoir-flag"></i> Sending...';
+      btn.innerHTML = '<i class="iconoir-warning-triangle"></i> Sending...';
       try {
         await api('/api/flags/create.php', {
           method: 'POST',

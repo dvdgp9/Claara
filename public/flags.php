@@ -74,7 +74,7 @@ if (!$canSee) {
           </div>
 
           <div id="flags-empty" class="hidden text-center py-16">
-            <i class="iconoir-flag text-4xl text-slate-300"></i>
+            <i class="iconoir-warning-triangle text-4xl text-slate-300"></i>
             <p class="text-slate-500 mt-3">No reports here.</p>
           </div>
 

@@ -195,7 +195,7 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
         </a>
         <?php if ($canSeeFlags): ?>
           <a href="/flags.php" id="flags-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
-            <i class="iconoir-flag"></i>
+            <i class="iconoir-warning-triangle"></i>
             <span>Reports</span>
             <?php if ($flagsOpenCount > 0): ?>
               <span class="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#FF8B73] text-white text-xs font-semibold"><?php echo (int)$flagsOpenCount; ?></span>
