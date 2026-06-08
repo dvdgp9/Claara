@@ -27,6 +27,7 @@ if (!$isSuperadmin) {
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
+  <link rel="stylesheet" href="/assets/css/styles.css">
   <style>
     .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -76,7 +77,6 @@ if (!$isSuperadmin) {
       border-radius: 0 3px 3px 0;
       box-shadow: 0 0 14px rgba(183, 201, 242,0.75);
     }
-    .tab-active { border-bottom: 2px solid #B7C9F2; color: #B7C9F2; }
     .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
     .status-active { background: #dcfce7; color: #166534; }
     .status-pending { background: #fef3c7; color: #92400e; }
