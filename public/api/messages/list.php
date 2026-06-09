@@ -30,6 +30,7 @@ if (!$access || empty($access['can_view'])) {
 $msgs = new MessagesRepo();
 $filesRepo = new ChatFilesRepo();
 $items = $msgs->listByConversation($conversationId);
+$activity = $msgs->getConversationActivity($conversationId);
 
 // Enriquecer mensajes con información de archivos e imágenes
 foreach ($items as &$item) {
@@ -64,6 +65,7 @@ foreach ($items as &$item) {
 
 Response::json([
     'items' => $items,
+    'activity' => $activity,
     'access' => [
         'permission' => $access['permission'],
         'can_view' => (bool)$access['can_view'],

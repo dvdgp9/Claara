@@ -116,6 +116,15 @@ $headerShowLogo = true;
             <div class="text-amber-700 mt-0.5">To keep performance stable, only the most recent messages are sent to the assistant. The full history remains saved.</div>
           </div>
         </div>
+        <div id="conversation-activity-notice" class="conversation-activity-notice hidden mx-6 mt-4">
+          <div class="conversation-activity-card">
+            <div class="conversation-activity-copy">
+              <i class="iconoir-message-text"></i>
+              <span>New activity in this conversation</span>
+            </div>
+            <button id="conversation-activity-refresh" type="button">Refresh</button>
+          </div>
+        </div>
         <div id="empty-state" class="absolute inset-0 overflow-auto px-4 py-5 pb-36 sm:px-6 lg:px-8 lg:pb-8">
           <div class="empty-shell max-w-6xl mx-auto py-4 lg:py-8">
             
@@ -630,6 +639,8 @@ $headerShowLogo = true;
   <script type="module">
     const messagesEl = document.getElementById('messages');
     const messagesContainer = document.getElementById('messages-container');
+    const conversationActivityNotice = document.getElementById('conversation-activity-notice');
+    const conversationActivityRefresh = document.getElementById('conversation-activity-refresh');
     const emptyState = document.getElementById('empty-state');
     const chatFooter = document.getElementById('chat-footer');
     const inputEl = document.getElementById('chat-input');
@@ -736,6 +747,9 @@ $headerShowLogo = true;
     let currentUser = null;
     let currentConvTitle = null;
     let currentConversationAccess = null;
+    let currentLatestMessageId = 0;
+    let activityPollTimer = null;
+    let activityPollInFlight = false;
     let currentFiles = []; // current attached files
     let currentFilesEmpty = []; // attached files in empty state
     let currentFolderId = -1; // -1 = all, 0 = no folder, >0 = specific folder
@@ -916,6 +930,8 @@ $headerShowLogo = true;
       messagesEl.innerHTML = '';
       document.getElementById('context-warning').classList.add('hidden');
       convTitleEl.classList.add('hidden');
+      currentLatestMessageId = 0;
+      restartConversationActivityPolling();
       applyConversationAccessState();
       focusEmptyComposer();
     }
@@ -950,6 +966,61 @@ $headerShowLogo = true;
         conversationAccessChip.classList.toggle('hidden', !label || !currentConversationId);
       }
     }
+
+    function hideConversationActivityNotice() {
+      conversationActivityNotice?.classList.add('hidden');
+    }
+
+    function showConversationActivityNotice() {
+      if (!conversationActivityNotice || !currentConversationId) return;
+      conversationActivityNotice.classList.remove('hidden');
+    }
+
+    function shouldPollConversationActivity() {
+      if (!currentConversationId || !currentConversationAccess) return false;
+      if (document.hidden || isGenerating) return false;
+      return currentConversationAccess.permission !== 'owner' || !!currentConversationAccess.is_shared;
+    }
+
+    async function checkConversationActivity() {
+      if (!shouldPollConversationActivity() || activityPollInFlight) return;
+      activityPollInFlight = true;
+      try {
+        const data = await api(`/api/messages/activity.php?conversation_id=${encodeURIComponent(currentConversationId)}`);
+        const latest = Number(data.activity?.latest_message_id || 0);
+        if (latest > currentLatestMessageId) {
+          showConversationActivityNotice();
+          await loadConversations();
+        }
+      } catch (err) {
+        console.warn('Conversation activity check failed:', err);
+      } finally {
+        activityPollInFlight = false;
+      }
+    }
+
+    function restartConversationActivityPolling() {
+      if (activityPollTimer) {
+        clearInterval(activityPollTimer);
+        activityPollTimer = null;
+      }
+      hideConversationActivityNotice();
+      if (!currentConversationId) return;
+      activityPollTimer = setInterval(checkConversationActivity, 12000);
+    }
+
+    conversationActivityRefresh?.addEventListener('click', async () => {
+      if (!currentConversationId) return;
+      hideConversationActivityNotice();
+      await loadMessages(currentConversationId);
+      await loadConversations();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        checkConversationActivity();
+      }
+    });
 
     // Delete empty conversations to avoid accumulation.
     async function cleanupEmptyConversation(exceptId = null) {
@@ -3056,6 +3127,9 @@ $headerShowLogo = true;
     async function loadMessages(conversationId){
       const data = await api(`/api/messages/list.php?conversation_id=${encodeURIComponent(conversationId)}`);
       currentConversationAccess = data.access || null;
+      currentLatestMessageId = Number(data.activity?.latest_message_id || 0);
+      hideConversationActivityNotice();
+      restartConversationActivityPolling();
       messagesEl.innerHTML = '';
       document.getElementById('context-warning').classList.add('hidden');
       const items = data.items || [];
@@ -3226,6 +3300,7 @@ $headerShowLogo = true;
                 if (emptyConversationId === currentConversationId) emptyConversationId = null;
                 await loadConversations();
               } else if (data.type === 'meta') {
+                if (data.message_id) currentLatestMessageId = Math.max(currentLatestMessageId, Number(data.message_id));
                 finalizeStreamingMessage(assistantBubble, fullContent, data.images, data.annotations, data.message_id);
               } else if (data.type === 'error') {
                 throw new Error(data.message);

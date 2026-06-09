@@ -19,6 +19,17 @@ class MessagesRepo {
         return $stmt->fetchAll() ?: [];
     }
 
+    public function getConversationActivity(int $conversationId): array
+    {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) AS total, COALESCE(MAX(id), 0) AS latest_message_id FROM messages WHERE conversation_id = ?');
+        $stmt->execute([$conversationId]);
+        $row = $stmt->fetch() ?: [];
+        return [
+            'total' => (int)($row['total'] ?? 0),
+            'latest_message_id' => (int)($row['latest_message_id'] ?? 0),
+        ];
+    }
+
     public function create(int $conversationId, ?int $userId, string $role, string $content, ?string $model = null, ?int $inputTokens = null, ?int $outputTokens = null, ?int $fileId = null, ?array $images = null, ?array $metadata = null): int
     {
         $now = date('Y-m-d H:i:s');
