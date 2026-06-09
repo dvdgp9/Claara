@@ -58,10 +58,12 @@ try {
         }
 
         $removed = $accessRepo->removeShare($conversationId, $shareId);
+        $freshAccess = $accessRepo->getAccess($conversationId, $user);
         Response::json([
             'ok' => true,
             'removed' => $removed,
             'shares' => $accessRepo->listShares($conversationId),
+            'access' => format_share_access($freshAccess),
         ]);
     }
 
@@ -75,12 +77,32 @@ try {
 
     $accessRepo->upsertShare($conversationId, $targetType, $targetId, $permission, (int)$user['id']);
 
+    $freshAccess = $accessRepo->getAccess($conversationId, $user);
     Response::json([
         'ok' => true,
         'shares' => $accessRepo->listShares($conversationId),
+        'access' => format_share_access($freshAccess),
     ]);
 } catch (\InvalidArgumentException $e) {
     Response::error('validation_error', $e->getMessage(), 400);
 } catch (\Throwable $e) {
     Response::serverError('conversation_share_error', $e, 'Could not update conversation sharing');
+}
+
+function format_share_access(?array $access): ?array
+{
+    if (!$access) {
+        return null;
+    }
+
+    return [
+        'permission' => $access['permission'],
+        'can_view' => (bool)$access['can_view'],
+        'can_chat' => (bool)$access['can_chat'],
+        'can_manage' => (bool)$access['can_manage'],
+        'is_shared' => (bool)($access['is_shared'] ?? false),
+        'share_count' => (int)($access['share_count'] ?? 0),
+        'share' => $access['share'],
+        'conversation' => $access['conversation'],
+    ];
 }

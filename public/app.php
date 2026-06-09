@@ -552,7 +552,7 @@ $headerShowLogo = true;
         </div>
 
         <button id="share-add-btn" type="button" class="w-full py-2.5 px-4 rounded-xl gradient-brand-btn text-[#2F3440] font-medium shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2">
-          <i class="iconoir-plus"></i> Add access
+          <i class="iconoir-plus"></i> Save access
         </button>
 
         <div>
@@ -939,7 +939,7 @@ $headerShowLogo = true;
 
       if (conversationAccessChip) {
         const label = permission === 'owner'
-          ? 'Private'
+          ? (access?.is_shared ? 'Shared' : 'Private')
           : permission === 'chat'
             ? 'Can chat'
             : permission === 'view'
@@ -2728,6 +2728,10 @@ $headerShowLogo = true;
                 share_id: share.id
               }
             });
+            if (data.access) {
+              currentConversationAccess = data.access;
+              applyConversationAccessState();
+            }
             renderShares(data.shares || []);
             await loadConversations();
           } catch (err) {
@@ -2737,6 +2741,25 @@ $headerShowLogo = true;
         row.appendChild(removeBtn);
         shareList.appendChild(row);
       }
+    }
+
+    function setShareSaveState(state) {
+      if (!shareAddBtn) return;
+      if (state === 'saving') {
+        shareAddBtn.disabled = true;
+        shareAddBtn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Saving...';
+        return;
+      }
+      if (state === 'saved') {
+        shareAddBtn.disabled = false;
+        shareAddBtn.innerHTML = '<i class="iconoir-check-circle"></i> Saved';
+        setTimeout(() => {
+          if (shareAddBtn) shareAddBtn.innerHTML = '<i class="iconoir-plus"></i> Save access';
+        }, 1400);
+        return;
+      }
+      shareAddBtn.disabled = false;
+      shareAddBtn.innerHTML = '<i class="iconoir-plus"></i> Save access';
     }
 
     async function openShareModal() {
@@ -2777,6 +2800,7 @@ $headerShowLogo = true;
       if (!targetId || !currentConversationId) return;
 
       try {
+        setShareSaveState('saving');
         const data = await api('/api/conversations/shares.php', {
           method: 'POST',
           body: {
@@ -2787,9 +2811,15 @@ $headerShowLogo = true;
             permission: sharePermissionSelect.value || 'view'
           }
         });
+        if (data.access) {
+          currentConversationAccess = data.access;
+          applyConversationAccessState();
+        }
         renderShares(data.shares || []);
+        setShareSaveState('saved');
         await loadConversations();
       } catch (err) {
+        setShareSaveState('idle');
         alert('Error sharing conversation: ' + err.message);
       }
     });

@@ -69,6 +69,8 @@ Response::json([
         'can_view' => (bool)$access['can_view'],
         'can_chat' => (bool)$access['can_chat'],
         'can_manage' => (bool)$access['can_manage'],
+        'is_shared' => (bool)($access['is_shared'] ?? false),
+        'share_count' => (int)($access['share_count'] ?? 0),
         'share' => $access['share'],
         'conversation' => $access['conversation'],
     ],

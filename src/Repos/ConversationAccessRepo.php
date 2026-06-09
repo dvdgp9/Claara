@@ -38,7 +38,7 @@ class ConversationAccessRepo {
         $isSuperadmin = !empty($user['is_superadmin']);
 
         if ($isOwner || $isSuperadmin) {
-            return $this->formatAccess($conversation, 'owner', true, true, true, null);
+            return $this->formatAccess($conversation, 'owner', true, true, true, null, $this->countShares($conversationId));
         }
 
         $share = $this->bestShareForUser($conversationId, $user);
@@ -56,7 +56,8 @@ class ConversationAccessRepo {
             [
                 'target_type' => $share['target_type'],
                 'target_id' => (int)$share['target_id'],
-            ]
+            ],
+            $this->countShares($conversationId)
         );
     }
 
@@ -96,6 +97,13 @@ class ConversationAccessRepo {
         ');
         $stmt->execute([$conversationId]);
         return $stmt->fetchAll() ?: [];
+    }
+
+    public function countShares(int $conversationId): int
+    {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM conversation_shares WHERE conversation_id = ?');
+        $stmt->execute([$conversationId]);
+        return (int)$stmt->fetchColumn();
     }
 
     public function upsertShare(int $conversationId, string $targetType, int $targetId, string $permission, ?int $createdBy): void
@@ -182,7 +190,7 @@ class ConversationAccessRepo {
         return $row ?: null;
     }
 
-    private function formatAccess(array $conversation, string $permission, bool $canView, bool $canChat, bool $canManage, ?array $share): array
+    private function formatAccess(array $conversation, string $permission, bool $canView, bool $canChat, bool $canManage, ?array $share, int $shareCount): array
     {
         return [
             'conversation' => [
@@ -203,6 +211,8 @@ class ConversationAccessRepo {
             'can_view' => $canView,
             'can_chat' => $canChat,
             'can_manage' => $canManage,
+            'is_shared' => $shareCount > 0,
+            'share_count' => $shareCount,
             'share' => $share,
         ];
     }
