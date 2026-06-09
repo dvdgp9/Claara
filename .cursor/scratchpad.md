@@ -1982,3 +1982,52 @@ Hallazgos de la exploración del código (commit base `ed4f590`):
 - (iconos Iconoir) `iconoir-flag` NO existe en la versión de Iconoir cargada (CDN @main) y se renderiza como cuadrado "tofu". Antes de usar un icono nuevo, comprobar que ya aparece en el proyecto (`grep -roE "iconoir-[a-z-]+"`). Iconos confirmados útiles: iconoir-warning-triangle, iconoir-check-circle, iconoir-megaphone.
 - (estilos de layout compartidos) Las clases `.sidebar-rail` y `.tab-item` que usa `includes/left-tabs.php` estaban solo en `head.php` (inline) y duplicadas en cada página admin; páginas que arman su propio <head> (account.php, flags.php) salían con el rail sin estilo. Solución: viven en `styles.css` (cargado en todas las páginas).
 - (drift de migraciones en prod) `schema_migrations` en prod NO refleja la realidad: hay migraciones aplicadas a mano sin registrar (p.ej. `004_gesture_executions.sql` → su tabla existe pero no está en la tabla de control), así que `scripts/migrate.php` se detiene con "table already exists" antes de llegar a las nuevas. Workaround para migraciones nuevas: aplicar el `.sql` a mano vía cliente mysql (usar `CREATE TABLE IF NOT EXISTS`) y luego `INSERT IGNORE INTO schema_migrations`. Pendiente: reconciliar el estado completo de schema_migrations (tarea aparte, requiere revisar migración por migración).
+
+---
+
+# FEATURE: Mejora del Generador de Imágenes (2026-06-09)
+
+## Background and Motivation — Img
+El gesto "editor-imagenes" no da buenos resultados. Objetivo: mejorar (1) la calidad del resultado y (2) la interfaz. Prioridad acordada con el usuario: **A (mejora de prompt con LLM), B (aspect ratio real), D (guardarraíles de calidad)** primero. UI (E) y variaciones (C) más adelante.
+
+## Key Challenges and Analysis — Img
+Estado actual (commit base ~9ec9225):
+- Modelo `google/gemini-3.1-flash-image-preview` (Nano Banana 2) vía OpenRouter.
+- `src/Chat/OpenRouterClient::generateWithMessages()` solo envía `modalities` y `temperature`. NO envía `image_config`.
+- `public/assets/js/gesture-image-editor.js` `buildPrompt()` envuelve la descripción ("...in Spanish context: {desc}") y concatena formato/estilo/composición como TEXTO. El aspect ratio va como frase, no como parámetro → el modelo no lo respeta.
+- No hay expansión de prompt (palanca #1 de calidad). Sin guardarraíles de calidad.
+
+Docs API confirmadas (ver `docs/openrouter-image-generation.md`):
+- `image_config.aspect_ratio`: 1:1,2:3,3:2,4:3,3:4,4:5,5:4,9:16,16:9,21:9 (extremos 1:4,4:1,1:8,8:1 solo Flash). Los formatos del UI (1:1,3:4,4:3,16:9,9:16) están todos soportados.
+- `image_config.image_size`: 0.5K,1K(default),2K,4K.
+- Respuesta `images[].image_url.url` (ya parseado por getLastImages()).
+- Alternativa de calidad: `google/gemini-3-pro-image-preview` (Nano Banana Pro, 2K/4K).
+
+## High-level Task Breakdown — Img
+- [ ] **IMG-1 (base de B): OpenRouterClient soporta image_config**
+  - `generateWithMessages()` acepta `?array $imageConfig=null` y lo añade al payload como `image_config` cuando viene.
+  - Success: petición a OpenRouter incluye image_config; sin regresión cuando es null.
+- [ ] **IMG-2 (B): aspect ratio + resolución reales en generate-image.php**
+  - Aceptar `aspect_ratio` e `image_size` desde input_data; pasarlos como image_config al cliente. Quitar el aspect ratio textual del prompt.
+  - Frontend: el pill de formato envía `aspect_ratio` (no como texto); selector de calidad 1K/2K.
+  - Success: pedir 16:9 devuelve imagen 1344×768 (verificable por dimensiones).
+- [ ] **IMG-3 (A): paso de mejora de prompt con LLM**
+  - Antes de generar (modo 'generate'), llamar a un modelo de texto que reescribe {descripción + estilo/composición/luz/color} en UN prompt rico y coherente en inglés. Guardar raw + enhanced. Transparente (no bloquea UI); el enhanced se devuelve para poder mostrarlo en el futuro (E).
+  - Success: una descripción corta produce un prompt expandido y mejor imagen; el enhanced queda en output_data.
+- [ ] **IMG-4 (D): guardarraíles de calidad**
+  - System instruction reforzada (evitar texto deforme, marcas de agua, miembros extra, baja resolución, artefactos) tanto en el paso de enhance como en la generación.
+  - Success: instrucción presente; sin regresión.
+
+## Project Status Board — Img
+- [x] IMG-1 OpenRouterClient image_config — implementado (param ?array $imageConfig en generateWithMessages, añade image_config al payload).
+- [x] IMG-2 Aspect ratio + resolución reales — implementado (generate-image.php construye image_config desde inputData.format + image_size default 1K; pasa al cliente). Pendiente verificación de dimensiones.
+- [x] IMG-3 Mejora de prompt con LLM — implementado (enhanceImagePrompt con gemini-3-flash-preview, solo modo generate, transparente; guarda final_prompt/enhanced en output_data). Pendiente verificación.
+- [x] IMG-4 Guardarraíles de calidad — implementado (qualityGuardrails añadido al system instruction de generate y edit).
+- Decisiones: resolución default 1K; mejora de prompt transparente (sin UI). Sin cambios en JS (payload actual ya trae format/description/controles).
+
+## Decisiones pendientes — Img
+- Resolución por defecto: 1K (rápido/barato) vs 2K (mejor calidad). [pendiente usuario]
+- Mejora de prompt: transparente (solo backend) vs vista previa editable (parte de E). [pendiente usuario]
+
+## Lessons — Img
+- (OpenRouter imagen) El aspect ratio/resolución se controla con `image_config` en el body, NO con texto en el prompt. Ver docs/openrouter-image-generation.md.

@@ -54,8 +54,9 @@ class OpenRouterClient {
      * @param array<int, array{role:string, content:string, file?:array}> $messages
      * @param array|null $modalities Modalidades de salida (ej: ['image', 'text'] para generación de imágenes)
      * @param bool $webSearch Activar búsqueda web para enriquecer respuestas
+     * @param array|null $imageConfig Config de imagen para OpenRouter (ej: ['aspect_ratio' => '16:9', 'image_size' => '1K'])
      */
-    public function generateWithMessages(array $messages, ?array $modalities = null, bool $webSearch = false): string
+    public function generateWithMessages(array $messages, ?array $modalities = null, bool $webSearch = false, ?array $imageConfig = null): string
     {
         if (!$this->apiKey) {
             Response::error('openrouter_api_key_missing', 'Falta OPENROUTER_API_KEY en .env', 500);
@@ -167,7 +168,11 @@ class OpenRouterClient {
         if ($modalities !== null && !empty($modalities)) {
             $payload['modalities'] = $modalities;
         }
-        
+        // Config de imagen (aspect_ratio, image_size) para modelos de generación
+        if ($imageConfig !== null && !empty($imageConfig)) {
+            $payload['image_config'] = $imageConfig;
+        }
+
         // Añadir parámetros opcionales
         if ($this->temperature !== null) {
             $payload['temperature'] = $this->temperature;

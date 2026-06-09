@@ -71,12 +71,41 @@ if (count($referenceImages) > 4) {
     $referenceImages = array_slice($referenceImages, 0, 4);
 }
 $model = 'google/gemini-3.1-flash-image-preview';
+
+// Guardarraíles de calidad comunes (IMG-4)
+$qualityGuardrails = " Always produce a high-resolution, sharp, professional result. Avoid: garbled or misspelled text, distorted or extra limbs/fingers, watermarks, signatures, low-resolution or blurry artifacts, oversaturation, and unwanted borders or frames. Keep composition clean and intentional.";
+
 $systemInstruction = $mode === 'edit'
-    ? "You are an expert image editor focused on instruction fidelity. Perform targeted, minimal, non-destructive edits. Keep all existing elements intact unless the user explicitly asks to modify them. If adding a logo to clothing that already has a logo, preserve the existing logo and place the new logo beside it, keeping realistic scale, perspective, fabric deformation, lighting, and readability."
-    : "You are an expert image generator focused on photorealistic, high-quality outputs that strictly follow user instructions. If the user includes reference images, use them as visual guidance while preserving logo readability, proportion and clean layout hierarchy.";
+    ? "You are an expert image editor focused on instruction fidelity. Perform targeted, minimal, non-destructive edits. Keep all existing elements intact unless the user explicitly asks to modify them. If adding a logo to clothing that already has a logo, preserve the existing logo and place the new logo beside it, keeping realistic scale, perspective, fabric deformation, lighting, and readability." . $qualityGuardrails
+    : "You are an expert image generator focused on photorealistic, high-quality outputs that strictly follow user instructions. If the user includes reference images, use them as visual guidance while preserving logo readability, proportion and clean layout hierarchy." . $qualityGuardrails;
 
 if ($mode === 'edit' && !$sourceImage) {
     Response::error('missing_source_image', 'Se requiere una imagen fuente para el modo edición', 400);
+}
+
+// Aspect ratio + resolución como parámetros reales del modelo (IMG-2)
+$allowedRatios = ['1:1','2:3','3:2','4:3','3:4','4:5','5:4','9:16','16:9','21:9','1:4','4:1','1:8','8:1'];
+$aspectRatio = (string)($inputData['format'] ?? $inputData['aspect_ratio'] ?? '');
+$aspectRatio = in_array($aspectRatio, $allowedRatios, true) ? $aspectRatio : null;
+
+$allowedSizes = ['0.5K','1K','2K','4K'];
+$imageSize = (string)($inputData['image_size'] ?? '1K');
+if (!in_array($imageSize, $allowedSizes, true)) {
+    $imageSize = '1K';
+}
+
+$imageConfig = ['image_size' => $imageSize];
+if ($aspectRatio !== null) {
+    $imageConfig['aspect_ratio'] = $aspectRatio;
+}
+
+// Mejora de prompt con LLM (IMG-3) — solo en generación, transparente para el usuario.
+$enhancedPrompt = null;
+if ($mode === 'generate') {
+    $enhancedPrompt = enhanceImagePrompt($inputData, count($referenceImages));
+    if (is_string($enhancedPrompt) && trim($enhancedPrompt) !== '') {
+        $prompt = $enhancedPrompt;
+    }
 }
 
 // Generar/Editar imagen
@@ -109,7 +138,7 @@ try {
         }
     }
 
-    $text = $client->generateWithMessages($messages, ['image', 'text']);
+    $text = $client->generateWithMessages($messages, ['image', 'text'], false, $imageConfig);
     $images = $client->getLastImages();
     $usedModel = $client->getModel();
 } catch (\Exception $e) {
@@ -164,7 +193,10 @@ $executionId = $repo->create([
     'output_data' => [
         'image' => $imageBase64,
         'image_thumbnail' => $imageThumbnailBase64,
-        'text' => $text
+        'text' => $text,
+        'final_prompt' => $prompt,
+        'enhanced' => $enhancedPrompt !== null && trim((string)$enhancedPrompt) !== '',
+        'image_config' => $imageConfig
     ],
     'content_type' => null,
     'business_line' => null,
@@ -182,6 +214,56 @@ Response::json([
     'text' => $text,
     'title' => $title,
 ]);
+
+/**
+ * Mejora de prompt (IMG-3): reescribe la descripción del usuario + los controles
+ * seleccionados en un prompt rico y coherente en inglés para el modelo de imagen.
+ * Devuelve null si falla o no hay descripción (se usará el prompt original como fallback).
+ */
+function enhanceImagePrompt(array $inputData, int $referenceCount = 0): ?string
+{
+    $description = trim((string)($inputData['description'] ?? ''));
+    if ($description === '') {
+        return null;
+    }
+
+    // Atributos elegidos por el usuario (pueden venir vacíos).
+    $attrs = [];
+    foreach (['style' => 'Style', 'composition' => 'Composition', 'lighting' => 'Lighting', 'color' => 'Color palette'] as $key => $label) {
+        $val = trim((string)($inputData[$key] ?? ''));
+        if ($val !== '') {
+            $attrs[] = "$label: $val";
+        }
+    }
+    $attrsText = $attrs ? ("\nUser-selected attributes:\n- " . implode("\n- ", $attrs)) : '';
+    $refsText = $referenceCount > 0
+        ? "\nThe user attached $referenceCount reference image(s); assume they convey brand/style/elements to respect."
+        : '';
+
+    $system = "You are a senior prompt engineer for text-to-image models. "
+        . "Rewrite the user's idea into ONE single, vivid, self-contained English image prompt. "
+        . "Specify: main subject, setting/background, composition and framing, lighting, mood, color, materials/textures, and a clear visual style. "
+        . "Be concrete and descriptive but concise (max ~80 words). "
+        . "Do NOT include aspect ratio, resolution, camera megapixels, or meta commentary. "
+        . "Do NOT add text/letters to the image unless the user explicitly asked for them. "
+        . "Output only the final prompt, with no preamble, quotes or labels.";
+
+    $userMsg = "User idea (may be in Spanish; translate the meaning to English): \"$description\"" . $attrsText . $refsText;
+
+    try {
+        $client = new OpenRouterClient(null, 'google/gemini-3-flash-preview', $system, 0.7, 400);
+        $result = $client->generateWithMessages([
+            ['role' => 'user', 'content' => $userMsg],
+        ]);
+        $result = trim((string)$result);
+        // Saneado básico: quitar comillas envolventes o etiquetas accidentales.
+        $result = trim($result, "\"' \n\r\t");
+        return $result !== '' ? $result : null;
+    } catch (\Throwable $e) {
+        error_log('enhanceImagePrompt failed: ' . $e->getMessage());
+        return null;
+    }
+}
 
 /**
  * Genera un título para la imagen basado en la descripción
