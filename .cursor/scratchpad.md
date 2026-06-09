@@ -194,7 +194,7 @@ Optional later:
    - `Can view`: read messages only.
    - Success: read-only users cannot mutate the conversation; chat users can add messages and trigger Claara without owner privileges.
 
-6. [ ] Add single-AI-run lock.
+6. [x] Add single-AI-run lock.
    - Prevent duplicate AI responses in a shared conversation.
    - Show clear UI while Claara is responding.
    - Success: two users cannot start two simultaneous AI runs in the same conversation.
@@ -247,7 +247,7 @@ Build in this order:
 - [x] Executor: inspect current conversation access assumptions.
 - [x] Executor: implement sharing schema and access service.
 - [x] Executor: implement read-only sharing.
-- [ ] Executor: implement collaborative chat permissions and AI run locking.
+- [x] Executor: implement collaborative chat permissions and AI run locking.
 - [ ] Executor: update sidebar grouping and shared states.
 
 ## Current Status / Progress Tracking
@@ -255,6 +255,7 @@ Build in this order:
 - 2026-06-09 Planner: Scratchpad cleaned and rewritten in English. Active planning focus is shared conversations and collaborative chat.
 - 2026-06-09 Executor: Added migration `023_shared_conversations.sql` and `ConversationAccessRepo`. The repo resolves owner, direct user share, department share, `Can view`, `Can chat`, and manage permissions. PHP lint passed for the new repo and bootstrap.
 - 2026-06-09 Executor: Implemented first usable sharing cut. Added share target/shares APIs, Share modal, shared sidebar sections, read-only composer state, message read access for shared conversations, file serving for viewers, and backend `Can chat` checks for chat, streaming, voice-query, file upload, and regeneration. PHP lint and extracted JS syntax check passed. Local DB is not reachable, so migration validation must happen on the server.
+- 2026-06-09 Executor: Added single-AI-run lock using `conversations.ai_status`, `ai_started_at`, and `ai_locked_by_message_id`. Standard chat, streaming chat, and inline voice queries now reject a second AI run while Claara is already responding in the same conversation. Frontend SSE error handling now surfaces server errors in the assistant bubble.
 
 ## Executor's Feedback or Assistance Requests
 

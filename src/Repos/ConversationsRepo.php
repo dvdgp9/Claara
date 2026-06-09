@@ -95,6 +95,45 @@ class ConversationsRepo {
         $stmt->execute([$now, $conversationId]);
     }
 
+    public function acquireAiLock(int $conversationId, ?int $messageId = null, int $staleAfterSeconds = 180): bool
+    {
+        $now = date('Y-m-d H:i:s');
+        $staleBefore = date('Y-m-d H:i:s', time() - $staleAfterSeconds);
+        $stmt = $this->pdo->prepare('
+            UPDATE conversations
+            SET ai_status = "responding",
+                ai_started_at = ?,
+                ai_locked_by_message_id = ?
+            WHERE id = ?
+              AND (
+                ai_status = "idle"
+                OR ai_status IS NULL
+                OR ai_started_at IS NULL
+                OR ai_started_at < ?
+              )
+        ');
+        $stmt->execute([$now, $messageId, $conversationId, $staleBefore]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function updateAiLockMessage(int $conversationId, int $messageId): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE conversations SET ai_locked_by_message_id = ? WHERE id = ? AND ai_status = "responding"');
+        $stmt->execute([$messageId, $conversationId]);
+    }
+
+    public function releaseAiLock(int $conversationId): void
+    {
+        $stmt = $this->pdo->prepare('
+            UPDATE conversations
+            SET ai_status = "idle",
+                ai_started_at = NULL,
+                ai_locked_by_message_id = NULL
+            WHERE id = ?
+        ');
+        $stmt->execute([$conversationId]);
+    }
+
     public function autoTitle(int $conversationId, string $firstMessage): void
     {
         // Only if the title is the generic default.

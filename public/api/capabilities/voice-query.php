@@ -44,6 +44,19 @@ if (!$conversationAccess->canChat($conversationId, $user)) {
 }
 
 $convos = new ConversationsRepo();
+$aiLockAcquired = false;
+$releaseAiLock = static function () use (&$aiLockAcquired, $conversationId, $convos): void {
+    if ($aiLockAcquired) {
+        $convos->releaseAiLock($conversationId);
+        $aiLockAcquired = false;
+    }
+};
+register_shutdown_function($releaseAiLock);
+
+if (!$convos->acquireAiLock($conversationId)) {
+    Response::error('conversation_busy', 'Claara is already responding in this conversation. Please wait a moment.', 409);
+}
+$aiLockAcquired = true;
 
 $msgs = new MessagesRepo();
 $history = [];

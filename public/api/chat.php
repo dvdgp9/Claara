@@ -110,6 +110,15 @@ $convos = new ConversationsRepo();
 $conversationAccess = new ConversationAccessRepo();
 $msgs = new MessagesRepo();
 $usageLog = new UsageLogRepo();
+$aiLockAcquired = false;
+$lockedConversationId = null;
+$releaseAiLock = static function () use (&$aiLockAcquired, &$lockedConversationId, $convos): void {
+    if ($aiLockAcquired && $lockedConversationId) {
+        $convos->releaseAiLock((int)$lockedConversationId);
+        $aiLockAcquired = false;
+    }
+};
+register_shutdown_function($releaseAiLock);
 
 // Limpieza de imágenes antiguas (5 días)
 $msgs->purgeImagesOlderThan(5);
@@ -124,8 +133,15 @@ if ($isNewConversation) {
     Response::error('forbidden', 'You do not have permission to chat in this conversation', 403);
 }
 
+if (!$convos->acquireAiLock($conversationId)) {
+    Response::error('conversation_busy', 'Claara is already responding in this conversation. Please wait a moment.', 409);
+}
+$aiLockAcquired = true;
+$lockedConversationId = $conversationId;
+
 // Guardar mensaje de usuario (con file_id si existe)
 $userMsgId = $msgs->create($conversationId, (int)$user['id'], 'user', $message, null, null, null, $fileId);
+$convos->updateAiLockMessage($conversationId, $userMsgId);
 
 // Registrar mensaje de usuario con modelo para estadísticas
 $usageLog->log((int)$user['id'], 'message', 1, ['model' => $modelName]);

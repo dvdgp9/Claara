@@ -3180,22 +3180,25 @@ $headerShowLogo = true;
               const dataStr = line.substring(6).trim();
               if (dataStr === '[DONE]') continue;
 
+              let data = null;
               try {
-                const data = JSON.parse(dataStr);
-                if (data.type === 'chunk') {
-                  fullContent += data.content;
-                  updateStreamingMessage(assistantBubble, fullContent);
-                } else if (data.type === 'conversation') {
-                  currentConversationId = data.id;
-                  if (emptyConversationId === currentConversationId) emptyConversationId = null;
-                  await loadConversations();
-                } else if (data.type === 'meta') {
-                  finalizeStreamingMessage(assistantBubble, fullContent, data.images, data.annotations, data.message_id);
-                } else if (data.type === 'error') {
-                  throw new Error(data.message);
-                }
+                data = JSON.parse(dataStr);
               } catch (e) {
                 console.error('Chunk parse error:', e);
+                continue;
+              }
+
+              if (data.type === 'chunk') {
+                fullContent += data.content;
+                updateStreamingMessage(assistantBubble, fullContent);
+              } else if (data.type === 'conversation') {
+                currentConversationId = data.id;
+                if (emptyConversationId === currentConversationId) emptyConversationId = null;
+                await loadConversations();
+              } else if (data.type === 'meta') {
+                finalizeStreamingMessage(assistantBubble, fullContent, data.images, data.annotations, data.message_id);
+              } else if (data.type === 'error') {
+                throw new Error(data.message);
               }
             }
           }
