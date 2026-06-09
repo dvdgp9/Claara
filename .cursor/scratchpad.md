@@ -2020,8 +2020,8 @@ Docs API confirmadas (ver `docs/openrouter-image-generation.md`):
 
 ## Project Status Board — Img
 - [x] IMG-1 OpenRouterClient image_config — implementado (param ?array $imageConfig en generateWithMessages, añade image_config al payload).
-- [x] IMG-2 Aspect ratio + resolución reales — implementado (generate-image.php construye image_config desde inputData.format + image_size default 1K; pasa al cliente). Pendiente verificación de dimensiones.
-- [x] IMG-3 Mejora de prompt con LLM — implementado (enhanceImagePrompt con gemini-3-flash-preview, solo modo generate, transparente; guarda final_prompt/enhanced en output_data). Pendiente verificación.
+- [x] IMG-2 Aspect ratio + resolución reales — IMPLEMENTADO Y VERIFICADO en prod (commit edaaad2). Smoke test: pedir 16:9 devolvió 1376×768 (ratio ≈16:9, apaisada) en vez de 1024×1024 cuadrada. El ratio se respeta (las dimensiones exactas difieren levemente de la tabla de docs).
+- [x] IMG-3 Mejora de prompt con LLM — IMPLEMENTADO Y VERIFICADO en prod. Smoke test: descripción corta ES → prompt cinematográfico rico (280 chars) en inglés. Guarda final_prompt/enhanced en output_data.
 - [x] IMG-4 Guardarraíles de calidad — implementado (qualityGuardrails añadido al system instruction de generate y edit).
 - Decisiones: resolución default 1K; mejora de prompt transparente (sin UI). Sin cambios en JS (payload actual ya trae format/description/controles).
 
