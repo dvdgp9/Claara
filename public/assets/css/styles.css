@@ -2422,6 +2422,132 @@ select {
   box-shadow: 0 0 14px rgba(255,139,115,0.52);
 }
 
+/* Shared conversation rows */
+.shared-conversation-section {
+  margin-top: 14px;
+  padding: 0 8px 4px;
+}
+
+.shared-conversation-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.shared-conversation-section-title span:last-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.shared-conversation-row {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.shared-conversation-row:hover {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+}
+
+.shared-conversation-row.is-active {
+  border-color: rgba(183, 201, 242, 0.65);
+  background: linear-gradient(90deg, rgba(183, 201, 242, 0.16), rgba(47, 52, 64, 0.06));
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+}
+
+.shared-conversation-row-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px;
+}
+
+.shared-conversation-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #94a3b8;
+}
+
+.shared-conversation-text {
+  min-width: 0;
+  max-width: 190px;
+  flex: 1 1 auto;
+}
+
+.shared-conversation-title {
+  overflow: hidden;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shared-conversation-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 3px;
+}
+
+.shared-conversation-owner {
+  min-width: 0;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shared-conversation-permission {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0 7px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.shared-conversation-permission.can-chat {
+  background: rgba(183, 201, 242, 0.22);
+  color: #2f3440;
+}
+
+.shared-conversation-permission.read-only {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
 /* Flag / report modal */
 .flag-type-btn.is-active {
   color: #1f2937;

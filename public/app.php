@@ -2873,8 +2873,13 @@ $headerShowLogo = true;
       if (!items || items.length === 0) return;
 
       const header = document.createElement('li');
-      header.className = 'pt-3 pb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400';
-      header.textContent = title;
+      header.className = 'shared-conversation-section';
+      header.innerHTML = `
+        <div class="shared-conversation-section-title">
+          <span>${escapeHtml(title)}</span>
+          <span>${items.length}</span>
+        </div>
+      `;
       convListEl.appendChild(header);
 
       for (const c of items) {
@@ -2886,20 +2891,22 @@ $headerShowLogo = true;
         const isShared = !!options.shared;
         const li = document.createElement('li');
         const isActive = currentConversationId === c.id;
-        li.className = 'group rounded-lg transition-all duration-200 ' + (isActive ? 'bg-gradient-to-r from-[#B7C9F2]/10 to-[#2F3440]/10 shadow-sm' : 'hover:bg-slate-50');
+        li.className = isShared
+          ? 'shared-conversation-row group' + (isActive ? ' is-active' : '')
+          : 'group rounded-lg transition-all duration-200 ' + (isActive ? 'bg-gradient-to-r from-[#B7C9F2]/10 to-[#2F3440]/10 shadow-sm' : 'hover:bg-slate-50');
         li.setAttribute('data-conv-id', c.id);
         li.style.minHeight = '48px';
 
         const container = document.createElement('div');
-        container.className = 'flex items-center gap-3 p-2';
+        container.className = isShared ? 'shared-conversation-row-inner' : 'flex items-center gap-3 p-2';
 
         const leadBtn = document.createElement('button');
-        leadBtn.className = 'flex-shrink-0 transition-colors';
+        leadBtn.className = isShared ? 'shared-conversation-icon' : 'flex-shrink-0 transition-colors';
         if (isShared) {
           leadBtn.disabled = true;
           leadBtn.innerHTML = options.type === 'department'
-            ? '<i class="iconoir-group text-slate-300"></i>'
-            : '<i class="iconoir-share-android text-slate-300"></i>';
+            ? '<i class="iconoir-group"></i>'
+            : '<i class="iconoir-share-android"></i>';
           leadBtn.title = options.type === 'department' ? 'Shared with your department' : 'Shared with you';
         } else {
           leadBtn.setAttribute('data-action', 'favorite');
@@ -2923,18 +2930,32 @@ $headerShowLogo = true;
         btn.setAttribute('data-conv-id', c.id);
 
         const textContainer = document.createElement('div');
-        textContainer.className = 'flex-1 min-w-0 max-w-[180px]';
+        textContainer.className = isShared ? 'shared-conversation-text' : 'flex-1 min-w-0 max-w-[180px]';
         const titleEl = document.createElement('div');
-        titleEl.className = 'font-medium text-sm truncate ' + (isActive ? 'text-[#2F3440]' : 'text-slate-700 group-hover:text-slate-900');
+        titleEl.className = isShared
+          ? 'shared-conversation-title'
+          : 'font-medium text-sm truncate ' + (isActive ? 'text-[#2F3440]' : 'text-slate-700 group-hover:text-slate-900');
         titleEl.textContent = c.title || `Conversation ${c.id}`;
-        const timeEl = document.createElement('div');
-        timeEl.className = 'text-xs text-slate-400 truncate';
-        const dateText = new Date(c.updated_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
-        timeEl.textContent = isShared
-          ? `${c.effective_permission === 'chat' ? 'Can chat' : 'Read only'} · ${c.owner_name || 'Owner'}`
-          : dateText;
         textContainer.appendChild(titleEl);
-        textContainer.appendChild(timeEl);
+
+        if (isShared) {
+          const metaEl = document.createElement('div');
+          metaEl.className = 'shared-conversation-meta';
+          const ownerEl = document.createElement('span');
+          ownerEl.className = 'shared-conversation-owner';
+          ownerEl.textContent = c.owner_name || 'Owner';
+          const permissionEl = document.createElement('span');
+          permissionEl.className = 'shared-conversation-permission ' + (c.effective_permission === 'chat' ? 'can-chat' : 'read-only');
+          permissionEl.textContent = c.effective_permission === 'chat' ? 'Can chat' : 'Read only';
+          metaEl.appendChild(ownerEl);
+          metaEl.appendChild(permissionEl);
+          textContainer.appendChild(metaEl);
+        } else {
+          const timeEl = document.createElement('div');
+          timeEl.className = 'text-xs text-slate-400 truncate';
+          timeEl.textContent = new Date(c.updated_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+          textContainer.appendChild(timeEl);
+        }
 
         btn.appendChild(textContainer);
         btn.addEventListener('click', async () => {
