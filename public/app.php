@@ -978,7 +978,7 @@ $headerShowLogo = true;
 
     function shouldPollConversationActivity() {
       if (!currentConversationId || !currentConversationAccess) return false;
-      if (document.hidden || isGenerating) return false;
+      if (isGenerating) return false;
       return currentConversationAccess.permission !== 'owner' || !!currentConversationAccess.is_shared;
     }
 
@@ -1006,7 +1006,8 @@ $headerShowLogo = true;
       }
       hideConversationActivityNotice();
       if (!currentConversationId) return;
-      activityPollTimer = setInterval(checkConversationActivity, 12000);
+      const intervalMs = document.hidden ? 12000 : 5000;
+      activityPollTimer = setInterval(checkConversationActivity, intervalMs);
     }
 
     conversationActivityRefresh?.addEventListener('click', async () => {
@@ -1017,6 +1018,7 @@ $headerShowLogo = true;
     });
 
     document.addEventListener('visibilitychange', () => {
+      restartConversationActivityPolling();
       if (!document.hidden) {
         checkConversationActivity();
       }
