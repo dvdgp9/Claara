@@ -2952,8 +2952,17 @@ $headerShowLogo = true;
           textContainer.appendChild(metaEl);
         } else {
           const timeEl = document.createElement('div');
-          timeEl.className = 'text-xs text-slate-400 truncate';
-          timeEl.textContent = new Date(c.updated_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+          timeEl.className = 'conversation-row-meta';
+          const dateEl = document.createElement('span');
+          dateEl.className = 'conversation-row-date';
+          dateEl.textContent = new Date(c.updated_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+          timeEl.appendChild(dateEl);
+          if (Number(c.share_count || 0) > 0) {
+            const sharedEl = document.createElement('span');
+            sharedEl.className = 'conversation-row-shared-chip';
+            sharedEl.innerHTML = `<i class="iconoir-share-android"></i><span>${Number(c.share_count)} shared</span>`;
+            timeEl.appendChild(sharedEl);
+          }
           textContainer.appendChild(timeEl);
         }
 

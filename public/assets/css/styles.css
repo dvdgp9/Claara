@@ -2548,6 +2548,42 @@ select {
   color: #64748b;
 }
 
+.conversation-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.conversation-row-date {
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversation-row-shared-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 17px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0 6px;
+  background: rgba(183, 201, 242, 0.18);
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.conversation-row-shared-chip i {
+  font-size: 11px;
+}
+
 /* Flag / report modal */
 .flag-type-btn.is-active {
   color: #1f2937;

@@ -23,18 +23,25 @@ class ConversationsRepo {
         if ($folderId !== null) {
             if ($folderId === 0) {
                 // Carpeta raíz (sin carpeta)
-                $folderCondition = ' AND folder_id IS NULL';
+                $folderCondition = ' AND c.folder_id IS NULL';
             } else {
-                $folderCondition = ' AND folder_id = ?';
+                $folderCondition = ' AND c.folder_id = ?';
                 $params[] = $folderId;
             }
         }
         
+        $select = "SELECT c.id, c.title, c.status, c.is_favorite, c.folder_id, c.created_at, c.updated_at,
+                          COUNT(cs.id) AS share_count
+                   FROM conversations c
+                   LEFT JOIN conversation_shares cs ON cs.conversation_id = c.id
+                   WHERE c.user_id = ?";
+        $groupBy = " GROUP BY c.id, c.title, c.status, c.is_favorite, c.folder_id, c.created_at, c.updated_at";
+
         if ($orderBy === 'favorite') {
-            $sql = "SELECT id, title, status, is_favorite, folder_id, created_at, updated_at FROM conversations WHERE user_id = ?" . $folderCondition . " ORDER BY is_favorite DESC, updated_at DESC";
+            $sql = $select . $folderCondition . $groupBy . " ORDER BY c.is_favorite DESC, c.updated_at DESC";
         } else {
             $direction = $sort === 'title' ? 'ASC' : 'DESC';
-            $sql = "SELECT id, title, status, is_favorite, folder_id, created_at, updated_at FROM conversations WHERE user_id = ?" . $folderCondition . " ORDER BY {$orderBy} {$direction}";
+            $sql = $select . $folderCondition . $groupBy . " ORDER BY c.{$orderBy} {$direction}";
         }
         
         $stmt = $this->pdo->prepare($sql);
