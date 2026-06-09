@@ -742,6 +742,7 @@ $headerShowLogo = true;
     let allFolders = []; // folder cache
     let shareTargets = { users: [], departments: [] };
     let shareTargetType = 'user';
+    let currentShares = [];
     let conversationToMove = null; // conversation being moved
     let imageMode = false; // image generation mode
     let webSearchMode = false; // web search mode
@@ -2675,13 +2676,23 @@ $headerShowLogo = true;
     }
 
     function renderShareTargetOptions() {
-      const items = shareTargetType === 'user' ? shareTargets.users : shareTargets.departments;
+      const sharedKeys = new Set((currentShares || []).map(share => `${share.target_type}:${share.target_id}`));
+      const sourceItems = shareTargetType === 'user' ? shareTargets.users : shareTargets.departments;
+      const items = (sourceItems || []).filter(item => !sharedKeys.has(`${shareTargetType}:${item.id}`));
       shareTargetSelect.innerHTML = '';
+
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = shareTargetType === 'user' ? 'Select a person' : 'Select a department';
+      shareTargetSelect.appendChild(placeholder);
+
       if (!items || items.length === 0) {
         const option = document.createElement('option');
         option.value = '';
-        option.textContent = shareTargetType === 'user' ? 'No people available' : 'No departments available';
+        option.disabled = true;
+        option.textContent = shareTargetType === 'user' ? 'No more people available' : 'No more departments available';
         shareTargetSelect.appendChild(option);
+        shareAddBtn.disabled = true;
         return;
       }
 
@@ -2693,9 +2704,14 @@ $headerShowLogo = true;
           : `${item.name} · ${item.user_count} member${item.user_count === 1 ? '' : 's'}`;
         shareTargetSelect.appendChild(option);
       }
+      shareTargetSelect.value = '';
+      shareAddBtn.disabled = false;
     }
 
     function renderShares(shares) {
+      currentShares = shares || [];
+      renderShareTargetOptions();
+
       if (!shares || shares.length === 0) {
         shareList.innerHTML = '<div class="text-sm text-slate-400 px-3 py-3 border border-dashed border-slate-200 rounded-xl">No shared access yet.</div>';
         return;
@@ -2754,12 +2770,15 @@ $headerShowLogo = true;
         shareAddBtn.disabled = false;
         shareAddBtn.innerHTML = '<i class="iconoir-check-circle"></i> Saved';
         setTimeout(() => {
-          if (shareAddBtn) shareAddBtn.innerHTML = '<i class="iconoir-plus"></i> Save access';
+          if (shareAddBtn) {
+            shareAddBtn.innerHTML = '<i class="iconoir-plus"></i> Save access';
+            renderShareTargetOptions();
+          }
         }, 1400);
         return;
       }
-      shareAddBtn.disabled = false;
       shareAddBtn.innerHTML = '<i class="iconoir-plus"></i> Save access';
+      renderShareTargetOptions();
     }
 
     async function openShareModal() {
@@ -2777,8 +2796,8 @@ $headerShowLogo = true;
           users: targets.users || [],
           departments: targets.departments || []
         };
-        setShareTargetType(shareTargetType);
         renderShares(sharesData.shares || []);
+        setShareTargetType(shareTargetType);
       } catch (err) {
         shareList.innerHTML = `<div class="text-sm text-red-500 px-3 py-3">Error: ${escapeHtml(err.message)}</div>`;
       }
@@ -2797,7 +2816,10 @@ $headerShowLogo = true;
     shareTargetDepartments?.addEventListener('click', () => setShareTargetType('department'));
     shareAddBtn?.addEventListener('click', async () => {
       const targetId = parseInt(shareTargetSelect.value, 10);
-      if (!targetId || !currentConversationId) return;
+      if (!targetId || !currentConversationId) {
+        shareTargetSelect.focus();
+        return;
+      }
 
       try {
         setShareSaveState('saving');
