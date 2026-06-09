@@ -99,6 +99,11 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
       <div id="conv-title" class="hidden flex items-center gap-2 min-w-0">
         <i class="iconoir-chat-bubble text-[#B7C9F2] hidden lg:block"></i>
         <span class="text-sm font-medium leading-tight text-slate-700 truncate max-w-[60vw] lg:max-w-md"></span>
+        <span id="conversation-access-chip" class="hidden text-[10px] font-semibold px-2 py-0.5 rounded-full border border-slate-200 text-slate-500 bg-white"></span>
+        <button id="conversation-share-btn" type="button" class="hidden items-center gap-1.5 px-2 py-1 text-xs font-medium text-slate-500 hover:text-[#2F3440] hover:bg-[#B7C9F2]/10 rounded-lg transition-colors" title="Share conversation">
+          <i class="iconoir-share-android"></i>
+          <span class="hidden sm:inline">Share</span>
+        </button>
       </div>
     <?php else: ?>
       <?php if ($headerBackUrl): ?>

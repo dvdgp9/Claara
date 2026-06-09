@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../src/Chat/OpenRouterClient.php';
 require_once __DIR__ . '/../../src/Chat/ContextBuilder.php';
 require_once __DIR__ . '/../../src/Auth/AuthService.php';
 require_once __DIR__ . '/../../src/Repos/ConversationsRepo.php';
+require_once __DIR__ . '/../../src/Repos/ConversationAccessRepo.php';
 require_once __DIR__ . '/../../src/Repos/MessagesRepo.php';
 
 use App\Response;
@@ -19,6 +20,7 @@ use Auth\AuthService;
 use Chat\OpenRouterClient;
 use Chat\ContextBuilder;
 use Repos\ConversationsRepo;
+use Repos\ConversationAccessRepo;
 use Repos\MessagesRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -37,11 +39,11 @@ if (!$messageId || !$conversationId) {
 }
 
 $convos = new ConversationsRepo();
+$conversationAccess = new ConversationAccessRepo();
 $msgs = new MessagesRepo();
 
-$conversation = $convos->findByIdForUser($conversationId, (int)$user['id']);
-if (!$conversation) {
-    Response::error('not_found', 'Conversación no encontrada', 404);
+if (!$conversationAccess->canChat($conversationId, $user)) {
+    Response::error('not_found', 'Conversation not found', 404);
 }
 
 $allMessages = $msgs->listByConversation($conversationId);

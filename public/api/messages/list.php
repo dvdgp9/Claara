@@ -1,13 +1,13 @@
 <?php
 require_once __DIR__ . '/../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../src/Auth/AuthService.php';
-require_once __DIR__ . '/../../../src/Repos/ConversationsRepo.php';
+require_once __DIR__ . '/../../../src/Repos/ConversationAccessRepo.php';
 require_once __DIR__ . '/../../../src/Repos/MessagesRepo.php';
 require_once __DIR__ . '/../../../src/Repos/ChatFilesRepo.php';
 
 use App\Response;
 use Auth\AuthService;
-use Repos\ConversationsRepo;
+use Repos\ConversationAccessRepo;
 use Repos\MessagesRepo;
 use Repos\ChatFilesRepo;
 
@@ -21,8 +21,9 @@ if ($conversationId <= 0) {
     Response::error('validation_error', 'conversation_id is required', 400);
 }
 
-$convos = new ConversationsRepo();
-if (!$convos->findByIdForUser($conversationId, (int)$user['id'])) {
+$accessRepo = new ConversationAccessRepo();
+$access = $accessRepo->getAccess($conversationId, $user);
+if (!$access || empty($access['can_view'])) {
     Response::error('not_found', 'Conversation not found', 404);
 }
 
@@ -61,4 +62,14 @@ foreach ($items as &$item) {
     unset($item['metadata']);
 }
 
-Response::json(['items' => $items]);
+Response::json([
+    'items' => $items,
+    'access' => [
+        'permission' => $access['permission'],
+        'can_view' => (bool)$access['can_view'],
+        'can_chat' => (bool)$access['can_chat'],
+        'can_manage' => (bool)$access['can_manage'],
+        'share' => $access['share'],
+        'conversation' => $access['conversation'],
+    ],
+]);

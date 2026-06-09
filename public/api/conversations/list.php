@@ -2,10 +2,12 @@
 require_once __DIR__ . '/../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../src/Auth/AuthService.php';
 require_once __DIR__ . '/../../../src/Repos/ConversationsRepo.php';
+require_once __DIR__ . '/../../../src/Repos/ConversationAccessRepo.php';
 
 use App\Response;
 use Auth\AuthService;
 use Repos\ConversationsRepo;
+use Repos\ConversationAccessRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     Response::error('method_not_allowed', 'GET only', 405);
@@ -23,4 +25,11 @@ $filterFolderId = ($folderId === -1) ? null : $folderId;
 $repo = new ConversationsRepo();
 $list = $repo->listByUser((int)$user['id'], $sort, $filterFolderId);
 
-Response::json(['items' => $list]);
+$payload = ['items' => $list];
+
+if (!empty($_GET['include_shared'])) {
+    $accessRepo = new ConversationAccessRepo();
+    $payload['shared'] = $accessRepo->listSharedWithUser($user);
+}
+
+Response::json($payload);

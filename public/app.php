@@ -518,6 +518,53 @@ $headerShowLogo = true;
     </div>
   </div>
 
+  <!-- Conversation sharing modal -->
+  <div id="share-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden">
+      <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+            <i class="iconoir-share-android text-[#B7C9F2]"></i> Share conversation
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">Give people or departments access to this conversation.</p>
+        </div>
+        <button id="share-modal-close" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Close">
+          <i class="iconoir-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <button type="button" id="share-target-people" class="share-target-tab px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-900 text-white">People</button>
+              <button type="button" id="share-target-departments" class="share-target-tab px-3 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100">Departments</button>
+            </div>
+            <select id="share-target-select" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#B7C9F2]"></select>
+          </div>
+          <div class="space-y-2">
+            <label for="share-permission-select" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Permission</label>
+            <select id="share-permission-select" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#B7C9F2]">
+              <option value="view">Can view</option>
+              <option value="chat">Can chat</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="share-add-btn" type="button" class="w-full py-2.5 px-4 rounded-xl gradient-brand-btn text-[#2F3440] font-medium shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2">
+          <i class="iconoir-plus"></i> Add access
+        </button>
+
+        <div>
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Current access</div>
+          <div id="share-list" class="space-y-2">
+            <div class="text-sm text-slate-400 px-3 py-3 border border-dashed border-slate-200 rounded-xl">No shared access yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Lightbox for generated images -->
   <div id="image-lightbox" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onclick="closeLightbox()">
     <button onclick="closeLightbox()" class="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors">
@@ -649,6 +696,16 @@ $headerShowLogo = true;
     const cancelMoveBtn = document.getElementById('cancel-move');
     const folderOptionsEl = document.getElementById('folder-options');
     const emptyFoldersEl = document.getElementById('empty-folders');
+    const conversationShareBtn = document.getElementById('conversation-share-btn');
+    const conversationAccessChip = document.getElementById('conversation-access-chip');
+    const shareModal = document.getElementById('share-modal');
+    const shareModalClose = document.getElementById('share-modal-close');
+    const shareTargetPeople = document.getElementById('share-target-people');
+    const shareTargetDepartments = document.getElementById('share-target-departments');
+    const shareTargetSelect = document.getElementById('share-target-select');
+    const sharePermissionSelect = document.getElementById('share-permission-select');
+    const shareAddBtn = document.getElementById('share-add-btn');
+    const shareList = document.getElementById('share-list');
     const fileInput = document.getElementById('file-input');
     const attachBtn = document.getElementById('attach-btn');
     const filePreview = document.getElementById('file-preview');
@@ -678,10 +735,13 @@ $headerShowLogo = true;
     let emptyConversationId = null; // id for a conversation with no messages yet
     let currentUser = null;
     let currentConvTitle = null;
+    let currentConversationAccess = null;
     let currentFiles = []; // current attached files
     let currentFilesEmpty = []; // attached files in empty state
     let currentFolderId = -1; // -1 = all, 0 = no folder, >0 = specific folder
     let allFolders = []; // folder cache
+    let shareTargets = { users: [], departments: [] };
+    let shareTargetType = 'user';
     let conversationToMove = null; // conversation being moved
     let imageMode = false; // image generation mode
     let webSearchMode = false; // web search mode
@@ -843,6 +903,7 @@ $headerShowLogo = true;
       emptyState.classList.add('hidden');
       messagesEl.classList.remove('hidden');
       chatFooter.classList.remove('hidden');
+      applyConversationAccessState();
     }
 
     
@@ -854,7 +915,39 @@ $headerShowLogo = true;
       messagesEl.innerHTML = '';
       document.getElementById('context-warning').classList.add('hidden');
       convTitleEl.classList.add('hidden');
+      applyConversationAccessState();
       focusEmptyComposer();
+    }
+
+    function applyConversationAccessState() {
+      const access = currentConversationAccess;
+      const canChat = !access || access.can_chat || access.can_manage;
+      const canManage = !!(access && access.can_manage);
+      const permission = access?.permission || null;
+
+      inputEl.disabled = !canChat;
+      inputEl.placeholder = canChat ? 'Write a message...' : 'You have read-only access to this conversation';
+      formEl.querySelector('button[type="submit"]').disabled = !canChat;
+      formEl.querySelector('button[type="submit"]').classList.toggle('opacity-40', !canChat);
+      attachBtn.disabled = !canChat;
+      attachBtn.classList.toggle('opacity-40', !canChat);
+
+      if (conversationShareBtn) {
+        conversationShareBtn.classList.toggle('hidden', !canManage || !currentConversationId);
+        conversationShareBtn.classList.toggle('flex', canManage && !!currentConversationId);
+      }
+
+      if (conversationAccessChip) {
+        const label = permission === 'owner'
+          ? 'Private'
+          : permission === 'chat'
+            ? 'Can chat'
+            : permission === 'view'
+              ? 'Read only'
+              : '';
+        conversationAccessChip.textContent = label;
+        conversationAccessChip.classList.toggle('hidden', !label || !currentConversationId);
+      }
     }
 
     // Delete empty conversations to avoid accumulation.
@@ -2574,17 +2667,171 @@ $headerShowLogo = true;
       }
     }
 
+    function setShareTargetType(type) {
+      shareTargetType = type;
+      shareTargetPeople.className = 'share-target-tab px-3 py-1.5 rounded-lg text-sm font-medium ' + (type === 'user' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100');
+      shareTargetDepartments.className = 'share-target-tab px-3 py-1.5 rounded-lg text-sm font-medium ' + (type === 'department' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100');
+      renderShareTargetOptions();
+    }
+
+    function renderShareTargetOptions() {
+      const items = shareTargetType === 'user' ? shareTargets.users : shareTargets.departments;
+      shareTargetSelect.innerHTML = '';
+      if (!items || items.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = shareTargetType === 'user' ? 'No people available' : 'No departments available';
+        shareTargetSelect.appendChild(option);
+        return;
+      }
+
+      for (const item of items) {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = shareTargetType === 'user'
+          ? `${item.first_name} ${item.last_name} · ${item.email}`
+          : `${item.name} · ${item.user_count} member${item.user_count === 1 ? '' : 's'}`;
+        shareTargetSelect.appendChild(option);
+      }
+    }
+
+    function renderShares(shares) {
+      if (!shares || shares.length === 0) {
+        shareList.innerHTML = '<div class="text-sm text-slate-400 px-3 py-3 border border-dashed border-slate-200 rounded-xl">No shared access yet.</div>';
+        return;
+      }
+
+      shareList.innerHTML = '';
+      for (const share of shares) {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50/60';
+        row.innerHTML = `
+          <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
+            <i class="${share.target_type === 'department' ? 'iconoir-group' : 'iconoir-user'}"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-slate-800 truncate">${escapeHtml(share.target_name || 'Unknown target')}</div>
+            <div class="text-xs text-slate-400 truncate">${share.permission === 'chat' ? 'Can chat' : 'Can view'}${share.target_email ? ` · ${escapeHtml(share.target_email)}` : ''}</div>
+          </div>
+        `;
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors';
+        removeBtn.title = 'Remove access';
+        removeBtn.innerHTML = '<i class="iconoir-trash"></i>';
+        removeBtn.addEventListener('click', async () => {
+          try {
+            const data = await api('/api/conversations/shares.php', {
+              method: 'POST',
+              body: {
+                action: 'remove',
+                conversation_id: currentConversationId,
+                share_id: share.id
+              }
+            });
+            renderShares(data.shares || []);
+            await loadConversations();
+          } catch (err) {
+            alert('Error removing access: ' + err.message);
+          }
+        });
+        row.appendChild(removeBtn);
+        shareList.appendChild(row);
+      }
+    }
+
+    async function openShareModal() {
+      if (!currentConversationId || !currentConversationAccess?.can_manage) return;
+
+      shareModal.classList.remove('hidden');
+      shareList.innerHTML = '<div class="text-sm text-slate-400 px-3 py-3">Loading...</div>';
+
+      try {
+        const [targets, sharesData] = await Promise.all([
+          api('/api/conversations/share_targets.php'),
+          api(`/api/conversations/shares.php?conversation_id=${encodeURIComponent(currentConversationId)}`)
+        ]);
+        shareTargets = {
+          users: targets.users || [],
+          departments: targets.departments || []
+        };
+        setShareTargetType(shareTargetType);
+        renderShares(sharesData.shares || []);
+      } catch (err) {
+        shareList.innerHTML = `<div class="text-sm text-red-500 px-3 py-3">Error: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function closeShareModal() {
+      shareModal.classList.add('hidden');
+    }
+
+    conversationShareBtn?.addEventListener('click', openShareModal);
+    shareModalClose?.addEventListener('click', closeShareModal);
+    shareModal?.addEventListener('click', (event) => {
+      if (event.target === shareModal) closeShareModal();
+    });
+    shareTargetPeople?.addEventListener('click', () => setShareTargetType('user'));
+    shareTargetDepartments?.addEventListener('click', () => setShareTargetType('department'));
+    shareAddBtn?.addEventListener('click', async () => {
+      const targetId = parseInt(shareTargetSelect.value, 10);
+      if (!targetId || !currentConversationId) return;
+
+      try {
+        const data = await api('/api/conversations/shares.php', {
+          method: 'POST',
+          body: {
+            action: 'upsert',
+            conversation_id: currentConversationId,
+            target_type: shareTargetType,
+            target_id: targetId,
+            permission: sharePermissionSelect.value || 'view'
+          }
+        });
+        renderShares(data.shares || []);
+        await loadConversations();
+      } catch (err) {
+        alert('Error sharing conversation: ' + err.message);
+      }
+    });
+
     async function loadConversations(){
       const sort = sortSelect.value || 'updated_at';
       const folderParam = currentFolderId !== null ? `&folder_id=${currentFolderId}` : '';
-      const data = await api(`/api/conversations/list.php?sort=${encodeURIComponent(sort)}${folderParam}`);
+      const data = await api(`/api/conversations/list.php?sort=${encodeURIComponent(sort)}${folderParam}&include_shared=1`);
       const items = data.items || [];
-      if(items.length === 0){
+      const sharedWithMe = data.shared?.shared_with_me || [];
+      const departmentShared = data.shared?.department_shared || [];
+
+      convListEl.innerHTML = '';
+
+      if(items.length === 0 && sharedWithMe.length === 0 && departmentShared.length === 0){
         convListEl.innerHTML = '<li class="text-slate-400 text-sm px-3 py-2">(empty)</li>';
         return;
       }
-      convListEl.innerHTML = '';
-      for(const c of items){
+
+      for(const c of items) {
+        convListEl.appendChild(renderConversationRow(c, { shared: false }));
+      }
+
+      renderSharedSection('Shared with me', sharedWithMe, 'user');
+      renderSharedSection('Department conversations', departmentShared, 'department');
+    }
+
+    function renderSharedSection(title, items, type) {
+      if (!items || items.length === 0) return;
+
+      const header = document.createElement('li');
+      header.className = 'pt-3 pb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400';
+      header.textContent = title;
+      convListEl.appendChild(header);
+
+      for (const c of items) {
+        convListEl.appendChild(renderConversationRow(c, { shared: true, type }));
+      }
+    }
+
+    function renderConversationRow(c, options = {}) {
+        const isShared = !!options.shared;
         const li = document.createElement('li');
         const isActive = currentConversationId === c.id;
         li.className = 'group rounded-lg transition-all duration-200 ' + (isActive ? 'bg-gradient-to-r from-[#B7C9F2]/10 to-[#2F3440]/10 shadow-sm' : 'hover:bg-slate-50');
@@ -2594,23 +2841,30 @@ $headerShowLogo = true;
         const container = document.createElement('div');
         container.className = 'flex items-center gap-3 p-2';
 
-        // Botón estrella fuera del botón principal
-        const starBtn = document.createElement('button');
-        starBtn.className = 'flex-shrink-0 transition-colors';
-        starBtn.setAttribute('data-action', 'favorite');
-        starBtn.innerHTML = c.is_favorite 
-          ? '<i class="iconoir-star-solid text-amber-500"></i>'
-          : '<i class="iconoir-star text-slate-300 group-hover:text-slate-400"></i>';
-        starBtn.title = c.is_favorite ? 'Remove from favorites' : 'Add to favorites';
-        starBtn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          try {
-            await api('/api/conversations/toggle_favorite.php', { method: 'POST', body: { id: c.id } });
-            await loadConversations();
-          } catch (err) {
-            alert('Error changing favorite: ' + err.message);
-          }
-        });
+        const leadBtn = document.createElement('button');
+        leadBtn.className = 'flex-shrink-0 transition-colors';
+        if (isShared) {
+          leadBtn.disabled = true;
+          leadBtn.innerHTML = options.type === 'department'
+            ? '<i class="iconoir-group text-slate-300"></i>'
+            : '<i class="iconoir-share-android text-slate-300"></i>';
+          leadBtn.title = options.type === 'department' ? 'Shared with your department' : 'Shared with you';
+        } else {
+          leadBtn.setAttribute('data-action', 'favorite');
+          leadBtn.innerHTML = c.is_favorite
+            ? '<i class="iconoir-star-solid text-amber-500"></i>'
+            : '<i class="iconoir-star text-slate-300 group-hover:text-slate-400"></i>';
+          leadBtn.title = c.is_favorite ? 'Remove from favorites' : 'Add to favorites';
+          leadBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+              await api('/api/conversations/toggle_favorite.php', { method: 'POST', body: { id: c.id } });
+              await loadConversations();
+            } catch (err) {
+              alert('Error changing favorite: ' + err.message);
+            }
+          });
+        }
 
         const btn = document.createElement('button');
         btn.className = 'text-left flex-1 min-w-0 flex items-center gap-2';
@@ -2622,8 +2876,11 @@ $headerShowLogo = true;
         titleEl.className = 'font-medium text-sm truncate ' + (isActive ? 'text-[#2F3440]' : 'text-slate-700 group-hover:text-slate-900');
         titleEl.textContent = c.title || `Conversation ${c.id}`;
         const timeEl = document.createElement('div');
-        timeEl.className = 'text-xs text-slate-400';
-        timeEl.textContent = new Date(c.updated_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+        timeEl.className = 'text-xs text-slate-400 truncate';
+        const dateText = new Date(c.updated_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+        timeEl.textContent = isShared
+          ? `${c.effective_permission === 'chat' ? 'Can chat' : 'Read only'} · ${c.owner_name || 'Owner'}`
+          : dateText;
         textContainer.appendChild(titleEl);
         textContainer.appendChild(timeEl);
 
@@ -2696,11 +2953,13 @@ $headerShowLogo = true;
           }
         });
 
-        actions.appendChild(renameBtn);
-        actions.appendChild(moveBtn);
-        actions.appendChild(delBtn);
+        if (!isShared) {
+          actions.appendChild(renameBtn);
+          actions.appendChild(moveBtn);
+          actions.appendChild(delBtn);
+        }
 
-        container.appendChild(starBtn);
+        container.appendChild(leadBtn);
         container.appendChild(btn);
         container.appendChild(actions);
         li.appendChild(container);
@@ -2709,12 +2968,12 @@ $headerShowLogo = true;
           if (e.target.closest('button') && !e.target.closest('[data-conv-id]')) return;
           btn.click();
         });
-        convListEl.appendChild(li);
-      }
+        return li;
     }
 
     async function loadMessages(conversationId){
       const data = await api(`/api/messages/list.php?conversation_id=${encodeURIComponent(conversationId)}`);
+      currentConversationAccess = data.access || null;
       messagesEl.innerHTML = '';
       document.getElementById('context-warning').classList.add('hidden');
       const items = data.items || [];
@@ -2726,8 +2985,13 @@ $headerShowLogo = true;
         }
         emptyConversationId = null;
       } else {
-        showEmptyMode();
-        emptyConversationId = conversationId;
+        if (currentConversationAccess?.can_chat || currentConversationAccess?.can_manage) {
+          showEmptyMode();
+          emptyConversationId = conversationId;
+        } else {
+          showChatMode();
+          messagesEl.innerHTML = '<div class="max-w-3xl mx-auto text-center text-sm text-slate-400 py-12">This shared conversation has no messages yet.</div>';
+        }
       }
     }
     
@@ -2737,9 +3001,11 @@ $headerShowLogo = true;
         const span = convTitleEl.querySelector('span');
         if (span) span.textContent = title;
         convTitleEl.classList.remove('hidden');
+        applyConversationAccessState();
       } else {
         currentConvTitle = null;
         convTitleEl.classList.add('hidden');
+        applyConversationAccessState();
       }
     }
 
@@ -2756,6 +3022,7 @@ $headerShowLogo = true;
         const res = await api('/api/conversations/create.php', { method: 'POST', body: {} });
         currentConversationId = res.id;
         emptyConversationId = res.id;
+        currentConversationAccess = null;
         updateConvTitle(null);
         await loadConversations();
         showEmptyMode();
@@ -2766,6 +3033,10 @@ $headerShowLogo = true;
 
     async function handleSubmit(text, files = []){
       if(!text && (!files || files.length === 0)) return;
+      if (currentConversationAccess && !currentConversationAccess.can_chat && !currentConversationAccess.can_manage) {
+        alert('You have read-only access to this conversation.');
+        return;
+      }
       
       const filesArray = Array.isArray(files) ? files : (files ? [files] : []);
       

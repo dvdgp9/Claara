@@ -8,10 +8,12 @@
 
 require_once __DIR__ . '/../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../src/Repos/ChatFilesRepo.php';
+require_once __DIR__ . '/../../../src/Repos/ConversationAccessRepo.php';
 
 use App\Session;
 use App\Response;
 use Repos\ChatFilesRepo;
+use Repos\ConversationAccessRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     Response::error('method_not_allowed', 'POST only', 405);
@@ -136,6 +138,10 @@ if ($isFormData) {
 
 if ($mimeType === '' || !isset($allowedTypes[$mimeType])) {
     Response::error('validation_error', 'Unsupported file type', 400);
+}
+
+if ($conversationId && !(new ConversationAccessRepo())->canChat((int)$conversationId, $user)) {
+    Response::error('forbidden', 'You do not have permission to upload files to this conversation', 403);
 }
 
 // Validar tamaño (máx 30MB)

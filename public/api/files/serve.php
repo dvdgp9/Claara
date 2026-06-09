@@ -7,9 +7,11 @@
 
 require_once __DIR__ . '/../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../src/Repos/ChatFilesRepo.php';
+require_once __DIR__ . '/../../../src/Repos/ConversationAccessRepo.php';
 
 use App\Session;
 use Repos\ChatFilesRepo;
+use Repos\ConversationAccessRepo;
 
 $user = Session::user();
 if (!$user) {
@@ -24,9 +26,18 @@ if ($fileId <= 0) {
 }
 
 $repo = new ChatFilesRepo();
-$file = $repo->findByIdAndUser($fileId, (int)$user['id']);
+$file = $repo->findById($fileId);
 
 if (!$file) {
+    http_response_code(404);
+    exit('File not found');
+}
+
+$ownsFile = (int)$file['user_id'] === (int)$user['id'];
+$conversationId = isset($file['conversation_id']) ? (int)$file['conversation_id'] : 0;
+$canViewConversation = $conversationId > 0 && (new ConversationAccessRepo())->canView($conversationId, $user);
+
+if (!$ownsFile && !$canViewConversation) {
     http_response_code(404);
     exit('File not found');
 }

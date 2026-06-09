@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../../src/Auth/AuthService.php';
 require_once __DIR__ . '/../../../src/Repos/ConversationsRepo.php';
+require_once __DIR__ . '/../../../src/Repos/ConversationAccessRepo.php';
 require_once __DIR__ . '/../../../src/Repos/MessagesRepo.php';
 require_once __DIR__ . '/../../../src/Repos/UsageLogRepo.php';
 
@@ -9,6 +10,7 @@ use App\Response;
 use App\Session;
 use Auth\AuthService;
 use Repos\ConversationsRepo;
+use Repos\ConversationAccessRepo;
 use Repos\MessagesRepo;
 use Repos\UsageLogRepo;
 use Voices\VoiceContextBuilder;
@@ -36,11 +38,12 @@ if ($conversationId <= 0) {
     Response::error('validation_error', 'conversation_id requerido', 400);
 }
 
-$convos = new ConversationsRepo();
-$conversation = $convos->findByIdForUser($conversationId, (int)$user['id']);
-if (!$conversation) {
-    Response::error('not_found', 'Conversación no encontrada', 404);
+$conversationAccess = new ConversationAccessRepo();
+if (!$conversationAccess->canChat($conversationId, $user)) {
+    Response::error('not_found', 'Conversation not found', 404);
 }
+
+$convos = new ConversationsRepo();
 
 $msgs = new MessagesRepo();
 $history = [];

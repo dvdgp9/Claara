@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../src/Chat/LlmProviderFactory.php';
 require_once __DIR__ . '/../../src/Auth/AuthService.php';
 require_once __DIR__ . '/../../src/Audio/ContentExtractor.php';
 require_once __DIR__ . '/../../src/Repos/ConversationsRepo.php';
+require_once __DIR__ . '/../../src/Repos/ConversationAccessRepo.php';
 require_once __DIR__ . '/../../src/Repos/MessagesRepo.php';
 require_once __DIR__ . '/../../src/Repos/ChatFilesRepo.php';
 require_once __DIR__ . '/../../src/Repos/UsageLogRepo.php';
@@ -26,6 +27,7 @@ use Auth\AuthService;
 use Chat\OpenRouterClient;
 use Chat\ContextBuilder;
 use Repos\ConversationsRepo;
+use Repos\ConversationAccessRepo;
 use Repos\MessagesRepo;
 use Repos\ChatFilesRepo;
 use Repos\UsageLogRepo;
@@ -163,6 +165,7 @@ if ($file) {
 }
 
 $convos = new ConversationsRepo();
+$conversationAccess = new ConversationAccessRepo();
 $msgs = new MessagesRepo();
 $usageLog = new UsageLogRepo();
 
@@ -176,6 +179,8 @@ if ($isNewConversation) {
     $usageLog->log((int)$user['id'], 'conversation');
     // Notificar al cliente de la nueva conversación
     sendEvent('conversation', ['id' => $conversationId]);
+} elseif (!$conversationAccess->canChat($conversationId, $user)) {
+    sendError('You do not have permission to chat in this conversation', 403);
 }
 
 // Guardar mensaje de usuario
