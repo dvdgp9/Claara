@@ -3353,7 +3353,7 @@ $headerShowLogo = true;
               } else if (data.type === 'conversation') {
                 currentConversationId = data.id;
                 if (emptyConversationId === currentConversationId) emptyConversationId = null;
-                await loadConversations();
+                loadConversations().catch(err => console.warn('Conversation refresh failed during stream:', err));
               } else if (data.type === 'meta') {
                 if (data.message_id) currentLatestMessageId = Math.max(currentLatestMessageId, Number(data.message_id));
                 finalizeStreamingMessage(assistantBubble, fullContent, data.images, data.annotations, data.message_id);

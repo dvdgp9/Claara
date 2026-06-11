@@ -102,6 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 try {
     $user = AuthService::requireAuth();
     Session::requireCsrf();
+    // The stream can run for a while. Release PHP's session file lock so
+    // parallel UI requests (sidebar refresh, activity checks) do not block
+    // the browser's stream reader and make the response appear all at once.
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
     openSseStream();
 } catch (\Exception $e) {
     sendError($e->getMessage(), 401);
