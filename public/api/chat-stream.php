@@ -66,6 +66,14 @@ function sendSseComment(string $comment = 'claara-stream'): void {
     flushSse();
 }
 
+function openSseStream(): void {
+    sendSseComment('claara-stream');
+    // Some proxy/browser combinations wait for an initial payload before exposing
+    // fetch() stream chunks. A comment is SSE-safe and invisible to the UI.
+    echo ': ' . str_repeat(' ', 4096) . "\n\n";
+    flushSse();
+}
+
 /**
  * Enviar evento SSE
  */
@@ -94,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 try {
     $user = AuthService::requireAuth();
     Session::requireCsrf();
-    sendSseComment();
+    openSseStream();
 } catch (\Exception $e) {
     sendError($e->getMessage(), 401);
 }
