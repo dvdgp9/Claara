@@ -392,7 +392,7 @@ class OpenRouterClient {
 
         $fullText = '';
         $buffer = '';
-        $rawErrorBody = ''; // Capturar body en caso de error HTTP
+        $rawErrorBody = ''; // Capturar body acotado para diagnóstico de errores HTTP
         
         // Referencia a $this para usar dentro del closure
         $self = $this;
@@ -412,9 +412,13 @@ class OpenRouterClient {
             CURLOPT_TIMEOUT => 180,
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_BUFFERSIZE => 128, // Buffer pequeño para recibir chunks rápido
+            CURLOPT_TCP_NODELAY => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_WRITEFUNCTION => function($ch, $data) use (&$fullText, &$buffer, &$rawErrorBody, $onChunk, $self) {
-                // Acumular body bruto para diagnóstico de errores HTTP
-                $rawErrorBody .= $data;
+                // Acumular body bruto para diagnóstico sin crecimiento ilimitado.
+                if (strlen($rawErrorBody) < 65536) {
+                    $rawErrorBody .= substr($data, 0, 65536 - strlen($rawErrorBody));
+                }
                 $buffer .= $data;
                 
                 // Procesar líneas completas del buffer
@@ -423,18 +427,25 @@ class OpenRouterClient {
                     $buffer = substr($buffer, $pos + 1);
                     
                     $line = trim($line);
-                    if ($line === '' || $line === 'data: [DONE]') {
+                    if ($line === '' || $line[0] === ':' || $line === 'data: [DONE]') {
                         continue;
                     }
                     
-                    if (strpos($line, 'data: ') === 0) {
-                        $jsonStr = substr($line, 6);
+                    if (strpos($line, 'data:') === 0) {
+                        $jsonStr = trim(substr($line, 5));
                         $json = json_decode($jsonStr, true);
+
+                        if ($json && isset($json['error'])) {
+                            $detail = $json['error']['message'] ?? $json['message'] ?? 'OpenRouter stream error';
+                            throw new \Exception('OpenRouter stream error: ' . $detail);
+                        }
                         
                         if ($json && isset($json['choices'][0]['delta']['content'])) {
                             $chunk = $json['choices'][0]['delta']['content'];
-                            $fullText .= $chunk;
-                            $onChunk($chunk);
+                            if ($chunk !== '') {
+                                $fullText .= $chunk;
+                                $onChunk($chunk);
+                            }
                         }
                         
                         // Capturar modelo usado

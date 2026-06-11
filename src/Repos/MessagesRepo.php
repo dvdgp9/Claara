@@ -24,9 +24,20 @@ class MessagesRepo {
         $stmt = $this->pdo->prepare('SELECT COUNT(*) AS total, COALESCE(MAX(id), 0) AS latest_message_id FROM messages WHERE conversation_id = ?');
         $stmt->execute([$conversationId]);
         $row = $stmt->fetch() ?: [];
+
+        // Locks older than the stale threshold (180s, same as acquireAiLock) count as idle.
+        $staleBefore = date('Y-m-d H:i:s', time() - 180);
+        $stmtAi = $this->pdo->prepare('SELECT ai_status, ai_started_at FROM conversations WHERE id = ? LIMIT 1');
+        $stmtAi->execute([$conversationId]);
+        $ai = $stmtAi->fetch() ?: [];
+        $aiStatus = (($ai['ai_status'] ?? null) === 'responding' && ($ai['ai_started_at'] ?? '') >= $staleBefore)
+            ? 'responding'
+            : 'idle';
+
         return [
             'total' => (int)($row['total'] ?? 0),
             'latest_message_id' => (int)($row['latest_message_id'] ?? 0),
+            'ai_status' => $aiStatus,
         ];
     }
 

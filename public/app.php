@@ -125,6 +125,12 @@ $headerShowLogo = true;
             <button id="conversation-activity-refresh" type="button">Refresh</button>
           </div>
         </div>
+        <div id="conversation-ai-busy" class="conversation-ai-busy hidden mx-6 mt-4">
+          <div class="conversation-ai-busy-card">
+            <span class="conversation-ai-busy-dots"><span></span><span></span><span></span></span>
+            <span>Claara is responding to a teammate&hellip; You can send your message when she finishes.</span>
+          </div>
+        </div>
         <div id="empty-state" class="absolute inset-0 overflow-auto px-4 py-5 pb-36 sm:px-6 lg:px-8 lg:pb-8">
           <div class="empty-shell max-w-6xl mx-auto py-4 lg:py-8">
             
@@ -641,6 +647,7 @@ $headerShowLogo = true;
     const messagesContainer = document.getElementById('messages-container');
     const conversationActivityNotice = document.getElementById('conversation-activity-notice');
     const conversationActivityRefresh = document.getElementById('conversation-activity-refresh');
+    const conversationAiBusyNotice = document.getElementById('conversation-ai-busy');
     const emptyState = document.getElementById('empty-state');
     const chatFooter = document.getElementById('chat-footer');
     const inputEl = document.getElementById('chat-input');
@@ -750,6 +757,7 @@ $headerShowLogo = true;
     let currentLatestMessageId = 0;
     let activityPollTimer = null;
     let activityPollInFlight = false;
+    let remoteAiBusy = false; // another user is waiting for Claara in this shared conversation
     let currentFiles = []; // current attached files
     let currentFilesEmpty = []; // attached files in empty state
     let currentFolderId = -1; // -1 = all, 0 = no folder, >0 = specific folder
@@ -942,12 +950,17 @@ $headerShowLogo = true;
       const canManage = !!(access && access.can_manage);
       const permission = access?.permission || null;
 
-      inputEl.disabled = !canChat;
-      inputEl.placeholder = canChat ? 'Write a message...' : 'You have read-only access to this conversation';
-      formEl.querySelector('button[type="submit"]').disabled = !canChat;
-      formEl.querySelector('button[type="submit"]').classList.toggle('opacity-40', !canChat);
-      attachBtn.disabled = !canChat;
-      attachBtn.classList.toggle('opacity-40', !canChat);
+      const composerEnabled = canChat && !remoteAiBusy;
+      inputEl.disabled = !composerEnabled;
+      inputEl.placeholder = !canChat
+        ? 'You have read-only access to this conversation'
+        : remoteAiBusy
+          ? 'Claara is responding to a teammate...'
+          : 'Write a message...';
+      formEl.querySelector('button[type="submit"]').disabled = !composerEnabled;
+      formEl.querySelector('button[type="submit"]').classList.toggle('opacity-40', !composerEnabled);
+      attachBtn.disabled = !composerEnabled;
+      attachBtn.classList.toggle('opacity-40', !composerEnabled);
 
       if (conversationShareBtn) {
         conversationShareBtn.classList.toggle('hidden', !canManage || !currentConversationId);
@@ -976,9 +989,17 @@ $headerShowLogo = true;
       conversationActivityNotice.classList.remove('hidden');
     }
 
+    function setRemoteAiBusy(busy) {
+      if (remoteAiBusy === busy) return;
+      remoteAiBusy = busy;
+      conversationAiBusyNotice?.classList.toggle('hidden', !busy);
+      applyConversationAccessState();
+    }
+
     function shouldPollConversationActivity() {
       if (!currentConversationId || !currentConversationAccess) return false;
       if (isGenerating) return false;
+      if (remoteAiBusy) return true; // keep polling until the lock clears
       return currentConversationAccess.permission !== 'owner' || !!currentConversationAccess.is_shared;
     }
 
@@ -988,9 +1009,11 @@ $headerShowLogo = true;
       try {
         const data = await api(`/api/messages/activity.php?conversation_id=${encodeURIComponent(currentConversationId)}`);
         const latest = Number(data.activity?.latest_message_id || 0);
+        setRemoteAiBusy(data.activity?.ai_status === 'responding');
         if (latest > currentLatestMessageId) {
+          const firstNotice = conversationActivityNotice?.classList.contains('hidden');
           showConversationActivityNotice();
-          await loadConversations();
+          if (firstNotice) await loadConversations();
         }
       } catch (err) {
         console.warn('Conversation activity check failed:', err);
@@ -1005,6 +1028,7 @@ $headerShowLogo = true;
         activityPollTimer = null;
       }
       hideConversationActivityNotice();
+      setRemoteAiBusy(false);
       if (!currentConversationId) return;
       const intervalMs = document.hidden ? 12000 : 5000;
       activityPollTimer = setInterval(checkConversationActivity, intervalMs);
@@ -1155,14 +1179,18 @@ $headerShowLogo = true;
     function extractCapabilityRoutes(content) {
       const routes = new Set();
       const text = String(content || '');
-      const regex = /\/(?:voices|gestos)\/[^\s`)<\]*_~"']+/g;
+      // Negative lookbehind: skip API URLs such as /api/voices/doc.php (document sources).
+      const regex = /(?<!\/api)\/(?:voices|gestos)\/[^\s`)<\]*_~"']+/g;
       let match;
 
       while ((match = regex.exec(text)) !== null) {
         routes.add(normalizeCapabilityRoute(match[0]));
       }
 
-      return Array.from(routes).filter(route => route.startsWith('/voices/') || route.startsWith('/gestos/'));
+      return Array.from(routes).filter(route =>
+        (route.startsWith('/voices/') || route.startsWith('/gestos/'))
+        && !/\/(?:doc|docs|list_docs_ajax)\.php/.test(route)
+      );
     }
 
     function capabilityIcon(item, route) {
@@ -1267,7 +1295,13 @@ $headerShowLogo = true;
         finalizeStreamingMessage(bubble, result.message.content, null, null, result.message.id);
         await loadConversations();
       } catch (error) {
-        bubble.innerHTML = `<span class="text-red-500">Error: ${escapeHtml(error.message)}</span>`;
+        if (error.code === 'conversation_busy' || error.status === 409) {
+          wrap?.remove();
+          isGenerating = false;
+          setRemoteAiBusy(true);
+        } else {
+          bubble.innerHTML = `<span class="text-red-500">Error: ${escapeHtml(error.message)}</span>`;
+        }
       } finally {
         isGenerating = false;
         button.dataset.loading = '0';
@@ -1554,8 +1588,12 @@ $headerShowLogo = true;
           setTimeout(() => bubble.classList.remove('ring-2', 'ring-emerald-400', 'ring-opacity-75'), 2000);
         }
       } catch (error) {
-        alert('Error regenerating: ' + error.message);
         btn.innerHTML = originalIcon;
+        if (error.code === 'conversation_busy' || error.status === 409) {
+          setRemoteAiBusy(true);
+        } else {
+          alert('Error regenerating: ' + error.message);
+        }
       } finally {
         btn.disabled = false;
         bubble.classList.remove('opacity-50', 'pointer-events-none');
@@ -1984,9 +2022,11 @@ $headerShowLogo = true;
           const lines = buffer.split('\n');
           buffer = lines.pop() || '';
           
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line || line.startsWith(':')) continue;
+            if (line.startsWith('data:')) {
+              const data = line.slice(5).trim();
               
               if (data === '[DONE]') {
                 continue;
@@ -2385,7 +2425,11 @@ $headerShowLogo = true;
         if (isFromModal) hideEditModal();
         
       } catch (error) {
-        alert('Error regenerating: ' + error.message);
+        if (error.code === 'conversation_busy' || error.status === 409) {
+          setRemoteAiBusy(true);
+        } else {
+          alert('Error regenerating: ' + error.message);
+        }
       } finally {
         if (isFromModal) {
           editModalSubmit.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Apply changes';
@@ -2409,7 +2453,12 @@ $headerShowLogo = true;
         credentials: 'include'
       });
       const data = await res.json().catch(()=>({}));
-      if(!res.ok) throw new Error(data?.error?.message || res.statusText);
+      if(!res.ok) {
+        const err = new Error(data?.error?.message || res.statusText);
+        err.status = res.status;
+        err.code = data?.error?.code;
+        throw err;
+      }
       return data;
     }
     window.appApi = api;
@@ -3218,10 +3267,10 @@ $headerShowLogo = true;
         url: URL.createObjectURL(fileToUpload)
       } : null;
       
-      append('user', text, userFile);
-      
+      const { wrap: userWrap } = append('user', text, userFile);
+
       // 2. Preparar respuesta del asistente (streaming bubble)
-      const { bubble: assistantBubble } = append('assistant', '', null, [], null, { isStreaming: true });
+      const { wrap: assistantWrap, bubble: assistantBubble } = append('assistant', '', null, [], null, { isStreaming: true });
       
       isGenerating = true;
       
@@ -3272,18 +3321,22 @@ $headerShowLogo = true;
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = '';
         let fullContent = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const dataStr = line.substring(6).trim();
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line || line.startsWith(':')) continue;
+            if (line.startsWith('data:')) {
+              const dataStr = line.substring(5).trim();
               if (dataStr === '[DONE]') continue;
 
               let data = null;
@@ -3305,14 +3358,27 @@ $headerShowLogo = true;
                 if (data.message_id) currentLatestMessageId = Math.max(currentLatestMessageId, Number(data.message_id));
                 finalizeStreamingMessage(assistantBubble, fullContent, data.images, data.annotations, data.message_id);
               } else if (data.type === 'error') {
-                throw new Error(data.message);
+                const err = new Error(data.message);
+                err.code = data.code;
+                throw err;
               }
             }
           }
         }
       } catch (e) {
         console.error('Stream error:', e);
-        assistantBubble.innerHTML = `<span class="text-red-500">Error: ${escapeHtml(e.message)}</span>`;
+        if (e.code === 409) {
+          // Claara is busy with another teammate: undo the optimistic bubbles,
+          // give the text back to the composer and show the integrated notice.
+          assistantWrap?.remove();
+          userWrap?.remove();
+          if (inputEl) inputEl.value = text;
+          isGenerating = false;
+          setRemoteAiBusy(true);
+          checkConversationActivity();
+        } else {
+          assistantBubble.innerHTML = `<span class="text-red-500">Error: ${escapeHtml(e.message)}</span>`;
+        }
       } finally {
         isGenerating = false;
         

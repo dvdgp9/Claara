@@ -249,6 +249,7 @@ Build in this order:
 - [x] Executor: implement read-only sharing.
 - [x] Executor: implement collaborative chat permissions and AI run locking.
 - [ ] Executor: update sidebar grouping and shared states.
+- [ ] Executor: harden real-time assistant response streaming.
 
 ## Current Status / Progress Tracking
 
@@ -256,6 +257,12 @@ Build in this order:
 - 2026-06-09 Executor: Added migration `023_shared_conversations.sql` and `ConversationAccessRepo`. The repo resolves owner, direct user share, department share, `Can view`, `Can chat`, and manage permissions. PHP lint passed for the new repo and bootstrap.
 - 2026-06-09 Executor: Implemented first usable sharing cut. Added share target/shares APIs, Share modal, shared sidebar sections, read-only composer state, message read access for shared conversations, file serving for viewers, and backend `Can chat` checks for chat, streaming, voice-query, file upload, and regeneration. PHP lint and extracted JS syntax check passed. Local DB is not reachable, so migration validation must happen on the server.
 - 2026-06-09 Executor: Added single-AI-run lock using `conversations.ai_status`, `ai_started_at`, and `ai_locked_by_message_id`. Standard chat, streaming chat, and inline voice queries now reject a second AI run while Claara is already responding in the same conversation. Frontend SSE error handling now surfaces server errors in the assistant bubble.
+
+- 2026-06-09 Executor: Fine-grained actions pass. Verified rename/delete/move/favorite remain owner-only (all SQL scoped by `user_id`). Decision (user-confirmed): `Can chat` users may regenerate. Added the AI lock to `chat-regenerate.php` and `chat-regenerate-full.php` (409 `conversation_busy` + shutdown release). Added integrated "Claara is responding" UI: `activity.php` now returns `ai_status` (stale-aware, 180s), frontend polling shows a pulsing banner, disables the composer while busy, and a 409 on send now restores the user's text instead of showing a red error bubble. Also: activity poll only calls `loadConversations()` on the first notice, and polling continues while the busy banner is visible so it always clears. PHP lint and extracted JS syntax check passed.
+
+- 2026-06-09 Executor: Fixed phantom "Ask Open voice" button. `extractCapabilityRoutes` matched the `/voices/doc.php` substring inside `/api/voices/doc.php?...` source links from voice answers, inferring slug `doc` ("Voice not found" on click). Added a `(?<!\/api)` lookbehind plus a filter excluding `doc.php`/`docs.php`/`list_docs_ajax.php` routes. JS syntax check passed.
+
+- 2026-06-11 Executor: Hardened SSE streaming for assistant responses. The endpoint now disables common buffering/compression paths, sends an initial SSE comment after auth, and flushes consistently. OpenRouter streaming parsing now ignores SSE comments, accepts `data:` events without requiring a space, caps diagnostic raw bodies, enables low-latency cURL options, and surfaces mid-stream OpenRouter errors. Frontend parsing now preserves partial SSE lines across network chunks.
 
 ## Executor's Feedback or Assistance Requests
 
@@ -273,3 +280,4 @@ Build in this order:
 - Verify Iconoir icon names before using new icons; missing icons render as square placeholders.
 - Sidebar/shared layout classes should live in `public/assets/css/styles.css`, not page-local inline styles.
 - Avoid creating a foreign key from `conversations.ai_locked_by_message_id` to `messages.id`; `messages` already depends on `conversations`, and a reverse FK would create an unnecessary cycle.
+- Streaming responses over OpenRouter use SSE with `stream: true`; chunks arrive in `choices[0].delta.content`, and comment lines such as `: OPENROUTER PROCESSING` must be ignored.

@@ -2642,6 +2642,57 @@ select {
   transform: translateY(1px);
 }
 
+.conversation-ai-busy {
+  position: sticky;
+  top: 12px;
+  z-index: 34;
+}
+
+.conversation-ai-busy-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 720px;
+  margin: 0 auto;
+  border: 1px solid rgba(183, 201, 242, 0.7);
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(14px);
+  color: #334155;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.conversation-ai-busy-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.conversation-ai-busy-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b7c9f2;
+  animation: conversation-ai-busy-pulse 1.2s ease-in-out infinite;
+}
+
+.conversation-ai-busy-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.conversation-ai-busy-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes conversation-ai-busy-pulse {
+  0%, 100% { opacity: 0.35; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+
 /* Flag / report modal */
 .flag-type-btn.is-active {
   color: #1f2937;

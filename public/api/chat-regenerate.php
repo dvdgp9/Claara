@@ -52,6 +52,13 @@ if (!$conversationAccess->canChat($conversationId, $user)) {
     Response::error('not_found', 'Conversation not found', 404);
 }
 
+if (!$convos->acquireAiLock($conversationId, $messageId)) {
+    Response::error('conversation_busy', 'Claara is already responding in this conversation. Please wait a moment.', 409);
+}
+register_shutdown_function(static function () use ($convos, $conversationId): void {
+    $convos->releaseAiLock($conversationId);
+});
+
 // Obtener el mensaje a editar
 $messages = $msgs->listByConversation($conversationId);
 $targetMessage = null;

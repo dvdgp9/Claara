@@ -34,14 +34,37 @@ use Repos\UsageLogRepo;
 use Repos\UserFeatureAccessRepo;
 use Utils\SpreadsheetReader;
 
-// Desactivar output buffering para streaming
-while (ob_get_level()) ob_end_clean();
+// Keep SSE responsive across Apache/Nginx/Plesk/cPanel-style stacks.
+@ini_set('zlib.output_compression', '0');
+@ini_set('output_buffering', '0');
+@ini_set('implicit_flush', '1');
+if (function_exists('apache_setenv')) {
+    @apache_setenv('no-gzip', '1');
+}
+while (ob_get_level()) {
+    @ob_end_flush();
+}
+ob_implicit_flush(true);
 
 // Cabeceras para SSE
-header('Content-Type: text/event-stream');
-header('Cache-Control: no-cache');
+header('Content-Type: text/event-stream; charset=utf-8');
+header('Cache-Control: no-cache, no-store, must-revalidate, no-transform');
+header('Pragma: no-cache');
+header('Expires: 0');
 header('Connection: keep-alive');
 header('X-Accel-Buffering: no'); // Desactivar buffering de nginx
+
+function flushSse(): void {
+    if (function_exists('ob_flush')) {
+        @ob_flush();
+    }
+    flush();
+}
+
+function sendSseComment(string $comment = 'claara-stream'): void {
+    echo ': ' . $comment . "\n\n";
+    flushSse();
+}
 
 /**
  * Enviar evento SSE
@@ -49,7 +72,7 @@ header('X-Accel-Buffering: no'); // Desactivar buffering de nginx
 function sendEvent(string $type, array $data): void {
     $data['type'] = $type;
     echo "data: " . json_encode($data, JSON_UNESCAPED_UNICODE) . "\n\n";
-    flush();
+    flushSse();
 }
 
 /**
@@ -58,7 +81,7 @@ function sendEvent(string $type, array $data): void {
 function sendError(string $message, int $code = 500): void {
     sendEvent('error', ['message' => $message, 'code' => $code]);
     echo "data: [DONE]\n\n";
-    flush();
+    flushSse();
     exit;
 }
 
@@ -71,6 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 try {
     $user = AuthService::requireAuth();
     Session::requireCsrf();
+    sendSseComment();
 } catch (\Exception $e) {
     sendError($e->getMessage(), 401);
 }
@@ -329,7 +353,7 @@ if ($imageMode) {
         sendEvent('meta', $metaData);
         
         echo "data: [DONE]\n\n";
-        flush();
+        flushSse();
         exit;
     } catch (\Exception $e) {
         sendError($e->getMessage());
@@ -380,7 +404,7 @@ try {
     }
     
     echo "data: [DONE]\n\n";
-    flush();
+    flushSse();
     } catch (\Exception $e) {
         // Cascada de fallbacks cuando OpenRouter falla parseando un PDF.
         $historyHasPdf = pdfHistoryContainsAttachment($history);
@@ -422,7 +446,7 @@ try {
                     }
 
                     echo "data: [DONE]\n\n";
-                    flush();
+                    flushSse();
                     exit;
                 } catch (\Exception $ignored) {
                     // Cae al siguiente fallback.
@@ -465,7 +489,7 @@ try {
                 }
 
                 echo "data: [DONE]\n\n";
-                flush();
+                flushSse();
                 exit;
             } catch (\Exception $fallbackException) {
                 sendError('No se ha podido procesar el PDF. ' . $fallbackException->getMessage());
