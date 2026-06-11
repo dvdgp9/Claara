@@ -249,7 +249,7 @@ Build in this order:
 - [x] Executor: implement read-only sharing.
 - [x] Executor: implement collaborative chat permissions and AI run locking.
 - [ ] Executor: update sidebar grouping and shared states.
-- [ ] Executor: harden real-time assistant response streaming.
+- [x] Executor: harden real-time assistant response streaming.
 
 ## Current Status / Progress Tracking
 
@@ -262,7 +262,7 @@ Build in this order:
 
 - 2026-06-09 Executor: Fixed phantom "Ask Open voice" button. `extractCapabilityRoutes` matched the `/voices/doc.php` substring inside `/api/voices/doc.php?...` source links from voice answers, inferring slug `doc` ("Voice not found" on click). Added a `(?<!\/api)` lookbehind plus a filter excluding `doc.php`/`docs.php`/`list_docs_ajax.php` routes. JS syntax check passed.
 
-- 2026-06-11 Executor: Hardened SSE streaming for assistant responses. The endpoint now disables common buffering/compression paths, sends an initial SSE comment after auth, and flushes consistently. OpenRouter streaming parsing now ignores SSE comments, accepts `data:` events without requiring a space, caps diagnostic raw bodies, enables low-latency cURL options, and surfaces mid-stream OpenRouter errors. Frontend parsing now preserves partial SSE lines across network chunks.
+- 2026-06-11 Executor: Hardened SSE streaming for assistant responses. The endpoint now disables common buffering/compression paths, sends an initial SSE comment after auth, and flushes consistently. OpenRouter streaming parsing now ignores SSE comments, accepts `data:` events without requiring a space, caps diagnostic raw bodies, enables low-latency cURL options, and surfaces mid-stream OpenRouter errors. Frontend parsing now preserves partial SSE lines across network chunks. PHP lint, extracted JS syntax check, and direct OpenRouter streaming tests passed locally and on production.
 
 ## Executor's Feedback or Assistance Requests
 
