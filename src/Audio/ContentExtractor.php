@@ -15,29 +15,13 @@ class ContentExtractor
             return ['success' => false, 'error' => 'URL no válida'];
         }
 
-        // SSRF Protection: validar URL antes de fetch
-        $ssrfCheck = $this->validateUrlForSsrf($url);
-        if ($ssrfCheck !== true) {
-            return ['success' => false, 'error' => $ssrfCheck];
+        // SSRF Protection: descarga validada (valida cada salto de redirección
+        // y fija la conexión a la IP ya verificada para evitar DNS rebinding).
+        $fetch = $this->fetchUrlSafely($url);
+        if ($fetch['success'] !== true) {
+            return ['success' => false, 'error' => $fetch['error']];
         }
-
-        $ctx = stream_context_create([
-            'http' => [
-                'method' => 'GET',
-                'header' => "User-Agent: Mozilla/5.0 (compatible; EbonIA/1.0)\r\n",
-                'timeout' => 30
-            ],
-            'ssl' => [
-                'verify_peer' => true,
-                'verify_peer_name' => true
-            ]
-        ]);
-
-        $html = @file_get_contents($url, false, $ctx);
-
-        if ($html === false) {
-            return ['success' => false, 'error' => 'No se pudo acceder a la URL'];
-        }
+        $html = $fetch['body'];
 
         // Extraer título
         $title = '';
@@ -494,42 +478,140 @@ class ContentExtractor
     }
 
     /**
+     * Descarga una URL de forma resistente a SSRF.
+     *
+     * Sigue las redirecciones manualmente (file_get_contents/cURL las seguían
+     * sin revalidar, permitiendo saltar a una IP interna) y fija la conexión a
+     * la IP que se acaba de validar mediante CURLOPT_RESOLVE, de modo que un
+     * cambio de DNS entre la validación y la descarga (DNS rebinding) no pueda
+     * redirigir el socket a la red interna.
+     *
+     * @return array{success:bool, body?:string, error?:string}
+     */
+    private function fetchUrlSafely(string $url, int $maxRedirects = 4): array
+    {
+        if (!function_exists('curl_init')) {
+            return ['success' => false, 'error' => 'No hay soporte cURL para descargar la URL de forma segura'];
+        }
+
+        $current = $url;
+
+        for ($hop = 0; $hop <= $maxRedirects; $hop++) {
+            $check = $this->validateUrlForSsrf($current);
+            if ($check !== true) {
+                return ['success' => false, 'error' => $check];
+            }
+
+            $parsed = parse_url($current);
+            $scheme = strtolower($parsed['scheme']);
+            $host = $parsed['host'];
+            $port = (int)($parsed['port'] ?? ($scheme === 'https' ? 443 : 80));
+
+            // validateUrlForSsrf ya garantiza que todas las IPs resueltas son
+            // públicas; fijamos la conexión a la primera para que cURL no vuelva
+            // a resolver el dominio.
+            $ip = $this->resolveFirstIp($host);
+            if ($ip === null) {
+                return ['success' => false, 'error' => 'No se pudo resolver el dominio'];
+            }
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $current,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => false,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_CONNECTTIMEOUT => 15,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; EbonIA/1.0)',
+                CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+                CURLOPT_RESOLVE => ["{$host}:{$port}:{$ip}"],
+            ]);
+
+            $body = curl_exec($ch);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $redirectUrl = (string)curl_getinfo($ch, CURLINFO_REDIRECT_URL);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($body === false) {
+                return ['success' => false, 'error' => 'No se pudo acceder a la URL' . ($curlError ? ': ' . $curlError : '')];
+            }
+
+            // Redirección: revalidamos el destino en la siguiente iteración.
+            if ($httpCode >= 300 && $httpCode < 400 && $redirectUrl !== '') {
+                $current = $redirectUrl;
+                continue;
+            }
+
+            return ['success' => true, 'body' => (string)$body];
+        }
+
+        return ['success' => false, 'error' => 'Demasiadas redirecciones'];
+    }
+
+    /**
+     * Resuelve un host a su primera IP. Acepta literales IP directamente.
+     */
+    private function resolveFirstIp(string $host): ?string
+    {
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            return $host;
+        }
+        $ips = gethostbynamel($host);
+        return ($ips && isset($ips[0])) ? $ips[0] : null;
+    }
+
+    /**
      * Valida una URL contra ataques SSRF
      * @return true|string True si es válida, string con error si no
      */
     private function validateUrlForSsrf(string $url): bool|string
     {
         $parsed = parse_url($url);
-        
+
         // Solo permitir http/https
         $scheme = strtolower($parsed['scheme'] ?? '');
         if (!in_array($scheme, ['http', 'https'])) {
             return 'Solo se permiten URLs HTTP/HTTPS';
         }
-        
+
         $host = $parsed['host'] ?? '';
         if (empty($host)) {
             return 'URL sin host válido';
         }
-        
+
+        // Normalizar literal IPv6 entre corchetes ([::1] -> ::1)
+        $hostForCheck = trim($host, '[]');
+
         // Bloquear localhost y variantes
         $blockedHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
-        if (in_array(strtolower($host), $blockedHosts)) {
+        if (in_array(strtolower($hostForCheck), $blockedHosts)) {
             return 'No se permiten URLs locales';
         }
-        
-        // Resolver DNS y verificar que no sea IP interna
+
+        // Literal IP directo (IPv4 o IPv6): validar sin resolver DNS.
+        if (filter_var($hostForCheck, FILTER_VALIDATE_IP)) {
+            if ($this->isPrivateIp($hostForCheck)) {
+                return 'No se permiten URLs que apunten a redes internas';
+            }
+            return true;
+        }
+
+        // Resolver DNS y verificar que no sea IP interna. gethostbynamel solo
+        // devuelve IPv4; un host solo-IPv6 se rechaza (fail-closed).
         $ips = gethostbynamel($host);
         if ($ips === false) {
             return 'No se pudo resolver el dominio';
         }
-        
+
         foreach ($ips as $ip) {
             if ($this->isPrivateIp($ip)) {
                 return 'No se permiten URLs que apunten a redes internas';
             }
         }
-        
+
         return true;
     }
     

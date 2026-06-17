@@ -253,6 +253,9 @@ Build in this order:
 
 ## Current Status / Progress Tracking
 
+- 2026-06-17 Executor: Prepared a commercial, non-technical feature inventory request for Claara. Local code review confirmed current commercial modules: central chat, integrated RAG voices, guided gestures, document/file support, web search, image generation, shared conversations, voice feedback loop, organization/access management, and commercial lead/content workflows. Local DB connection is not available from this environment, so production-published dynamic voice names beyond the code-confirmed Lex voice still need server validation if the dossier must name every live voice.
+- 2026-06-17 Executor: Updated the commercial feature inventory dossier to English for Pierre while keeping the non-technical, commercial positioning and the emphasis on chat-to-voice integration and gestures.
+- 2026-06-17 Executor: Generated a PDF version of the English commercial dossier at `output/pdf/claara-current-features-commercial-dossier.pdf`. Rendered pages to PNG and visually checked representative pages for legibility, margins, and page endings.
 - 2026-06-09 Planner: Scratchpad cleaned and rewritten in English. Active planning focus is shared conversations and collaborative chat.
 - 2026-06-09 Executor: Added migration `023_shared_conversations.sql` and `ConversationAccessRepo`. The repo resolves owner, direct user share, department share, `Can view`, `Can chat`, and manage permissions. PHP lint passed for the new repo and bootstrap.
 - 2026-06-09 Executor: Implemented first usable sharing cut. Added share target/shares APIs, Share modal, shared sidebar sections, read-only composer state, message read access for shared conversations, file serving for viewers, and backend `Can chat` checks for chat, streaming, voice-query, file upload, and regeneration. PHP lint and extracted JS syntax check passed. Local DB is not reachable, so migration validation must happen on the server.
@@ -266,7 +269,7 @@ Build in this order:
 
 ## Executor's Feedback or Assistance Requests
 
-- None currently.
+- 2026-06-17: Need production/server access details only if Pierre's dossier must list the exact set of currently published dynamic voices, because the local DB connection fails from this environment.
 
 ## Lessons
 
@@ -280,4 +283,5 @@ Build in this order:
 - Verify Iconoir icon names before using new icons; missing icons render as square placeholders.
 - Sidebar/shared layout classes should live in `public/assets/css/styles.css`, not page-local inline styles.
 - Avoid creating a foreign key from `conversations.ai_locked_by_message_id` to `messages.id`; `messages` already depends on `conversations`, and a reverse FK would create an unnecessary cycle.
+- SSRF: validar la URL antes del fetch no basta. `file_get_contents`/cURL siguen redirecciones sin revalidar (302 → IP interna) y resuelven DNS de nuevo (DNS rebinding). En `ContentExtractor::fetchUrlSafely` se siguen redirecciones manualmente revalidando cada salto y se fija la IP validada con `CURLOPT_RESOLVE`. `extractFromUrl` (src/Audio/ContentExtractor.php) es el único punto que descarga URLs de usuario (gestos podcast y SOP).
 - Streaming responses over OpenRouter use SSE with `stream: true`; chunks arrive in `choices[0].delta.content`, and comment lines such as `: OPENROUTER PROCESSING` must be ignored.
