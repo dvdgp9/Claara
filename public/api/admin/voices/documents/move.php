@@ -26,13 +26,13 @@ $folderId = (int)($input['folder_id'] ?? 0);
 $repo = new ContextDocsRepo();
 $doc = $repo->getById($id);
 if (!$doc || ($doc['target_slug'] ?? '') !== $voice['slug']) {
-    Response::error('not_found', 'Documento no encontrado para esta voz', 404);
+    Response::error('not_found', 'Document not found for this voice', 404);
 }
 
 $folders = new VoiceFoldersRepo();
 $folder = $folders->getById($folderId);
 if (!$folder || (int)$folder['voice_id'] !== (int)$voice['id']) {
-    Response::error('invalid_folder', 'Carpeta no encontrada para esta voz', 400);
+    Response::error('invalid_folder', 'Folder not found for this voice', 400);
 }
 
 $repo->setFolder($id, $folderId);

@@ -32,7 +32,7 @@ if (!$builder->voiceExists()) {
 $voice = $builder->getVoiceInfo() ?? ['slug' => $voiceId];
 $resolver = new VoiceAccessResolver();
 if (!$resolver->hasVoiceAccess((int)$user['id'], $voice)) {
-    Response::error('forbidden', 'No tienes acceso a esta voz', 403);
+    Response::error('forbidden', 'You do not have access to this voice', 403);
 }
 $allowedFolderIds = $resolver->hasFullAccess((int)$user['id'], $voice)
     ? null

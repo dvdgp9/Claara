@@ -25,10 +25,10 @@ function clean_text(array $input, string $key, int $maxLength, bool $required = 
 {
     $value = trim((string)($input[$key] ?? ''));
     if ($required && $value === '') {
-        Response::error('validation_error', "{$key} requerido", 400);
+        Response::error('validation_error', "{$key} is required", 400);
     }
     if ($value !== '' && strlen($value) > $maxLength) {
-        Response::error('validation_error', "{$key} demasiado largo", 400);
+        Response::error('validation_error', "{$key} is too long", 400);
     }
     return $value === '' ? null : $value;
 }
@@ -37,10 +37,10 @@ function clean_voice_slug(array $input, string $key = 'slug'): string
 {
     $slug = strtolower(trim((string)($input[$key] ?? '')));
     if ($slug === '') {
-        Response::error('validation_error', "{$key} requerido", 400);
+        Response::error('validation_error', "{$key} is required", 400);
     }
     if (strlen($slug) > 50 || !preg_match('/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/', $slug)) {
-        Response::error('validation_error', 'slug inválido: usa minúsculas, números y guiones', 400);
+        Response::error('validation_error', 'invalid slug: use lowercase letters, numbers, and hyphens', 400);
     }
     return $slug;
 }
@@ -48,7 +48,7 @@ function clean_voice_slug(array $input, string $key = 'slug'): string
 function clean_voice_payload(array $input, bool $creating): array
 {
     if (!$creating && array_key_exists('name', $input) && trim((string)$input['name']) === '') {
-        Response::error('validation_error', 'name requerido', 400);
+        Response::error('validation_error', 'name is required', 400);
     }
 
     $name = clean_text($input, 'name', 100, $creating);
@@ -86,7 +86,7 @@ function clean_voice_payload(array $input, bool $creating): array
 
 function respond_voice_not_found(): void
 {
-    Response::error('voice_not_found', 'Voz no encontrada', 404);
+    Response::error('voice_not_found', 'Voice not found', 404);
 }
 
 function clean_user_id_list(mixed $value): array

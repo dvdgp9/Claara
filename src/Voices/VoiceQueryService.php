@@ -37,7 +37,7 @@ class VoiceQueryService
         // Access gate: a user can open the voice if they are a superadmin, the
         // voice's responsible, or have an access profile in it.
         if (!$this->accessResolver->hasVoiceAccess($userId, $voice)) {
-            throw new \RuntimeException('No tienes acceso a esta voz', 403);
+            throw new \RuntimeException('You do not have access to this voice', 403);
         }
 
         // Folders this user may read from. null = full access (no folder filter);

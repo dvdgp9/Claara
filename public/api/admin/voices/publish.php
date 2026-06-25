@@ -22,7 +22,7 @@ if (!$voice) {
     respond_voice_not_found();
 }
 if (trim((string)$voice['instructions']) === '') {
-    Response::error('publish_blocked', 'Añade instrucciones antes de publicar la voz', 400);
+    Response::error('publish_blocked', 'Add instructions before publishing the voice', 400);
 }
 $docsRepo = new ContextDocsRepo();
 $processedDocs = array_filter(
@@ -30,7 +30,7 @@ $processedDocs = array_filter(
     static fn(array $doc): bool => ($doc['rag_status'] ?? '') === 'processed'
 );
 if (count($processedDocs) === 0) {
-    Response::error('publish_blocked', 'Procesa al menos un documento de conocimiento antes de publicar la voz', 400);
+    Response::error('publish_blocked', 'Process at least one knowledge document before publishing the voice', 400);
 }
 
 try {
@@ -41,5 +41,5 @@ try {
         'voice' => $repo->findBySlug($slug, true),
     ]);
 } catch (\Throwable $e) {
-    Response::serverError('voice_publish_failed', $e, 'No se pudo publicar la voz');
+    Response::serverError('voice_publish_failed', $e, 'Could not publish the voice');
 }

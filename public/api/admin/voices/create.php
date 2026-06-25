@@ -49,5 +49,5 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    Response::serverError('voice_create_failed', $e, 'No se pudo crear la voz');
+    Response::serverError('voice_create_failed', $e, 'Could not create the voice');
 }

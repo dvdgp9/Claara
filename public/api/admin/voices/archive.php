@@ -27,5 +27,5 @@ try {
         'voice' => $repo->findBySlug($slug, true),
     ]);
 } catch (\Throwable $e) {
-    Response::serverError('voice_archive_failed', $e, 'No se pudo archivar la voz');
+    Response::serverError('voice_archive_failed', $e, 'Could not archive the voice');
 }

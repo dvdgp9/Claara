@@ -13,16 +13,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 Session::requireCsrf();
 
 if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-    Response::error('upload_error', 'No se pudo subir el archivo', 400);
+    Response::error('upload_error', 'Could not upload the file', 400);
 }
 
 $file = $_FILES['file'];
 $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 if (!in_array($extension, ['pdf', 'txt', 'md'], true)) {
-    Response::error('invalid_extension', 'Formatos permitidos: pdf, txt, md', 400);
+    Response::error('invalid_extension', 'Allowed formats: pdf, txt, md', 400);
 }
 if ((int)$file['size'] > 30 * 1024 * 1024) {
-    Response::error('file_too_large', 'El archivo supera 30MB', 400);
+    Response::error('file_too_large', 'The file exceeds 30MB', 400);
 }
 
 $repo = new ContextDocsRepo();
@@ -38,7 +38,7 @@ while (file_exists($targetPath . '/' . $filename) && $counter < 100) {
 $destPath = $targetPath . '/' . $filename;
 
 if (!move_uploaded_file($file['tmp_name'], $destPath)) {
-    Response::error('move_error', 'No se pudo guardar el archivo', 500);
+    Response::error('move_error', 'Could not save the file', 500);
 }
 
 // Resolve the target folder: an explicit folder_id, a relative path (whole-folder
@@ -87,5 +87,5 @@ try {
     if (file_exists($destPath)) {
         unlink($destPath);
     }
-    Response::serverError('voice_document_upload_failed', $e, 'No se pudo registrar el documento');
+    Response::serverError('voice_document_upload_failed', $e, 'Could not register the document');
 }

@@ -15,24 +15,24 @@ Session::requireCsrf();
 
 $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 if ($id <= 0) {
-    Response::error('invalid_id', 'id requerido', 400);
+    Response::error('invalid_id', 'id is required', 400);
 }
 
 $repo = new ContextDocsRepo();
 $doc = $repo->getById($id);
 if (!$doc || ($doc['target_slug'] ?? '') !== $voice['slug']) {
-    Response::error('not_found', 'Documento no encontrado para esta voz', 404);
+    Response::error('not_found', 'Document not found for this voice', 404);
 }
 
 $filePath = voice_documents_path($voice['slug']) . '/' . $doc['filename'];
 if (!file_exists($filePath)) {
-    Response::error('file_not_found', 'El archivo físico no existe', 404);
+    Response::error('file_not_found', 'The physical file does not exist', 404);
 }
 
 try {
     $processor = new RagProcessor(null, null, $voice['rag_collection']);
     if (!$processor->isQdrantHealthy()) {
-        Response::error('qdrant_unavailable', 'Qdrant no está disponible', 503);
+        Response::error('qdrant_unavailable', 'Qdrant is not available', 503);
     }
 
     $repo->updateRagStatus($id, 'processing');
@@ -52,5 +52,5 @@ try {
     ]);
 } catch (\Throwable $e) {
     $repo->updateRagStatus($id, 'error', null, $e->getMessage());
-    Response::serverError('voice_document_process_failed', $e, 'No se pudo procesar el documento');
+    Response::serverError('voice_document_process_failed', $e, 'Could not process the document');
 }

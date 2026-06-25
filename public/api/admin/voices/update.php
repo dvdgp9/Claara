@@ -49,5 +49,5 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    Response::serverError('voice_update_failed', $e, 'No se pudo actualizar la voz');
+    Response::serverError('voice_update_failed', $e, 'Could not update the voice');
 }

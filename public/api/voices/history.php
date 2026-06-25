@@ -23,7 +23,7 @@ if (!$voiceId) {
     Response::error('missing_voice', 'voice_id is required', 400);
 }
 if (!(new UserFeatureAccessRepo())->hasVoiceAccess((int)$user['id'], $voiceId)) {
-    Response::error('forbidden', 'No tienes acceso a esta voz', 403);
+    Response::error('forbidden', 'You do not have access to this voice', 403);
 }
 
 $repo = new VoiceExecutionsRepo();
