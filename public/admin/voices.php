@@ -141,14 +141,14 @@ $headerBackText = 'Chat';
                   <small>Future chat routing will use this guidance to recommend the voice.</small>
                 </label>
 
-                <label>
+                <div class="voice-form-field">
                   <span>Responsible users</span>
                   <div class="voice-people-picker">
                     <input type="text" id="voice-responsibles-search" class="voice-people-search" placeholder="Search people…" autocomplete="off">
                     <div id="voice-responsibles" class="voice-people-list" role="group" aria-label="Responsible users"></div>
                   </div>
                   <small>Responsible users keep full access to this voice. Tick everyone who maintains it.</small>
-                </label>
+                </div>
 
                 <div class="voice-form-footer">
                   <p id="voice-form-note">Draft voices can be tested here before publishing.</p>

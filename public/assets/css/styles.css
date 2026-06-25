@@ -984,7 +984,20 @@ table.voice-access-matrix thead small {
   padding: 3px 9px;
 }
 
-/* People picker (responsible users) — replaces the native multi-select */
+/* People picker (responsible users) — replaces the native multi-select.
+   Selectors are scoped under the picker so they win over the generic
+   .voice-form input / label / label span rules. */
+.voice-form-field {
+  display: grid;
+  gap: 7px;
+}
+
+.voice-form-field > span {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 760;
+}
+
 .voice-people-picker {
   border: 1px solid #cbd5e1;
   border-radius: 12px;
@@ -992,17 +1005,25 @@ table.voice-access-matrix thead small {
   overflow: hidden;
 }
 
-.voice-people-search {
+.voice-people-picker .voice-people-search {
   width: 100%;
   border: none;
   border-bottom: 1px solid #eef2f6;
-  padding: 9px 12px;
+  border-radius: 0;
+  background: #fff;
+  padding: 10px 12px;
   font-size: 13px;
   color: #0f172a;
   outline: none;
 }
 
-.voice-people-search::placeholder { color: #94a3b8; }
+.voice-people-picker .voice-people-search:focus {
+  box-shadow: none;
+  border-color: #eef2f6;
+  border-bottom-color: #cbd5e1;
+}
+
+.voice-people-picker .voice-people-search::placeholder { color: #94a3b8; }
 
 .voice-people-list {
   display: flex;
@@ -1011,38 +1032,46 @@ table.voice-access-matrix thead small {
   overflow-y: auto;
 }
 
-.voice-people-option {
+.voice-people-list .voice-people-option {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin: 0;
   padding: 9px 12px;
   cursor: pointer;
   border-bottom: 1px solid #f1f5f9;
   transition: background .12s ease;
 }
 
-.voice-people-option:last-child { border-bottom: none; }
-.voice-people-option:hover { background: #f8fafc; }
-.voice-people-option.is-checked { background: #ecfeff; }
+.voice-people-list .voice-people-option:last-child { border-bottom: none; }
+.voice-people-list .voice-people-option:hover { background: #f8fafc; }
+.voice-people-list .voice-people-option.is-checked { background: #ecfeff; }
 
-.voice-people-option input {
+.voice-people-list .voice-people-option input {
   width: 16px;
   height: 16px;
+  flex: 0 0 auto;
   accent-color: #0891b2;
-  flex-shrink: 0;
   cursor: pointer;
 }
 
-.voice-people-text {
+.voice-people-list .voice-people-text {
   display: flex;
   flex-direction: column;
+  gap: 1px;
   min-width: 0;
 }
 
-.voice-people-name { font-size: 13px; color: #0f172a; line-height: 1.25; }
+.voice-people-list .voice-people-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.25;
+}
 
-.voice-people-meta {
+.voice-people-list .voice-people-meta {
   font-size: 11px;
+  font-weight: 400;
   color: #94a3b8;
   overflow: hidden;
   text-overflow: ellipsis;
