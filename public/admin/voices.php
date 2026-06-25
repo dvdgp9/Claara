@@ -203,6 +203,33 @@ $headerBackText = 'Chat';
                   </div>
                 </div>
               </section>
+
+              <section class="voice-access-panel">
+                <div class="voice-panel-head">
+                  <div>
+                    <h2>Access</h2>
+                    <p id="voice-access-summary">Create profiles, choose which folders each profile can read, then assign people.</p>
+                  </div>
+                  <button id="voice-profile-new-btn" class="voice-secondary-btn" type="button">
+                    <i class="iconoir-community"></i>
+                    <span>New profile</span>
+                  </button>
+                </div>
+                <div class="voice-access-body">
+                  <div class="voice-access-card">
+                    <div class="voice-access-subhead">Folder access by profile</div>
+                    <div id="voice-access-matrix" class="voice-access-matrix-wrap">
+                      <div class="voice-documents-empty">Select a voice to manage access.</div>
+                    </div>
+                  </div>
+                  <div class="voice-access-card">
+                    <div class="voice-access-subhead">People</div>
+                    <div id="voice-access-users" class="voice-access-user-list">
+                      <div class="voice-documents-empty">Select a voice to assign profiles.</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
             </section>
           </section>
         </div>

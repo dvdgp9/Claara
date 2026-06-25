@@ -6,7 +6,10 @@
     isCreating: true,
     documents: [],
     folders: [],
-    selectedFolderId: null
+    selectedFolderId: null,
+    profiles: [],
+    accessUsers: [],
+    accessProfileOptions: []
   };
 
   const $ = (id) => document.getElementById(id);
@@ -129,6 +132,9 @@
     state.documents = [];
     state.folders = [];
     state.selectedFolderId = null;
+    state.profiles = [];
+    state.accessUsers = [];
+    state.accessProfileOptions = [];
     $('voice-form').reset();
     $('voice-slug').disabled = false;
     $('voice-editor-status').textContent = 'Draft';
@@ -142,6 +148,8 @@
     renderFolderTree();
     renderBreadcrumb();
     renderDocuments();
+    renderAccessMatrix();
+    renderAccessUsers();
   }
 
   function renderResponsibleOptions() {
@@ -199,6 +207,7 @@
     await loadFolders();
     await loadDocuments();
     renderBreadcrumb();
+    await loadAccess();
   }
 
   /* ---- Folders ---- */
@@ -252,6 +261,7 @@
       state.selectedFolderId = root ? root.id : null;
     }
     renderFolderTree();
+    renderAccessMatrix();
   }
 
   function renderFolderTree() {
@@ -437,6 +447,197 @@
     } finally {
       setBusy(button, false);
       if (hint) hint.textContent = '';
+    }
+  }
+
+  /* ---- Access: profiles, folder grants, user assignment ---- */
+
+  async function loadAccess() {
+    const voice = selectedVoice();
+    if (!voice || state.isCreating) {
+      state.profiles = [];
+      state.accessUsers = [];
+      state.accessProfileOptions = [];
+      renderAccessMatrix();
+      renderAccessUsers();
+      return;
+    }
+    const [profilesData, accessData] = await Promise.all([
+      api(`/api/admin/voices/profiles/list.php?slug=${encodeURIComponent(voice.slug)}`),
+      api(`/api/admin/voices/access/list.php?slug=${encodeURIComponent(voice.slug)}`)
+    ]);
+    state.profiles = (profilesData.profiles || []).map((p) => ({
+      ...p,
+      id: Number(p.id),
+      assigned_users: Number(p.assigned_users || 0),
+      granted_folder_ids: (p.granted_folder_ids || []).map(Number)
+    }));
+    state.accessProfileOptions = (accessData.profiles || []).map((p) => ({ id: Number(p.id), name: p.name }));
+    state.accessUsers = (accessData.users || []).map((u) => ({
+      ...u,
+      profile_id: u.profile_id == null ? null : Number(u.profile_id)
+    }));
+    renderAccessMatrix();
+    renderAccessUsers();
+  }
+
+  function renderAccessMatrix() {
+    const el = $('voice-access-matrix');
+    if (!el) return;
+    if (state.isCreating || !selectedVoice()) {
+      el.innerHTML = '<div class="voice-documents-empty">Select a voice to manage access.</div>';
+      return;
+    }
+    if (!state.profiles.length) {
+      el.innerHTML = '<div class="voice-documents-empty">No profiles yet. Create one to control folder access.</div>';
+      return;
+    }
+    const head = state.profiles.map((p) => `
+      <th>
+        <div class="voice-access-col">
+          <span title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
+          <button class="voice-folder-menu" type="button" data-profile="${p.id}" title="Rename or delete"><i class="iconoir-more-vert"></i></button>
+        </div>
+        <small>${p.assigned_users} user${p.assigned_users === 1 ? '' : 's'}</small>
+      </th>`).join('');
+    const rows = state.folders.map((f) => {
+      const cells = state.profiles.map((p) => {
+        const checked = p.granted_folder_ids.includes(f.id) ? 'checked' : '';
+        return `<td><input type="checkbox" class="voice-grant-box" data-profile="${p.id}" data-folder="${f.id}" ${checked}></td>`;
+      }).join('');
+      const indent = 2 + f.depth * 12;
+      const icon = f.is_root ? 'iconoir-home-simple' : 'iconoir-folder';
+      return `<tr><th scope="row"><span style="padding-left:${indent}px"><i class="${icon}"></i>${escapeHtml(f.name)}</span></th>${cells}</tr>`;
+    }).join('');
+    el.innerHTML = `
+      <table class="voice-access-matrix">
+        <thead><tr><th class="corner">Folder</th>${head}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="voice-access-hint">Granting a folder also grants everything inside it.</p>`;
+    el.querySelectorAll('.voice-grant-box').forEach((box) => {
+      box.addEventListener('change', () => toggleGrant(Number(box.dataset.profile), Number(box.dataset.folder), box.checked));
+    });
+    el.querySelectorAll('.voice-folder-menu[data-profile]').forEach((btn) => {
+      btn.addEventListener('click', () => profileMenu(Number(btn.dataset.profile)));
+    });
+  }
+
+  function renderAccessUsers() {
+    const el = $('voice-access-users');
+    if (!el) return;
+    if (state.isCreating || !selectedVoice()) {
+      el.innerHTML = '<div class="voice-documents-empty">Select a voice to assign profiles.</div>';
+      return;
+    }
+    if (!state.accessUsers.length) {
+      el.innerHTML = '<div class="voice-documents-empty">No users found.</div>';
+      return;
+    }
+    const options = state.accessProfileOptions || [];
+    el.innerHTML = state.accessUsers.map((u) => {
+      const identity = `<div><strong>${escapeHtml(u.name || u.email)}</strong><small>${escapeHtml(u.email)}</small></div>`;
+      if (u.is_superadmin) {
+        return `<div class="voice-access-user">${identity}<span class="voice-access-badge">Full access</span></div>`;
+      }
+      const opts = ['<option value="0">No access</option>']
+        .concat(options.map((o) => `<option value="${o.id}" ${u.profile_id === o.id ? 'selected' : ''}>${escapeHtml(o.name)}</option>`))
+        .join('');
+      return `<div class="voice-access-user">${identity}<select class="voice-access-select" data-user="${u.id}">${opts}</select></div>`;
+    }).join('');
+    el.querySelectorAll('.voice-access-select').forEach((sel) => {
+      sel.addEventListener('change', () => assignUser(Number(sel.dataset.user), Number(sel.value)));
+    });
+  }
+
+  async function toggleGrant(profileId, folderId, granted) {
+    const voice = selectedVoice();
+    if (!voice) return;
+    try {
+      await api(`/api/admin/voices/profiles/grant.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { profile_id: profileId, folder_id: folderId, granted }
+      });
+      await loadAccess();
+    } catch (error) {
+      showAlert(error.message, 'error');
+      await loadAccess().catch(() => {});
+    }
+  }
+
+  async function createProfile() {
+    const voice = selectedVoice();
+    if (!voice || state.isCreating) { showAlert('Save the voice before adding profiles.'); return; }
+    const name = (window.prompt('New profile name (e.g. Standard, Manager, Board)') || '').trim();
+    if (!name) return;
+    try {
+      await api(`/api/admin/voices/profiles/create.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { name }
+      });
+      await loadAccess();
+      showAlert('Profile created');
+    } catch (error) {
+      showAlert(error.message, 'error');
+    }
+  }
+
+  function profileMenu(id) {
+    const profile = state.profiles.find((p) => p.id === id);
+    if (!profile) return;
+    const action = (window.prompt(`Profile "${profile.name}" — type R to rename or D to delete.`, 'R') || '').trim().toUpperCase();
+    if (action === 'R') renameProfile(id);
+    else if (action === 'D') deleteProfile(id);
+  }
+
+  async function renameProfile(id) {
+    const voice = selectedVoice();
+    const profile = state.profiles.find((p) => p.id === id);
+    if (!voice || !profile) return;
+    const name = (window.prompt('Rename profile', profile.name) || '').trim();
+    if (!name || name === profile.name) return;
+    try {
+      await api(`/api/admin/voices/profiles/update.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { id, name }
+      });
+      await loadAccess();
+      showAlert('Profile renamed');
+    } catch (error) {
+      showAlert(error.message, 'error');
+    }
+  }
+
+  async function deleteProfile(id) {
+    const voice = selectedVoice();
+    const profile = state.profiles.find((p) => p.id === id);
+    if (!voice || !profile) return;
+    if (!window.confirm(`Delete profile "${profile.name}"? People with this profile lose access to the voice.`)) return;
+    try {
+      await api(`/api/admin/voices/profiles/delete.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { id }
+      });
+      await loadAccess();
+      showAlert('Profile deleted');
+    } catch (error) {
+      showAlert(error.message, 'error');
+    }
+  }
+
+  async function assignUser(userId, profileId) {
+    const voice = selectedVoice();
+    if (!voice) return;
+    try {
+      await api(`/api/admin/voices/access/assign.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { user_id: userId, profile_id: profileId }
+      });
+      await loadAccess();
+      showAlert('Access updated');
+    } catch (error) {
+      showAlert(error.message, 'error');
+      await loadAccess().catch(() => {});
     }
   }
 
@@ -687,6 +888,7 @@
       uploadFolder(event.target.files);
       event.target.value = '';
     });
+    $('voice-profile-new-btn').addEventListener('click', createProfile);
     $('voice-publish-btn').addEventListener('click', publishVoice);
     $('voice-archive-btn').addEventListener('click', archiveVoice);
     $('voice-name').addEventListener('input', () => {

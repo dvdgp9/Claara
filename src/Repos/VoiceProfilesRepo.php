@@ -69,6 +69,44 @@ class VoiceProfilesRepo
         );
     }
 
+    public function update(int $id, string $name, ?string $description): void
+    {
+        $this->pdo->prepare(
+            'UPDATE voice_access_profiles SET name = ?, description = ?, updated_at = NOW() WHERE id = ?'
+        )->execute([$name, $description, $id]);
+    }
+
+    public function delete(int $id): void
+    {
+        $this->pdo->prepare('DELETE FROM voice_access_profiles WHERE id = ?')->execute([$id]);
+    }
+
+    /**
+     * @return int[] folder ids granted to a profile
+     */
+    public function folderIdsForProfile(int $profileId): array
+    {
+        $stmt = $this->pdo->prepare('SELECT folder_id FROM folder_profile_access WHERE profile_id = ?');
+        $stmt->execute([$profileId]);
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+
+    /**
+     * @return array<int,int> profile_id => assigned user count for a voice
+     */
+    public function assignedUserCounts(int $voiceId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT profile_id, COUNT(*) AS n FROM user_voice_profiles WHERE voice_id = ? GROUP BY profile_id'
+        );
+        $stmt->execute([$voiceId]);
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(int)$row['profile_id']] = (int)$row['n'];
+        }
+        return $out;
+    }
+
     public function grantFolder(int $folderId, int $profileId): void
     {
         $this->pdo->prepare(
