@@ -14,11 +14,11 @@ if (!$user) {
 }
 
 $voicesRepo = new VoicesRepo();
-$accessRepo = new UserFeatureAccessRepo();
+$voiceResolver = new \Voices\VoiceAccessResolver();
 $voices = [];
 
 foreach ($voicesRepo->listPublished() as $voice) {
-    if (!$accessRepo->hasVoiceAccess((int)$user['id'], $voice['slug'])) {
+    if (!$voiceResolver->hasVoiceAccess((int)$user['id'], $voice)) {
         continue;
     }
     $voices[] = [

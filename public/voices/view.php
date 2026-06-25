@@ -27,8 +27,8 @@ if (!$voice || $voice['status'] !== 'published') {
     exit;
 }
 
-$accessRepo = new UserFeatureAccessRepo();
-if (!$accessRepo->hasVoiceAccess((int)$user['id'], $slug)) {
+$voiceResolver = new \Voices\VoiceAccessResolver();
+if (!$voiceResolver->hasVoiceAccess((int)$user['id'], $voice)) {
     header('Location: /app/?error=no_access');
     exit;
 }

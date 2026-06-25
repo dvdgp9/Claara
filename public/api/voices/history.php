@@ -11,7 +11,8 @@ require_once __DIR__ . '/../../../src/Repos/UserFeatureAccessRepo.php';
 use App\Session;
 use App\Response;
 use Voices\VoiceExecutionsRepo;
-use Repos\UserFeatureAccessRepo;
+use Voices\VoiceAccessResolver;
+use Repos\VoicesRepo;
 
 $user = Session::user();
 if (!$user) {
@@ -22,7 +23,8 @@ $voiceId = $_GET['voice_id'] ?? '';
 if (!$voiceId) {
     Response::error('missing_voice', 'voice_id is required', 400);
 }
-if (!(new UserFeatureAccessRepo())->hasVoiceAccess((int)$user['id'], $voiceId)) {
+$voice = (new VoicesRepo())->findBySlug($voiceId) ?? ['slug' => $voiceId];
+if (!(new VoiceAccessResolver())->hasVoiceAccess((int)$user['id'], $voice)) {
     Response::error('forbidden', 'You do not have access to this voice', 403);
 }
 

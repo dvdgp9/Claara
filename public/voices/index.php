@@ -24,10 +24,11 @@ $headerIcon = 'iconoir-voice-square';
 $headerIconColor = 'from-slate-700 to-cyan-700';
 
 $voicesRepo = new VoicesRepo();
-$accessRepo = new UserFeatureAccessRepo();
+$voiceResolver = new \Voices\VoiceAccessResolver();
+$userId = (int)$user['id'];
 $voices = array_values(array_filter(
     $voicesRepo->listPublished(),
-    static fn(array $voice): bool => $accessRepo->hasVoiceAccess((int)$user['id'], $voice['slug'])
+    static fn(array $voice): bool => $voiceResolver->hasVoiceAccess($userId, $voice)
 ));
 ?><!DOCTYPE html>
 <html lang="en">

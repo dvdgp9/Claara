@@ -16,6 +16,7 @@ Session::start();
 $user = Session::user();
 $userId = $user ? (int)$user['id'] : 0;
 $accessRepo = new UserFeatureAccessRepo();
+$voiceResolver = new \Voices\VoiceAccessResolver();
 
 $activeTab = $activeTab ?? 'conversations';
 
@@ -178,7 +179,7 @@ $tabs = [
         <?php 
         $hasVoices = false;
         foreach ($voicesList as $voice): 
-          if ($accessRepo->hasVoiceAccess($userId, $voice['id'])):
+          if ($voiceResolver->canAccessSlug($userId, $voice['id'])):
             $hasVoices = true;
         ?>
           <a href="<?php echo $voice['href']; ?>" 

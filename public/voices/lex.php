@@ -12,9 +12,9 @@ if (!$user) {
     exit;
 }
 
-// Verificar acceso a esta voz
-$accessRepo = new UserFeatureAccessRepo();
-if (!$accessRepo->hasVoiceAccess((int)$user['id'], 'lex')) {
+// Verify access to this voice
+$voiceResolver = new \Voices\VoiceAccessResolver();
+if (!$voiceResolver->canAccessSlug((int)$user['id'], 'lex')) {
     header('Location: /app/?error=no_access');
     exit;
 }

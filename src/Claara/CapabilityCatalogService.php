@@ -5,6 +5,7 @@ use Repos\ContextDocsRepo;
 use Repos\OrganizationResponsibilityRepo;
 use Repos\UserFeatureAccessRepo;
 use Repos\VoicesRepo;
+use Voices\VoiceAccessResolver;
 use Throwable;
 
 class CapabilityCatalogService
@@ -66,17 +67,20 @@ class CapabilityCatalogService
     private VoicesRepo $voicesRepo;
     private ?ContextDocsRepo $docsRepo;
     private ?OrganizationResponsibilityRepo $responsibilityRepo;
+    private VoiceAccessResolver $accessResolver;
 
     public function __construct(
         ?UserFeatureAccessRepo $accessRepo = null,
         ?VoicesRepo $voicesRepo = null,
         ?ContextDocsRepo $docsRepo = null,
-        ?OrganizationResponsibilityRepo $responsibilityRepo = null
+        ?OrganizationResponsibilityRepo $responsibilityRepo = null,
+        ?VoiceAccessResolver $accessResolver = null
     ) {
         $this->accessRepo = $accessRepo ?? new UserFeatureAccessRepo();
         $this->voicesRepo = $voicesRepo ?? new VoicesRepo();
         $this->docsRepo = $docsRepo ?? new ContextDocsRepo();
         $this->responsibilityRepo = $responsibilityRepo ?? new OrganizationResponsibilityRepo();
+        $this->accessResolver = $accessResolver ?? new VoiceAccessResolver();
     }
 
     public function forUser(array $user): array
@@ -183,7 +187,7 @@ class CapabilityCatalogService
     {
         $voices = [];
         foreach ($this->voicesRepo->listPublished() as $voice) {
-            if (!$this->accessRepo->hasVoiceAccess($userId, (string)$voice['slug'])) {
+            if (!$this->accessResolver->hasVoiceAccess($userId, $voice)) {
                 continue;
             }
 

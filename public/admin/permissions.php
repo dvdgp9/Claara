@@ -227,16 +227,8 @@ if (!$isSuperadmin) {
                         </div>
                         <div>
                           <h3 class="font-semibold text-slate-800">Voices</h3>
-                          <p class="text-xs text-slate-500">Specialized assistants</p>
+                          <p class="text-xs text-slate-500">Access by profile · folders are managed in Voice Studio</p>
                         </div>
-                      </div>
-                      <div class="flex gap-2">
-                        <button onclick="toggleAllOfType('voice', true)" class="text-xs px-2.5 py-1 bg-violet-100 text-violet-600 rounded-lg hover:bg-violet-200 transition-colors font-medium">
-                          All
-                        </button>
-                        <button onclick="toggleAllOfType('voice', false)" class="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors font-medium">
-                          None
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -365,8 +357,72 @@ if (!$isSuperadmin) {
     // Renderizar permisos
     function renderPermissions() {
       renderFeatureList('gesture', 'gestures-list');
-      renderFeatureList('voice', 'voices-list');
       renderFeatureList('feature', 'features-list');
+      loadVoiceAccess();
+    }
+
+    // Voices use the per-voice access profile model (user_voice_profiles), not the
+    // legacy feature toggle. Show a profile dropdown per voice for the selected user.
+    let voiceAccess = [];
+
+    async function loadVoiceAccess() {
+      const container = document.getElementById('voices-list');
+      if (!selectedUser) return;
+      if (selectedUser.is_superadmin) {
+        voiceAccess = [];
+        container.innerHTML = '<p class="p-4 text-sm text-slate-500">Superadmins have full access to every voice.</p>';
+        return;
+      }
+      container.innerHTML = '<p class="p-4 text-sm text-slate-400">Loading…</p>';
+      try {
+        const data = await api(`/api/admin/features/voice-access.php?user_id=${selectedUserId}`);
+        voiceAccess = data.voices || [];
+        renderVoiceAccessList();
+      } catch (err) {
+        container.innerHTML = `<p class="p-4 text-sm text-red-600">${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    function renderVoiceAccessList() {
+      const container = document.getElementById('voices-list');
+      if (!voiceAccess.length) {
+        container.innerHTML = '<p class="p-5 text-sm text-slate-400 text-center">No published voices.</p>';
+        return;
+      }
+      container.innerHTML = voiceAccess.map(v => {
+        const opts = ['<option value="0">No access</option>']
+          .concat(v.profiles.map(p => `<option value="${p.id}" ${v.assigned_profile_id === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`))
+          .join('');
+        const control = v.profiles.length === 0
+          ? '<span class="text-xs text-amber-600">No profiles yet — add them in Voice Studio</span>'
+          : `<select class="text-sm border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white" data-voice="${v.voice_id}" onchange="assignVoice(this)">${opts}</select>`;
+        return `
+          <div class="p-4 flex items-center gap-4 hover:bg-slate-50/50 transition-colors">
+            <div class="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+              <i class="iconoir-voice-square text-violet-500"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm text-slate-800">${escapeHtml(v.name)}</div>
+              <div class="text-xs text-slate-500 truncate">${escapeHtml(v.slug)}</div>
+            </div>
+            ${control}
+          </div>`;
+      }).join('');
+    }
+
+    async function assignVoice(select) {
+      const voiceId = parseInt(select.dataset.voice);
+      const profileId = parseInt(select.value);
+      try {
+        await api('/api/admin/features/assign-voice.php', {
+          method: 'POST',
+          body: { user_id: selectedUserId, voice_id: voiceId, profile_id: profileId }
+        });
+        await loadVoiceAccess();
+      } catch (err) {
+        alert(err.message);
+        await loadVoiceAccess();
+      }
     }
 
     // Renderizar lista de features de un tipo
@@ -376,7 +432,7 @@ if (!$isSuperadmin) {
       const isSuperadmin = selectedUser?.is_superadmin;
       
       if (features.length === 0) {
-        container.innerHTML = '<p class="p-5 text-sm text-slate-400 text-center">No hay elementos disponibles</p>';
+        container.innerHTML = '<p class="p-5 text-sm text-slate-400 text-center">No items available</p>';
         return;
       }
       

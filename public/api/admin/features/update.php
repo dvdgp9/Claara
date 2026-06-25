@@ -18,7 +18,7 @@ $user = AuthService::requireAuth();
 Session::requireCsrf();
 
 if (!$user['is_superadmin']) {
-    Response::error('forbidden', 'Acceso denegado', 403);
+    Response::error('forbidden', 'Access denied', 403);
 }
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -30,13 +30,13 @@ $enabled = isset($input['enabled']) ? (bool)$input['enabled'] : false;
 
 // Validar
 if ($userId <= 0) {
-    Response::error('validation_error', 'user_id requerido', 400);
+    Response::error('validation_error', 'user_id is required', 400);
 }
 if (!in_array($featureType, ['gesture', 'voice', 'feature'])) {
-    Response::error('validation_error', 'feature_type inválido', 400);
+    Response::error('validation_error', 'invalid feature_type', 400);
 }
 if (empty($featureSlug)) {
-    Response::error('validation_error', 'feature_slug requerido', 400);
+    Response::error('validation_error', 'feature_slug is required', 400);
 }
 
 $repo = new UserFeatureAccessRepo();
@@ -50,5 +50,5 @@ if ($repo->setAccess($userId, $featureType, $featureSlug, $enabled)) {
         'enabled' => $enabled
     ]);
 } else {
-    Response::error('update_failed', 'Error al actualizar permiso', 500);
+    Response::error('update_failed', 'Could not update permission', 500);
 }

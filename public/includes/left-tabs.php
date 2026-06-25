@@ -9,6 +9,7 @@ Session::start();
 $user = Session::user();
 $userId = $user ? (int)$user['id'] : 0;
 $accessRepo = new UserFeatureAccessRepo();
+$voiceResolver = new \Voices\VoiceAccessResolver();
 
 /**
  * Partial: left navigation rail with hover menus
@@ -203,7 +204,7 @@ try {
             </div>
           <?php elseif ($tabId === 'voices'): ?>
             <?php foreach ($voicesList as $voice): ?>
-              <?php if ($accessRepo->hasVoiceAccess($userId, $voice['id'])): ?>
+              <?php if ($voiceResolver->canAccessSlug($userId, $voice['id'])): ?>
                 <a href="<?php echo $voice['href']; ?>" class="hover-panel-item">
                   <div class="hover-panel-item-icon">
                     <i class="<?php echo $voice['icon']; ?>"></i>

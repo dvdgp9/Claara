@@ -4,6 +4,7 @@ namespace Voices;
 use App\DB;
 use PDO;
 use Repos\VoiceProfilesRepo;
+use Repos\VoicesRepo;
 
 /**
  * Resolves, for a given user and voice, whether they can access the voice and
@@ -62,6 +63,19 @@ class VoiceAccessResolver
     public function getUserVoiceProfile(int $userId, int $voiceId): ?array
     {
         return $this->profiles->getUserProfile($userId, $voiceId);
+    }
+
+    /**
+     * Convenience for callers that only have a voice slug: loads the voice and
+     * checks access. Returns false for unknown voices.
+     */
+    public function canAccessSlug(int $userId, string $voiceSlug): bool
+    {
+        $voice = (new VoicesRepo())->findBySlug($voiceSlug);
+        if (!$voice) {
+            return false;
+        }
+        return $this->hasVoiceAccess($userId, $voice);
     }
 
     /**

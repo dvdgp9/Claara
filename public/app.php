@@ -13,6 +13,7 @@ if (!$user) {
 }
 
 $accessRepo = new UserFeatureAccessRepo();
+$voiceResolver = new \Voices\VoiceAccessResolver();
 $userId = (int)$user['id'];
 $hasImageGenAccess = $accessRepo->hasImageGenerationAccess($userId);
 
@@ -224,7 +225,7 @@ $headerShowLogo = true;
                 </div>
                 
                 <div class="space-y-2">
-                  <?php if ($accessRepo->hasVoiceAccess($userId, 'lex')): ?>
+                  <?php if ($voiceResolver->canAccessSlug($userId, 'lex')): ?>
                   <!-- Lex - Active -->
                   <button class="voice-option empty-action w-full p-3 bg-white/65 hover:bg-white border border-slate-200/80 hover:border-rose-300 rounded-2xl transition-smooth text-left group hover:shadow-md" data-voice="lex">
                     <div class="flex items-center gap-3">

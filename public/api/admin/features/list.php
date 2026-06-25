@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 // Requiere autenticación y ser superadmin
 $user = AuthService::requireAuth();
 if (!$user['is_superadmin']) {
-    Response::error('forbidden', 'Acceso denegado', 403);
+    Response::error('forbidden', 'Access denied', 403);
 }
 
 $repo = new UserFeatureAccessRepo();
