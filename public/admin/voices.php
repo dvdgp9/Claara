@@ -211,24 +211,32 @@ $headerBackText = 'Chat';
                 <div class="voice-panel-head">
                   <div>
                     <h2>Access</h2>
-                    <p id="voice-access-summary">Create profiles, choose which folders each profile can read, then assign people.</p>
+                    <p id="voice-access-summary">Define access levels, set a minimum level per folder, then give each person a level.</p>
                   </div>
                   <button id="voice-profile-new-btn" class="voice-secondary-btn" type="button">
                     <i class="iconoir-community"></i>
-                    <span>New profile</span>
+                    <span>New level</span>
                   </button>
                 </div>
                 <div class="voice-access-body">
-                  <div class="voice-access-card">
-                    <div class="voice-access-subhead">Folder access by profile</div>
-                    <div id="voice-access-matrix" class="voice-access-matrix-wrap">
-                      <div class="voice-documents-empty">Select a voice to manage access.</div>
+                  <div class="voice-access-col">
+                    <div class="voice-access-card">
+                      <div class="voice-access-subhead">Access levels — highest first</div>
+                      <div id="voice-levels-list" class="voice-levels-list">
+                        <div class="voice-documents-empty">Select a voice to manage access.</div>
+                      </div>
+                    </div>
+                    <div class="voice-access-card">
+                      <div class="voice-access-subhead">Folder access — minimum level to read</div>
+                      <div id="voice-folder-levels" class="voice-folder-levels">
+                        <div class="voice-documents-empty">Select a voice.</div>
+                      </div>
                     </div>
                   </div>
                   <div class="voice-access-card">
                     <div class="voice-access-subhead">People</div>
                     <div id="voice-access-users" class="voice-access-user-list">
-                      <div class="voice-documents-empty">Select a voice to assign profiles.</div>
+                      <div class="voice-documents-empty">Select a voice to assign levels.</div>
                     </div>
                   </div>
                 </div>

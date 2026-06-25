@@ -148,7 +148,8 @@
     renderFolderTree();
     renderBreadcrumb();
     renderDocuments();
-    renderAccessMatrix();
+    renderLevelsList();
+    renderFolderLevels();
     renderAccessUsers();
     selectResponsibleUsers([]);
     const responsibleSearch = $('voice-responsibles-search');
@@ -291,14 +292,15 @@
       id: Number(f.id),
       parent_id: f.parent_id == null ? null : Number(f.parent_id),
       depth: Number(f.depth || 0),
-      doc_count: Number(f.doc_count || 0)
+      doc_count: Number(f.doc_count || 0),
+      required_level_id: f.required_level_id == null ? null : Number(f.required_level_id)
     }));
     if (!folderById(state.selectedFolderId)) {
       const root = rootFolder();
       state.selectedFolderId = root ? root.id : null;
     }
     renderFolderTree();
-    renderAccessMatrix();
+    renderFolderLevels();
   }
 
   function renderFolderTree() {
@@ -495,7 +497,8 @@
       state.profiles = [];
       state.accessUsers = [];
       state.accessProfileOptions = [];
-      renderAccessMatrix();
+      renderLevelsList();
+      renderFolderLevels();
       renderAccessUsers();
       return;
     }
@@ -506,57 +509,75 @@
     state.profiles = (profilesData.profiles || []).map((p) => ({
       ...p,
       id: Number(p.id),
-      assigned_users: Number(p.assigned_users || 0),
-      granted_folder_ids: (p.granted_folder_ids || []).map(Number)
+      rank: Number(p.rank || 0),
+      assigned_users: Number(p.assigned_users || 0)
     }));
     state.accessProfileOptions = (accessData.profiles || []).map((p) => ({ id: Number(p.id), name: p.name }));
     state.accessUsers = (accessData.users || []).map((u) => ({
       ...u,
       profile_id: u.profile_id == null ? null : Number(u.profile_id)
     }));
-    renderAccessMatrix();
+    renderLevelsList();
+    renderFolderLevels();
     renderAccessUsers();
   }
 
-  function renderAccessMatrix() {
-    const el = $('voice-access-matrix');
+  function renderLevelsList() {
+    const el = $('voice-levels-list');
     if (!el) return;
     if (state.isCreating || !selectedVoice()) {
       el.innerHTML = '<div class="voice-documents-empty">Select a voice to manage access.</div>';
       return;
     }
     if (!state.profiles.length) {
-      el.innerHTML = '<div class="voice-documents-empty">No profiles yet. Create one to control folder access.</div>';
+      el.innerHTML = '<div class="voice-documents-empty">No levels yet. Add one — e.g. Assistant, Manager, Director.</div>';
       return;
     }
-    const head = state.profiles.map((p) => `
-      <th>
-        <div class="voice-access-col">
-          <span title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
-          <button class="voice-folder-menu" type="button" data-profile="${p.id}" title="Rename or delete"><i class="iconoir-more-vert"></i></button>
-        </div>
-        <small>${p.assigned_users} user${p.assigned_users === 1 ? '' : 's'}</small>
-      </th>`).join('');
-    const rows = state.folders.map((f) => {
-      const cells = state.profiles.map((p) => {
-        const checked = p.granted_folder_ids.includes(f.id) ? 'checked' : '';
-        return `<td><input type="checkbox" class="voice-grant-box" data-profile="${p.id}" data-folder="${f.id}" ${checked}></td>`;
-      }).join('');
+    // state.profiles is ordered highest access first.
+    el.innerHTML = state.profiles.map((p, i) => `
+      <div class="voice-level-row">
+        <span class="voice-level-rank">${i + 1}</span>
+        <span class="voice-level-name">${escapeHtml(p.name)}</span>
+        <span class="voice-level-users">${p.assigned_users} ${p.assigned_users === 1 ? 'person' : 'people'}</span>
+        <span class="voice-level-actions">
+          <button class="voice-level-btn" type="button" data-move="up" data-id="${p.id}" ${i === 0 ? 'disabled' : ''} title="More access"><i class="iconoir-nav-arrow-up"></i></button>
+          <button class="voice-level-btn" type="button" data-move="down" data-id="${p.id}" ${i === state.profiles.length - 1 ? 'disabled' : ''} title="Less access"><i class="iconoir-nav-arrow-down"></i></button>
+          <button class="voice-level-btn" type="button" data-menu="${p.id}" title="Rename or delete"><i class="iconoir-more-vert"></i></button>
+        </span>
+      </div>`).join('');
+    el.querySelectorAll('[data-move]').forEach((btn) => {
+      btn.addEventListener('click', () => moveLevel(Number(btn.dataset.id), btn.dataset.move));
+    });
+    el.querySelectorAll('[data-menu]').forEach((btn) => {
+      btn.addEventListener('click', () => profileMenu(Number(btn.dataset.menu)));
+    });
+  }
+
+  function renderFolderLevels() {
+    const el = $('voice-folder-levels');
+    if (!el) return;
+    if (state.isCreating || !selectedVoice()) {
+      el.innerHTML = '<div class="voice-documents-empty">Select a voice.</div>';
+      return;
+    }
+    if (!state.folders.length) {
+      el.innerHTML = '<div class="voice-documents-empty">No folders yet.</div>';
+      return;
+    }
+    const levelOptions = (selId) => ['<option value="0">Everyone</option>']
+      .concat(state.profiles.map((p) => `<option value="${p.id}" ${p.id === selId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`))
+      .join('');
+    el.innerHTML = state.folders.map((f) => {
       const indent = 2 + f.depth * 12;
       const icon = f.is_root ? 'iconoir-home-simple' : 'iconoir-folder';
-      return `<tr><th scope="row"><span style="padding-left:${indent}px"><i class="${icon}"></i>${escapeHtml(f.name)}</span></th>${cells}</tr>`;
+      return `
+        <div class="voice-folder-level-row">
+          <span class="voice-folder-level-name" style="padding-left:${indent}px"><i class="${icon}"></i>${escapeHtml(f.name)}</span>
+          <select class="voice-level-select" data-folder="${f.id}">${levelOptions(f.required_level_id || 0)}</select>
+        </div>`;
     }).join('');
-    el.innerHTML = `
-      <table class="voice-access-matrix">
-        <thead><tr><th class="corner">Folder</th>${head}</tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <p class="voice-access-hint">Granting a folder also grants everything inside it.</p>`;
-    el.querySelectorAll('.voice-grant-box').forEach((box) => {
-      box.addEventListener('change', () => toggleGrant(Number(box.dataset.profile), Number(box.dataset.folder), box.checked));
-    });
-    el.querySelectorAll('.voice-folder-menu[data-profile]').forEach((btn) => {
-      btn.addEventListener('click', () => profileMenu(Number(btn.dataset.profile)));
+    el.querySelectorAll('.voice-level-select').forEach((sel) => {
+      sel.addEventListener('change', () => setFolderLevel(Number(sel.dataset.folder), Number(sel.value)));
     });
   }
 
@@ -587,25 +608,41 @@
     });
   }
 
-  async function toggleGrant(profileId, folderId, granted) {
+  async function setFolderLevel(folderId, levelId) {
     const voice = selectedVoice();
     if (!voice) return;
     try {
-      await api(`/api/admin/voices/profiles/grant.php?slug=${encodeURIComponent(voice.slug)}`, {
+      await api(`/api/admin/voices/folders/set-level.php?slug=${encodeURIComponent(voice.slug)}`, {
         method: 'POST',
-        body: { profile_id: profileId, folder_id: folderId, granted }
+        body: { folder_id: folderId, level_id: levelId }
       });
-      await loadAccess();
+      await loadFolders();
+      renderFolderLevels();
+      showAlert('Folder level updated');
     } catch (error) {
       showAlert(error.message, 'error');
       await loadAccess().catch(() => {});
     }
   }
 
+  async function moveLevel(id, direction) {
+    const voice = selectedVoice();
+    if (!voice) return;
+    try {
+      await api(`/api/admin/voices/profiles/reorder.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { id, direction }
+      });
+      await loadAccess();
+    } catch (error) {
+      showAlert(error.message, 'error');
+    }
+  }
+
   async function createProfile() {
     const voice = selectedVoice();
-    if (!voice || state.isCreating) { showAlert('Save the voice before adding profiles.'); return; }
-    const name = (window.prompt('New profile name (e.g. Standard, Manager, Board)') || '').trim();
+    if (!voice || state.isCreating) { showAlert('Save the voice before adding levels.'); return; }
+    const name = (window.prompt('New access level (e.g. Assistant, Manager, Director)') || '').trim();
     if (!name) return;
     try {
       await api(`/api/admin/voices/profiles/create.php?slug=${encodeURIComponent(voice.slug)}`, {
@@ -613,7 +650,7 @@
         body: { name }
       });
       await loadAccess();
-      showAlert('Profile created');
+      showAlert('Level created');
     } catch (error) {
       showAlert(error.message, 'error');
     }
@@ -622,7 +659,7 @@
   function profileMenu(id) {
     const profile = state.profiles.find((p) => p.id === id);
     if (!profile) return;
-    const action = (window.prompt(`Profile "${profile.name}" — type R to rename or D to delete.`, 'R') || '').trim().toUpperCase();
+    const action = (window.prompt(`Level "${profile.name}" — type R to rename or D to delete.`, 'R') || '').trim().toUpperCase();
     if (action === 'R') renameProfile(id);
     else if (action === 'D') deleteProfile(id);
   }
@@ -631,7 +668,7 @@
     const voice = selectedVoice();
     const profile = state.profiles.find((p) => p.id === id);
     if (!voice || !profile) return;
-    const name = (window.prompt('Rename profile', profile.name) || '').trim();
+    const name = (window.prompt('Rename level', profile.name) || '').trim();
     if (!name || name === profile.name) return;
     try {
       await api(`/api/admin/voices/profiles/update.php?slug=${encodeURIComponent(voice.slug)}`, {
@@ -639,7 +676,7 @@
         body: { id, name }
       });
       await loadAccess();
-      showAlert('Profile renamed');
+      showAlert('Level renamed');
     } catch (error) {
       showAlert(error.message, 'error');
     }
@@ -649,14 +686,14 @@
     const voice = selectedVoice();
     const profile = state.profiles.find((p) => p.id === id);
     if (!voice || !profile) return;
-    if (!window.confirm(`Delete profile "${profile.name}"? People with this profile lose access to the voice.`)) return;
+    if (!window.confirm(`Delete level "${profile.name}"? People with this level lose access to the voice.`)) return;
     try {
       await api(`/api/admin/voices/profiles/delete.php?slug=${encodeURIComponent(voice.slug)}`, {
         method: 'POST',
         body: { id }
       });
       await loadAccess();
-      showAlert('Profile deleted');
+      showAlert('Level deleted');
     } catch (error) {
       showAlert(error.message, 'error');
     }

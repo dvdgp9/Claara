@@ -1085,6 +1085,107 @@ table.voice-access-matrix thead small {
   text-align: center;
 }
 
+/* Access — levels + folder level + people */
+.voice-access-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.voice-levels-list,
+.voice-folder-levels {
+  display: flex;
+  flex-direction: column;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.voice-level-row,
+.voice-folder-level-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.voice-level-row:last-child,
+.voice-folder-level-row:last-child { border-bottom: none; }
+
+.voice-level-rank {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecfeff;
+  color: #0e7490;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.voice-level-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voice-level-users {
+  font-size: 11px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.voice-level-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.voice-level-btn {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 6px;
+  line-height: 0;
+}
+
+.voice-level-btn:hover { background: #e2e8f0; color: #0f172a; }
+.voice-level-btn:disabled { opacity: .35; cursor: default; }
+
+.voice-folder-level-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voice-folder-level-name i { color: #94a3b8; margin-right: 6px; }
+
+.voice-level-select {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  padding: 5px 8px;
+  max-width: 160px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 900px) {
   .voice-access-body { grid-template-columns: 1fr; }
 }

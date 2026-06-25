@@ -14,14 +14,14 @@ $voiceId = (int)$voice['id'];
 $repo = new VoiceProfilesRepo();
 $counts = $repo->assignedUserCounts($voiceId);
 
-$profiles = array_map(static function (array $p) use ($repo, $counts): array {
+$profiles = array_map(static function (array $p) use ($counts): array {
     return [
         'id' => (int)$p['id'],
         'name' => (string)$p['name'],
         'slug' => (string)$p['slug'],
         'description' => $p['description'],
         'is_default' => (int)$p['is_default'] === 1,
-        'granted_folder_ids' => $repo->folderIdsForProfile((int)$p['id']),
+        'rank' => (int)($p['rank'] ?? 0),
         'assigned_users' => $counts[(int)$p['id']] ?? 0,
     ];
 }, $repo->listByVoice($voiceId));

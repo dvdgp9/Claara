@@ -25,6 +25,7 @@ $tree = array_map(static function (array $f) use ($counts): array {
         'depth' => (int)$f['depth'],
         'is_root' => (int)$f['is_root'] === 1,
         'doc_count' => $counts[(int)$f['id']] ?? 0,
+        'required_level_id' => isset($f['required_level_id']) && $f['required_level_id'] !== null ? (int)$f['required_level_id'] : null,
     ];
 }, $folders->listByVoice($voiceId));
 
