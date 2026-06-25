@@ -56,19 +56,21 @@ foreach ($voices as $voice) {
             continue;
         }
 
-        // Must match the document_id format produced at index time (process.php).
-        $documentId = $slug . '_' . pathinfo((string)$doc['filename'], PATHINFO_FILENAME);
-        $filter = ['must' => [['key' => 'document_id', 'match' => ['value' => $documentId]]]];
+        // Match on document_name (== the stored filename), which is robust across
+        // both the prefixed ("{slug}_{base}") and legacy unprefixed document_id
+        // schemes present in older collections.
+        $filename = (string)$doc['filename'];
+        $filter = ['must' => [['key' => 'document_name', 'match' => ['value' => $filename]]]];
 
         $points = $qdrant->countPointsByFilter($collection, $filter);
         if ($points === 0) {
-            echo "  - {$documentId}: 0 chunks in Qdrant, skipped\n";
+            echo "  - {$filename}: 0 chunks in Qdrant, skipped\n";
             continue;
         }
 
         $qdrant->setPayloadByFilter($collection, ['folder_id' => $folderId], $filter);
         $totalUpdated += $points;
-        echo "  - {$documentId}: folder_id={$folderId} set on {$points} chunks\n";
+        echo "  - {$filename}: folder_id={$folderId} set on {$points} chunks\n";
     }
 }
 
