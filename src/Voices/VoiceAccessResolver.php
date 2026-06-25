@@ -114,18 +114,17 @@ class VoiceAccessResolver
             return [];
         }
 
-        // Every folder that is the granted folder itself or a descendant of one,
-        // resolved through the materialized path so grants inherit down the tree.
+        // Level model: a folder is readable when the user's level rank is at
+        // least the folder's required level rank. A folder with no required
+        // level (NULL) is readable by anyone who has the voice.
+        $userRank = (int)($profile['rank'] ?? 0);
         $stmt = $this->pdo->prepare(
-            'SELECT DISTINCT child.id
-             FROM folder_profile_access fpa
-             JOIN voice_folders granted ON granted.id = fpa.folder_id
-             JOIN voice_folders child
-               ON child.voice_id = granted.voice_id
-              AND child.path LIKE CONCAT(granted.path, "%")
-             WHERE fpa.profile_id = ? AND granted.voice_id = ?'
+            'SELECT f.id
+             FROM voice_folders f
+             LEFT JOIN voice_access_profiles req ON req.id = f.required_level_id
+             WHERE f.voice_id = ? AND COALESCE(req.`rank`, 0) <= ?'
         );
-        $stmt->execute([(int)$profile['id'], $voiceId]);
+        $stmt->execute([$voiceId, $userRank]);
 
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
     }

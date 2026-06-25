@@ -152,6 +152,15 @@ class VoiceFoldersRepo
     }
 
     /**
+     * Sets the minimum access level required to read a folder. NULL = everyone.
+     */
+    public function setRequiredLevel(int $id, ?int $levelId): void
+    {
+        $this->pdo->prepare('UPDATE voice_folders SET required_level_id = ? WHERE id = ?')
+            ->execute([$levelId, $id]);
+    }
+
+    /**
      * Ids of a folder and all its descendants (via the materialized path).
      *
      * @return int[]

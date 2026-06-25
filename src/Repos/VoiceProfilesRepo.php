@@ -35,20 +35,37 @@ class VoiceProfilesRepo
 
     public function listByVoice(int $voiceId): array
     {
+        // Highest level (most access) first.
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM voice_access_profiles WHERE voice_id = ? ORDER BY sort_order, name'
+            'SELECT * FROM voice_access_profiles WHERE voice_id = ? ORDER BY `rank` DESC, name'
         );
         $stmt->execute([$voiceId]);
         return $stmt->fetchAll();
     }
 
-    public function create(int $voiceId, string $name, string $slug, ?string $description = null, bool $isDefault = false): int
+    public function create(int $voiceId, string $name, string $slug, ?string $description = null, bool $isDefault = false, ?int $rank = null): int
     {
+        if ($rank === null) {
+            $rank = $this->nextRank($voiceId);
+        }
         $this->pdo->prepare(
-            'INSERT INTO voice_access_profiles (voice_id, name, slug, description, is_default)
-             VALUES (?, ?, ?, ?, ?)'
-        )->execute([$voiceId, $name, $slug, $description, $isDefault ? 1 : 0]);
+            'INSERT INTO voice_access_profiles (voice_id, name, slug, description, is_default, `rank`)
+             VALUES (?, ?, ?, ?, ?, ?)'
+        )->execute([$voiceId, $name, $slug, $description, $isDefault ? 1 : 0, $rank]);
         return (int)$this->pdo->lastInsertId();
+    }
+
+    /** Next available rank for a new level in this voice (highest + 1). */
+    public function nextRank(int $voiceId): int
+    {
+        $stmt = $this->pdo->prepare('SELECT COALESCE(MAX(`rank`), 0) + 1 FROM voice_access_profiles WHERE voice_id = ?');
+        $stmt->execute([$voiceId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function setRank(int $id, int $rank): void
+    {
+        $this->pdo->prepare('UPDATE voice_access_profiles SET `rank` = ? WHERE id = ?')->execute([$rank, $id]);
     }
 
     /**
@@ -64,8 +81,9 @@ class VoiceProfilesRepo
             $voiceId,
             $name,
             $slug,
-            'Default profile with access to all folders in this voice.',
-            true
+            'Top access level: can read every folder in this voice.',
+            true,
+            100
         );
     }
 
