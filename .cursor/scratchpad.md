@@ -241,6 +241,117 @@ Build in this order:
   - send/ask action is disabled or queued with clear copy,
   - if a participant adds text while Claara is responding, show `Ask Claara with new messages` after the current response finishes.
 
+## Active Feature Planning: Voice Access Profiles & Document Folders
+
+### Background and Motivation
+
+Today a voice is a single flat knowledge base and access is binary: a user can open the whole voice or none of it (`user_feature_access` with `feature_type='voice'`). Companies need finer control: inside one voice (e.g. Legal) some documents are for everyone, some only for the legal department, and some only for managers/C-level/board.
+
+Requested model (confirmed with Pierre and the user):
+
+- Inside a voice, organize documents in a **tree of folders**.
+- An admin defines **access profiles per voice** (e.g. `standard employee`, `manager`, `board`).
+- For each **folder**, the admin chooses which **profiles** can access it.
+- Each **user is assigned a profile in that voice** (per-voice, not global: a user can be `board` in Legal and `standard` in HR).
+- A user only retrieves/sees documents from folders their profile is allowed to access.
+
+### Product Decisions (confirmed)
+
+- **Profiles are per voice.** Profile assignment is per (user, voice). One profile per user per voice.
+- **Folders are a tree.** Access granted on a folder **inherits down** to its descendants. MVP is grant-only (no deny overrides on subfolders).
+- **Bulk folder upload:** admin can upload a whole folder from their computer and the folder structure is recreated server-side (browser `webkitdirectory`, each file carries its relative path).
+- **Single source of truth for voice access = profiles.** Having a profile in a voice *is* having access to that voice. The legacy binary voice toggle is replaced by/derived from this.
+- **Where assignment lives (IA decision):** voice is the source of truth. User→profile assignment is managed in a new **"Access" tab inside Voice Studio** (next to Knowledge/folders). The Feature Permissions page keeps a per-user overview but its **Voices column becomes a profile dropdown** (`No access` / profile) that reads & writes the **same** table. Fine-grained config (folders, folder→profile mapping) is NOT added to the per-user permissions page — it stays voice-centric.
+- **Fail closed.** If access resolution fails or yields an empty folder set, the query must return "no accessible documents", never fall back to an unfiltered search. This protects sensitive legal data.
+
+### Key Challenges and Analysis
+
+- **RAG is the only hard part; everything else is CRUD.** All of a voice's documents live in one Qdrant collection (`voices.rag_collection`). `LexRetriever::retrieve()` searches the whole collection with no access filter. Qdrant already supports payload filters (`must/should/must_not`, already used for `document_id` and for delete/count by filter), so per-folder isolation is done by stamping `folder_id` on each chunk's payload and filtering by the user's allowed folder set. No need for a collection per profile (that would re-embed and explode collections).
+- **Prompt leakage.** `VoiceContextBuilder::buildSystemPromptWithRag()` injects the names of ALL documents ("Available Documentation") plus a "Retrieved document coverage" section. These must be filtered to allowed folders too, or the model can reveal names/metadata of forbidden documents even without quoting them.
+- **Backfill / reindex.** Existing chunks in Qdrant have no `folder_id` payload, and existing voices have no folders/profiles. Need: (a) a default root folder per voice, (b) a default profile that maps to existing `user_feature_access` voice grants so nobody loses access, (c) a one-off script to stamp `folder_id` on existing chunks (or re-process docs). New uploads stamp `folder_id` from the start.
+- **Concept proliferation.** We already have departments, RBAC roles, and voice_responsibles. "Profile" is justified (per-voice, orthogonal to department) but we keep it as the only user-facing voice-access concept; RBAC roles stay internal. Departments are NOT reused (org-wide ≠ per-voice sensitivity tier).
+- **Inheritance resolution.** Use a materialized `path` on `voice_folders` so ancestor lookups (for "granted on any ancestor") and breadcrumbs are cheap. Resolution flattens to a set of allowed folder ids, keeping the Qdrant filter a simple `match any` list.
+- **Type/consistency.** Match existing types: `voices.id`, `users.id` are `BIGINT UNSIGNED`. `voice_responsibles` keys by `voice_slug`; new tables key by `voice_id` (FK to `voices.id`) for referential integrity, but resolution helpers should accept slug or id to fit existing call sites.
+
+### Proposed Data Model
+
+`voice_access_profiles` — profiles scoped to a voice
+- `id BIGINT UNSIGNED PK`, `voice_id BIGINT UNSIGNED NOT NULL`, `name VARCHAR(120)`, `slug VARCHAR(120)`, `sort_order INT`, timestamps
+- `UNIQUE (voice_id, slug)`, FK `voice_id -> voices(id) ON DELETE CASCADE`
+
+`user_voice_profiles` — one profile per user per voice (= voice access)
+- `user_id BIGINT UNSIGNED`, `voice_id BIGINT UNSIGNED`, `profile_id BIGINT UNSIGNED`, `created_at`
+- `PRIMARY KEY (user_id, voice_id)`, FKs to `users(id)`, `voices(id)`, `voice_access_profiles(id)` ON DELETE CASCADE
+
+`voice_folders` — document tree per voice
+- `id BIGINT UNSIGNED PK`, `voice_id BIGINT UNSIGNED`, `parent_id BIGINT UNSIGNED NULL`, `name VARCHAR(255)`, `path VARCHAR(1000)`, `depth INT`, `sort_order INT`, timestamps
+- FK `voice_id -> voices(id) ON DELETE CASCADE`, FK `parent_id -> voice_folders(id) ON DELETE CASCADE`, KEY `(voice_id, parent_id)`
+
+`folder_profile_access` — which profiles can access a folder (inherits down)
+- `folder_id BIGINT UNSIGNED`, `profile_id BIGINT UNSIGNED`, `created_at`
+- `PRIMARY KEY (folder_id, profile_id)`, FKs ON DELETE CASCADE
+
+`context_documents` — attach docs to a folder
+- `ADD COLUMN folder_id BIGINT UNSIGNED NULL` (NULL = voice root). Follow the existing `contextDocsHasColumn()` defensive pattern in `ContextDocsRepo`.
+
+Qdrant payload: add `folder_id` to each chunk (`RagProcessor::processDocument` metadata block).
+
+### Current Code Findings (integration points)
+
+- Access gate today: `VoiceQueryService::query()` calls `UserFeatureAccessRepo::hasVoiceAccess()` (binary). This becomes "resolve profile + allowed folders, else 403".
+- Retriever: `src/Rag/LexRetriever.php` `retrieve($query, $topK, $documentFilter)` — add an allowed-folders filter alongside the existing `document_id` filter.
+- Context build: `src/Voices/VoiceContextBuilder.php` `buildSystemPromptWithRag()`, `listDocuments()`, `buildRetrievedDocumentSummary()` — must receive and apply the allowed-folder set.
+- Indexing: `public/api/admin/voices/documents/process.php` calls `RagProcessor::processDocument(..., [metadata])` with `voices.rag_collection`; payload built in `src/Rag/RagProcessor.php`. Add `folder_id` to metadata + payload.
+- Upload: `public/api/admin/voices/documents/upload.php` + `ContextDocsRepo::create()` (already column-adaptive). Accept a `folder_id` / relative path.
+- Admin UI: Voice Studio `public/admin/voices.php` (Catalog + Editor + Knowledge panel) is where folders/profiles/Access live. Feature Permissions `public/admin/permissions.php` Voices column (currently a binary toggle, `toggleAllOfType('voice', ...)`) becomes a profile dropdown. Capability recommendations (`src/Claara/CapabilityCatalogService.php`) must use the new access check so chat only suggests accessible voices.
+- Org context: `users.job_title`, `department_responsibles`, `voice_responsibles` already exist; superadmins and voice responsibles bypass folder filtering (full access).
+
+### High-Level Task Breakdown
+
+Phase A — Schema & access core (no UI)
+1. [ ] Migration `024_voice_access_profiles_and_folders.sql`: create the 4 new tables + `context_documents.folder_id`; backfill a default root folder per voice, a default "Full access" profile per voice, map existing `user_feature_access` voice grants into `user_voice_profiles`, and grant the root folder to all existing profiles.
+   - Success: existing voices keep working; every current voice user has an equivalent profile; FKs/types match existing schema.
+2. [ ] Repos + access service: `VoiceProfilesRepo`, `VoiceFoldersRepo`, and a resolver `resolveAccessibleFolderIds(userId, voice)` + `getUserVoiceProfile(userId, voice)`.
+   - Success: resolver returns allowed folder ids (superadmin/responsible → all; no profile → empty/none), with inheritance via `path`. Unit-checkable in isolation.
+
+Phase B — RAG enforcement (highest risk)
+3. [ ] Stamp `folder_id` in `RagProcessor` payload; add a one-off backfill script for existing chunks (`document_id -> folder_id`).
+   - Success: new and backfilled chunks carry `folder_id` in Qdrant.
+4. [ ] Thread the allowed-folder filter through `LexRetriever::retrieve()`, `VoiceContextBuilder` (retrieval + document list + coverage summary), and `VoiceQueryService::query()`; fail closed on empty/unresolved access.
+   - Success: a user only retrieves and only sees document names from allowed folders; empty access → safe "no accessible documents" answer; citations never expose forbidden docs.
+
+Phase C — Voice Studio: folders + documents
+5. [ ] Folder tree UI in the Knowledge panel: create/rename/move/delete, breadcrumb, upload into a selected folder.
+   - Success: admin organizes a voice's documents into a tree; documents show their folder.
+6. [ ] Bulk folder upload (`webkitdirectory`): recreate the tree server-side from relative paths and enqueue RAG processing via `background_jobs`.
+   - Success: uploading a desktop folder recreates the structure and indexes all files into the right folders.
+
+Phase D — Voice Studio: profiles + access
+7. [ ] Profiles CRUD per voice.
+8. [ ] Folder→profile access matrix (grant per folder; show inheritance).
+9. [ ] "Access" tab: assign each user a profile in this voice.
+   - Success: admin defines profiles, maps folders to profiles, and assigns users; changes take effect in retrieval.
+
+Phase E — Reconcile Feature Permissions
+10. [ ] Replace the Voices binary toggle with a profile dropdown (reads/writes `user_voice_profiles`); update `CapabilityCatalogService` and `/api/capabilities` to use the new access check; deprecate binary voice rows in `user_feature_access`.
+    - Success: one source of truth; per-user overview still works; chat only recommends accessible voices.
+
+Phase F — QA & migrate
+11. [ ] End-to-end QA: fail-closed tests, a user with different profiles across two voices, bulk upload, reindex/verify Lex, no prompt leakage.
+    - Success: no access leak; existing Lex users unaffected; sensitivity tiers enforced end to end.
+
+### Suggested MVP Sequencing
+
+A → B → C(minimal: tree + single-file upload into folder) → D → E. Bulk folder upload (step 6) and inheritance-override polish can follow once the single-file path and enforcement are proven. Phase B is the gate: nothing ships to a client until retrieval is verified fail-closed.
+
+### UX Direction
+
+- Voice Studio gets a tabbed voice config: `Identity` / `Knowledge (folders + docs)` / `Access (profiles + folder mapping + user assignment)`.
+- Knowledge panel: left = folder tree (create/rename/move/delete, drag or move action), right = documents in the selected folder with status (processing/processed/error) and a per-folder upload + "Upload folder" action.
+- Access tab: a profiles list (CRUD), a folder→profile grid (rows = folders, columns = profiles, checkboxes with an inheritance hint), and a users list with a per-user profile dropdown.
+- Feature Permissions: Voices column shows a compact dropdown per voice (`No access` + profile names) instead of a checkbox; keep the All/None pattern only for gestures/features.
+- Copy stays English. New layout/tree classes go in `public/assets/css/styles.css`, not inline.
+
 ## Project Status Board
 
 - [ ] Planner: finalize shared conversations architecture and UX plan.
@@ -250,9 +361,18 @@ Build in this order:
 - [x] Executor: implement collaborative chat permissions and AI run locking.
 - [ ] Executor: update sidebar grouping and shared states.
 - [x] Executor: harden real-time assistant response streaming.
+- [x] Planner: design voice access profiles & document folders (per-voice profiles, folder tree, fail-closed RAG filtering, Voice Studio as source of truth).
+- [ ] Executor: Phase A — schema + access core (migration 024, profiles/folders/assignment tables, resolver service, backfill of existing voice grants).
+- [ ] Executor: Phase B — RAG enforcement (folder_id payload + backfill, allowed-folder filter through retriever/context/query, fail-closed, no prompt leakage).
+- [ ] Executor: Phase C — Voice Studio folder tree + single-file upload into folders.
+- [ ] Executor: Phase C — bulk folder upload (webkitdirectory) recreating structure.
+- [ ] Executor: Phase D — profiles CRUD, folder→profile matrix, per-voice user assignment.
+- [ ] Executor: Phase E — reconcile Feature Permissions (profile dropdown, capability catalog).
+- [ ] Executor: Phase F — end-to-end QA + reindex Lex.
 
 ## Current Status / Progress Tracking
 
+- 2026-06-25 Planner: Reviewed how Claara handles voice/document access today (binary per-voice whitelist in `user_feature_access`; single shared Qdrant collection per voice; no folders for voice docs; no document-level filtering in `LexRetriever`). Confirmed Pierre's model (per-voice profiles + folder tree + folder→profile access + user→profile assignment) is viable: Qdrant payload filtering already exists, ingestion/admin pipelines are clear integration points, and `ContextDocsRepo` is already column-adaptive. Confirmed product decisions: profiles per voice, folder tree with grant-inherits-down, bulk folder upload via `webkitdirectory`, profiles as single source of truth for voice access, and Voice Studio (new "Access" tab) as the management home with Feature Permissions' Voices column reduced to a profile dropdown over the same table. Documented full plan (data model, integration points, 6-phase breakdown, MVP sequencing, UX) in "Active Feature Planning: Voice Access Profiles & Document Folders". Phase B (fail-closed RAG filtering) flagged as the gate before any client ship. Awaiting user (Planner) go-ahead to start Phase A in Executor mode.
 - 2026-06-17 Executor: Prepared a commercial, non-technical feature inventory request for Claara. Local code review confirmed current commercial modules: central chat, integrated RAG voices, guided gestures, document/file support, web search, image generation, shared conversations, voice feedback loop, organization/access management, and commercial lead/content workflows. Local DB connection is not available from this environment, so production-published dynamic voice names beyond the code-confirmed Lex voice still need server validation if the dossier must name every live voice.
 - 2026-06-17 Executor: Updated the commercial feature inventory dossier to English for Pierre while keeping the non-technical, commercial positioning and the emphasis on chat-to-voice integration and gestures.
 - 2026-06-17 Executor: Generated a PDF version of the English commercial dossier at `output/pdf/claara-current-features-commercial-dossier.pdf`. Rendered pages to PNG and visually checked representative pages for legibility, margins, and page endings.
