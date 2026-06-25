@@ -38,6 +38,7 @@ try {
     $repo->updateRagStatus($id, 'processing');
     $documentId = $voice['slug'] . '_' . pathinfo($doc['filename'], PATHINFO_FILENAME);
     $result = $processor->processDocument($filePath, $documentId, $doc['filename'], [
+        'folder_id' => $doc['folder_id'] ?? null,
         'document_date' => $doc['document_date'] ?? null,
         'is_official_source' => !empty($doc['is_official_source']),
         'source_authority' => $doc['source_authority'] ?? null,

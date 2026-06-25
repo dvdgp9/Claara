@@ -109,6 +109,9 @@ class RagProcessor
                         'text' => $chunk['text'],
                         'document_id' => $documentId,
                         'document_name' => $documentName,
+                        // Folder this document belongs to. Used at query time to
+                        // restrict retrieval to the folders a user's profile may read.
+                        'folder_id' => isset($metadata['folder_id']) ? (int)$metadata['folder_id'] : null,
                         'document_date' => $metadata['document_date'] ?? null,
                         'is_official_source' => !empty($metadata['is_official_source']),
                         'source_authority' => $metadata['source_authority'] ?? null,

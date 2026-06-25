@@ -134,13 +134,29 @@ class QdrantClient
 
     /**
      * Elimina puntos por filtro de payload
-     * 
+     *
      * @param string $collection Nombre de la colección
      * @param array $filter Filtro en formato Qdrant (must, should, must_not)
      */
     public function deletePointsByFilter(string $collection, array $filter): array
     {
         return $this->request('POST', "/collections/{$collection}/points/delete", [
+            'filter' => $filter
+        ]);
+    }
+
+    /**
+     * Asigna/actualiza campos de payload en todos los puntos que coinciden con un filtro.
+     * Usado para re-etiquetar chunks existentes con su folder_id.
+     *
+     * @param string $collection Nombre de la colección
+     * @param array $payload Campos de payload a establecer (merge, no reemplaza el resto)
+     * @param array $filter Filtro en formato Qdrant (must, should, must_not)
+     */
+    public function setPayloadByFilter(string $collection, array $payload, array $filter): array
+    {
+        return $this->request('POST', "/collections/{$collection}/points/payload", [
+            'payload' => $payload,
             'filter' => $filter
         ]);
     }

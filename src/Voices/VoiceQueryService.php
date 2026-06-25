@@ -8,10 +8,12 @@ use Repos\UserFeatureAccessRepo;
 class VoiceQueryService
 {
     private UserFeatureAccessRepo $accessRepo;
+    private VoiceAccessResolver $accessResolver;
 
-    public function __construct(?UserFeatureAccessRepo $accessRepo = null)
+    public function __construct(?UserFeatureAccessRepo $accessRepo = null, ?VoiceAccessResolver $accessResolver = null)
     {
         $this->accessRepo = $accessRepo ?? new UserFeatureAccessRepo();
+        $this->accessResolver = $accessResolver ?? new VoiceAccessResolver();
     }
 
     public function query(array $user, string $voiceId, string $message, array $history = []): array
@@ -25,13 +27,28 @@ class VoiceQueryService
         if ($message === '') {
             throw new \InvalidArgumentException('message is required');
         }
-        if (!$this->accessRepo->hasVoiceAccess((int)$user['id'], $voiceId)) {
-            throw new \RuntimeException('No tienes acceso a esta voz', 403);
-        }
-
         $voiceContext = new VoiceContextBuilder($voiceId);
         if (!$voiceContext->voiceExists()) {
             throw new \RuntimeException('Voice not found', 404);
+        }
+        $voice = $voiceContext->getVoiceInfo() ?? ['slug' => $voiceId];
+        $userId = (int)$user['id'];
+
+        // Access gate: a user can open the voice if they are a superadmin, the
+        // voice's responsible, or have an access profile in it.
+        if (!$this->accessResolver->hasVoiceAccess($userId, $voice)) {
+            throw new \RuntimeException('No tienes acceso a esta voz', 403);
+        }
+
+        // Folders this user may read from. null = full access (no folder filter);
+        // [] = has the voice but no folders granted -> fail closed.
+        $fullAccess = $this->accessResolver->hasFullAccess($userId, $voice);
+        $allowedFolderIds = $fullAccess
+            ? null
+            : $this->accessResolver->resolveAccessibleFolderIds($userId, $voice);
+
+        if ($allowedFolderIds !== null && count($allowedFolderIds) === 0) {
+            return $this->noAccessibleDocumentsResponse($voice);
         }
 
         $useRag = false;
@@ -46,8 +63,14 @@ class VoiceQueryService
             }
         }
 
+        // A restricted user on a RAG voice must never fall back to the unfiltered
+        // static-context prompt. If retrieval is unavailable, fail closed.
+        if ($voiceContext->hasRagEnabled() && !$useRag && !$fullAccess) {
+            return $this->noAccessibleDocumentsResponse($voice, true);
+        }
+
         $systemPrompt = $useRag
-            ? $voiceContext->buildSystemPromptWithRag($message, 15)
+            ? $voiceContext->buildSystemPromptWithRag($message, 15, $allowedFolderIds)
             : $voiceContext->buildSystemPrompt();
 
         $messages = [];
@@ -81,6 +104,29 @@ class VoiceQueryService
             ],
             'model' => $client->getModel(),
             'voice' => $voiceContext->getVoiceInfo(),
+        ];
+    }
+
+    /**
+     * Safe response when the user has no documents they may read in this voice.
+     * Never invokes the model or exposes any document content (fail closed).
+     */
+    private function noAccessibleDocumentsResponse(array $voice, bool $temporary = false): array
+    {
+        $answer = $temporary
+            ? "I can't reach this voice's documents right now. Please try again in a moment."
+            : "I couldn't find any documents you have access to in this voice. If you think this is a mistake, please contact an administrator.";
+
+        return [
+            'answer' => $answer,
+            'meta' => [
+                'source_match' => null,
+                'sources' => [],
+                'conflicts' => [],
+                'conflict_summary' => null,
+            ],
+            'model' => null,
+            'voice' => $voice,
         ];
     }
 

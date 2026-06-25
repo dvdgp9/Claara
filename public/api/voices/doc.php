@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../../src/Repos/UserFeatureAccessRepo.php';
 use App\Session;
 use App\Response;
 use Voices\VoiceContextBuilder;
-use Repos\UserFeatureAccessRepo;
+use Voices\VoiceAccessResolver;
 
 $user = Session::user();
 if (!$user) {
@@ -27,18 +27,24 @@ if (!$voiceId) {
 if (!$docId) {
     Response::error('missing_doc', 'doc_id is required', 400);
 }
-if (!(new UserFeatureAccessRepo())->hasVoiceAccess((int)$user['id'], $voiceId)) {
-    Response::error('forbidden', 'No tienes acceso a esta voz', 403);
-}
-
 $builder = new VoiceContextBuilder($voiceId);
 
 if (!$builder->voiceExists()) {
     Response::error('invalid_voice', 'Voice not found', 404);
 }
 
-// Buscar el documento
-$docs = $builder->listDocuments();
+$voice = $builder->getVoiceInfo() ?? ['slug' => $voiceId];
+$resolver = new VoiceAccessResolver();
+if (!$resolver->hasVoiceAccess((int)$user['id'], $voice)) {
+    Response::error('forbidden', 'No tienes acceso a esta voz', 403);
+}
+$allowedFolderIds = $resolver->hasFullAccess((int)$user['id'], $voice)
+    ? null
+    : $resolver->resolveAccessibleFolderIds((int)$user['id'], $voice);
+
+// Buscar el documento solo entre los accesibles para este usuario. Un documento
+// fuera de sus carpetas no aparece y devuelve 404 (sin distinguir de inexistente).
+$docs = $builder->listDocuments($allowedFolderIds);
 $doc = null;
 foreach ($docs as $d) {
     if ($d['id'] === $docId) {

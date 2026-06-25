@@ -26,22 +26,34 @@ class LexRetriever
      * @param string $query Pregunta del usuario
      * @param int $topK Número de chunks a recuperar
      * @param string|null $documentFilter Filtrar por documento específico
+     * @param int[]|null $allowedFolderIds Restringe la búsqueda a estas carpetas.
+     *        null = sin restricción (acceso completo). [] = ninguna carpeta
+     *        accesible: se devuelve vacío (fail closed), nunca búsqueda sin filtro.
      * @return array Chunks relevantes con metadatos
      */
-    public function retrieve(string $query, int $topK = 15, ?string $documentFilter = null): array
+    public function retrieve(string $query, int $topK = 15, ?string $documentFilter = null, ?array $allowedFolderIds = null): array
     {
+        // Fail closed: una lista de carpetas explícita pero vacía significa
+        // "sin documentos accesibles", no "sin filtro".
+        if ($allowedFolderIds !== null && count($allowedFolderIds) === 0) {
+            return [];
+        }
+
         // Generar embedding de la pregunta
         $queryVector = $this->embeddings->embed($query);
 
-        // Construir filtro si se especifica documento
-        $filter = null;
+        // Construir filtro de payload
+        $must = [];
         if ($documentFilter !== null) {
-            $filter = [
-                'must' => [
-                    ['key' => 'document_id', 'match' => ['value' => $documentFilter]]
-                ]
+            $must[] = ['key' => 'document_id', 'match' => ['value' => $documentFilter]];
+        }
+        if ($allowedFolderIds !== null) {
+            $must[] = [
+                'key' => 'folder_id',
+                'match' => ['any' => array_values(array_map('intval', $allowedFolderIds))]
             ];
         }
+        $filter = $must ? ['must' => $must] : null;
 
         // Buscar en Qdrant
         $results = $this->qdrant->search($this->collection, $queryVector, $topK, $filter);

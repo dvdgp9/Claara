@@ -78,6 +78,48 @@ class ContextDocsRepo
     }
 
     /**
+     * Set of document filenames for a voice, restricted to a list of folder ids.
+     *
+     * Used as the join key between the filesystem document listing and the
+     * folder-based access model. Keys are normalized (lowercased basename) for
+     * fast membership checks.
+     *
+     * @param int[]|null $allowedFolderIds null = no restriction (all documents);
+     *        [] = no accessible folders, returns an empty set (fail closed).
+     * @return array<string,bool>
+     */
+    public function accessibleFilenameSet(string $slug, ?array $allowedFolderIds): array
+    {
+        $set = [];
+        $hasFolderColumn = $this->contextDocsHasColumn('folder_id');
+
+        foreach ($this->listByVoice($slug) as $doc) {
+            if ($allowedFolderIds !== null) {
+                $folderId = $hasFolderColumn && $doc['folder_id'] !== null ? (int)$doc['folder_id'] : 0;
+                if (!in_array($folderId, array_map('intval', $allowedFolderIds), true)) {
+                    continue;
+                }
+            }
+            foreach ([(string)($doc['filename'] ?? ''), (string)($doc['original_filename'] ?? '')] as $name) {
+                $key = self::normalizeDocFilename($name);
+                if ($key !== '') {
+                    $set[$key] = true;
+                }
+            }
+        }
+
+        return $set;
+    }
+
+    /**
+     * Normalizes a document filename for folder-access membership checks.
+     */
+    public static function normalizeDocFilename(string $name): string
+    {
+        return mb_strtolower(trim(basename($name)));
+    }
+
+    /**
      * Obtiene un documento por ID
      */
     public function getById(int $id): ?array

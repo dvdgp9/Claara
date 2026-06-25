@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../../src/Repos/UserFeatureAccessRepo.php';
 use App\Session;
 use App\Response;
 use Voices\VoiceContextBuilder;
-use Repos\UserFeatureAccessRepo;
+use Voices\VoiceAccessResolver;
 
 Session::start();
 $user = Session::user();
@@ -23,16 +23,22 @@ $voiceId = $_GET['voice_id'] ?? '';
 if (!$voiceId) {
     Response::error('missing_voice', 'voice_id is required', 400);
 }
-if (!(new UserFeatureAccessRepo())->hasVoiceAccess((int)$user['id'], $voiceId)) {
-    Response::error('forbidden', 'No tienes acceso a esta voz', 403);
-}
 
 $builder = new VoiceContextBuilder($voiceId);
 if (!$builder->voiceExists()) {
     Response::error('invalid_voice', 'Voice not found', 404);
 }
 
-$docs = $builder->listDocuments();
+$voice = $builder->getVoiceInfo() ?? ['slug' => $voiceId];
+$resolver = new VoiceAccessResolver();
+if (!$resolver->hasVoiceAccess((int)$user['id'], $voice)) {
+    Response::error('forbidden', 'No tienes acceso a esta voz', 403);
+}
+$allowedFolderIds = $resolver->hasFullAccess((int)$user['id'], $voice)
+    ? null
+    : $resolver->resolveAccessibleFolderIds((int)$user['id'], $voice);
+
+$docs = $builder->listDocuments($allowedFolderIds);
 
 Response::json([
     'success' => true,

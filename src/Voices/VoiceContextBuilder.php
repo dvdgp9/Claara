@@ -151,8 +151,12 @@ class VoiceContextBuilder
 
     /**
      * Lists available documents for this Voice, including indexed documents.
+     *
+     * @param int[]|null $allowedFolderIds Restricts the list to documents in
+     *        these folders. null = no restriction (full access). [] = no
+     *        accessible folders, returns an empty list (fail closed).
      */
-    public function listDocuments(): array
+    public function listDocuments(?array $allowedFolderIds = null): array
     {
         $docs = [];
         
@@ -186,6 +190,26 @@ class VoiceContextBuilder
                     'path' => $file,
                     'size' => filesize($file)
                 ];
+            }
+        }
+
+        // Folder-based access filter. Cross-reference the filesystem listing with
+        // the document folder assignments in the database. Documents without a
+        // matching accessible record (e.g. legacy static files for a restricted
+        // user) are dropped — fail closed.
+        if ($allowedFolderIds !== null) {
+            try {
+                $allowed = (new \Repos\ContextDocsRepo())
+                    ->accessibleFilenameSet($this->voiceId, $allowedFolderIds);
+                $docs = array_values(array_filter($docs, static function (array $d) use ($allowed): bool {
+                    $key = \Repos\ContextDocsRepo::normalizeDocFilename(
+                        (string)($d['path'] ?? $d['name'] ?? '')
+                    );
+                    return $key !== '' && isset($allowed[$key]);
+                }));
+            } catch (\Throwable $e) {
+                // Fail closed: if the access set cannot be resolved, expose nothing.
+                return [];
             }
         }
 
@@ -251,16 +275,17 @@ class VoiceContextBuilder
      * Builds the system prompt with indexed context.
      * Uses semantic search to find relevant chunks.
      */
-    public function buildSystemPromptWithRag(string $userQuery, int $topK = 15): ?string
+    public function buildSystemPromptWithRag(string $userQuery, int $topK = 15, ?array $allowedFolderIds = null): ?string
     {
         if (!$this->voiceExists()) {
             return null;
         }
 
         $voice = $this->voice;
-        
-        // Get the list of all documents so the assistant knows what is available.
-        $allDocs = $this->listDocuments();
+
+        // Get the list of accessible documents so the assistant knows what is
+        // available WITHOUT leaking names of documents outside the user's folders.
+        $allDocs = $this->listDocuments($allowedFolderIds);
         $docListText = "";
         foreach ($allDocs as $doc) {
             $docListText .= "- " . $doc['name'] . "\n";
@@ -318,8 +343,8 @@ class VoiceContextBuilder
         if ($this->retriever && $this->retriever->isReady()) {
             // Detect whether the user mentioned a specific agreement to filter by.
             $documentFilter = $this->detectMentionedDocument($userQuery, $allDocs);
-            
-            $chunks = $this->retriever->retrieve($userQuery, $topK, $documentFilter);
+
+            $chunks = $this->retriever->retrieve($userQuery, $topK, $documentFilter, $allowedFolderIds);
             $this->lastChunks = $chunks;
             $ragContext = $this->retriever->formatForPrompt($chunks);
             $prompt .= $ragContext;
