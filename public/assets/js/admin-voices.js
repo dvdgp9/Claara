@@ -150,27 +150,64 @@
     renderDocuments();
     renderAccessMatrix();
     renderAccessUsers();
+    selectResponsibleUsers([]);
+    const responsibleSearch = $('voice-responsibles-search');
+    if (responsibleSearch) responsibleSearch.value = '';
+    filterResponsiblePeople('');
   }
 
   function renderResponsibleOptions() {
-    const select = $('voice-responsibles');
-    if (!select) return;
-    select.innerHTML = state.users.map((user) => `
-      <option value="${escapeHtml(user.id)}">${escapeHtml(`${user.first_name} ${user.last_name}${user.job_title ? ` · ${user.job_title}` : ''}`)}</option>
-    `).join('');
+    const list = $('voice-responsibles');
+    if (!list) return;
+    if (!state.users.length) {
+      list.innerHTML = '<div class="voice-people-empty">No users found.</div>';
+      return;
+    }
+    list.innerHTML = state.users.map((user) => {
+      const name = `${user.first_name} ${user.last_name}`.trim();
+      const meta = user.job_title || user.email || '';
+      const search = `${name} ${user.email || ''}`.toLowerCase();
+      return `
+        <label class="voice-people-option" data-search="${escapeHtml(search)}">
+          <input type="checkbox" value="${escapeHtml(user.id)}">
+          <span class="voice-people-text">
+            <span class="voice-people-name">${escapeHtml(name)}</span>
+            <span class="voice-people-meta">${escapeHtml(meta)}</span>
+          </span>
+        </label>`;
+    }).join('');
+    list.querySelectorAll('.voice-people-option input').forEach((cb) => {
+      cb.addEventListener('change', () => {
+        cb.closest('.voice-people-option').classList.toggle('is-checked', cb.checked);
+      });
+    });
   }
 
   function selectResponsibleUsers(users = []) {
     const ids = new Set(users.map((user) => Number(user.id)));
-    Array.from($('voice-responsibles')?.options || []).forEach((option) => {
-      option.selected = ids.has(Number(option.value));
+    const list = $('voice-responsibles');
+    if (!list) return;
+    list.querySelectorAll('.voice-people-option input').forEach((cb) => {
+      cb.checked = ids.has(Number(cb.value));
+      cb.closest('.voice-people-option').classList.toggle('is-checked', cb.checked);
     });
   }
 
   function selectedResponsibleUserIds() {
-    return Array.from($('voice-responsibles')?.selectedOptions || [])
-      .map((option) => Number(option.value))
+    const list = $('voice-responsibles');
+    if (!list) return [];
+    return Array.from(list.querySelectorAll('.voice-people-option input:checked'))
+      .map((cb) => Number(cb.value))
       .filter(Boolean);
+  }
+
+  function filterResponsiblePeople(query) {
+    const q = (query || '').trim().toLowerCase();
+    const list = $('voice-responsibles');
+    if (!list) return;
+    list.querySelectorAll('.voice-people-option').forEach((row) => {
+      row.style.display = !q || (row.dataset.search || '').includes(q) ? '' : 'none';
+    });
   }
 
   function selectVoice(slug) {
@@ -889,6 +926,11 @@
       event.target.value = '';
     });
     $('voice-profile-new-btn').addEventListener('click', createProfile);
+    const responsibleSearch = $('voice-responsibles-search');
+    if (responsibleSearch) {
+      responsibleSearch.addEventListener('input', (event) => filterResponsiblePeople(event.target.value));
+      responsibleSearch.addEventListener('keydown', (event) => { if (event.key === 'Enter') event.preventDefault(); });
+    }
     $('voice-publish-btn').addEventListener('click', publishVoice);
     $('voice-archive-btn').addEventListener('click', archiveVoice);
     $('voice-name').addEventListener('input', () => {

@@ -984,6 +984,78 @@ table.voice-access-matrix thead small {
   padding: 3px 9px;
 }
 
+/* People picker (responsible users) — replaces the native multi-select */
+.voice-people-picker {
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.voice-people-search {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #eef2f6;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+}
+
+.voice-people-search::placeholder { color: #94a3b8; }
+
+.voice-people-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.voice-people-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background .12s ease;
+}
+
+.voice-people-option:last-child { border-bottom: none; }
+.voice-people-option:hover { background: #f8fafc; }
+.voice-people-option.is-checked { background: #ecfeff; }
+
+.voice-people-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: #0891b2;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.voice-people-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.voice-people-name { font-size: 13px; color: #0f172a; line-height: 1.25; }
+
+.voice-people-meta {
+  font-size: 11px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voice-people-empty {
+  padding: 14px;
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+}
+
 @media (max-width: 900px) {
   .voice-access-body { grid-template-columns: 1fr; }
 }
