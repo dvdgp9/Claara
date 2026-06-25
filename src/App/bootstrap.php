@@ -30,6 +30,8 @@ require_once dirname(__DIR__) . '/Repos/VoicesRepo.php';
 require_once dirname(__DIR__) . '/Repos/ContextDocsRepo.php';
 require_once dirname(__DIR__) . '/Repos/OrganizationResponsibilityRepo.php';
 require_once dirname(__DIR__) . '/Repos/ConversationAccessRepo.php';
+require_once dirname(__DIR__) . '/Repos/VoiceFoldersRepo.php';
+require_once dirname(__DIR__) . '/Repos/VoiceProfilesRepo.php';
 
 // Claara internal capabilities
 require_once dirname(__DIR__) . '/Claara/CapabilityCatalogService.php';
@@ -43,6 +45,7 @@ require_once dirname(__DIR__) . '/Rag/EmbeddingService.php';
 require_once dirname(__DIR__) . '/Rag/LexRetriever.php';
 
 // Voices
+require_once dirname(__DIR__) . '/Voices/VoiceAccessResolver.php';
 require_once dirname(__DIR__) . '/Voices/VoiceContextBuilder.php';
 require_once dirname(__DIR__) . '/Voices/VoiceQueryService.php';
 
