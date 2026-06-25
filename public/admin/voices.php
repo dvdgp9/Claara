@@ -167,16 +167,40 @@ $headerBackText = 'Chat';
                     <span>Process all</span>
                   </button>
                 </div>
-                <form id="voice-document-form" class="voice-document-form">
-                  <input id="voice-document-file" type="file" accept=".pdf,.txt,.md" multiple required>
-                  <input id="voice-document-description" type="text" maxlength="255" placeholder="Optional description">
-                  <button id="voice-document-upload-btn" class="voice-secondary-btn" type="submit">
-                    <i class="iconoir-upload"></i>
-                    <span>Upload</span>
-                  </button>
-                </form>
-                <div id="voice-documents-list" class="voice-documents-list">
-                  <div class="voice-documents-empty">Select a voice to manage its knowledge.</div>
+                <div class="voice-knowledge-body">
+                  <aside class="voice-folders-col">
+                    <div class="voice-folders-head">
+                      <span>Folders</span>
+                      <button id="voice-folder-new-btn" class="voice-icon-btn" type="button" title="New folder">
+                        <i class="iconoir-folder-plus"></i>
+                      </button>
+                    </div>
+                    <div id="voice-folder-tree" class="voice-folder-tree">
+                      <div class="voice-documents-empty">Select a voice.</div>
+                    </div>
+                  </aside>
+                  <div class="voice-docs-col">
+                    <div id="voice-folder-breadcrumb" class="voice-folder-breadcrumb"></div>
+                    <form id="voice-document-form" class="voice-document-form">
+                      <input id="voice-document-file" type="file" accept=".pdf,.txt,.md" multiple required>
+                      <input id="voice-document-description" type="text" maxlength="255" placeholder="Optional description">
+                      <button id="voice-document-upload-btn" class="voice-secondary-btn" type="submit">
+                        <i class="iconoir-upload"></i>
+                        <span>Upload</span>
+                      </button>
+                    </form>
+                    <div class="voice-folder-upload-row">
+                      <input id="voice-folder-file" type="file" multiple hidden webkitdirectory directory>
+                      <button id="voice-folder-upload-btn" class="voice-ghost-btn" type="button">
+                        <i class="iconoir-folder"></i>
+                        <span>Upload a folder — keeps its structure</span>
+                      </button>
+                      <span id="voice-folder-upload-hint" class="voice-folder-hint"></span>
+                    </div>
+                    <div id="voice-documents-list" class="voice-documents-list">
+                      <div class="voice-documents-empty">Select a voice to manage its knowledge.</div>
+                    </div>
+                  </div>
                 </div>
               </section>
             </section>

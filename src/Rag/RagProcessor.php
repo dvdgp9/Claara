@@ -162,6 +162,23 @@ class RagProcessor
     }
 
     /**
+     * Re-tags all chunks of a document with a new folder_id, keyed by
+     * document_name (== stored filename), which is stable across the prefixed
+     * and legacy document_id schemes. Used when a document moves between folders.
+     */
+    public function setDocumentFolder(string $documentName, int $folderId): void
+    {
+        if (!$this->qdrant->collectionExists($this->collection)) {
+            return;
+        }
+        $this->qdrant->setPayloadByFilter(
+            $this->collection,
+            ['folder_id' => $folderId],
+            ['must' => [['key' => 'document_name', 'match' => ['value' => $documentName]]]]
+        );
+    }
+
+    /**
      * Obtiene el número de chunks de un documento
      */
     public function getDocumentChunkCount(string $documentId): int

@@ -78,6 +78,62 @@ class ContextDocsRepo
     }
 
     /**
+     * Document count per folder for a voice.
+     *
+     * @return array<int,int> folder_id => count
+     */
+    public function countByFolder(string $slug): array
+    {
+        if (!$this->contextDocsHasColumn('folder_id')) {
+            return [];
+        }
+        $stmt = $this->pdo->prepare(
+            'SELECT folder_id, COUNT(*) AS n FROM context_documents
+              WHERE target_slug = ? AND folder_id IS NOT NULL
+              GROUP BY folder_id'
+        );
+        $stmt->execute([$slug]);
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(int)$row['folder_id']] = (int)$row['n'];
+        }
+        return $out;
+    }
+
+    /**
+     * Moves a single document into a folder.
+     */
+    public function setFolder(int $id, int $folderId): bool
+    {
+        if (!$this->contextDocsHasColumn('folder_id')) {
+            return false;
+        }
+        $stmt = $this->pdo->prepare('UPDATE context_documents SET folder_id = ?, updated_at = NOW() WHERE id = ?');
+        return $stmt->execute([$folderId, $id]);
+    }
+
+    /**
+     * Reassigns every document currently in any of $fromFolderIds to $toFolderId.
+     * Used when deleting a folder subtree so documents are not orphaned.
+     *
+     * @param int[] $fromFolderIds
+     * @return int rows affected
+     */
+    public function moveDocsToFolder(array $fromFolderIds, int $toFolderId): int
+    {
+        if (!$this->contextDocsHasColumn('folder_id') || empty($fromFolderIds)) {
+            return 0;
+        }
+        $ids = array_values(array_map('intval', $fromFolderIds));
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->pdo->prepare(
+            "UPDATE context_documents SET folder_id = ?, updated_at = NOW() WHERE folder_id IN ($in)"
+        );
+        $stmt->execute(array_merge([$toFolderId], $ids));
+        return $stmt->rowCount();
+    }
+
+    /**
      * Set of document filenames for a voice, restricted to a list of folder ids.
      *
      * Used as the join key between the filesystem document listing and the
@@ -198,6 +254,10 @@ class ContextDocsRepo
         if ($this->contextDocsHasColumn('voice_id')) {
             $fields[] = 'voice_id';
             $values[] = $data['voice_id'] ?? null;
+        }
+        if ($this->contextDocsHasColumn('folder_id')) {
+            $fields[] = 'folder_id';
+            $values[] = isset($data['folder_id']) ? (int)$data['folder_id'] : null;
         }
 
         $fields[] = 'created_by';

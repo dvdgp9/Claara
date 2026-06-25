@@ -150,4 +150,28 @@ class VoiceFoldersRepo
         }
         $this->pdo->prepare('UPDATE voice_folders SET name = ? WHERE id = ?')->execute([$name, $id]);
     }
+
+    /**
+     * Ids of a folder and all its descendants (via the materialized path).
+     *
+     * @return int[]
+     */
+    public function subtreeIds(array $folder): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id FROM voice_folders WHERE voice_id = ? AND path LIKE ?'
+        );
+        $stmt->execute([(int)$folder['voice_id'], (string)$folder['path'] . '%']);
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+
+    /**
+     * Deletes a folder. Descendant folders and profile grants are removed by the
+     * ON DELETE CASCADE foreign keys. Callers must reassign documents first
+     * (context_documents.folder_id has no FK by design).
+     */
+    public function delete(int $id): void
+    {
+        $this->pdo->prepare('DELETE FROM voice_folders WHERE id = ?')->execute([$id]);
+    }
 }

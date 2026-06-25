@@ -41,12 +41,35 @@ if (!move_uploaded_file($file['tmp_name'], $destPath)) {
     Response::error('move_error', 'No se pudo guardar el archivo', 500);
 }
 
+// Resolve the target folder: an explicit folder_id, a relative path (whole-folder
+// upload, where the structure is recreated), or the voice root by default.
+$folders = new \Repos\VoiceFoldersRepo();
+$voiceId = (int)($voice['id'] ?? 0);
+$folderId = $folders->ensureRootFolder($voiceId);
+$relPath = trim((string)($_POST['relative_path'] ?? ''));
+if ($relPath !== '') {
+    $segments = array_values(array_filter(
+        explode('/', str_replace('\\', '/', $relPath)),
+        static fn($s) => trim($s) !== ''
+    ));
+    array_pop($segments); // last segment is the filename itself
+    if ($segments) {
+        $folderId = $folders->ensurePath($voiceId, $segments);
+    }
+} elseif (isset($_POST['folder_id']) && (int)$_POST['folder_id'] > 0) {
+    $candidate = $folders->getById((int)$_POST['folder_id']);
+    if ($candidate && (int)$candidate['voice_id'] === $voiceId) {
+        $folderId = (int)$candidate['id'];
+    }
+}
+
 try {
     $id = $repo->create([
         'target' => 'lex',
         'target_type' => 'voice',
         'target_slug' => $voice['slug'],
         'voice_id' => $voice['id'] ?? null,
+        'folder_id' => $folderId,
         'filename' => $filename,
         'original_filename' => $file['name'],
         'file_extension' => $extension,

@@ -4,7 +4,9 @@
     users: [],
     selectedSlug: null,
     isCreating: true,
-    documents: []
+    documents: [],
+    folders: [],
+    selectedFolderId: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -125,6 +127,8 @@
     state.selectedSlug = null;
     state.isCreating = true;
     state.documents = [];
+    state.folders = [];
+    state.selectedFolderId = null;
     $('voice-form').reset();
     $('voice-slug').disabled = false;
     $('voice-editor-status').textContent = 'Draft';
@@ -135,6 +139,8 @@
     $('voice-archive-btn').classList.add('hidden');
     $('voice-form-note').textContent = 'Draft voices can be tested here before publishing.';
     renderList();
+    renderFolderTree();
+    renderBreadcrumb();
     renderDocuments();
   }
 
@@ -186,7 +192,252 @@
     $('voice-archive-btn').classList.toggle('hidden', voice.status === 'archived');
     $('voice-form-note').textContent = `RAG collection: ${voice.rag_collection || `voice_${voice.slug}`}`;
     renderList();
-    loadDocuments().catch((error) => showAlert(error.message, 'error'));
+    loadKnowledge().catch((error) => showAlert(error.message, 'error'));
+  }
+
+  async function loadKnowledge() {
+    await loadFolders();
+    await loadDocuments();
+    renderBreadcrumb();
+  }
+
+  /* ---- Folders ---- */
+
+  function rootFolder() {
+    return state.folders.find((f) => f.is_root) || state.folders[0] || null;
+  }
+
+  function folderById(id) {
+    return state.folders.find((f) => f.id === id) || null;
+  }
+
+  function currentFolderId() {
+    if (state.selectedFolderId && folderById(state.selectedFolderId)) {
+      return state.selectedFolderId;
+    }
+    const root = rootFolder();
+    return root ? root.id : null;
+  }
+
+  function folderPath(id) {
+    const chain = [];
+    const seen = new Set();
+    let node = folderById(id);
+    while (node && !seen.has(node.id)) {
+      seen.add(node.id);
+      chain.unshift(node);
+      node = node.parent_id ? folderById(node.parent_id) : null;
+    }
+    return chain;
+  }
+
+  async function loadFolders() {
+    const voice = selectedVoice();
+    if (!voice || state.isCreating) {
+      state.folders = [];
+      state.selectedFolderId = null;
+      renderFolderTree();
+      return;
+    }
+    const data = await api(`/api/admin/voices/folders/list.php?slug=${encodeURIComponent(voice.slug)}`);
+    state.folders = (data.folders || []).map((f) => ({
+      ...f,
+      id: Number(f.id),
+      parent_id: f.parent_id == null ? null : Number(f.parent_id),
+      depth: Number(f.depth || 0),
+      doc_count: Number(f.doc_count || 0)
+    }));
+    if (!folderById(state.selectedFolderId)) {
+      const root = rootFolder();
+      state.selectedFolderId = root ? root.id : null;
+    }
+    renderFolderTree();
+  }
+
+  function renderFolderTree() {
+    const tree = $('voice-folder-tree');
+    if (!tree) return;
+    if (state.isCreating || !selectedVoice()) {
+      tree.innerHTML = '<div class="voice-documents-empty">Select a voice.</div>';
+      return;
+    }
+    if (!state.folders.length) {
+      tree.innerHTML = '<div class="voice-documents-empty">No folders yet.</div>';
+      return;
+    }
+    const selected = currentFolderId();
+    tree.innerHTML = state.folders.map((f) => {
+      const indent = 8 + f.depth * 14;
+      const icon = f.is_root ? 'iconoir-home-simple' : 'iconoir-folder';
+      const menu = f.is_root
+        ? ''
+        : `<button class="voice-folder-menu" type="button" data-menu="${f.id}" title="Rename or delete"><i class="iconoir-more-vert"></i></button>`;
+      return `
+        <div class="voice-folder-node ${f.id === selected ? 'is-selected' : ''}" data-folder="${f.id}" style="padding-left:${indent}px">
+          <i class="${icon}"></i>
+          <span class="voice-folder-name">${escapeHtml(f.name)}</span>
+          <span class="voice-folder-count">${f.doc_count}</span>
+          ${menu}
+        </div>`;
+    }).join('');
+    tree.querySelectorAll('.voice-folder-node').forEach((node) => {
+      node.addEventListener('click', (ev) => {
+        if (ev.target.closest('.voice-folder-menu')) return;
+        selectFolder(Number(node.dataset.folder));
+      });
+    });
+    tree.querySelectorAll('.voice-folder-menu').forEach((btn) => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        folderMenu(Number(btn.dataset.menu));
+      });
+    });
+  }
+
+  function selectFolder(id) {
+    state.selectedFolderId = id;
+    renderFolderTree();
+    renderBreadcrumb();
+    renderDocuments();
+  }
+
+  function renderBreadcrumb() {
+    const el = $('voice-folder-breadcrumb');
+    if (!el) return;
+    const id = currentFolderId();
+    if (!id || state.isCreating) { el.innerHTML = ''; return; }
+    const path = folderPath(id);
+    el.innerHTML = path.map((f, i) => {
+      const isLast = i === path.length - 1;
+      return `<span class="crumb ${isLast ? 'current' : ''}" data-folder="${f.id}">${escapeHtml(f.name)}</span>`
+        + (isLast ? '' : '<span class="sep">/</span>');
+    }).join('');
+    el.querySelectorAll('.crumb').forEach((c) => {
+      c.addEventListener('click', () => selectFolder(Number(c.dataset.folder)));
+    });
+  }
+
+  async function createFolder() {
+    const voice = selectedVoice();
+    if (!voice || state.isCreating) { showAlert('Save the voice before adding folders.'); return; }
+    const name = (window.prompt('New folder name') || '').trim();
+    if (!name) return;
+    try {
+      await api(`/api/admin/voices/folders/create.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { name, parent_id: currentFolderId() }
+      });
+      await loadFolders();
+      renderBreadcrumb();
+      showAlert('Folder created');
+    } catch (error) {
+      showAlert(error.message, 'error');
+    }
+  }
+
+  function folderMenu(id) {
+    const folder = folderById(id);
+    if (!folder) return;
+    const action = (window.prompt(`Folder "${folder.name}" — type R to rename or D to delete.`, 'R') || '').trim().toUpperCase();
+    if (action === 'R') renameFolder(id);
+    else if (action === 'D') deleteFolder(id);
+  }
+
+  async function renameFolder(id) {
+    const voice = selectedVoice();
+    const folder = folderById(id);
+    if (!voice || !folder) return;
+    const name = (window.prompt('Rename folder', folder.name) || '').trim();
+    if (!name || name === folder.name) return;
+    try {
+      await api(`/api/admin/voices/folders/rename.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { id, name }
+      });
+      await loadFolders();
+      renderBreadcrumb();
+      showAlert('Folder renamed');
+    } catch (error) {
+      showAlert(error.message, 'error');
+    }
+  }
+
+  async function deleteFolder(id) {
+    const voice = selectedVoice();
+    const folder = folderById(id);
+    if (!voice || !folder) return;
+    if (!window.confirm(`Delete folder "${folder.name}"? Documents inside move to its parent folder.`)) return;
+    try {
+      const res = await api(`/api/admin/voices/folders/delete.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { id }
+      });
+      if (state.selectedFolderId === id) state.selectedFolderId = null;
+      await loadFolders();
+      await loadDocuments();
+      renderBreadcrumb();
+      showAlert(`Folder deleted. ${res.reassigned_documents || 0} document(s) moved.`);
+    } catch (error) {
+      showAlert(error.message, 'error');
+    }
+  }
+
+  async function moveDocument(id, folderId) {
+    const voice = selectedVoice();
+    if (!voice) return;
+    try {
+      await api(`/api/admin/voices/documents/move.php?slug=${encodeURIComponent(voice.slug)}`, {
+        method: 'POST',
+        body: { id, folder_id: folderId }
+      });
+      await loadFolders();
+      await loadDocuments();
+      showAlert('Document moved');
+    } catch (error) {
+      showAlert(error.message, 'error');
+    }
+  }
+
+  async function uploadFolder(files) {
+    const voice = selectedVoice();
+    if (!voice || state.isCreating || !files || !files.length) return;
+    const allowed = ['pdf', 'txt', 'md'];
+    const list = Array.from(files).filter((f) => allowed.includes((f.name.split('.').pop() || '').toLowerCase()));
+    if (!list.length) { showAlert('No PDF, TXT, or MD files found in that folder.', 'error'); return; }
+
+    const button = $('voice-folder-upload-btn');
+    const hint = $('voice-folder-upload-hint');
+    setBusy(button, true, 'Uploading');
+    let done = 0;
+    try {
+      for (const file of list) {
+        const form = new FormData();
+        form.append('slug', voice.slug);
+        form.append('file', file);
+        form.append('relative_path', file.webkitRelativePath || file.name);
+        const response = await fetch('/api/admin/voices/documents/upload.php', {
+          method: 'POST',
+          credentials: 'include',
+          headers: window.CSRF_TOKEN ? { 'X-CSRF-Token': window.CSRF_TOKEN } : {},
+          body: form
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(`${file.name}: ${data?.error?.message || response.statusText}`);
+        }
+        done += 1;
+        if (hint) hint.textContent = `${done}/${list.length}`;
+      }
+      showAlert(`${done} file(s) uploaded into the folder structure. Process them when ready.`);
+      await loadFolders();
+      await loadDocuments();
+      renderBreadcrumb();
+    } catch (error) {
+      showAlert(error.message, 'error');
+    } finally {
+      setBusy(button, false);
+      if (hint) hint.textContent = '';
+    }
   }
 
   async function loadDocuments() {
@@ -220,22 +471,44 @@
       return;
     }
 
-    list.innerHTML = state.documents.map((doc) => `
+    const folderId = currentFolderId();
+    const root = rootFolder();
+    const docFolderId = (doc) => (doc.folder_id != null ? Number(doc.folder_id) : (root ? root.id : null));
+    const inFolder = state.documents.filter((doc) => docFolderId(doc) === folderId);
+
+    if (!inFolder.length) {
+      list.innerHTML = '<div class="voice-documents-empty">This folder is empty. Upload files here, or move documents into it.</div>';
+      return;
+    }
+
+    const folderOptions = (selFid) => state.folders.map((f) =>
+      `<option value="${f.id}" ${f.id === selFid ? 'selected' : ''}>${escapeHtml(`${'  '.repeat(f.depth)}${f.name}`)}</option>`
+    ).join('');
+
+    list.innerHTML = inFolder.map((doc) => `
       <article class="voice-document-row">
         <div>
           <strong>${escapeHtml(doc.original_filename || doc.filename)}</strong>
           <small>${escapeHtml(doc.file_extension || '')} · ${formatBytes(Number(doc.file_size || 0))} · ${escapeHtml(doc.rag_status || 'pending')}</small>
           ${doc.rag_error_message ? `<p>${escapeHtml(doc.rag_error_message)}</p>` : ''}
         </div>
-        <button class="voice-secondary-btn voice-document-process-btn" type="button" data-id="${escapeHtml(doc.id)}">
-          <i class="iconoir-database-script"></i>
-          <span>${doc.rag_status === 'processed' ? 'Reprocess' : 'Process'}</span>
-        </button>
+        <div class="voice-document-actions">
+          <select class="voice-document-move" data-id="${escapeHtml(doc.id)}" title="Move to folder">
+            ${folderOptions(docFolderId(doc))}
+          </select>
+          <button class="voice-secondary-btn voice-document-process-btn" type="button" data-id="${escapeHtml(doc.id)}">
+            <i class="iconoir-database-script"></i>
+            <span>${doc.rag_status === 'processed' ? 'Reprocess' : 'Process'}</span>
+          </button>
+        </div>
       </article>
     `).join('');
 
     list.querySelectorAll('.voice-document-process-btn').forEach((button) => {
       button.addEventListener('click', () => processDocument(button.dataset.id, button));
+    });
+    list.querySelectorAll('.voice-document-move').forEach((sel) => {
+      sel.addEventListener('change', () => moveDocument(sel.dataset.id, Number(sel.value)));
     });
   }
 
@@ -260,6 +533,10 @@
         form.append('slug', voice.slug);
         form.append('file', file);
         form.append('description', $('voice-document-description').value.trim());
+        const targetFolder = currentFolderId();
+        if (targetFolder) {
+          form.append('folder_id', targetFolder);
+        }
 
         const response = await fetch('/api/admin/voices/documents/upload.php', {
           method: 'POST',
@@ -276,6 +553,7 @@
       fileInput.value = '';
       $('voice-document-description').value = '';
       showAlert(`${files.length} document${files.length === 1 ? '' : 's'} uploaded. Process before testing.`);
+      await loadFolders();
       await loadDocuments();
     } catch (error) {
       showAlert(error.message, 'error');
@@ -403,6 +681,12 @@
     $('voice-form').addEventListener('submit', saveVoice);
     $('voice-document-form').addEventListener('submit', uploadDocument);
     $('voice-process-all-btn').addEventListener('click', processAllDocuments);
+    $('voice-folder-new-btn').addEventListener('click', createFolder);
+    $('voice-folder-upload-btn').addEventListener('click', () => $('voice-folder-file').click());
+    $('voice-folder-file').addEventListener('change', (event) => {
+      uploadFolder(event.target.files);
+      event.target.value = '';
+    });
     $('voice-publish-btn').addEventListener('click', publishVoice);
     $('voice-archive-btn').addEventListener('click', archiveVoice);
     $('voice-name').addEventListener('input', () => {
