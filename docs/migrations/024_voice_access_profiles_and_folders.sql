@@ -47,7 +47,9 @@ CREATE TABLE IF NOT EXISTS voice_folders (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_voice_folders_voice_parent (voice_id, parent_id),
-  KEY idx_voice_folders_path (voice_id, path),
+  -- Prefix index: `path` is a short id-path, and a full utf8mb4 index on
+  -- VARCHAR(1000) would exceed InnoDB's 3072-byte key limit.
+  KEY idx_voice_folders_path (voice_id, path(191)),
   CONSTRAINT fk_voice_folders_voice
     FOREIGN KEY (voice_id) REFERENCES voices(id) ON DELETE CASCADE,
   CONSTRAINT fk_voice_folders_parent
