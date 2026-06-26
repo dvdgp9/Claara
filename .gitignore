@@ -21,6 +21,10 @@ migrations/
 .idea/
 .vscode/
 
+# Local scratch / generated artifacts (never deploy these)
+output/
+tmp/
+
 # FAQ internal context (subido a mano, no en Git)
 docs/context_faq/*.md
 
