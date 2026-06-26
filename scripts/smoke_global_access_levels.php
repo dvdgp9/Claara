@@ -32,9 +32,15 @@ function check(string $label, $got, $want) {
         json_encode($got), json_encode($want));
 }
 
-$lex = $voices->findBySlug('lex');
-$testv = $voices->findBySlug('test-voice');
-$conv = $voices->findBySlug('conveniex');
+// Load by id directly (test-voice is archived, which findBySlug filters out).
+$loadVoice = function (int $id) use ($pdo): ?array {
+    $stmt = $pdo->prepare('SELECT * FROM voices WHERE id = ?');
+    $stmt->execute([$id]);
+    return $stmt->fetch() ?: null;
+};
+$lex = $loadVoice(1);
+$testv = $loadVoice(2);
+$conv = $loadVoice(3);
 
 echo "=== Part A: live 'list' mode (cutover preserved access) ===\n";
 // Lex: list {1,9}; user 11 is a responsible (bypass) -> still in.
@@ -93,7 +99,7 @@ try {
 }
 
 echo "\n=== verify rollback left prod untouched ===\n";
-$conv2 = $voices->findBySlug('conveniex');
+$conv2 = $loadVoice(3);
 check('conveniex back to list mode', $conv2['access_mode'] ?? null, 'list');
 check('SmokeTech level gone', (new AccessLevelsRepo($pdo))->getBySlug('smoke-tech'), null);
 
