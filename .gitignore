@@ -31,3 +31,6 @@ docs/context_faq/*.md
 # Lex knowledge-base uploads are managed from the admin UI, not Git.
 docs/context/voices/lex/knowledge-base/*
 !docs/context/voices/lex/knowledge-base/README.md
+
+# Local commercial dossier (managed outside Git)
+docs/claara_funcionalidades_comerciales.md
