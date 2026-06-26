@@ -172,6 +172,20 @@ if (!$isSuperadmin) {
       </div>
     </div>
 
+    <!-- Access levels (global) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h2 class="font-semibold text-slate-800 flex items-center gap-2"><i class="iconoir-community text-[#B7C9F2]"></i> Access levels</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Global ranks, highest first. Voices and folders use these as the minimum level to read.</p>
+        </div>
+        <button onclick="addLevel()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#2F3440] rounded-lg hover:opacity-90 transition-colors">
+          <i class="iconoir-plus"></i><span>New level</span>
+        </button>
+      </div>
+      <div id="levels-list" class="space-y-2"><p class="text-sm text-slate-400">Loading levels…</p></div>
+    </div>
+
     <!-- Lista de usuarios -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div id="users-loading" class="text-center py-12">
@@ -400,6 +414,7 @@ if (!$isSuperadmin) {
     const csrf = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
     let allUsers = [];
     let allDepartments = [];
+    let allLevels = [];
     let allFeatures = { gesture: [], voice: [], feature: [] };
     let selectedUser = null;
     let isEditMode = false;
@@ -425,8 +440,111 @@ if (!$isSuperadmin) {
       await Promise.all([
         loadUsers(),
         loadDepartments(),
-        loadFeatures()
+        loadFeatures(),
+        loadAccessLevels()
       ]);
+    }
+
+    /* ---- Global access levels ---- */
+
+    async function loadAccessLevels() {
+      try {
+        const data = await api('/api/admin/access-levels/list.php');
+        allLevels = (data.levels || []).map((l) => ({
+          id: Number(l.id), name: l.name, rank: Number(l.rank || 0),
+          is_default: !!l.is_default, user_count: Number(l.user_count || 0)
+        }));
+      } catch (err) {
+        allLevels = [];
+      }
+      renderAccessLevels();
+      renderUsers();
+    }
+
+    function renderAccessLevels() {
+      const el = document.getElementById('levels-list');
+      if (!el) return;
+      if (!allLevels.length) {
+        el.innerHTML = '<p class="text-sm text-slate-400">No levels yet. Add one — e.g. Technician, Manager, Director.</p>';
+        return;
+      }
+      el.innerHTML = allLevels.map((l, i) => `
+        <div class="flex items-center gap-3 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50">
+          <span class="h-6 w-6 flex items-center justify-center rounded-md bg-[#B7C9F2]/20 text-[#2F3440] text-xs font-bold">${i + 1}</span>
+          <span class="flex-1 text-sm font-medium text-slate-800">${escapeHtml(l.name)}</span>
+          ${l.is_default ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-200 font-medium">Default</span>' : ''}
+          <span class="text-xs text-slate-400">${l.user_count} ${l.user_count === 1 ? 'person' : 'people'}</span>
+          <div class="flex items-center gap-1">
+            <button onclick="moveLevel(${l.id},'up')" ${i === 0 ? 'disabled' : ''} class="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30" title="More access"><i class="iconoir-nav-arrow-up"></i></button>
+            <button onclick="moveLevel(${l.id},'down')" ${i === allLevels.length - 1 ? 'disabled' : ''} class="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30" title="Less access"><i class="iconoir-nav-arrow-down"></i></button>
+            <button onclick="renameLevel(${l.id})" class="p-1 text-slate-400 hover:text-slate-700" title="Rename"><i class="iconoir-edit-pencil"></i></button>
+            ${l.is_default ? '' : `<button onclick="setLevelDefault(${l.id})" class="p-1 text-slate-400 hover:text-green-600" title="Make default for new users"><i class="iconoir-check-circle"></i></button>`}
+            ${l.is_default ? '' : `<button onclick="deleteLevel(${l.id})" class="p-1 text-slate-400 hover:text-red-600" title="Delete"><i class="iconoir-trash"></i></button>`}
+          </div>
+        </div>`).join('');
+    }
+
+    async function addLevel() {
+      const name = (window.prompt('New access level (e.g. Technician, Manager, Director)') || '').trim();
+      if (!name) return;
+      try {
+        await api('/api/admin/access-levels/create.php', { method: 'POST', body: { name } });
+        await loadAccessLevels();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function renameLevel(id) {
+      const level = allLevels.find((l) => l.id === id);
+      if (!level) return;
+      const name = (window.prompt('Rename level', level.name) || '').trim();
+      if (!name || name === level.name) return;
+      try {
+        await api('/api/admin/access-levels/update.php', { method: 'POST', body: { id, name } });
+        await loadAccessLevels();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function setLevelDefault(id) {
+      try {
+        await api('/api/admin/access-levels/update.php', { method: 'POST', body: { id, is_default: true } });
+        await loadAccessLevels();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function deleteLevel(id) {
+      const level = allLevels.find((l) => l.id === id);
+      if (!level) return;
+      if (!window.confirm(`Delete level "${level.name}"? People at this level move to the default level.`)) return;
+      try {
+        await api('/api/admin/access-levels/delete.php', { method: 'POST', body: { id } });
+        await loadAccessLevels();
+        await loadUsers();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function moveLevel(id, dir) {
+      const idx = allLevels.findIndex((l) => l.id === id);
+      if (idx < 0) return;
+      const swap = dir === 'up' ? idx - 1 : idx + 1;
+      if (swap < 0 || swap >= allLevels.length) return;
+      const order = allLevels.map((l) => l.id);
+      [order[idx], order[swap]] = [order[swap], order[idx]];
+      try {
+        await api('/api/admin/access-levels/reorder.php', { method: 'POST', body: { order } });
+        await loadAccessLevels();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function setUserLevel(userId, levelId) {
+      try {
+        await api('/api/admin/users/set-level.php', { method: 'POST', body: { user_id: userId, level_id: levelId } });
+        const user = allUsers.find((u) => Number(u.id) === userId);
+        if (user) user.access_level_id = levelId > 0 ? levelId : null;
+        await loadAccessLevels();
+      } catch (err) {
+        alert(err.message);
+        await loadUsers();
+      }
     }
 
     // Cargar catálogo de features
@@ -559,6 +677,7 @@ if (!$isSuperadmin) {
                   </span>`).join('')}
               </div>
               <div class="mt-2">${renderVoiceChips(voices)}</div>
+              <div class="mt-2">${renderUserLevel(u)}</div>
             </td>
             <td class="px-6 py-4 min-w-[150px]">
               <div>${statusBadge}</div>
@@ -583,6 +702,19 @@ if (!$isSuperadmin) {
           </tr>
         `;
       }).join('');
+    }
+
+    // Per-user global access level selector (superadmins bypass voice access).
+    function renderUserLevel(u) {
+      if (u.is_superadmin) {
+        return '<span class="inline-flex items-center gap-1 text-xs text-slate-400"><i class="iconoir-shield-check"></i> Access level: full (admin)</span>';
+      }
+      const cur = u.access_level_id == null ? 0 : Number(u.access_level_id);
+      const opts = ['<option value="0">No level</option>']
+        .concat(allLevels.map((l) => `<option value="${l.id}" ${l.id === cur ? 'selected' : ''}>${escapeHtml(l.name)}</option>`))
+        .join('');
+      return `<label class="inline-flex items-center gap-2 text-xs text-slate-500">Access level
+        <select onchange="setUserLevel(${u.id}, Number(this.value))" class="text-xs border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:border-[#B7C9F2]">${opts}</select></label>`;
     }
 
     // Voice chips: neutral chip = access, coral crown chip = responsible (lead).
