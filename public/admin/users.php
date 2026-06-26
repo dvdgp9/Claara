@@ -294,6 +294,15 @@ if (!$isSuperadmin) {
           </select>
         </div>
 
+        <div id="access-level-field">
+          <label class="text-sm font-medium text-slate-700 block mb-2">Access level</label>
+          <select id="user-access-level" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors">
+            <option value="0">No level</option>
+            <!-- Se llena dinámicamente -->
+          </select>
+          <p class="text-xs text-slate-500 mt-1">Global rank used to decide voice and folder access. Superadmins bypass it.</p>
+        </div>
+
         <div id="password-section">
           <label class="text-sm font-medium text-slate-700 block mb-2">
             <span id="password-label">Password *</span>
@@ -458,7 +467,17 @@ if (!$isSuperadmin) {
         allLevels = [];
       }
       renderAccessLevels();
+      renderLevelOptions();
       renderUsers();
+    }
+
+    function renderLevelOptions() {
+      const select = document.getElementById('user-access-level');
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = '<option value="0">No level</option>'
+        + allLevels.map((l) => `<option value="${l.id}">${escapeHtml(l.name)}</option>`).join('');
+      if (current) select.value = current;
     }
 
     function renderAccessLevels() {
@@ -535,17 +554,6 @@ if (!$isSuperadmin) {
       } catch (err) { alert(err.message); }
     }
 
-    async function setUserLevel(userId, levelId) {
-      try {
-        await api('/api/admin/users/set-level.php', { method: 'POST', body: { user_id: userId, level_id: levelId } });
-        const user = allUsers.find((u) => Number(u.id) === userId);
-        if (user) user.access_level_id = levelId > 0 ? levelId : null;
-        await loadAccessLevels();
-      } catch (err) {
-        alert(err.message);
-        await loadUsers();
-      }
-    }
 
     // Cargar catálogo de features
     async function loadFeatures() {
@@ -704,17 +712,17 @@ if (!$isSuperadmin) {
       }).join('');
     }
 
-    // Per-user global access level selector (superadmins bypass voice access).
+    // Per-user global access level, shown as a read-only chip. Editing happens
+    // in the create/edit form so all user control lives in one place.
     function renderUserLevel(u) {
       if (u.is_superadmin) {
         return '<span class="inline-flex items-center gap-1 text-xs text-slate-400"><i class="iconoir-shield-check"></i> Access level: full (admin)</span>';
       }
-      const cur = u.access_level_id == null ? 0 : Number(u.access_level_id);
-      const opts = ['<option value="0">No level</option>']
-        .concat(allLevels.map((l) => `<option value="${l.id}" ${l.id === cur ? 'selected' : ''}>${escapeHtml(l.name)}</option>`))
-        .join('');
-      return `<label class="inline-flex items-center gap-2 text-xs text-slate-500">Access level
-        <select onchange="setUserLevel(${u.id}, Number(this.value))" class="text-xs border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:border-[#B7C9F2]">${opts}</select></label>`;
+      const level = u.access_level_id == null ? null : allLevels.find((l) => l.id === Number(u.access_level_id));
+      if (!level) {
+        return '<span class="inline-flex items-center gap-1 text-xs text-slate-400"><i class="iconoir-community"></i> No access level</span>';
+      }
+      return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#B7C9F2]/10 text-[#2F3440] ring-1 ring-[#B7C9F2]/25 text-xs font-medium"><i class="iconoir-community text-[11px]"></i>${escapeHtml(level.name)}</span>`;
     }
 
     // Voice chips: neutral chip = access, coral crown chip = responsible (lead).
@@ -747,6 +755,8 @@ if (!$isSuperadmin) {
       document.getElementById('user-form').reset();
       document.getElementById('user-id').value = '';
       document.getElementById('user-status').checked = true;
+      const defaultLevel = allLevels.find((l) => l.is_default);
+      document.getElementById('user-access-level').value = String(defaultLevel ? defaultLevel.id : 0);
       document.getElementById('password-label').innerHTML = 'Password *';
       document.getElementById('password-hint').textContent = 'Minimum 8 characters';
       document.getElementById('user-password').required = true;
@@ -769,6 +779,7 @@ if (!$isSuperadmin) {
       document.getElementById('user-email').value = user.email;
       document.getElementById('user-job-title').value = user.job_title || '';
       document.getElementById('user-department').value = user.department_id || '';
+      document.getElementById('user-access-level').value = String(user.access_level_id || 0);
       document.getElementById('user-superadmin').checked = !!user.is_superadmin;
       document.getElementById('user-status').checked = user.status === 'active';
       document.getElementById('user-password').value = '';
@@ -824,6 +835,7 @@ if (!$isSuperadmin) {
       const email = document.getElementById('user-email').value.trim();
       const jobTitle = document.getElementById('user-job-title').value.trim();
       const departmentId = document.getElementById('user-department').value || null;
+      const accessLevelId = Number(document.getElementById('user-access-level').value || 0);
       const password = document.getElementById('user-password').value;
       const isSuperadmin = document.getElementById('user-superadmin').checked;
       const isActive = document.getElementById('user-status').checked;
@@ -848,8 +860,12 @@ if (!$isSuperadmin) {
               new_password: password
             }
           });
+          await api('/api/admin/users/set-level.php', {
+            method: 'POST',
+            body: { user_id: parseInt(userId), level_id: accessLevelId }
+          });
         } else {
-          await api('/api/admin/users/create.php', {
+          const created = await api('/api/admin/users/create.php', {
             method: 'POST',
             body: {
               first_name: firstName,
@@ -861,10 +877,18 @@ if (!$isSuperadmin) {
               is_superadmin: isSuperadmin
             }
           });
+          const newId = Number(created && created.user_id);
+          if (newId > 0) {
+            await api('/api/admin/users/set-level.php', {
+              method: 'POST',
+              body: { user_id: newId, level_id: accessLevelId }
+            });
+          }
         }
 
         document.getElementById('user-modal').classList.add('hidden');
         await loadUsers();
+        await loadAccessLevels();
       } catch (err) {
         errorEl.textContent = err.message;
         errorEl.classList.remove('hidden');
