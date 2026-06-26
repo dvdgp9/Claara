@@ -421,8 +421,9 @@ The current LEVELS model is **per-voice**: each voice owns its own ranked levels
 - [x] Executor: GAL step 1 — migration 026 applied & registered on prod (backup pre026 taken). access_levels seeded "Member", users.access_level_id, voices.access_mode/min, voice_access_list all live.
 - [x] Executor: GAL step 2 — fail-closed backfill applied on prod. All users → Member; voices 1/2/3 → list mode; lex list {1,9}; folder minimums cleared. Access preserved exactly.
 - [x] Executor: GAL step 3 — resolver rewritten + AccessLevelsRepo/VoiceAccessListRepo (bootstrap-registered). Deployed & verified on prod: smoke test 17/17 (list cutover + level gating + folder minimums; Part B in rolled-back tx).
-- [ ] Executor: GAL step 4 — admin endpoints (global levels CRUD, voice mode/min/list, per-user level).
-- [ ] Executor: GAL step 5 — UI (org levels surface + Voice Studio Access panel rebuild + per-user level).
+- [x] Executor: GAL step 4 — admin endpoints live & verified on prod (admin-ops smoke 14/14). access-levels CRUD/reorder, users/set-level, voices/access get|set-mode|list-set, folders/set-level repointed to global levels.
+- [x] Executor: GAL step 5a — Voice Studio Access panel rebuilt (2-mode switch: level≥min / specific people; folder minimums kept) + deployed. Visual review pending (needs superadmin browser session).
+- [ ] Executor: GAL step 5b — Users admin page: global level catalog (create/rename/reorder/default/delete) + per-user level assignment.
 - [ ] Executor: GAL step 6 — cutover, end-to-end QA, drop legacy tables.
 
 ## Current Status / Progress Tracking
@@ -456,6 +457,9 @@ The current LEVELS model is **per-voice**: each voice owns its own ranked levels
 ## Lessons
 
 - Keep scratchpad concise. Archive old history in git instead of preserving every completed implementation detail here.
+- PROD DEPLOY GOTCHA: the repo ROOT dir `/home/dvdgp/web/claara.tech/public_html` is `dvdgp:www-data` mode 751 — the SSH user `codex` can write in SUBdirectories but NOT at the repo root. So `git pull` works for changes under `public/`, `src/`, `scripts/`, etc., but FAILS to update/replace root-level tracked files (e.g. `.gitignore`) with "unable to unlink old … Permission denied", leaving a half-applied tree. Fix: `sudo setfacl -m u:codex:rwx .`, then `git fetch && git reset --hard origin/main`, then `sudo setfacl -x u:codex .`. Avoid committing changes to root-level files when possible.
+- `git add -A` in this repo will sweep in local scratch dirs (`output/`, `tmp/`) and one-off docs — now gitignored. Stage explicit paths for deploys.
+- GAL deploys touch DB: always `mysqldump | gzip` to `~/claara-backups/` first; apply idempotent SQL directly (not migrate.php — `schema_migrations` drifts) and register the row manually.
 - Before database work, inspect production schema and existing migration drift. Production has known `schema_migrations` drift from older manual migrations.
 - For new migrations, use `docs/migrations/*.sql`; `.gitignore` previously hid migration files outside the documented path.
 - In migrations with foreign keys, match existing column types exactly. `users.id`, `conversations.id`, and many related IDs are `BIGINT UNSIGNED`.
