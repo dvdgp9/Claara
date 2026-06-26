@@ -211,32 +211,44 @@ $headerBackText = 'Chat';
                 <div class="voice-panel-head">
                   <div>
                     <h2>Access</h2>
-                    <p id="voice-access-summary">Define access levels, set a minimum level per folder, then give each person a level.</p>
+                    <p id="voice-access-summary">Choose who can use this voice, then optionally set a minimum level per folder.</p>
                   </div>
+                  <a class="voice-subhead-btn" href="/admin/users.php" title="Access levels are global — manage them in Users">
+                    <i class="iconoir-community"></i>
+                    <span>Manage levels</span>
+                  </a>
                 </div>
                 <div class="voice-access-body">
-                    <div class="voice-access-card">
-                      <div class="voice-access-subhead">
-                        <span>Access levels — highest first</span>
-                        <button id="voice-profile-new-btn" class="voice-subhead-btn" type="button">
-                          <i class="iconoir-plus"></i>
-                          <span>New level</span>
-                        </button>
-                      </div>
-                      <div id="voice-levels-list" class="voice-levels-list">
-                        <div class="voice-documents-empty">Select a voice to manage access.</div>
-                      </div>
-                    </div>
-                    <div class="voice-access-card">
-                      <div class="voice-access-subhead">Folder access — minimum level to read</div>
-                      <div id="voice-folder-levels" class="voice-folder-levels">
-                        <div class="voice-documents-empty">Select a voice.</div>
-                      </div>
-                    </div>
                   <div class="voice-access-card">
-                    <div class="voice-access-subhead">People</div>
-                    <div id="voice-access-users" class="voice-access-user-list">
-                      <div class="voice-documents-empty">Select a voice to assign levels.</div>
+                    <div class="voice-access-subhead">Who can use this voice</div>
+                    <div class="voice-access-mode">
+                      <label class="voice-mode-opt">
+                        <input type="radio" name="voice-access-mode" value="level">
+                        <span class="voice-mode-text">
+                          <strong>Everyone at a level</strong>
+                          <small>Anyone whose global level is at least the minimum.</small>
+                        </span>
+                      </label>
+                      <div id="voice-min-level-row" class="voice-min-level-row">
+                        <span>Minimum level</span>
+                        <select id="voice-min-level" class="voice-level-select"></select>
+                      </div>
+                      <label class="voice-mode-opt">
+                        <input type="radio" name="voice-access-mode" value="list">
+                        <span class="voice-mode-text">
+                          <strong>Only specific people</strong>
+                          <small>Pick exactly who can use this voice.</small>
+                        </span>
+                      </label>
+                    </div>
+                    <div id="voice-access-people" class="voice-access-people">
+                      <div class="voice-documents-empty">Select a voice to manage access.</div>
+                    </div>
+                  </div>
+                  <div class="voice-access-card">
+                    <div class="voice-access-subhead">Folder access — minimum level to read</div>
+                    <div id="voice-folder-levels" class="voice-folder-levels">
+                      <div class="voice-documents-empty">Select a voice.</div>
                     </div>
                   </div>
                 </div>

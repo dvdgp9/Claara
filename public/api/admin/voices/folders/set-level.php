@@ -5,11 +5,12 @@
  * Sets the minimum access level required to read a folder.
  */
 require_once __DIR__ . '/../documents/_helpers.php';
+require_once __DIR__ . '/../../../../../src/Repos/AccessLevelsRepo.php';
 
 use App\Response;
 use App\Session;
 use Repos\VoiceFoldersRepo;
-use Repos\VoiceProfilesRepo;
+use Repos\AccessLevelsRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     Response::error('method_not_allowed', 'POST only', 405);
@@ -30,9 +31,9 @@ if (!$folder || (int)$folder['voice_id'] !== $voiceId) {
 }
 
 if ($levelId !== null) {
-    $level = (new VoiceProfilesRepo())->getById($levelId);
-    if (!$level || (int)$level['voice_id'] !== $voiceId) {
-        Response::error('invalid_level', 'Level not found for this voice', 400);
+    // Folder minimums now reference the GLOBAL access levels.
+    if ((new AccessLevelsRepo())->getById($levelId) === null) {
+        Response::error('invalid_level', 'Level not found', 400);
     }
 }
 

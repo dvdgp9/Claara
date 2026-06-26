@@ -86,8 +86,9 @@ class UsersRepo {
     public function listAll(): array
     {
         $stmt = $this->pdo->prepare('
-            SELECT u.id, u.email, u.first_name, u.last_name, u.status, u.is_superadmin, 
-                   u.job_title, u.department_id, d.name as department_name, u.last_login_at, u.created_at
+            SELECT u.id, u.email, u.first_name, u.last_name, u.status, u.is_superadmin,
+                   u.job_title, u.department_id, d.name as department_name, u.last_login_at, u.created_at,
+                   u.access_level_id
             FROM users u
             LEFT JOIN departments d ON d.id = u.department_id
             ORDER BY u.created_at DESC
