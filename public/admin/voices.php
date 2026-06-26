@@ -219,7 +219,6 @@ $headerBackText = 'Chat';
                   </button>
                 </div>
                 <div class="voice-access-body">
-                  <div class="voice-access-col">
                     <div class="voice-access-card">
                       <div class="voice-access-subhead">Access levels — highest first</div>
                       <div id="voice-levels-list" class="voice-levels-list">
@@ -232,7 +231,6 @@ $headerBackText = 'Chat';
                         <div class="voice-documents-empty">Select a voice.</div>
                       </div>
                     </div>
-                  </div>
                   <div class="voice-access-card">
                     <div class="voice-access-subhead">People</div>
                     <div id="voice-access-users" class="voice-access-user-list">
