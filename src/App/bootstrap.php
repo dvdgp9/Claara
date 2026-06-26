@@ -32,6 +32,8 @@ require_once dirname(__DIR__) . '/Repos/OrganizationResponsibilityRepo.php';
 require_once dirname(__DIR__) . '/Repos/ConversationAccessRepo.php';
 require_once dirname(__DIR__) . '/Repos/VoiceFoldersRepo.php';
 require_once dirname(__DIR__) . '/Repos/VoiceProfilesRepo.php';
+require_once dirname(__DIR__) . '/Repos/AccessLevelsRepo.php';
+require_once dirname(__DIR__) . '/Repos/VoiceAccessListRepo.php';
 
 // Claara internal capabilities
 require_once dirname(__DIR__) . '/Claara/CapabilityCatalogService.php';

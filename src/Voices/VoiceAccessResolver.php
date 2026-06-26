@@ -3,32 +3,45 @@ namespace Voices;
 
 use App\DB;
 use PDO;
-use Repos\VoiceProfilesRepo;
+use Repos\AccessLevelsRepo;
+use Repos\VoiceAccessListRepo;
 use Repos\VoicesRepo;
 
 /**
  * Resolves, for a given user and voice, whether they can access the voice and
  * exactly which document folders they may read from.
  *
+ * Access model — GLOBAL LEVELS:
+ *   - Each user has ONE global access level (users.access_level_id), ranked.
+ *   - Each voice declares an access policy:
+ *       * 'level': enter if the user's level rank >= the voice's minimum level
+ *                  rank. min_access_level_id NULL = everyone.
+ *       * 'list' : enter only if explicitly on the voice's allow-list.
+ *   - Each folder declares a minimum global level (voice_folders.required_level_id,
+ *     NULL = everyone). In 'level' mode a folder is readable when the user's rank
+ *     reaches it; in 'list' mode a listed user reads every folder of the voice.
+ *
  * Security contract — FAIL CLOSED:
- *   - A user with no profile in the voice (and who is not a superadmin or a
- *     voice responsible) gets NO access and an EMPTY folder set.
  *   - resolveAccessibleFolderIds() returning [] must be treated by callers as
  *     "no accessible documents", never as "no filter / show everything".
  *
  * Bypass (full access to every folder): superadmins and users responsible for
- * the voice. Everyone else is limited to the folders their profile is granted,
- * expanded down the tree via the materialized folder path.
+ * the voice.
  */
 class VoiceAccessResolver
 {
     private PDO $pdo;
-    private VoiceProfilesRepo $profiles;
+    private AccessLevelsRepo $levels;
+    private VoiceAccessListRepo $list;
 
-    public function __construct(?PDO $pdo = null, ?VoiceProfilesRepo $profiles = null)
-    {
+    public function __construct(
+        ?PDO $pdo = null,
+        ?AccessLevelsRepo $levels = null,
+        ?VoiceAccessListRepo $list = null
+    ) {
         $this->pdo = $pdo ?? DB::pdo();
-        $this->profiles = $profiles ?? new VoiceProfilesRepo($this->pdo);
+        $this->levels = $levels ?? new AccessLevelsRepo($this->pdo);
+        $this->list = $list ?? new VoiceAccessListRepo($this->pdo);
     }
 
     public function isSuperadmin(int $userId): bool
@@ -52,17 +65,12 @@ class VoiceAccessResolver
     }
 
     /**
-     * Full bypass means "see every folder regardless of profile grants".
+     * Full bypass means "see every folder regardless of policy".
      */
     public function hasFullAccess(int $userId, array $voice): bool
     {
         return $this->isSuperadmin($userId)
             || $this->isResponsible($userId, (string)($voice['slug'] ?? ''));
-    }
-
-    public function getUserVoiceProfile(int $userId, int $voiceId): ?array
-    {
-        return $this->profiles->getUserProfile($userId, $voiceId);
     }
 
     /**
@@ -90,7 +98,17 @@ class VoiceAccessResolver
         if ($voiceId <= 0) {
             return false;
         }
-        return $this->getUserVoiceProfile($userId, $voiceId) !== null;
+
+        $policy = $this->voicePolicy($voiceId);
+        if ($policy['mode'] === 'list') {
+            return $this->list->isListed($userId, $voiceId);
+        }
+
+        // 'level' mode.
+        if ($policy['min_rank'] === null) {
+            return true; // everyone
+        }
+        return $this->userRank($userId) >= $policy['min_rank'];
     }
 
     /**
@@ -109,24 +127,62 @@ class VoiceAccessResolver
             return $this->allFolderIds($voiceId);
         }
 
-        $profile = $this->getUserVoiceProfile($userId, $voiceId);
-        if ($profile === null) {
+        $policy = $this->voicePolicy($voiceId);
+
+        if ($policy['mode'] === 'list') {
+            // A listed user reads every folder of the voice; otherwise nothing.
+            return $this->list->isListed($userId, $voiceId)
+                ? $this->allFolderIds($voiceId)
+                : [];
+        }
+
+        // 'level' mode: must clear the voice minimum first (fail closed).
+        if (!$this->hasVoiceAccess($userId, $voice)) {
             return [];
         }
 
-        // Level model: a folder is readable when the user's level rank is at
-        // least the folder's required level rank. A folder with no required
-        // level (NULL) is readable by anyone who has the voice.
-        $userRank = (int)($profile['rank'] ?? 0);
+        // A folder is readable when the user's rank is at least the folder's
+        // required rank. NULL required level = everyone (rank 0).
+        $userRank = $this->userRank($userId);
         $stmt = $this->pdo->prepare(
             'SELECT f.id
              FROM voice_folders f
-             LEFT JOIN voice_access_profiles req ON req.id = f.required_level_id
+             LEFT JOIN access_levels req ON req.id = f.required_level_id
              WHERE f.voice_id = ? AND COALESCE(req.`rank`, 0) <= ?'
         );
         $stmt->execute([$voiceId, $userRank]);
 
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+
+    /**
+     * @return array{mode:string,min_rank:?int}
+     */
+    private function voicePolicy(int $voiceId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT v.access_mode, al.`rank` AS min_rank, v.min_access_level_id
+             FROM voices v
+             LEFT JOIN access_levels al ON al.id = v.min_access_level_id
+             WHERE v.id = ?'
+        );
+        $stmt->execute([$voiceId]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            // Unknown voice: fail closed as an empty list.
+            return ['mode' => 'list', 'min_rank' => null];
+        }
+        $mode = ($row['access_mode'] ?? 'level') === 'list' ? 'list' : 'level';
+        // min_rank is null only when no minimum level is set (everyone).
+        $minRank = $row['min_access_level_id'] === null ? null : (int)$row['min_rank'];
+        return ['mode' => $mode, 'min_rank' => $minRank];
+    }
+
+    /** The user's global level rank, 0 if they have none. */
+    private function userRank(int $userId): int
+    {
+        $level = $this->levels->getUserLevel($userId);
+        return $level ? (int)$level['rank'] : 0;
     }
 
     /**
