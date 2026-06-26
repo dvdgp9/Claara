@@ -352,6 +352,54 @@ A → B → C(minimal: tree + single-file upload into folder) → D → E. Bulk 
 - Feature Permissions: Voices column shows a compact dropdown per voice (`No access` + profile names) instead of a checkbox; keep the All/None pattern only for gestures/features.
 - Copy stays English. New layout/tree classes go in `public/assets/css/styles.css`, not inline.
 
+## Active Feature Planning: Global Access Levels (redesign)
+
+### Background and Motivation
+
+The current LEVELS model is **per-voice**: each voice owns its own ranked levels and each user is assigned a level *inside each voice* (`user_voice_profiles`). The user (product owner) flagged this does not scale: at 50–200 employees, a voice "for all technicians" would require touching every user per voice. Real orgs think in **global rank** (a technician has X clearance everywhere; a director has more), with a few **sensitive voices** restricted to named people.
+
+### Product Decisions (confirmed with user)
+
+- **Global, ordered access levels** (e.g. Technician ‹ Manager ‹ Director), defined once for the whole org. Not per-voice.
+- **Each person has ONE global level**, assigned once, with a sensible **default level on user creation** so onboarding 200 people is not manual.
+- **Each voice has an access mode**:
+  - `level` (default): a **minimum global level** to enter; everyone at/above it gets in automatically (NULL = everyone). This is the scalable common case.
+  - `list` (opt-in escape hatch): access limited to an **explicit set of named users**, regardless of rank — for sensitive voices.
+- **Folders keep a minimum global level** (already exists as `voice_folders.required_level_id`, but it must reference the GLOBAL levels now).
+- Ordered semantics = "this level **or above**" (higher rank = more access), the standard clearance mental model.
+
+### Key Challenges and Analysis
+
+- **Cutover safety is the critical risk.** Existing voices gate access via `user_voice_profiles`. Flipping them to `level` + `min = NULL` (everyone) would suddenly expose every existing voice to all users. **Mitigation: migrate every existing voice to `list` mode seeded with exactly the users who currently have access** (fail-closed; nobody gains access). Admin can later switch a voice to `level` deliberately. On prod this is near-trivial (2 superadmins + 1 test user), but the backfill must be general.
+- **No local DB** — every schema/data step happens on prod, following the proven workflow: full backup first, apply idempotent SQL directly (NOT migrate.php; `schema_migrations` drifts), then a transactional (rolled-back) smoke test before committing real data.
+- **No PSR-4 autoloader** — any new class must be registered in `bootstrap.php`.
+- **List-mode folder access decision:** a user on a voice's allow-list gets **full access to that voice's folders** (folder minimums are a `level`-mode feature). Keeps the sensitive-voice case simple.
+- **Where global levels live in the UI:** they are org-wide, so they move OUT of the per-voice Access panel into an org/admin settings surface; the per-user level is set in user management. The per-voice Access panel becomes: pick mode (Everyone at level ≥ X / Specific people) + the existing per-folder minimum.
+
+### Proposed Data Model
+
+- New `access_levels` (global): `id, name, slug, rank INT, is_default TINYINT, sort_order, timestamps`.
+- `users.access_level_id BIGINT NULL` (FK → access_levels ON DELETE SET NULL); new users default to the `is_default` level.
+- `voices.access_mode ENUM('level','list') NOT NULL DEFAULT 'level'` + `voices.min_access_level_id BIGINT NULL` (NULL = everyone).
+- New `voice_access_list (voice_id, user_id, created_at, PK(voice_id,user_id))` for `list` mode.
+- `voice_folders.required_level_id` retained, **remapped** to reference `access_levels`.
+- Legacy `voice_access_profiles` / `user_voice_profiles` / `folder_profile_access` kept in place during transition, removed only after cutover is verified.
+
+### Resolver Target Logic
+
+- `hasFullAccess` (superadmin / responsible) → all folders (unchanged).
+- `hasVoiceAccess`: `list` → user in `voice_access_list`; `level` → `min IS NULL` OR user has a level with `rank >= min.rank`.
+- `resolveAccessibleFolderIds`: full access → all; `list` member → all voice folders; `level` → folders where `required_level.rank <= user.level.rank` (NULL required = everyone).
+
+### High-Level Task Breakdown (each step independently verifiable)
+
+1. **Migration 026 (additive, idempotent):** create `access_levels`, `voice_access_list`; add `users.access_level_id`, `voices.access_mode`, `voices.min_access_level_id`. Seed one default global level. Success: tables/columns exist; re-run = no error; existing reads unaffected.
+2. **Backfill script (fail-closed):** assign every user the default level; for each existing voice set `access_mode='list'` and seed `voice_access_list` from current `user_voice_profiles`; remap `voice_folders.required_level_id` to the new global level ids. Success: transactional smoke test — each existing user keeps exactly their prior voice set; re-run idempotent.
+3. **Repos + resolver:** add `AccessLevelsRepo` (global CRUD), `VoiceAccessListRepo`; rewrite `VoiceAccessResolver` to the target logic; register classes in bootstrap. Success: PHP lint + transactional smoke (level gating + list gating + folder minimums, ≥8 assertions).
+4. **Admin endpoints:** global levels CRUD; voice access-mode + min-level + allow-list endpoints; per-user global level assignment; retire/redirect the per-voice level endpoints. Success: each endpoint exercised on prod in a rolled-back transaction.
+5. **UI:** move levels management to an org/admin surface; rebuild the Voice Studio Access panel around mode + min-level + allow-list, keep folder minimums; set per-user level in user management. Copy stays English. Success: visual review.
+6. **Cutover + cleanup:** flip resolver/UI live, verify end-to-end, then drop legacy tables/columns in a later migration once stable. Success: end-to-end QA, 50-user mental model holds.
+
 ## Project Status Board
 
 - [ ] Planner: finalize shared conversations architecture and UX plan.
@@ -369,6 +417,13 @@ A → B → C(minimal: tree + single-file upload into folder) → D → E. Bulk 
 - [x] Executor: Phase D — profiles CRUD, folder→profile matrix, per-voice user assignment. Deployed & verified on prod 2026-06-25 (10/10 assertions incl. restricted user resolving to a sub-folder only).
 - [x] Executor: Phase E — reconcile Feature Permissions (profile dropdown) + migrate ALL voice access checks (capability catalog, sidebar/nav, voice pages, history) to the resolver. Deployed & verified on prod 2026-06-25 (chat catalog reflects profiles).
 - [ ] Executor: Phase F — end-to-end QA + visual review (admin UI needs a superadmin browser session).
+- [ ] Planner: GLOBAL ACCESS LEVELS redesign — plan documented, awaiting go to apply migration 026 on prod.
+- [ ] Executor: GAL step 1 — migration 026 (access_levels, voice_access_list, users.access_level_id, voices.access_mode/min_access_level_id).
+- [ ] Executor: GAL step 2 — fail-closed backfill (default level per user, existing voices → list mode, remap folder required levels).
+- [ ] Executor: GAL step 3 — repos + resolver rewrite.
+- [ ] Executor: GAL step 4 — admin endpoints (global levels CRUD, voice mode/min/list, per-user level).
+- [ ] Executor: GAL step 5 — UI (org levels surface + Voice Studio Access panel rebuild + per-user level).
+- [ ] Executor: GAL step 6 — cutover, end-to-end QA, drop legacy tables.
 
 ## Current Status / Progress Tracking
 
