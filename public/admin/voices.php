@@ -213,14 +213,16 @@ $headerBackText = 'Chat';
                     <h2>Access</h2>
                     <p id="voice-access-summary">Define access levels, set a minimum level per folder, then give each person a level.</p>
                   </div>
-                  <button id="voice-profile-new-btn" class="voice-secondary-btn" type="button">
-                    <i class="iconoir-community"></i>
-                    <span>New level</span>
-                  </button>
                 </div>
                 <div class="voice-access-body">
                     <div class="voice-access-card">
-                      <div class="voice-access-subhead">Access levels — highest first</div>
+                      <div class="voice-access-subhead">
+                        <span>Access levels — highest first</span>
+                        <button id="voice-profile-new-btn" class="voice-subhead-btn" type="button">
+                          <i class="iconoir-plus"></i>
+                          <span>New level</span>
+                        </button>
+                      </div>
                       <div id="voice-levels-list" class="voice-levels-list">
                         <div class="voice-documents-empty">Select a voice to manage access.</div>
                       </div>

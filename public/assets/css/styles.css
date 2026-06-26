@@ -873,7 +873,12 @@
 }
 
 .voice-access-subhead {
-  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 7px 10px 7px 14px;
   border-bottom: 1px solid #eef2f6;
   font-size: 11px;
   font-weight: 700;
@@ -881,6 +886,30 @@
   text-transform: uppercase;
   color: #64748b;
 }
+
+/* Compact action that lives inside a card head (e.g. "New level"),
+   placing the control next to the list it acts on. */
+.voice-subhead-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0e7490;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.voice-subhead-btn:hover { background: #ecfeff; border-color: #a5f3fc; }
+.voice-subhead-btn:active { background: #cffafe; }
+.voice-subhead-btn i { font-size: 15px; line-height: 0; }
 
 .voice-access-matrix-wrap { overflow: auto; }
 
