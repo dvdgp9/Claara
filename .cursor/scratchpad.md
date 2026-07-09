@@ -466,8 +466,8 @@ Claara has a connectors foundation (migration `docs/migrations/017_connectors.sq
 - [x] Executor: GAL step 5b — Users admin page gained a global Access levels catalog (create/rename/reorder/default/delete) + a per-user level dropdown. Deployed (commit b308f99). Visual review pending.
 - [x] Planner: CONNECTORS (Google Drive v1) — plan documented 2026-07-09 (point-of-use pickers: chat composer + Voice Studio; /connectors.php = account management). Blocked on user providing Google Cloud OAuth credentials before Executor step 2.
 - [x] Executor: Connectors step 1 — DONE 2026-07-09. Migration 017 was already applied AND registered on prod (2026-05-15); connector tables + provider seeds verified (google_drive enabled). Added to prod .env (backup `.env.bak-connectors`): generated `CONNECTOR_TOKEN_ENCRYPTION_KEY` + empty `GOOGLE_OAUTH_CLIENT_ID/SECRET` + `GOOGLE_PICKER_API_KEY` placeholders. Crypto round-trip verified on prod (encrypt/decrypt OK). Local .env got its own key + placeholders. Awaiting Google credentials from user to fill placeholders.
-- [ ] Executor: Connectors step 2 — GoogleDriveProvider + OAuth start/callback.
-- [ ] Executor: Connectors step 3 — connect/disconnect UI.
+- [x] Executor: Connectors step 2 — GoogleDriveProvider (+GoogleOAuthException) + OAuth start/callback + disconnect endpoints. Deployed to prod (commit 7139a9f); provider smoke-tested on prod (auth URL carries correct redirect_uri + drive.file). Google credentials placed in prod .env by copying ONLY the GOOGLE_* lines from local .env (local file targets a different DB — never sync it whole). Awaiting user browser test of the connect flow.
+- [x] Executor: Connectors step 3 — connect/disconnect UI wired in connectors.js (Connect → start.php; Disconnect → POST with CSRF + Google token revoke; callback notice via ?connect=). Deployed with step 2. Visual/browser verification pending.
 - [ ] Executor: Connectors step 4 — token refresh service + picker-token endpoint.
 - [ ] Executor: Connectors step 5 — importer core (download/export + allowlists).
 - [ ] Executor: Connectors step 6 — chat composer Drive picker → chat attachment.
