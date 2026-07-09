@@ -468,8 +468,9 @@ Claara has a connectors foundation (migration `docs/migrations/017_connectors.sq
 - [x] Executor: Connectors step 1 — DONE 2026-07-09. Migration 017 was already applied AND registered on prod (2026-05-15); connector tables + provider seeds verified (google_drive enabled). Added to prod .env (backup `.env.bak-connectors`): generated `CONNECTOR_TOKEN_ENCRYPTION_KEY` + empty `GOOGLE_OAUTH_CLIENT_ID/SECRET` + `GOOGLE_PICKER_API_KEY` placeholders. Crypto round-trip verified on prod (encrypt/decrypt OK). Local .env got its own key + placeholders. Awaiting Google credentials from user to fill placeholders.
 - [x] Executor: Connectors step 2 — GoogleDriveProvider (+GoogleOAuthException) + OAuth start/callback + disconnect endpoints. Deployed to prod (commit 7139a9f); provider smoke-tested on prod (auth URL carries correct redirect_uri + drive.file). Google credentials placed in prod .env by copying ONLY the GOOGLE_* lines from local .env (local file targets a different DB — never sync it whole). Awaiting user browser test of the connect flow.
 - [x] Executor: Connectors step 3 — connect/disconnect UI wired in connectors.js (Connect → start.php; Disconnect → POST with CSRF + Google token revoke; callback notice via ?connect=). Deployed with step 2. Visual/browser verification pending.
-- [ ] Executor: Connectors step 4 — token refresh service + picker-token endpoint.
-- [ ] Executor: Connectors step 5 — importer core (download/export + allowlists).
+- [x] Executor: Connectors step 4 — GoogleTokenService (refresh <5min margin, markError on invalid_grant/missing refresh) + picker-token.php (access_token + api_key + app_id; refresh token never leaves server). Deployed (df90914); smoke on prod with real account: token refreshed + Drive API 200 (0 visible files = correct drive.file behavior pre-picker).
+- [x] Executor: Connectors step 5 — GoogleDriveImporter.fetchToTemp(account, fileId, target 'voice'|'chat'): metadata fetch, export map for Google-native formats (Docs/Sheets/Slides→pdf; Sheets→xlsx for chat), per-target mime allowlists mirroring the existing upload endpoints, 30MB cap enforced mid-download, ConnectorImportException with UI-safe messages. Deployed with step 4. Full end-to-end exercise happens in steps 6-7 (needs a picked file).
+- [x] Executor: Connectors steps 2-3 user verification — DONE 2026-07-09 (user connected, saw scope-checkbox notice, disconnect works after CSRF fix).
 - [ ] Executor: Connectors step 6 — chat composer Drive picker → chat attachment.
 - [ ] Executor: Connectors step 7 — Voice Studio Drive picker → voice document + RAG.
 - [ ] Executor: Connectors step 8 — status UI polish + English copy sweep.
@@ -506,6 +507,8 @@ Claara has a connectors foundation (migration `docs/migrations/017_connectors.sq
 
 ## Lessons
 
+- Any page that includes `includes/head.php` MUST set `$csrfToken = $_SESSION['csrf_token'] ?? '';` first, or `window.CSRF_TOKEN` is empty and every POST from that page fails with 403 csrf_invalid (bit connectors.php's Disconnect).
+- Google's consent screen shows the `drive.file` scope as an UNCHECKED-able checkbox: users can "approve" without granting Drive access. The callback must verify the granted scopes (it does) and the UI must explain the retry ("tick the Drive files checkbox").
 - Keep scratchpad concise. Archive old history in git instead of preserving every completed implementation detail here.
 - PROD DEPLOY GOTCHA: the repo ROOT dir `/home/dvdgp/web/claara.tech/public_html` is `dvdgp:www-data` mode 751 — the SSH user `codex` can write in SUBdirectories but NOT at the repo root. So `git pull` works for changes under `public/`, `src/`, `scripts/`, etc., but FAILS to update/replace root-level tracked files (e.g. `.gitignore`) with "unable to unlink old … Permission denied", leaving a half-applied tree. Fix: `sudo setfacl -m u:codex:rwx .`, then `git fetch && git reset --hard origin/main`, then `sudo setfacl -x u:codex .`. Avoid committing changes to root-level files when possible.
 - `git add -A` in this repo will sweep in local scratch dirs (`output/`, `tmp/`) and one-off docs — now gitignored. Stage explicit paths for deploys.
