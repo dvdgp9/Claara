@@ -11,6 +11,7 @@ if (!$user) {
     exit;
 }
 
+$csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = 'connectors';
 $pageTitle = 'Connectors - Claara';
 $headerTitle = 'Connectors';
@@ -45,6 +46,8 @@ $headerBackText = 'Chat';
               <span class="connectors-pulse"></span>
             </div>
           </section>
+
+          <div id="connectors-notice" class="hidden connectors-notice" role="status"></div>
 
           <section class="connectors-grid-shell">
             <div class="connectors-section-head">

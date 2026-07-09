@@ -5,6 +5,7 @@
     error: document.getElementById('connectors-error'),
     list: document.getElementById('connectors-list'),
     refresh: document.getElementById('refresh-connectors-btn'),
+    notice: document.getElementById('connectors-notice'),
   };
 
   const START_URLS = {
@@ -25,13 +26,30 @@
     const params = new URLSearchParams(window.location.search);
     const result = params.get('connect');
     if (!result) return;
-    const messages = {
-      success: 'Google Drive connected successfully.',
-      cancelled: 'Connection cancelled.',
-      error: 'Could not complete the connection. Please try again.',
-    };
-    els.count.textContent = messages[result] || messages.error;
+    const detail = params.get('detail') || '';
+    let message;
+    let kind = 'error';
+    if (result === 'success') {
+      message = 'Google Drive connected successfully.';
+      kind = 'success';
+    } else if (result === 'cancelled') {
+      message = 'Connection cancelled.';
+    } else if (detail.includes('not granted')) {
+      message = 'Google Drive was not connected: please tick the Drive files checkbox on the Google consent screen and try again.';
+    } else {
+      message = 'Could not complete the connection. Please try again.';
+    }
+    showNotice(message, kind);
     window.history.replaceState({}, '', '/connectors.php');
+  }
+
+  function showNotice(message, kind) {
+    if (!els.notice) return;
+    els.notice.textContent = message;
+    els.notice.className = `connectors-notice connectors-notice-${kind}`;
+    if (kind === 'success') {
+      setTimeout(() => els.notice.classList.add('hidden'), 6000);
+    }
   }
 
   async function onProviderAction(event) {
@@ -61,11 +79,12 @@
         if (!response.ok) {
           throw new Error(data.error?.message || 'Could not disconnect');
         }
+        showNotice('Account disconnected.', 'success');
         loadConnectors();
       } catch (error) {
         console.error(error);
         button.disabled = false;
-        els.count.textContent = 'Could not disconnect the account. Please try again.';
+        showNotice('Could not disconnect the account. Please try again.', 'error');
       }
     }
   }
