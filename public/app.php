@@ -801,7 +801,10 @@ $headerShowLogo = true;
     let selectedMessageId = null;
     let dragCounter = 0;
 
-    loadCapabilityCatalog();
+    let capabilityCatalogReady = false;
+    const capabilityCatalogPromise = loadCapabilityCatalog().finally(() => {
+      capabilityCatalogReady = true;
+    });
 
     const MAX_FILE_SIZE = 30 * 1024 * 1024;
     const VALID_FILE_TYPES = [
@@ -1204,12 +1207,23 @@ $headerShowLogo = true;
       let match;
 
       while ((match = regex.exec(text)) !== null) {
+        // Skip paths that live inside an absolute URL of another domain
+        // (e.g. a web-search citation like https://somesite.com/voices/...).
+        const before = text.slice(Math.max(0, match.index - 120), match.index);
+        const urlPrefix = before.match(/https?:\/\/[^\s`)<\]"']*$/);
+        if (urlPrefix) {
+          const host = urlPrefix[0].replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+          if (host !== window.location.host.replace(/^www\./, '')) continue;
+        }
         routes.add(normalizeCapabilityRoute(match[0]));
       }
 
+      // Only routes that resolve to a real capability in this user's catalog
+      // become buttons; anything else stays as plain text/link.
       return Array.from(routes).filter(route =>
         (route.startsWith('/voices/') || route.startsWith('/gestos/'))
         && !/\/(?:doc|docs|list_docs_ajax)\.php/.test(route)
+        && capabilityRouteIndex.has(route)
       );
     }
 
@@ -1428,6 +1442,12 @@ $headerShowLogo = true;
 
     function enhanceCapabilityActions(containerEl, content) {
       if (!containerEl) return;
+      if (!capabilityCatalogReady) {
+        // The catalog request may still be in flight on first paint; retry
+        // once it resolves so early messages keep their buttons.
+        capabilityCatalogPromise.then(() => enhanceCapabilityActions(containerEl, content));
+        return;
+      }
       containerEl.querySelectorAll('.capability-actions').forEach(existing => existing.remove());
       const routes = extractCapabilityRoutes(content);
       if (!routes.length) return;
