@@ -191,6 +191,10 @@ $headerBackText = 'Chat';
                         <i class="iconoir-upload"></i>
                         <span>Upload</span>
                       </button>
+                      <button id="voice-drive-import-btn" class="voice-secondary-btn" type="button" title="Import from Google Drive (Docs and Sheets convert automatically)">
+                        <i class="iconoir-google-drive"></i>
+                        <span>Google Drive</span>
+                      </button>
                     </form>
                     <div class="voice-folder-upload-row">
                       <input id="voice-folder-file" type="file" multiple hidden webkitdirectory directory>
@@ -260,6 +264,7 @@ $headerBackText = 'Chat';
     </main>
   </div>
 
+  <script src="/assets/js/drive-picker.js"></script>
   <script src="/assets/js/admin-voices.js"></script>
 </body>
 </html>

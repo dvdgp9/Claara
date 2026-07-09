@@ -796,6 +796,62 @@
     }
   }
 
+  const DRIVE_VOICE_MIMES = [
+    'application/pdf', 'text/plain', 'text/markdown',
+    'application/vnd.google-apps.document',
+    'application/vnd.google-apps.spreadsheet',
+    'application/vnd.google-apps.presentation',
+  ];
+
+  async function importFromDrive() {
+    const voice = selectedVoice();
+    if (!voice || state.isCreating) {
+      showAlert('Select a voice first.', 'error');
+      return;
+    }
+    const button = $('voice-drive-import-btn');
+    try {
+      await ClaaraDrivePicker.open({
+        mimeTypes: DRIVE_VOICE_MIMES,
+        title: `Add knowledge to ${voice.name || voice.slug} from Google Drive`,
+        onPicked: async (docs) => {
+          const doc = docs[0];
+          if (!doc) return;
+          setBusy(button, true, 'Importing');
+          try {
+            const response = await fetch(`/api/admin/voices/documents/import-drive.php?slug=${encodeURIComponent(voice.slug)}`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(window.CSRF_TOKEN ? { 'X-CSRF-Token': window.CSRF_TOKEN } : {}),
+              },
+              body: JSON.stringify({
+                drive_file_id: doc.id,
+                folder_id: currentFolderId(),
+                description: $('voice-document-description').value.trim(),
+              }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(data?.error?.message || response.statusText);
+            }
+            $('voice-document-description').value = '';
+            showAlert(`"${data.document?.original_filename || doc.name}" imported from Google Drive. Process before testing.`);
+            await loadFolders();
+            await loadDocuments();
+          } catch (error) {
+            showAlert(error.message, 'error');
+          } finally {
+            setBusy(button, false);
+          }
+        },
+      });
+    } catch (error) {
+      showAlert(error.message || 'Could not open Google Drive.', 'error');
+    }
+  }
+
   async function processDocument(id, button) {
     const voice = selectedVoice();
     if (!voice || !id) return;
@@ -914,6 +970,7 @@
     $('voice-refresh-btn').addEventListener('click', () => loadVoices().catch((error) => showAlert(error.message, 'error')));
     $('voice-form').addEventListener('submit', saveVoice);
     $('voice-document-form').addEventListener('submit', uploadDocument);
+    $('voice-drive-import-btn').addEventListener('click', importFromDrive);
     $('voice-process-all-btn').addEventListener('click', processAllDocuments);
     $('voice-folder-new-btn').addEventListener('click', createFolder);
     $('voice-folder-upload-btn').addEventListener('click', () => $('voice-folder-file').click());
