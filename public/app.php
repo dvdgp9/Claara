@@ -659,9 +659,17 @@ $headerShowLogo = true;
         <small>Docs and Sheets convert automatically</small>
       </span>
     </button>
+    <button type="button" class="attach-menu-item" data-attach-source="onedrive" role="menuitem">
+      <span class="attach-menu-icon"><i class="iconoir-cloud"></i></span>
+      <span class="attach-menu-copy">
+        <span>From OneDrive</span>
+        <small>Word and PowerPoint convert automatically</small>
+      </span>
+    </button>
   </div>
 
   <script src="/assets/js/drive-picker.js"></script>
+  <script src="/assets/js/onedrive-picker.js"></script>
   <script type="module">
     const messagesEl = document.getElementById('messages');
     const messagesContainer = document.getElementById('messages-container');
@@ -3504,6 +3512,8 @@ $headerShowLogo = true;
         (target === 'empty' ? fileInputEmpty : fileInput).click();
       } else if (source === 'drive') {
         openDrivePickerFor(target);
+      } else if (source === 'onedrive') {
+        openOneDrivePickerFor(target);
       }
     });
 
@@ -3518,12 +3528,18 @@ $headerShowLogo = true;
     });
     window.addEventListener('resize', closeAttachMenu);
 
+    const ONEDRIVE_CHAT_EXTENSIONS = [
+      'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'csv', 'xls', 'xlsx',
+      'doc', 'docx', 'dot', 'dotx', 'rtf', 'htm', 'html', 'odt', 'odp',
+      'pps', 'ppsx', 'ppt', 'pptx', 'eml', 'msg', 'tif', 'tiff',
+    ];
+
     async function openDrivePickerFor(target) {
       try {
         await ClaaraDrivePicker.open({
           mimeTypes: DRIVE_CHAT_MIMES,
           title: 'Choose a file from Google Drive',
-          onPicked: (docs) => addDriveDoc(docs[0], target),
+          onPicked: (docs) => addCloudDoc(docs[0], target, 'google_drive'),
         });
       } catch (error) {
         console.error(error);
@@ -3531,15 +3547,35 @@ $headerShowLogo = true;
       }
     }
 
-    function addDriveDoc(doc, target) {
+    async function openOneDrivePickerFor(target) {
+      try {
+        await ClaaraOneDrivePicker.open({
+          extensions: ONEDRIVE_CHAT_EXTENSIONS,
+          title: 'Choose a file from OneDrive',
+          onPicked: (docs) => addCloudDoc(docs[0], target, 'onedrive'),
+        });
+      } catch (error) {
+        console.error(error);
+        alert(error.message || 'Could not open OneDrive.');
+      }
+    }
+
+    const CLOUD_IMPORT_ENDPOINTS = {
+      google_drive: { url: '/api/connectors/google/import-to-chat.php', idField: 'drive_file_id', label: 'Drive' },
+      onedrive: { url: '/api/connectors/onedrive/import-to-chat.php', idField: 'item_id', label: 'OneDrive' },
+    };
+
+    function addCloudDoc(doc, target, provider) {
       if (!doc) return;
+      const endpoint = CLOUD_IMPORT_ENDPOINTS[provider];
       const targetArray = target === 'empty' ? currentFilesEmpty : currentFiles;
       const render = target === 'empty' ? renderFilesPreviewEmpty : renderFilesPreview;
 
       const entry = {
         isDrive: true,
+        cloudLabel: endpoint.label,
         status: 'importing',
-        name: doc.name || 'Drive file',
+        name: doc.name || 'Cloud file',
         type: doc.mimeType || '',
         size: Number(doc.sizeBytes || 0),
         url: null,
@@ -3548,14 +3584,14 @@ $headerShowLogo = true;
       };
 
       entry.promise = (async () => {
-        const response = await fetch('/api/connectors/google/import-to-chat.php', {
+        const response = await fetch(endpoint.url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-          body: JSON.stringify({ drive_file_id: doc.id, conversation_id: currentConversationId }),
+          body: JSON.stringify({ [endpoint.idField]: doc.id, conversation_id: currentConversationId }),
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.success) {
-          throw new Error(data.error?.message || 'Could not import the file from Google Drive');
+          throw new Error(data.error?.message || `Could not import the file from ${endpoint.label}`);
         }
         entry.status = 'ready';
         entry.name = data.name;
@@ -3742,7 +3778,7 @@ $headerShowLogo = true;
         return `<div class="flex items-center gap-2 p-2 bg-[#B7C9F2]/10 rounded-lg">
           <i class="iconoir-refresh-double text-lg text-[#2F3440] file-chip-spin"></i>
           <span class="flex-1 text-sm text-slate-700 truncate">${escapeHtml(file.name)}</span>
-          <span class="text-xs text-slate-400">Importing from Drive...</span>
+          <span class="text-xs text-slate-400">Importing from ${escapeHtml(file.cloudLabel || 'Drive')}...</span>
           <button type="button" onclick="${removeFnName}(${idx})" class="text-slate-400 hover:text-red-500" title="Cancel">
             <i class="iconoir-xmark"></i>
           </button>
@@ -3760,7 +3796,7 @@ $headerShowLogo = true;
       }
 
       const driveBadge = file.isDrive
-        ? '<i class="iconoir-google-drive text-xs text-slate-400" title="Imported from Google Drive"></i>'
+        ? `<i class="${file.cloudLabel === 'OneDrive' ? 'iconoir-cloud' : 'iconoir-google-drive'} text-xs text-slate-400" title="Imported from ${escapeHtml(file.cloudLabel || 'Google Drive')}"></i>`
         : '';
       return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
         <i class="${iconClass} text-lg"></i>

@@ -852,6 +852,61 @@
     }
   }
 
+  const ONEDRIVE_VOICE_EXTENSIONS = [
+    'pdf', 'txt', 'md',
+    'doc', 'docx', 'dot', 'dotx', 'rtf', 'htm', 'html', 'odt', 'odp', 'ods',
+    'pps', 'ppsx', 'ppt', 'pptx', 'xls', 'xlsm', 'xlsx', 'eml', 'msg', 'tif', 'tiff',
+  ];
+
+  async function importFromOneDrive() {
+    const voice = selectedVoice();
+    if (!voice || state.isCreating) {
+      showAlert('Select a voice first.', 'error');
+      return;
+    }
+    const button = $('voice-onedrive-import-btn');
+    try {
+      await ClaaraOneDrivePicker.open({
+        extensions: ONEDRIVE_VOICE_EXTENSIONS,
+        title: `Add knowledge to ${voice.name || voice.slug} from OneDrive`,
+        onPicked: async (docs) => {
+          const doc = docs[0];
+          if (!doc) return;
+          setBusy(button, true, 'Importing');
+          try {
+            const response = await fetch(`/api/admin/voices/documents/import-onedrive.php?slug=${encodeURIComponent(voice.slug)}`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(window.CSRF_TOKEN ? { 'X-CSRF-Token': window.CSRF_TOKEN } : {}),
+              },
+              body: JSON.stringify({
+                item_id: doc.id,
+                folder_id: currentFolderId(),
+                description: $('voice-document-description').value.trim(),
+              }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(data?.error?.message || response.statusText);
+            }
+            $('voice-document-description').value = '';
+            showAlert(`"${data.document?.original_filename || doc.name}" imported from OneDrive. Process before testing.`);
+            await loadFolders();
+            await loadDocuments();
+          } catch (error) {
+            showAlert(error.message, 'error');
+          } finally {
+            setBusy(button, false);
+          }
+        },
+      });
+    } catch (error) {
+      showAlert(error.message || 'Could not open OneDrive.', 'error');
+    }
+  }
+
   async function processDocument(id, button) {
     const voice = selectedVoice();
     if (!voice || !id) return;
@@ -971,6 +1026,7 @@
     $('voice-form').addEventListener('submit', saveVoice);
     $('voice-document-form').addEventListener('submit', uploadDocument);
     $('voice-drive-import-btn').addEventListener('click', importFromDrive);
+    $('voice-onedrive-import-btn').addEventListener('click', importFromOneDrive);
     $('voice-process-all-btn').addEventListener('click', processAllDocuments);
     $('voice-folder-new-btn').addEventListener('click', createFolder);
     $('voice-folder-upload-btn').addEventListener('click', () => $('voice-folder-file').click());

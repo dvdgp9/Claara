@@ -440,6 +440,29 @@ Claara has a connectors foundation (migration `docs/migrations/017_connectors.sq
 - Steps 1–4 are pure plumbing with no UX risk; 5–7 deliver user value; ship chat (6) before voice (7) if staging time is limited — it has the simpler permission surface (session user only; voice import must pass the existing voice-admin guard `require_voice_document_context()`).
 - API docs to pin before executing step 2 (per house rule, verified 2026-07-09): Google Picker overview & web sample (developers.google.com/workspace/drive/picker), Drive scopes guide (drive/api/guides/api-specific-auth). A dedicated `docs/apis/google_drive_connector.md` should be written during step 2.
 
+## Active Feature Planning: External Connectors — OneDrive v1
+
+### Background and Motivation
+
+Google Drive connector v1 is live. OneDrive reuses the whole pipeline (tables, crypto, import targets). Two provider-specific differences (docs verified 2026-07-09): Microsoft has no per-file scope → delegated `Files.Read` (reads the connecting user's files); and instead of Microsoft's complex file picker v8, Claara ships its OWN picker modal (Claara design) backed by a server-side Graph browse endpoint — the Microsoft token never reaches the browser at all.
+
+### Key Decisions
+
+- Scopes: `openid profile email offline_access Files.Read` (authority `/common` — personal + work accounts).
+- Conversions via Graph `/content?format=pdf` (302 → preauthenticated URL): chat target = docx/doc/ppt(x)/rtf/odt/odp→pdf, xlsx/csv/images/pdf direct; voice target = pdf/txt/md direct, everything else convertible→pdf.
+- Generalized `ConnectorTokenService(provider)` replaces GoogleTokenService; `ConnectorOAuthException` base (GoogleOAuthException extends it).
+- Parallel endpoints under /api/connectors/onedrive/ (start/callback/disconnect/browse/import-to-chat) + voice `documents/import-onedrive.php` — mirrors the Google files, no risk to what works.
+- New env vars: `MS_OAUTH_CLIENT_ID`, `MS_OAUTH_CLIENT_SECRET`. Azure app registration is a USER prerequisite (redirect URI `https://claara.tech/api/connectors/onedrive/callback.php`).
+- Provider stays `is_enabled=0` in `connector_providers` until credentials are in prod .env; then flip to 1.
+
+### High-Level Task Breakdown
+
+1. Backend core: MicrosoftOneDriveProvider + ConnectorTokenService refactor + OneDriveImporter. Success: lint + prod smoke once creds exist.
+2. OAuth endpoints (start/callback/disconnect) + browse.php (Graph children listing). Success: connect cycle + browse JSON on prod.
+3. Claara picker modal (onedrive-picker.js + .cfp-* styles): folder nav, breadcrumb, selection, connect prompt w/ auto-resume. Success: visual review.
+4. Chat integration (attach menu 3rd option, import-to-chat) + Voice Studio button (import-onedrive). Success: end-to-end file into chat + voice.
+5. Enable provider + connectors.js mappings + docs update. Success: full user QA.
+
 ## Project Status Board
 
 - [ ] Planner: finalize shared conversations architecture and UX plan.

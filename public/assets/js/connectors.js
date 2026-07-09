@@ -10,9 +10,11 @@
 
   const START_URLS = {
     google_drive: '/api/connectors/google/start.php',
+    onedrive: '/api/connectors/onedrive/start.php',
   };
   const DISCONNECT_URLS = {
     google_drive: '/api/connectors/google/disconnect.php',
+    onedrive: '/api/connectors/onedrive/disconnect.php',
   };
 
   document.addEventListener('DOMContentLoaded', () => {

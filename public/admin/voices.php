@@ -195,6 +195,10 @@ $headerBackText = 'Chat';
                         <i class="iconoir-google-drive"></i>
                         <span>Google Drive</span>
                       </button>
+                      <button id="voice-onedrive-import-btn" class="voice-secondary-btn" type="button" title="Import from OneDrive (Word, Excel and PowerPoint convert to PDF)">
+                        <i class="iconoir-cloud"></i>
+                        <span>OneDrive</span>
+                      </button>
                     </form>
                     <div class="voice-folder-upload-row">
                       <input id="voice-folder-file" type="file" multiple hidden webkitdirectory directory>
@@ -265,6 +269,7 @@ $headerBackText = 'Chat';
   </div>
 
   <script src="/assets/js/drive-picker.js"></script>
+  <script src="/assets/js/onedrive-picker.js"></script>
   <script src="/assets/js/admin-voices.js"></script>
 </body>
 </html>
