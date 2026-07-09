@@ -7,10 +7,68 @@
     refresh: document.getElementById('refresh-connectors-btn'),
   };
 
+  const START_URLS = {
+    google_drive: '/api/connectors/google/start.php',
+  };
+  const DISCONNECT_URLS = {
+    google_drive: '/api/connectors/google/disconnect.php',
+  };
+
   document.addEventListener('DOMContentLoaded', () => {
     els.refresh?.addEventListener('click', loadConnectors);
+    els.list?.addEventListener('click', onProviderAction);
+    showCallbackNotice();
     loadConnectors();
   });
+
+  function showCallbackNotice() {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get('connect');
+    if (!result) return;
+    const messages = {
+      success: 'Google Drive connected successfully.',
+      cancelled: 'Connection cancelled.',
+      error: 'Could not complete the connection. Please try again.',
+    };
+    els.count.textContent = messages[result] || messages.error;
+    window.history.replaceState({}, '', '/connectors.php');
+  }
+
+  async function onProviderAction(event) {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+    const providerKey = button.dataset.provider;
+
+    if (button.dataset.action === 'connect' && START_URLS[providerKey]) {
+      window.location.href = START_URLS[providerKey];
+      return;
+    }
+
+    if (button.dataset.action === 'disconnect' && DISCONNECT_URLS[providerKey]) {
+      if (!window.confirm('Disconnect this account? Files already imported stay in Claara.')) return;
+      button.disabled = true;
+      try {
+        const response = await fetch(DISCONNECT_URLS[providerKey], {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': window.CSRF_TOKEN || '',
+          },
+          body: JSON.stringify({ account_id: Number(button.dataset.accountId) }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error?.message || 'Could not disconnect');
+        }
+        loadConnectors();
+      } catch (error) {
+        console.error(error);
+        button.disabled = false;
+        els.count.textContent = 'Could not disconnect the account. Please try again.';
+      }
+    }
+  }
 
   async function loadConnectors() {
     setState('loading');
@@ -40,8 +98,10 @@
     const enabled = Number(provider.is_enabled) === 1;
     const connected = Boolean(provider.account_id);
     const status = connected ? provider.account_status : (enabled ? 'not_connected' : 'planned');
-    const actionLabel = enabled ? (connected ? 'Manage' : 'Connect') : 'Planned';
-    const actionDisabled = !enabled || !connected;
+    const hasFlow = Boolean(START_URLS[provider.provider_key]);
+    const actionLabel = enabled ? (connected ? 'Disconnect' : 'Connect') : 'Planned';
+    const actionDisabled = !enabled || !hasFlow;
+    const action = connected ? 'disconnect' : 'connect';
     const subtitle = connected
       ? `${provider.external_email || provider.account_display_name || 'Connected account'}`
       : (enabled ? 'Ready for selected-file access' : 'Not enabled yet');
@@ -69,8 +129,11 @@
             <span>Imported</span>
           </div>
         </div>
-        <button class="connectors-primary-btn" ${actionDisabled ? 'disabled' : ''}>
-          <i class="${connected ? 'iconoir-settings' : 'iconoir-log-in'}"></i>
+        <button class="connectors-primary-btn" ${actionDisabled ? 'disabled' : ''}
+          data-action="${action}"
+          data-provider="${escapeAttr(provider.provider_key)}"
+          data-account-id="${Number(provider.account_id || 0)}">
+          <i class="${connected ? 'iconoir-log-out' : 'iconoir-log-in'}"></i>
           <span>${actionLabel}</span>
         </button>
       </article>

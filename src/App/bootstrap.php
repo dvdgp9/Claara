@@ -80,6 +80,8 @@ require_once dirname(__DIR__) . '/Connectors/ConnectorAccountsRepo.php';
 require_once dirname(__DIR__) . '/Connectors/ConnectorTokensRepo.php';
 require_once dirname(__DIR__) . '/Connectors/ConnectorItemsRepo.php';
 require_once dirname(__DIR__) . '/Connectors/ConnectorImportsRepo.php';
+require_once dirname(__DIR__) . '/Connectors/GoogleOAuthException.php';
+require_once dirname(__DIR__) . '/Connectors/GoogleDriveProvider.php';
 
 // Utils
 require_once dirname(__DIR__) . '/Utils/DocumentGenerator.php';

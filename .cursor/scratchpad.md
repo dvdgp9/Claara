@@ -400,6 +400,46 @@ The current LEVELS model is **per-voice**: each voice owns its own ranked levels
 5. **UI:** move levels management to an org/admin surface; rebuild the Voice Studio Access panel around mode + min-level + allow-list, keep folder minimums; set per-user level in user management. Copy stays English. Success: visual review.
 6. **Cutover + cleanup:** flip resolver/UI live, verify end-to-end, then drop legacy tables/columns in a later migration once stable. Success: end-to-end QA, 50-user mental model holds.
 
+## Active Feature Planning: External Connectors — Google Drive v1
+
+### Background and Motivation
+
+Claara has a connectors foundation (migration `docs/migrations/017_connectors.sql`, repos in `src/Connectors/`, page `public/connectors.php`) but no working provider: the `ConnectorProviderInterface` / `ConnectorItemImporterInterface` have zero implementations, there are no OAuth endpoints, no file picker, and no importer. The UI "Connect" button is intentionally disabled. Goal: make Google Drive work end to end; OneDrive/Slack/Teams stay disabled (schema already supports them).
+
+### Product Decisions (confirmed with user 2026-07-09)
+
+- v1 scope is Google Drive only, "selected files" model (user picks specific files; no full-drive sync).
+- **Pickers live at the point of use, not on a central page**:
+  - Voice Studio documents panel → picked files become documents of THAT voice (same pipeline as `api/admin/voices/documents/upload.php`).
+  - Chat composer → picked files become chat attachments (same pipeline as `api/files/upload.php`).
+- `/connectors.php` remains as the account-management surface: connect/disconnect the Google account, see sync status and imported counts.
+- Use Google Picker (client-side) with the `drive.file` scope — the user must grant per-file access via the picker; the backend then downloads with the stored OAuth token. Minimizes scopes and eases Google app verification.
+
+### Key Challenges and Analysis
+
+- **Two import targets, one importer core**: the download/convert step (Drive file → local file bytes + mime + name) is shared; only the destination differs. Chat files accept pdf/png/jpg/gif/webp/csv/xls/xlsx (see `api/files/upload.php` allowlist); voice docs accept pdf/txt/md only (see `voices/documents/upload.php`). Google-native formats (Docs/Sheets/Slides) must be exported (`files.export`): Docs→pdf (voice) and Sheets→xlsx (chat), size-capped.
+- **Token lifecycle**: access tokens expire in ~1h; refresh flow (`refresh_token`) must run server-side before any download. `ConnectorTokensRepo`/`ConnectorTokenCrypto` are ready; need `CONNECTOR_TOKEN_ENCRYPTION_KEY` in prod .env.
+- **Picker token vs backend token**: the Picker needs an OAuth access token in the browser. Plan: browser asks our backend for a short-lived access token of the already-connected account (refreshing if needed) rather than running a second client-side OAuth flow. Never expose the refresh token to the browser.
+- **drive.file semantics**: backend can only download files the user actually opened via the Picker with our client id. This is fine for the selected-files model.
+- **Google Cloud prerequisites** (user action): create/choose a GCP project, enable Drive API + Picker API, configure OAuth consent screen, create OAuth Web client (redirect URI `https://claara.tech/api/connectors/google/callback.php`) and a browser API key for the Picker.
+- New env vars: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_PICKER_API_KEY`, `CONNECTOR_TOKEN_ENCRYPTION_KEY`. Migration 017 must be applied on prod (verify — connector tables may not exist there yet).
+
+### High-Level Task Breakdown (each step independently verifiable)
+
+1. **Env + schema readiness**: verify/apply migration 017 on prod (backup first, register row manually per known drift), add the 4 env vars locally and on prod, document them. Success: connector tables exist on prod; `new ConnectorTokenCrypto()` does not throw; `/connectors.php` renders providers from DB.
+2. **GoogleDriveProvider + OAuth endpoints**: implement `ConnectorProviderInterface` (auth URL with `access_type=offline&prompt=consent`, code exchange, refresh, userinfo profile); endpoints `api/connectors/google/start.php` (CSRF-bound `state` in session) and `callback.php` (exchange → `ConnectorAccountsRepo::createOrUpdate` + `ConnectorTokensRepo::saveForAccount` → redirect to `/connectors.php`). Register classes in bootstrap (no autoloader). Success: real account connects on prod; row in `connector_accounts` + encrypted tokens; reconnect updates instead of duplicating.
+3. **Connect/disconnect UI**: enable the Connect button in `connectors.js` (→ start.php), add Disconnect (revoke token at Google, `markDisconnected`, delete tokens). Success: full connect→disconnect→reconnect cycle in browser.
+4. **Token service + picker-token endpoint**: `GoogleTokenService::freshAccessToken(accountId)` (refresh when <5 min left, `markError` on invalid_grant); `api/connectors/google/picker-token.php` returns `{access_token, expires_in, api_key, client_id? }` for the session user's connected account. Success: transactional smoke test — expired token gets refreshed and re-encrypted; endpoint 403s users without a connected account.
+5. **Importer core**: `GoogleDriveImporter` — given account + file metadata from Picker, downloads (`files.get?alt=media`) or exports Google-native formats, enforces per-target mime/size allowlists, records `connector_items` + `connector_imports` rows. Success: CLI/transactional smoke importing a real small file both raw and exported.
+6. **Chat picker integration**: "From Google Drive" option in the composer attach menu → loads Picker (`gapi` script), on pick calls `api/connectors/google/import-to-chat.php` (importer core → reuse `ChatFilesRepo` path exactly as `api/files/upload.php`, CSRF included). If no account connected, prompt links to `/connectors.php`. Success: picked Drive PDF appears as a normal chat attachment and the model can read it.
+7. **Voice Studio picker integration**: "Import from Google Drive" in the documents panel (respecting current folder) → `api/connectors/google/import-to-voice.php` (importer core → same storage + `ContextDocsRepo` flow as `voices/documents/upload.php`, then existing RAG processing). Success: picked Drive file appears in the voice's folder, processes into Qdrant, and answers cite it.
+8. **Status & polish**: `/connectors.php` shows real item/import counts and last sync; English copy sweep; error states (expired grant → "Reconnect"). Success: visual review.
+
+### Suggested Sequencing / Notes
+
+- Steps 1–4 are pure plumbing with no UX risk; 5–7 deliver user value; ship chat (6) before voice (7) if staging time is limited — it has the simpler permission surface (session user only; voice import must pass the existing voice-admin guard `require_voice_document_context()`).
+- API docs to pin before executing step 2 (per house rule, verified 2026-07-09): Google Picker overview & web sample (developers.google.com/workspace/drive/picker), Drive scopes guide (drive/api/guides/api-specific-auth). A dedicated `docs/apis/google_drive_connector.md` should be written during step 2.
+
 ## Project Status Board
 
 - [ ] Planner: finalize shared conversations architecture and UX plan.
@@ -424,6 +464,15 @@ The current LEVELS model is **per-voice**: each voice owns its own ranked levels
 - [x] Executor: GAL step 4 — admin endpoints live & verified on prod (admin-ops smoke 14/14). access-levels CRUD/reorder, users/set-level, voices/access get|set-mode|list-set, folders/set-level repointed to global levels.
 - [x] Executor: GAL step 5a — Voice Studio Access panel rebuilt (2-mode switch: level≥min / specific people; folder minimums kept) + deployed. Visual review pending (needs superadmin browser session).
 - [x] Executor: GAL step 5b — Users admin page gained a global Access levels catalog (create/rename/reorder/default/delete) + a per-user level dropdown. Deployed (commit b308f99). Visual review pending.
+- [x] Planner: CONNECTORS (Google Drive v1) — plan documented 2026-07-09 (point-of-use pickers: chat composer + Voice Studio; /connectors.php = account management). Blocked on user providing Google Cloud OAuth credentials before Executor step 2.
+- [x] Executor: Connectors step 1 — DONE 2026-07-09. Migration 017 was already applied AND registered on prod (2026-05-15); connector tables + provider seeds verified (google_drive enabled). Added to prod .env (backup `.env.bak-connectors`): generated `CONNECTOR_TOKEN_ENCRYPTION_KEY` + empty `GOOGLE_OAUTH_CLIENT_ID/SECRET` + `GOOGLE_PICKER_API_KEY` placeholders. Crypto round-trip verified on prod (encrypt/decrypt OK). Local .env got its own key + placeholders. Awaiting Google credentials from user to fill placeholders.
+- [ ] Executor: Connectors step 2 — GoogleDriveProvider + OAuth start/callback.
+- [ ] Executor: Connectors step 3 — connect/disconnect UI.
+- [ ] Executor: Connectors step 4 — token refresh service + picker-token endpoint.
+- [ ] Executor: Connectors step 5 — importer core (download/export + allowlists).
+- [ ] Executor: Connectors step 6 — chat composer Drive picker → chat attachment.
+- [ ] Executor: Connectors step 7 — Voice Studio Drive picker → voice document + RAG.
+- [ ] Executor: Connectors step 8 — status UI polish + English copy sweep.
 - [ ] Executor: GAL step 6 — visual review of both surfaces (needs superadmin browser session), then cleanup: remove orphaned per-voice endpoints (`voices/profiles/*`, `voices/access/list.php`+`assign.php`) and drop legacy tables (`voice_access_profiles`, `user_voice_profiles`, `folder_profile_access`) once stable.
 
 ## Current Status / Progress Tracking
