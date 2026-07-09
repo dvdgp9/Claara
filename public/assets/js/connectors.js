@@ -118,12 +118,15 @@
     const connected = Boolean(provider.account_id);
     const status = connected ? provider.account_status : (enabled ? 'not_connected' : 'planned');
     const hasFlow = Boolean(START_URLS[provider.provider_key]);
-    const actionLabel = enabled ? (connected ? 'Disconnect' : 'Connect') : 'Planned';
+    const needsReconnect = connected && (status === 'error' || status === 'needs_attention');
+    const actionLabel = !enabled ? 'Planned' : (needsReconnect ? 'Reconnect' : (connected ? 'Disconnect' : 'Connect'));
     const actionDisabled = !enabled || !hasFlow;
-    const action = connected ? 'disconnect' : 'connect';
-    const subtitle = connected
-      ? `${provider.external_email || provider.account_display_name || 'Connected account'}`
-      : (enabled ? 'Ready for selected-file access' : 'Not enabled yet');
+    const action = connected && !needsReconnect ? 'disconnect' : 'connect';
+    const subtitle = needsReconnect
+      ? (provider.last_error_message || 'This account needs to be reconnected.')
+      : connected
+        ? `${provider.external_email || provider.account_display_name || 'Connected account'}`
+        : (enabled ? 'Ready for selected-file access' : 'Not enabled yet');
 
     return `
       <article class="connectors-provider-card" style="--index:${index}">
@@ -152,7 +155,7 @@
           data-action="${action}"
           data-provider="${escapeAttr(provider.provider_key)}"
           data-account-id="${Number(provider.account_id || 0)}">
-          <i class="${connected ? 'iconoir-log-out' : 'iconoir-log-in'}"></i>
+          <i class="${action === 'disconnect' ? 'iconoir-log-out' : 'iconoir-log-in'}"></i>
           <span>${actionLabel}</span>
         </button>
       </article>
