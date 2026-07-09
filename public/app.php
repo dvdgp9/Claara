@@ -643,6 +643,25 @@ $headerShowLogo = true;
     </div>
   </div>
   
+  <!-- Attach source menu (anchored to whichever attach button opened it) -->
+  <div id="attach-menu" class="attach-menu hidden" role="menu" aria-label="Attach a file">
+    <button type="button" class="attach-menu-item" data-attach-source="device" role="menuitem">
+      <span class="attach-menu-icon"><i class="iconoir-laptop"></i></span>
+      <span class="attach-menu-copy">
+        <span>From this device</span>
+        <small>PDF, image, CSV or Excel</small>
+      </span>
+    </button>
+    <button type="button" class="attach-menu-item" data-attach-source="drive" role="menuitem">
+      <span class="attach-menu-icon"><i class="iconoir-google-drive"></i></span>
+      <span class="attach-menu-copy">
+        <span>From Google Drive</span>
+        <small>Docs and Sheets convert automatically</small>
+      </span>
+    </button>
+  </div>
+
+  <script src="/assets/js/drive-picker.js"></script>
   <script type="module">
     const messagesEl = document.getElementById('messages');
     const messagesContainer = document.getElementById('messages-container');
@@ -3260,12 +3279,25 @@ $headerShowLogo = true;
       showChatMode();
       
       const fileToUpload = filesArray.length > 0 ? filesArray[0] : null;
-      
+
+      // Drive files import at pick time; make sure the import has finished.
+      if (fileToUpload?.isDrive) {
+        if (fileToUpload.status === 'importing') {
+          try {
+            await fileToUpload.promise;
+          } catch (e) { /* falls through to the error check below */ }
+        }
+        if (fileToUpload.status === 'error') {
+          alert('The Google Drive import failed: ' + (fileToUpload.error || 'unknown error') + '. Remove the file and try again.');
+          return;
+        }
+      }
+
       // 1. Show user message immediately.
       const userFile = fileToUpload ? {
         name: fileToUpload.name,
         mime_type: fileToUpload.type || '',
-        url: URL.createObjectURL(fileToUpload)
+        url: fileToUpload.isDrive ? fileToUpload.url : URL.createObjectURL(fileToUpload)
       } : null;
       
       const { wrap: userWrap } = append('user', text, userFile);
@@ -3278,8 +3310,10 @@ $headerShowLogo = true;
       let uploadedFileId = null;
 
       try {
-        // 3. Subir primer archivo si existe
-        if (fileToUpload) {
+        // 3. Subir primer archivo si existe (los de Drive ya están importados)
+        if (fileToUpload?.isDrive) {
+          uploadedFileId = fileToUpload.uploaded_file_id;
+        } else if (fileToUpload) {
           const formData = new FormData();
           formData.append('file', fileToUpload);
           formData.append('csrf_token', csrf);
@@ -3406,9 +3440,126 @@ $headerShowLogo = true;
       });
     }
 
+    // ----- Attach source menu (device / Google Drive) -----
+    const attachMenu = document.getElementById('attach-menu');
+    let attachMenuTarget = 'main'; // which composer opened the menu
+
+    const DRIVE_CHAT_MIMES = [
+      'application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+      'text/csv', 'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.google-apps.document',
+      'application/vnd.google-apps.spreadsheet',
+      'application/vnd.google-apps.presentation',
+    ];
+
+    function openAttachMenu(anchorBtn, target) {
+      if (imageMode) {
+        showImageModeAttachmentWarning();
+        return;
+      }
+      attachMenuTarget = target;
+      attachMenu.classList.remove('hidden');
+      const rect = anchorBtn.getBoundingClientRect();
+      const menuRect = attachMenu.getBoundingClientRect();
+      let left = Math.min(rect.left, window.innerWidth - menuRect.width - 12);
+      let top = rect.top - menuRect.height - 10;
+      if (top < 12) top = rect.bottom + 10; // fall back below the button
+      attachMenu.style.left = Math.max(12, left) + 'px';
+      attachMenu.style.top = top + 'px';
+      attachMenu.querySelector('.attach-menu-item')?.focus();
+    }
+
+    function closeAttachMenu() {
+      attachMenu.classList.add('hidden');
+    }
+
+    attachMenu.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-attach-source]');
+      if (!item) return;
+      const source = item.dataset.attachSource;
+      const target = attachMenuTarget;
+      closeAttachMenu();
+      if (source === 'device') {
+        (target === 'empty' ? fileInputEmpty : fileInput).click();
+      } else if (source === 'drive') {
+        openDrivePickerFor(target);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (attachMenu.classList.contains('hidden')) return;
+      if (!e.target.closest('#attach-menu') && !e.target.closest('[data-attach-anchor]')) {
+        closeAttachMenu();
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeAttachMenu();
+    });
+    window.addEventListener('resize', closeAttachMenu);
+
+    async function openDrivePickerFor(target) {
+      try {
+        await ClaaraDrivePicker.open({
+          mimeTypes: DRIVE_CHAT_MIMES,
+          title: 'Choose a file from Google Drive',
+          onPicked: (docs) => addDriveDoc(docs[0], target),
+        });
+      } catch (error) {
+        console.error(error);
+        alert(error.message || 'Could not open Google Drive.');
+      }
+    }
+
+    function addDriveDoc(doc, target) {
+      if (!doc) return;
+      const targetArray = target === 'empty' ? currentFilesEmpty : currentFiles;
+      const render = target === 'empty' ? renderFilesPreviewEmpty : renderFilesPreview;
+
+      const entry = {
+        isDrive: true,
+        status: 'importing',
+        name: doc.name || 'Drive file',
+        type: doc.mimeType || '',
+        size: Number(doc.sizeBytes || 0),
+        url: null,
+        uploaded_file_id: null,
+        error: null,
+      };
+
+      entry.promise = (async () => {
+        const response = await fetch('/api/connectors/google/import-to-chat.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+          body: JSON.stringify({ drive_file_id: doc.id, conversation_id: currentConversationId }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success) {
+          throw new Error(data.error?.message || 'Could not import the file from Google Drive');
+        }
+        entry.status = 'ready';
+        entry.name = data.name;
+        entry.type = data.mime_type;
+        entry.size = data.size;
+        entry.url = data.url;
+        entry.uploaded_file_id = data.file_id;
+        render();
+        return data.file_id;
+      })();
+      entry.promise.catch((error) => {
+        entry.status = 'error';
+        entry.error = error.message;
+        render();
+      });
+
+      targetArray.push(entry);
+      render();
+    }
+
     // Handle file attachment.
+    attachBtn.setAttribute('data-attach-anchor', '');
     attachBtn.addEventListener('click', () => {
-      fileInput.click();
+      openAttachMenu(attachBtn, 'main');
     });
 
     // Toggle image generation mode.
@@ -3560,28 +3711,56 @@ $headerShowLogo = true;
     }
     window.removeFile = removeFile;
 
+    function fileChipHtml(file, idx, removeFnName) {
+      let iconClass = 'iconoir-page text-[#B7C9F2]';
+      const type = file.type || '';
+      if (type === 'application/pdf') iconClass = 'iconoir-page text-red-500';
+      else if (type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#B7C9F2]';
+      else if (type === 'text/csv' || type.includes('spreadsheet') || type.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
+
+      if (file.isDrive && file.status === 'importing') {
+        return `<div class="flex items-center gap-2 p-2 bg-[#B7C9F2]/10 rounded-lg">
+          <i class="iconoir-refresh-double text-lg text-[#2F3440] file-chip-spin"></i>
+          <span class="flex-1 text-sm text-slate-700 truncate">${escapeHtml(file.name)}</span>
+          <span class="text-xs text-slate-400">Importing from Drive...</span>
+          <button type="button" onclick="${removeFnName}(${idx})" class="text-slate-400 hover:text-red-500" title="Cancel">
+            <i class="iconoir-xmark"></i>
+          </button>
+        </div>`;
+      }
+
+      if (file.isDrive && file.status === 'error') {
+        return `<div class="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
+          <i class="iconoir-warning-triangle text-lg text-red-500"></i>
+          <span class="flex-1 text-sm text-red-700 truncate" title="${escapeHtml(file.error || '')}">${escapeHtml(file.name)} — ${escapeHtml(file.error || 'Import failed')}</span>
+          <button type="button" onclick="${removeFnName}(${idx})" class="text-red-400 hover:text-red-600" title="Remove">
+            <i class="iconoir-xmark"></i>
+          </button>
+        </div>`;
+      }
+
+      const driveBadge = file.isDrive
+        ? '<i class="iconoir-google-drive text-xs text-slate-400" title="Imported from Google Drive"></i>'
+        : '';
+      return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
+        <i class="${iconClass} text-lg"></i>
+        <span class="flex-1 text-sm text-slate-700 truncate">${escapeHtml(file.name)}</span>
+        ${driveBadge}
+        <span class="text-xs text-slate-400">${formatFileSize(file.size)}</span>
+        <button type="button" onclick="${removeFnName}(${idx})" class="text-slate-400 hover:text-red-500">
+          <i class="iconoir-xmark"></i>
+        </button>
+      </div>`;
+    }
+
     function renderFilesPreview() {
       if (currentFiles.length === 0) {
         filesPreview.classList.add('hidden');
         return;
       }
-      
+
       filesPreview.classList.remove('hidden');
-      filesList.innerHTML = currentFiles.map((file, idx) => {
-        let iconClass = 'iconoir-page text-[#B7C9F2]';
-        if (file.type === 'application/pdf') iconClass = 'iconoir-page text-red-500';
-        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#B7C9F2]';
-        else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
-        
-        return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
-          <i class="${iconClass} text-lg"></i>
-          <span class="flex-1 text-sm text-slate-700 truncate">${escapeHtml(file.name)}</span>
-          <span class="text-xs text-slate-400">${formatFileSize(file.size)}</span>
-          <button type="button" onclick="removeFile(${idx})" class="text-slate-400 hover:text-red-500">
-            <i class="iconoir-xmark"></i>
-          </button>
-        </div>`;
-      }).join('');
+      filesList.innerHTML = currentFiles.map((file, idx) => fileChipHtml(file, idx, 'removeFile')).join('');
     }
 
     function formatFileSize(bytes) {
@@ -3627,12 +3806,14 @@ $headerShowLogo = true;
     });
 
     // Handle file attachment in empty state.
+    attachBtnEmpty.setAttribute('data-attach-anchor', '');
     attachBtnEmpty.addEventListener('click', () => {
-      fileInputEmpty.click();
+      openAttachMenu(attachBtnEmpty, 'empty');
     });
     if (attachBtnEmptyDesktop) {
+      attachBtnEmptyDesktop.setAttribute('data-attach-anchor', '');
       attachBtnEmptyDesktop.addEventListener('click', () => {
-        fileInputEmpty.click();
+        openAttachMenu(attachBtnEmptyDesktop, 'empty');
       });
     }
 
@@ -3736,21 +3917,7 @@ $headerShowLogo = true;
       }
       
       filesPreviewEmpty.classList.remove('hidden');
-      filesListEmpty.innerHTML = currentFilesEmpty.map((file, idx) => {
-        let iconClass = 'iconoir-page text-[#B7C9F2]';
-        if (file.type === 'application/pdf') iconClass = 'iconoir-page text-red-500';
-        else if (file.type.startsWith('image/')) iconClass = 'iconoir-media-image text-[#B7C9F2]';
-        else if (file.type === 'text/csv' || file.type.includes('spreadsheet') || file.type.includes('excel')) iconClass = 'iconoir-table-rows text-emerald-600';
-        
-        return `<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
-          <i class="${iconClass} text-lg"></i>
-          <span class="flex-1 text-sm text-slate-700 truncate">${escapeHtml(file.name)}</span>
-          <span class="text-xs text-slate-400">${formatFileSize(file.size)}</span>
-          <button type="button" onclick="removeFileEmpty(${idx})" class="text-slate-400 hover:text-red-500">
-            <i class="iconoir-xmark"></i>
-          </button>
-        </div>`;
-      }).join('');
+      filesListEmpty.innerHTML = currentFilesEmpty.map((file, idx) => fileChipHtml(file, idx, 'removeFileEmpty')).join('');
     }
 
     // Manejar clics en voces - rutas a páginas específicas

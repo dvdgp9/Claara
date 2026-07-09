@@ -2217,6 +2217,85 @@ select {
   font-weight: 700;
 }
 
+/* Attach source menu (chat composer: device / Google Drive) */
+.attach-menu {
+  position: fixed;
+  z-index: 90;
+  min-width: 250px;
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 18px 44px -18px rgba(47, 52, 64, 0.35);
+  animation: attachMenuRise 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes attachMenuRise {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.attach-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.attach-menu-item:hover,
+.attach-menu-item:focus-visible {
+  background: rgba(183, 201, 242, 0.16);
+  outline: none;
+}
+
+.attach-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(183, 201, 242, 0.18);
+  color: #2f3440;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.attach-menu-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.attach-menu-copy span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.attach-menu-copy small {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Spinner for the "importing from Drive" file chip */
+.file-chip-spin {
+  animation: fileChipSpin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes fileChipSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .connectors-notice {
   margin: 0 0 16px;
   border-radius: 16px;
