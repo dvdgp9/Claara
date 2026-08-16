@@ -15,7 +15,7 @@ class UsersRepo {
     public function findByEmail(string $email): ?array
     {
         $stmt = $this->pdo->prepare('
-            SELECT u.id, u.email, u.password_hash, u.first_name, u.last_name, u.job_title, u.status, u.is_superadmin, u.department_id, d.name as department_name
+            SELECT u.id, u.email, u.password_hash, u.first_name, u.last_name, u.locale, u.job_title, u.status, u.is_superadmin, u.department_id, d.name as department_name
             FROM users u
             LEFT JOIN departments d ON d.id = u.department_id
             WHERE u.email = ? 
@@ -51,6 +51,12 @@ class UsersRepo {
         $now = date('Y-m-d H:i:s');
         $stmt = $this->pdo->prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?');
         $stmt->execute([$newPasswordHash, $now, $userId]);
+    }
+
+    public function updateLocale(int $userId, ?string $locale): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE users SET locale = ?, updated_at = NOW() WHERE id = ?');
+        $stmt->execute([$locale, $userId]);
     }
 
     public function getActivityStats(int $userId): array
@@ -100,7 +106,7 @@ class UsersRepo {
     public function findById(int $userId): ?array
     {
         $stmt = $this->pdo->prepare('
-            SELECT u.id, u.email, u.first_name, u.last_name, u.status, u.is_superadmin, 
+            SELECT u.id, u.email, u.first_name, u.last_name, u.locale, u.status, u.is_superadmin, 
                    u.job_title, u.department_id, d.name as department_name, u.last_login_at, u.created_at, u.updated_at
             FROM users u
             LEFT JOIN departments d ON d.id = u.department_id

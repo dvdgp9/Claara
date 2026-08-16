@@ -15,39 +15,43 @@ use App\Response;
 use Chat\LlmProviderFactory;
 use Chat\OpenRouterClient;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
 use Repos\UsageLogRepo;
 
 Session::start();
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Invalid session', 401);
+    Response::error('unauthorized', I18n::translate('auth.error.unauthorized'), 401);
 }
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'project-admin');
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'POST only', 405);
+    Response::error('method_not_allowed', I18n::translate('auth.error.method_not_allowed'), 405);
 }
 
 // Validar CSRF
 $csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 $csrfSession = $_SESSION['csrf_token'] ?? '';
 if (!$csrfHeader || !$csrfSession || !hash_equals($csrfSession, $csrfHeader)) {
-    Response::error('csrf_invalid', 'Token CSRF inválido', 403);
+    Response::error('csrf_invalid', I18n::translate('auth.error.csrf_invalid'), 403);
 }
 
 // Parsear body
 $body = json_decode(file_get_contents('php://input'), true);
 if (!$body) {
-    Response::error('invalid_body', 'Body JSON inválido', 400);
+    Response::error('invalid_body', I18n::translate('project_ui.api_invalid_body'), 400);
 }
 
-$gestureType = $body['gesture_type'] ?? 'project-admin';
+$gestureType = 'project-admin';
 $files = $body['files'] ?? [];
 $actions = $body['actions'] ?? ['expenses'];
 $instructions = trim($body['instructions'] ?? '');
 $maxFileSizeBytes = 40 * 1024 * 1024;
 
 if (empty($files)) {
-    Response::error('missing_files', 'Se requiere al menos un documento', 400);
+    Response::error('missing_files', I18n::translate('project_ui.api_missing_files'), 400);
 }
 
 // Modelo para análisis de documentos largos
@@ -65,12 +69,12 @@ foreach ($files as $file) {
     }
 
     if ($mimeType !== 'application/pdf') {
-        Response::error('invalid_file_type', "El archivo {$fileName} no es PDF", 400);
+        Response::error('invalid_file_type', I18n::translate('project_ui.api_invalid_pdf', ['name' => $fileName]), 400);
     }
 
     $estimatedBytes = estimateBase64SizeBytes($fileData);
     if ($estimatedBytes > $maxFileSizeBytes) {
-        Response::error('file_too_large', "El archivo {$fileName} supera el límite de 40MB", 400);
+        Response::error('file_too_large', I18n::translate('project_ui.too_large', ['name' => $fileName]), 400);
     }
     
     $documentsContent[] = [
@@ -81,7 +85,7 @@ foreach ($files as $file) {
 }
 
 if (empty($documentsContent)) {
-    Response::error('no_valid_files', 'No se encontraron archivos válidos', 400);
+    Response::error('no_valid_files', I18n::translate('project_ui.api_no_valid_files'), 400);
 }
 
 // Preparar resultados
@@ -120,7 +124,7 @@ if (in_array('expenses', $actions)) {
         ];
     } catch (\Exception $e) {
         $results['expenses'] = [
-            'content' => 'Error al analizar gastos: ' . $e->getMessage(),
+            'content' => I18n::translate('project_ui.api_expense_error'),
             'error' => true
         ];
     }
@@ -158,7 +162,7 @@ if (in_array('hours', $actions)) {
         ];
     } catch (\Exception $e) {
         $results['hours'] = [
-            'content' => 'Error al analizar horas: ' . $e->getMessage(),
+            'content' => I18n::translate('project_ui.api_hours_error'),
             'error' => true
         ];
     }
@@ -205,8 +209,11 @@ Response::json([
  */
 function buildExpensesPrompt(string $additionalInstructions = ''): string
 {
+    $languageInstruction = I18n::translate('project_ui.output_language');
     $prompt = <<<PROMPT
 Eres un experto en análisis de pliegos de licitaciones públicas españolas. Analiza el documento y extrae información sobre gastos NO PERSONALES de forma INTELIGENTE y PRÁCTICA.
+
+IDIOMA DE SALIDA: {$languageInstruction}
 
 ## REGLAS CRÍTICAS:
 
@@ -224,13 +231,13 @@ Responde en formato estructurado usando SOLO estas secciones:
 
 ---
 
-## 📋 RESUMEN EJECUTIVO
+## RESUMEN EJECUTIVO
 
 Breve párrafo (2-3 líneas) indicando el tipo de contrato, presupuesto base y principales partidas de gasto detectadas.
 
 ---
 
-## 💰 GASTOS CUANTIFICADOS
+## GASTOS CUANTIFICADOS
 
 Lista SOLO los gastos donde puedas dar una cifra concreta o estimación razonable:
 
@@ -239,7 +246,7 @@ Lista SOLO los gastos donde puedas dar una cifra concreta o estimación razonabl
 
 ---
 
-## 📦 GASTOS OBLIGATORIOS SIN CUANTIFICAR
+## GASTOS OBLIGATORIOS SIN CUANTIFICAR
 
 Lista los gastos que el contratista DEBE asumir pero que requieren valoración:
 
@@ -248,14 +255,14 @@ Lista los gastos que el contratista DEBE asumir pero que requieren valoración:
 
 ---
 
-## 🔒 GARANTÍAS Y AVALES
+## GARANTÍAS Y AVALES
 
 - **Garantía definitiva**: [Porcentaje]% = [Importe]€
 - **Otros avales requeridos**: [Si aplica]
 
 ---
 
-## ⚠️ RIESGOS ECONÓMICOS A CONSIDERAR
+## RIESGOS ECONÓMICOS A CONSIDERAR
 
 Menciona brevemente (sin detallar cada penalidad):
 - Principales incumplimientos penalizados
@@ -263,7 +270,7 @@ Menciona brevemente (sin detallar cada penalidad):
 
 ---
 
-## 📊 ESTIMACIÓN TOTAL
+## ESTIMACIÓN TOTAL
 
 | Categoría | Estimación |
 |-----------|------------|
@@ -274,7 +281,7 @@ Menciona brevemente (sin detallar cada penalidad):
 
 ---
 
-## 💡 RECOMENDACIONES
+## RECOMENDACIONES
 
 Lista 2-3 puntos clave que el licitador debería investigar o valorar con más detalle.
 
@@ -313,8 +320,11 @@ function estimateBase64SizeBytes(string $base64): int
  */
 function buildHoursPrompt(string $additionalInstructions = ''): string
 {
+    $languageInstruction = I18n::translate('project_ui.output_language');
     $prompt = <<<PROMPT
 Eres un experto en análisis de pliegos de licitaciones públicas españolas. Analiza el documento y extrae información sobre HORAS DE TRABAJO de forma INTELIGENTE y PRÁCTICA.
+
+IDIOMA DE SALIDA: {$languageInstruction}
 
 ## REGLAS CRÍTICAS:
 
@@ -329,13 +339,13 @@ Eres un experto en análisis de pliegos de licitaciones públicas españolas. An
 
 ---
 
-## 📋 RESUMEN EJECUTIVO
+## RESUMEN EJECUTIVO
 
 Breve párrafo indicando el tipo de servicio, duración del contrato y volumen aproximado de horas detectado.
 
 ---
 
-## ⏱️ HORAS DE SERVICIO DIRECTO
+## HORAS DE SERVICIO DIRECTO
 
 Horas donde el personal está prestando el servicio principal:
 
@@ -345,29 +355,29 @@ Horas donde el personal está prestando el servicio principal:
 - **Semanas/año**: [X semanas]
 - **Cálculo**: [Detalle del cálculo]
 - **Total**: **[X] horas/año**
-- 📍 Fuente: [Cláusula/página]
+- Fuente: [Cláusula/página]
 
 ---
 
-## 👥 HORAS DE COORDINACIÓN Y GESTIÓN
+## HORAS DE COORDINACIÓN Y GESTIÓN
 
 Reuniones, supervisión, tareas administrativas:
 
 - **[Tipo de reunión/tarea]**: [Frecuencia] × [Duración] = **[X] horas/año**
-  - 📍 Fuente: [Cláusula/página]
+  - Fuente: [Cláusula/página]
 
 ---
 
-## 📚 HORAS DE FORMACIÓN
+## HORAS DE FORMACIÓN
 
 Formación inicial y continua requerida:
 
 - **[Tipo de formación]**: [Horas totales]
-  - 📍 Fuente: [Cláusula/página]
+  - Fuente: [Cláusula/página]
 
 ---
 
-## 📊 RESUMEN DE HORAS
+## RESUMEN DE HORAS
 
 | Categoría | Horas/año |
 |-----------|----------:|
@@ -378,7 +388,7 @@ Formación inicial y continua requerida:
 
 ---
 
-## 👷 EQUIVALENCIA EN PERSONAL
+## EQUIVALENCIA EN PERSONAL
 
 Si es posible calcular:
 - **Jornada completa** (1.720 h/año): [X] personas
@@ -386,13 +396,13 @@ Si es posible calcular:
 
 ---
 
-## ⚠️ DATOS AMBIGUOS O INCOMPLETOS
+## DATOS AMBIGUOS O INCOMPLETOS
 
 Menciona cualquier referencia a horas que no hayas podido cuantificar y por qué.
 
 ---
 
-## 💡 NOTAS DEL ANÁLISIS
+## NOTAS DEL ANÁLISIS
 
 Cualquier consideración importante sobre los cálculos realizados o supuestos asumidos.
 
@@ -411,8 +421,8 @@ PROMPT;
 function generateTitle(array $fileNames, array $actions): string
 {
     $actionLabels = [
-        'expenses' => 'Gastos',
-        'hours' => 'Horas'
+        'expenses' => I18n::translate('project_ui.expenses'),
+        'hours' => I18n::translate('project_ui.hours')
     ];
     
     $actionsStr = implode(' + ', array_map(fn($a) => $actionLabels[$a] ?? $a, $actions));
@@ -426,5 +436,5 @@ function generateTitle(array $fileNames, array $actions): string
         return "{$actionsStr}: {$name}";
     }
     
-    return "{$actionsStr}: " . count($fileNames) . " documentos";
+    return "{$actionsStr}: " . count($fileNames) . ' ' . I18n::translate('project_ui.api_documents');
 }

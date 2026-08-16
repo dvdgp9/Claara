@@ -2,6 +2,7 @@
 namespace Repos;
 
 use App\DB;
+use Modules\ModuleEntitlementService;
 use PDO;
 
 class UserFeatureAccessRepo
@@ -17,11 +18,13 @@ class UserFeatureAccessRepo
     ];
 
     private PDO $pdo;
-    private static ?array $availableFeaturesColumns = null;
+    private ModuleEntitlementService $entitlements;
+    private ?array $availableFeaturesColumns = null;
 
-    public function __construct(?PDO $pdo = null)
+    public function __construct(?PDO $pdo = null, ?ModuleEntitlementService $entitlements = null)
     {
         $this->pdo = $pdo ?? DB::pdo();
+        $this->entitlements = $entitlements ?? ModuleEntitlementService::current();
     }
 
     /**
@@ -30,6 +33,10 @@ class UserFeatureAccessRepo
      */
     public function hasAccess(int $userId, string $featureType, string $featureSlug): bool
     {
+        if (!$this->entitlements->isCapabilityEnabled($featureType, $featureSlug)) {
+            return false;
+        }
+
         // Primero verificar si es superadmin
         $stmt = $this->pdo->prepare('SELECT is_superadmin FROM users WHERE id = ?');
         $stmt->execute([$userId]);
@@ -86,7 +93,13 @@ class UserFeatureAccessRepo
             WHERE is_active = 1
             ORDER BY feature_type, sort_order
         ');
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_values(array_filter(
+            $stmt->fetchAll(PDO::FETCH_ASSOC),
+            fn(array $feature): bool => $this->entitlements->isCapabilityEnabled(
+                (string)$feature['feature_type'],
+                (string)$feature['feature_slug']
+            )
+        ));
     }
 
     /**
@@ -124,6 +137,9 @@ class UserFeatureAccessRepo
         // Convertir a mapa para fácil acceso
         $access = [];
         foreach ($rows as $row) {
+            if (!$this->entitlements->isCapabilityEnabled((string)$row['feature_type'], (string)$row['feature_slug'])) {
+                continue;
+            }
             $key = $row['feature_type'] . ':' . $row['feature_slug'];
             $access[$key] = $row['enabled'] == 1;
         }
@@ -159,11 +175,27 @@ class UserFeatureAccessRepo
      */
     public function setAccess(int $userId, string $featureType, string $featureSlug, bool $enabled): bool
     {
-        $stmt = $this->pdo->prepare('
-            INSERT INTO user_feature_access (user_id, feature_type, feature_slug, enabled)
-            VALUES (?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE enabled = VALUES(enabled), updated_at = NOW()
-        ');
+        if (!$this->entitlements->isCapabilityRegistered($featureType, $featureSlug)) {
+            return false;
+        }
+        if ($enabled && !$this->entitlements->isCapabilityEnabled($featureType, $featureSlug)) {
+            return false;
+        }
+
+        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            $stmt = $this->pdo->prepare('
+                INSERT INTO user_feature_access (user_id, feature_type, feature_slug, enabled)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id, feature_type, feature_slug)
+                DO UPDATE SET enabled = excluded.enabled, updated_at = CURRENT_TIMESTAMP
+            ');
+        } else {
+            $stmt = $this->pdo->prepare('
+                INSERT INTO user_feature_access (user_id, feature_type, feature_slug, enabled)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE enabled = VALUES(enabled), updated_at = NOW()
+            ');
+        }
         return $stmt->execute([$userId, $featureType, $featureSlug, $enabled ? 1 : 0]);
     }
 
@@ -180,8 +212,13 @@ class UserFeatureAccessRepo
 
         try {
             foreach ($permissions as $key => $enabled) {
+                if (!is_string($key) || !str_contains($key, ':')) {
+                    throw new \InvalidArgumentException('Invalid capability key');
+                }
                 [$featureType, $featureSlug] = explode(':', $key, 2);
-                $this->setAccess($userId, $featureType, $featureSlug, $enabled);
+                if (!$this->setAccess($userId, $featureType, $featureSlug, (bool)$enabled)) {
+                    throw new \RuntimeException("Capability is not entitled: {$key}");
+                }
             }
             if ($startedTransaction) {
                 $this->pdo->commit();
@@ -200,7 +237,15 @@ class UserFeatureAccessRepo
      */
     public function grantDefaultAccessForNewUser(int $userId): bool
     {
-        return $this->setMultipleAccess($userId, self::DEFAULT_NEW_USER_ACCESS);
+        $entitledDefaults = array_filter(
+            self::DEFAULT_NEW_USER_ACCESS,
+            function (bool $enabled, string $key): bool {
+                [$type, $slug] = explode(':', $key, 2);
+                return !$enabled || $this->entitlements->isCapabilityEnabled($type, $slug);
+            },
+            ARRAY_FILTER_USE_BOTH
+        );
+        return $this->setMultipleAccess($userId, $entitledDefaults);
     }
 
     /**
@@ -213,7 +258,9 @@ class UserFeatureAccessRepo
         try {
             foreach ($features as $f) {
                 if ($f['feature_type'] === $featureType) {
-                    $this->setAccess($userId, $featureType, $f['feature_slug'], true);
+                    if (!$this->setAccess($userId, $featureType, $f['feature_slug'], true)) {
+                        throw new \RuntimeException('Could not enable entitled capability');
+                    }
                 }
             }
             $this->pdo->commit();
@@ -261,6 +308,10 @@ class UserFeatureAccessRepo
             WHERE feature_type = "gesture" AND is_active = 1
             ORDER BY sort_order
         ')->fetchAll(PDO::FETCH_ASSOC);
+        $allGestures = array_values(array_filter(
+            $allGestures,
+            fn(array $gesture): bool => $this->entitlements->isCapabilityEnabled('gesture', (string)$gesture['feature_slug'])
+        ));
 
         if ($user && $user['is_superadmin']) {
             return $allGestures;
@@ -275,7 +326,7 @@ class UserFeatureAccessRepo
         $stmt->execute([$userId]);
         $allowed = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'feature_slug');
 
-        return array_filter($allGestures, fn($g) => in_array($g['feature_slug'], $allowed));
+        return array_values(array_filter($allGestures, fn($g) => in_array($g['feature_slug'], $allowed, true)));
     }
 
     /**
@@ -294,6 +345,10 @@ class UserFeatureAccessRepo
             WHERE feature_type = "voice" AND is_active = 1
             ORDER BY sort_order
         ')->fetchAll(PDO::FETCH_ASSOC);
+        $allVoices = array_values(array_filter(
+            $allVoices,
+            fn(array $voice): bool => $this->entitlements->isCapabilityEnabled('voice', (string)$voice['feature_slug'])
+        ));
 
         if ($user && $user['is_superadmin']) {
             return $allVoices;
@@ -308,7 +363,7 @@ class UserFeatureAccessRepo
         $stmt->execute([$userId]);
         $allowed = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'feature_slug');
 
-        return array_filter($allVoices, fn($v) => in_array($v['feature_slug'], $allowed));
+        return array_values(array_filter($allVoices, fn($v) => in_array($v['feature_slug'], $allowed, true)));
     }
 
     private function availableFeatureSelectColumns(): string
@@ -331,16 +386,24 @@ class UserFeatureAccessRepo
 
     private function availableFeaturesColumns(): array
     {
-        if (self::$availableFeaturesColumns !== null) {
-            return self::$availableFeaturesColumns;
+        if ($this->availableFeaturesColumns !== null) {
+            return $this->availableFeaturesColumns;
         }
 
-        $stmt = $this->pdo->query('SHOW COLUMNS FROM available_features');
-        self::$availableFeaturesColumns = array_map(
-            fn(array $row): string => (string)$row['Field'],
-            $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []
-        );
+        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            $stmt = $this->pdo->query('PRAGMA table_info(available_features)');
+            $this->availableFeaturesColumns = array_map(
+                fn(array $row): string => (string)$row['name'],
+                $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []
+            );
+        } else {
+            $stmt = $this->pdo->query('SHOW COLUMNS FROM available_features');
+            $this->availableFeaturesColumns = array_map(
+                fn(array $row): string => (string)$row['Field'],
+                $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []
+            );
+        }
 
-        return self::$availableFeaturesColumns;
+        return $this->availableFeaturesColumns;
     }
 }

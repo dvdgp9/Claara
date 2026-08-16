@@ -1,0 +1,3 @@
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS locale VARCHAR(10) NULL AFTER last_name;
+

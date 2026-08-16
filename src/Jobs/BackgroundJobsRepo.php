@@ -3,6 +3,7 @@
 namespace Jobs;
 
 use App\DB;
+use Gestures\GestureAccessGuard;
 use PDO;
 
 class BackgroundJobsRepo
@@ -19,6 +20,10 @@ class BackgroundJobsRepo
      */
     public function create(array $data): int
     {
+        $inputData = GestureAccessGuard::captureJobRequirement(
+            (string)($data['job_type'] ?? ''),
+            is_array($data['input_data'] ?? null) ? $data['input_data'] : []
+        );
         $stmt = $this->db->prepare("
             INSERT INTO background_jobs (user_id, job_type, status, input_data, created_at)
             VALUES (:user_id, :job_type, 'pending', :input_data, NOW())
@@ -27,7 +32,7 @@ class BackgroundJobsRepo
         $stmt->execute([
             'user_id' => $data['user_id'],
             'job_type' => $data['job_type'],
-            'input_data' => json_encode($data['input_data'] ?? [])
+            'input_data' => json_encode($inputData)
         ]);
 
         return (int)$this->db->lastInsertId();

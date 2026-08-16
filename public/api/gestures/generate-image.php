@@ -8,18 +8,26 @@
 
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
+function imageApiTranslate(string $key, array $parameters = [], string $fallback = 'Internal server error.'): string
+{
+    try {
+        return \I18n\I18n::translate($key, $parameters);
+    } catch (\Throwable) {
+        return $fallback;
+    }
+}
 set_error_handler(function($errno, $errstr, $errfile, $errline) {
     error_log("PHP Error [$errno]: $errstr in $errfile:$errline");
     header('Content-Type: application/json');
     http_response_code(500);
-    echo json_encode(['error' => ['code' => 'php_error', 'message' => 'Error interno del servidor']]);
+    echo json_encode(['error' => ['code' => 'php_error', 'message' => imageApiTranslate('image_ui.api_internal')]]);
     exit;
 });
 set_exception_handler(function($e) {
     error_log("Exception: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
     header('Content-Type: application/json');
     http_response_code(500);
-    echo json_encode(['error' => ['code' => 'exception', 'message' => 'Error interno del servidor']]);
+    echo json_encode(['error' => ['code' => 'exception', 'message' => imageApiTranslate('image_ui.api_internal')]]);
     exit;
 });
 
@@ -31,32 +39,36 @@ use App\Session;
 use App\Response;
 use Chat\OpenRouterClient;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
 use Repos\UsageLogRepo;
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Invalid session', 401);
+    Response::error('unauthorized', I18n::translate('image_ui.api_unauthorized'), 401);
 }
+
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'image-editor');
 
 // Validar CSRF
 $csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 $csrfSession = $_SESSION['csrf_token'] ?? '';
 if (!$csrfHeader || !$csrfSession || !hash_equals($csrfSession, $csrfHeader)) {
-    Response::error('csrf_invalid', 'Token CSRF inválido', 403);
+    Response::error('csrf_invalid', I18n::translate('image_ui.api_csrf_invalid'), 403);
 }
 
 // Parsear body
 $body = json_decode(file_get_contents('php://input'), true);
 if (!$body) {
-    Response::error('invalid_body', 'Body JSON inválido', 400);
+    Response::error('invalid_body', I18n::translate('image_ui.api_invalid_body'), 400);
 }
 
-$gestureType = $body['gesture_type'] ?? '';
+$gestureType = 'image-editor';
 $prompt = $body['prompt'] ?? '';
 $inputData = $body['input_data'] ?? [];
 
 if (!$gestureType || !$prompt) {
-    Response::error('missing_params', 'Faltan parámetros requeridos', 400);
+    Response::error('missing_params', I18n::translate('image_ui.api_missing_params'), 400);
 }
 
 // Modo de operación: 'generate' o 'edit'
@@ -78,9 +90,10 @@ $qualityGuardrails = " Always produce a high-resolution, sharp, professional res
 $systemInstruction = $mode === 'edit'
     ? "You are an expert image editor focused on instruction fidelity. Perform targeted, minimal, non-destructive edits. Keep all existing elements intact unless the user explicitly asks to modify them. If adding a logo to clothing that already has a logo, preserve the existing logo and place the new logo beside it, keeping realistic scale, perspective, fabric deformation, lighting, and readability." . $qualityGuardrails
     : "You are an expert image generator focused on photorealistic, high-quality outputs that strictly follow user instructions. If the user includes reference images, use them as visual guidance while preserving logo readability, proportion and clean layout hierarchy." . $qualityGuardrails;
+$systemInstruction .= ' ' . I18n::translate('image_ui.output_language');
 
 if ($mode === 'edit' && !$sourceImage) {
-    Response::error('missing_source_image', 'Se requiere una imagen fuente para el modo edición', 400);
+    Response::error('missing_source_image', I18n::translate('image_ui.api_missing_source'), 400);
 }
 
 // Aspect ratio + resolución como parámetros reales del modelo (IMG-2)
@@ -142,7 +155,7 @@ try {
     $images = $client->getLastImages();
     $usedModel = $client->getModel();
 } catch (\Exception $e) {
-    Response::error('llm_error', 'Error al generar imagen: ' . $e->getMessage(), 500);
+    Response::error('llm_error', I18n::translate('image_ui.api_generation_error', ['message' => $e->getMessage()]), 500);
 }
 
 // Extraer imagen base64
@@ -171,7 +184,7 @@ if ($images && is_array($images) && count($images) > 0) {
 }
 
 if (!$imageBase64) {
-    Response::error('no_image', 'El modelo no generó ninguna imagen. Intenta con otra descripción.', 400);
+    Response::error('no_image', I18n::translate('image_ui.api_no_image'), 400);
 }
 
 // Generar título
@@ -189,7 +202,7 @@ $executionId = $repo->create([
     'gesture_type' => $gestureType,
     'title' => $title,
     'input_data' => $inputData,
-    'output_content' => $text ?: 'Imagen generada',
+    'output_content' => $text ?: I18n::translate('image_ui.api_generated'),
     'output_data' => [
         'image' => $imageBase64,
         'image_thumbnail' => $imageThumbnailBase64,
@@ -273,7 +286,7 @@ function generateImageTitle(array $inputData): string
     $description = $inputData['description'] ?? '';
     
     if (!$description) {
-        return 'Imagen generada';
+        return I18n::translate('image_ui.api_generated');
     }
     
     // Tomar las primeras palabras (máx 50 caracteres)

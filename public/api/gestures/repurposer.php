@@ -18,6 +18,7 @@ use App\Response;
 use Audio\ContentExtractor;
 use Content\ContentRepurposer;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
 use Repos\UsageLogRepo;
 
 Session::start();
@@ -26,6 +27,9 @@ $user = Session::user();
 if (!$user) {
     Response::error('unauthorized', 'Not authenticated', 401);
 }
+
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'content-repurposer');
 
 Session::requireCsrf();
 
@@ -40,6 +44,7 @@ $sourceUrl = $body['url'] ?? '';
 $sourceText = $body['text'] ?? '';
 $sourcePdf = $body['pdf_base64'] ?? '';
 $options = $body['options'] ?? [];
+$options['language'] = I18n::locale();
 
 // Soportar tanto formato único como múltiple
 $outputFormats = $body['output_formats'] ?? [];
@@ -52,20 +57,20 @@ if (empty($outputFormats)) {
 
 // Validaciones de entrada
 if ($sourceType === 'url' && empty($sourceUrl)) {
-    Response::error('missing_url', 'Se requiere una URL', 400);
+    Response::error('missing_url', I18n::translate('repurpose_ui.enter_url'), 400);
 }
 if ($sourceType === 'text' && empty($sourceText)) {
-    Response::error('missing_text', 'Se requiere el texto', 400);
+    Response::error('missing_text', I18n::translate('repurpose_ui.enter_text'), 400);
 }
 if ($sourceType === 'pdf' && empty($sourcePdf)) {
-    Response::error('missing_pdf', 'Se requiere el PDF en base64', 400);
+    Response::error('missing_pdf', I18n::translate('repurpose_ui.select_pdf'), 400);
 }
 
 // Validar formatos de salida
 $validFormats = array_keys(ContentRepurposer::getOutputFormats());
 $invalidFormats = array_diff($outputFormats, $validFormats);
 if (!empty($invalidFormats)) {
-    Response::error('invalid_format', 'Formatos no válidos: ' . implode(', ', $invalidFormats), 400);
+    Response::error('invalid_format', I18n::translate('repurpose_ui.invalid_formats', ['formats' => implode(', ', $invalidFormats)]), 400);
 }
 
 try {
@@ -104,7 +109,7 @@ try {
             }
             $content = $result['content'];
             $title = $result['title'];
-            $source = 'Texto';
+            $source = I18n::translate('repurpose_ui.text');
             break;
     }
 
@@ -127,7 +132,7 @@ try {
     $executionId = $repo->create([
         'user_id' => $user['id'],
         'gesture_type' => 'content-repurposer',
-        'title' => $title ?: 'Transformación múltiple',
+        'title' => $title ?: I18n::translate('repurpose_ui.default_title'),
         'input_data' => [
             'source_type' => $sourceType,
             'source' => $source,

@@ -34,6 +34,7 @@ use App\Session;
 use App\Response;
 use Sop\SopGenerator;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
 use Repos\UsageLogRepo;
 use Repos\UserFeatureAccessRepo;
 
@@ -44,16 +45,14 @@ if (!$user) {
     Response::error('unauthorized', 'Not authenticated', 401);
 }
 
+// Verificar acceso al gesto y a su módulo de instancia.
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'sop-generator');
+
 Session::requireCsrf();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     Response::error('method_not_allowed', 'POST only', 405);
-}
-
-// Verificar acceso al gesto
-$accessRepo = new UserFeatureAccessRepo();
-if (!$accessRepo->hasGestureAccess((int)$user['id'], 'sop-generator')) {
-    Response::error('forbidden', 'No tienes acceso a este gesto', 403);
 }
 
 // Parsear body
@@ -67,7 +66,7 @@ $hasContent = !empty($body['text'])
     || (!empty($body['images']) && is_array($body['images']) && count($body['images']) > 0);
 
 if (!$hasContent) {
-    Response::error('missing_content', 'Debes proporcionar al menos una fuente de contenido (texto, URL, PDF, audio o imágenes)', 400);
+    Response::error('missing_content', I18n::translate('sop_ui.source_required'), 400);
 }
 
 // Configurar tiempo límite alto para procesamiento de audio/múltiples fuentes
@@ -132,5 +131,5 @@ try {
     ]);
     
 } catch (\Exception $e) {
-    Response::serverError('server_error', $e, 'Error generando SOP');
+    Response::serverError('server_error', $e, I18n::translate('sop_ui.generation_error', ['message' => I18n::translate('sop_ui.unknown_error')]));
 }

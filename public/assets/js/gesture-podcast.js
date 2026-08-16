@@ -7,6 +7,14 @@
   'use strict';
 
   const GESTURE_TYPE = 'podcast-from-article';
+  const podcastI18n = window.CLAARA_PODCAST_I18N?.messages || {};
+  function podcastT(key, vars = {}) {
+    let value = podcastI18n[`podcast_ui.${key}`] || key;
+    Object.entries(vars).forEach(([name, replacement]) => {
+      value = value.replaceAll(`{${name}}`, String(replacement));
+    });
+    return value;
+  }
   const POLL_INTERVAL_INITIAL = 3000; // 3s al inicio
   const POLL_INTERVAL_LONG = 8000;    // 8s después de 30s
   const POLL_TIMEOUT = 900000;        // 15 min máximo
@@ -82,14 +90,14 @@
       if (!file) return;
       
       if (file.type !== 'application/pdf') {
-        alert('Please select a PDF file');
+        alert(podcastT('select_pdf'));
         return;
       }
       
       const reader = new FileReader();
       reader.onload = (event) => {
         pdfBase64 = event.target.result.split(',')[1];
-        pdfFilename.textContent = `📄 ${file.name}`;
+        pdfFilename.textContent = file.name;
         pdfFilename.classList.remove('hidden');
       };
       reader.readAsDataURL(file);
@@ -113,7 +121,7 @@
       case 'url':
         const url = articleUrl.value.trim();
         if (!url) {
-          alert('Please enter a URL');
+          alert(podcastT('enter_url'));
           return;
         }
         inputData.url = url;
@@ -122,7 +130,7 @@
       case 'text':
         const text = articleText.value.trim();
         if (!text) {
-          alert('Please enter the article text');
+          alert(podcastT('enter_text'));
           return;
         }
         inputData.text = text;
@@ -130,7 +138,7 @@
         
       case 'pdf':
         if (!pdfBase64) {
-          alert('Please select a PDF file');
+          alert(podcastT('select_pdf'));
           return;
         }
         inputData.pdf_base64 = pdfBase64;
@@ -138,7 +146,7 @@
     }
 
     showProgress();
-    updateProgress('Creating task...', 'Preparing podcast generation');
+    updateProgress(podcastT('creating_task'), podcastT('preparing_generation'));
 
     try {
       // Create background job
@@ -160,7 +168,7 @@
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error?.message || data.message || 'Error creating task');
+        throw new Error(data.error?.message || data.message || podcastT('task_error'));
       }
 
       currentJobId = data.job_id;
@@ -170,7 +178,7 @@
       pollStartTime = Date.now();
       
       // Show message so user can navigate while processing
-      updateProgress('Processing...', 'We are creating your podcast. Please wait a few minutes.');
+      updateProgress(podcastT('processing'), podcastT('creating'));
       showNavigationHint();
       
       // Trigger processing and start polling
@@ -187,6 +195,7 @@
   function triggerProcessing() {
     fetch('/api/jobs/process.php', {
       method: 'POST',
+      headers: { 'X-CSRF-Token': getCsrfToken() },
       credentials: 'include'
     }).catch(() => {}); // Ignore errors, background processing will retry.
   }
@@ -204,7 +213,7 @@
         });
         
         if (!res.ok) {
-          throw new Error('Error checking status');
+          throw new Error(podcastT('status_error'));
         }
         
         const data = await res.json();
@@ -213,8 +222,8 @@
         if (job.status === 'processing' || job.status === 'pending') {
           // Update progress
           updateProgress(
-            job.progress_text || 'Processing...',
-            job.status === 'pending' ? 'We are creating your podcast. Please wait a few minutes.' : 'We are creating your podcast. Please wait a few minutes.'
+            job.progress_text || podcastT('processing'),
+            podcastT('creating')
           );
           
           // Slow down polling interval after 30s
@@ -227,7 +236,7 @@
           // Timeout after 15 minutes
           if (elapsed > POLL_TIMEOUT) {
             stopPolling();
-            showError('Generation is taking too long. Check history again in a few minutes.');
+            showError(podcastT('timeout'));
           }
           
         } else if (job.status === 'completed') {
@@ -238,7 +247,7 @@
         } else if (job.status === 'failed') {
           // Failed
           stopPolling();
-          showError(job.error_message || 'Error generating podcast');
+          showError(job.error_message || podcastT('generation_error'));
         }
         
       } catch (err) {
@@ -268,7 +277,7 @@
   async function cancelJob() {
     if (!currentJobId) return;
     
-    if (!confirm('Are you sure you want to cancel podcast generation?')) {
+    if (!confirm(podcastT('cancel_confirm'))) {
       return;
     }
 
@@ -288,27 +297,27 @@
 
       if (res.ok && data.success) {
         stopPolling();
-        showToast('Generation canceled', 'info');
+        showToast(podcastT('canceled'), 'info');
         resetUI();
       } else {
-        showToast('Error canceling: ' + (data.error?.message || 'Unknown error'), 'error');
+        showToast(podcastT('cancel_error', { message: data.error?.message || podcastT('unknown_error') }), 'error');
       }
     } catch (err) {
       console.error('Error cancelando job:', err);
-      showToast('Connection error while canceling', 'error');
+      showToast(podcastT('cancel_connection_error'), 'error');
     }
   }
 
   // Handle completed job
   async function handleJobCompleted(outputData) {
     if (!outputData) {
-      showError('No podcast data was received');
+      showError(podcastT('no_data'));
       return;
     }
     
     const audioUrl = outputData.audio_url;
     if (!audioUrl) {
-      showError('No audio URL was received');
+      showError(podcastT('no_audio'));
       return;
     }
     
@@ -317,7 +326,7 @@
 
     // Update UI immediately
     audioPlayer.src = audioUrl;
-    podcastTitle.textContent = outputData.title || 'Generated podcast';
+    podcastTitle.textContent = outputData.title || podcastT('generated');
     podcastSummary.textContent = outputData.summary || '';
     podcastScript.innerHTML = mdToHtml(formatScript(outputData.script_display || outputData.script));
 
@@ -325,13 +334,13 @@
     loadHistory();
     
     // Toast notification
-    showToast('Your podcast is ready!', 'success');
+    showToast(podcastT('ready'), 'success');
 
     // Fetch blob for background download prep (non-blocking UI)
     if (downloadBtn) {
       downloadBtn.disabled = true;
       downloadBtn.classList.add('opacity-50', 'cursor-wait');
-      downloadBtn.innerHTML = '<i class="iconoir-refresh animate-spin text-xs"></i> Preparing...';
+      downloadBtn.innerHTML = `<i class="iconoir-refresh animate-spin text-xs"></i> ${escapeHtml(podcastT('preparing'))}`;
     }
 
     try {
@@ -340,7 +349,7 @@
       if (downloadBtn) {
         downloadBtn.disabled = false;
         downloadBtn.classList.remove('opacity-50', 'cursor-wait');
-        downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
+        downloadBtn.innerHTML = `<i class="iconoir-download"></i> ${escapeHtml(podcastT('download'))}`;
       }
     } catch (e) {
       console.error('Error preloading blob after generation:', e);
@@ -348,7 +357,7 @@
       if (downloadBtn) {
         downloadBtn.disabled = false;
         downloadBtn.classList.remove('opacity-50', 'cursor-wait');
-        downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
+        downloadBtn.innerHTML = `<i class="iconoir-download"></i> ${escapeHtml(podcastT('download'))}`;
       }
     }
   }
@@ -362,7 +371,7 @@
       hint.className = 'mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-700 flex items-center gap-2';
       hint.innerHTML = `
         <i class="iconoir-info-circle"></i>
-        <span>You can navigate to other sections and return in a few minutes.</span>
+        <span>${escapeHtml(podcastT('navigate_hint'))}</span>
       `;
       if (progressPanel) {
         progressPanel.appendChild(hint);
@@ -432,7 +441,7 @@
     if (errorPanel) errorPanel.classList.add('hidden');
     if (generateBtn) {
       generateBtn.disabled = true;
-      generateBtn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Generating...';
+      generateBtn.innerHTML = `<i class="iconoir-refresh animate-spin"></i> ${escapeHtml(podcastT('processing'))}`;
     }
   }
 
@@ -448,7 +457,7 @@
     if (podcastResult) podcastResult.classList.remove('hidden');
     if (generateBtn) {
       generateBtn.disabled = false;
-      generateBtn.innerHTML = '<i class="iconoir-sparks"></i> <span>Generate Podcast</span>';
+      generateBtn.innerHTML = `<i class="iconoir-sparks"></i> <span>${escapeHtml(podcastT('generate'))}</span>`;
     }
   }
 
@@ -459,7 +468,7 @@
     if (errorMessage) errorMessage.textContent = message;
     if (generateBtn) {
       generateBtn.disabled = false;
-      generateBtn.innerHTML = '<i class="iconoir-sparks"></i> <span>Generate Podcast</span>';
+      generateBtn.innerHTML = `<i class="iconoir-sparks"></i> <span>${escapeHtml(podcastT('generate'))}</span>`;
     }
   }
 
@@ -470,7 +479,7 @@
     if (podcastResult) podcastResult.classList.add('hidden');
     if (generateBtn) {
       generateBtn.disabled = false;
-      generateBtn.innerHTML = '<i class="iconoir-sparks"></i> <span>Generate Podcast</span>';
+      generateBtn.innerHTML = `<i class="iconoir-sparks"></i> <span>${escapeHtml(podcastT('generate'))}</span>`;
     }
 
     articleUrl.value = '';
@@ -490,7 +499,7 @@
       if (savedId) {
         // Show panel and resume polling via API.
         showProgress();
-        updateProgress('Processing...', 'Recovering active podcast status...');
+        updateProgress(podcastT('processing'), podcastT('recovering'));
         checkActiveJobs();
         return;
       }
@@ -536,8 +545,8 @@
           pollStartTime = Date.now() - 30000; // Assume it has already been running.
           showProgress();
           updateProgress(
-            podcastJob.progress_text || 'Processing...',
-            'Recovering active podcast status...'
+            podcastJob.progress_text || podcastT('processing'),
+            podcastT('recovering')
           );
           showNavigationHint();
           startPolling();
@@ -557,13 +566,13 @@
       const data = await res.json();
 
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Could not load</div>';
+        historyList.innerHTML = `<div class="p-4 text-center text-red-500 text-sm">${escapeHtml(podcastT('could_not_load'))}</div>`;
         return;
       }
 
       renderHistory(data.items || []);
     } catch (err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Connection error</div>';
+      historyList.innerHTML = `<div class="p-4 text-center text-red-500 text-sm">${escapeHtml(podcastT('connection_error'))}</div>`;
     }
   }
 
@@ -574,8 +583,8 @@
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-podcast text-xl text-orange-400"></i>
           </div>
-          <p class="text-sm text-slate-500">You have not created podcasts yet</p>
-          <p class="text-xs text-slate-400 mt-1">Use the form to get started</p>
+          <p class="text-sm text-slate-500">${escapeHtml(podcastT('no_history'))}</p>
+          <p class="text-xs text-slate-400 mt-1">${escapeHtml(podcastT('no_history_help'))}</p>
         </div>
       `;
       return;
@@ -596,7 +605,7 @@
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="${escapeHtml(podcastT('delete'))}">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -626,7 +635,7 @@
       const data = await res.json();
 
       if (!res.ok || !data.execution) {
-        alert('Could not load the podcast');
+        alert(podcastT('load_error'));
         return;
       }
 
@@ -656,7 +665,7 @@
         if (downloadBtn) {
           downloadBtn.disabled = true;
           downloadBtn.classList.add('opacity-50', 'cursor-wait');
-          downloadBtn.innerHTML = '<i class="iconoir-refresh animate-spin text-xs"></i> Preparing...';
+          downloadBtn.innerHTML = `<i class="iconoir-refresh animate-spin text-xs"></i> ${escapeHtml(podcastT('preparing'))}`;
         }
 
         fetch(outputData.audio_url, { credentials: 'include' })
@@ -666,7 +675,7 @@
             if (downloadBtn) {
               downloadBtn.disabled = false;
               downloadBtn.classList.remove('opacity-50', 'cursor-wait');
-              downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
+              downloadBtn.innerHTML = `<i class="iconoir-download"></i> ${escapeHtml(podcastT('download'))}`;
             }
           })
           .catch(e => {
@@ -675,19 +684,19 @@
             if (downloadBtn) {
               downloadBtn.disabled = false;
               downloadBtn.classList.remove('opacity-50', 'cursor-wait');
-              downloadBtn.innerHTML = '<i class="iconoir-download"></i> Download';
+              downloadBtn.innerHTML = `<i class="iconoir-download"></i> ${escapeHtml(podcastT('download'))}`;
             }
           });
       } else {
         showResult();
       }
     } catch (err) {
-      alert('Could not load the podcast');
+      alert(podcastT('load_error'));
     }
   }
 
   async function deleteExecution(id) {
-    if (!confirm('Delete this podcast from history?')) return;
+    if (!confirm(podcastT('delete_confirm'))) return;
 
     try {
       const csrfToken = getCsrfToken();
@@ -705,7 +714,7 @@
         loadHistory();
       }
     } catch (err) {
-      alert('Error deleting');
+      alert(podcastT('delete_error'));
     }
   }
 
@@ -765,11 +774,11 @@
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Ahora';
-    if (diffMins < 60) return `Hace ${diffMins} min`;
-    if (diffHours < 24) return `Hace ${diffHours}h`;
-    if (diffDays < 7) return `Hace ${diffDays}d`;
-    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    if (diffMins < 1) return podcastT('just_now');
+    if (diffMins < 60) return podcastT('minutes_ago', { count: diffMins });
+    if (diffHours < 24) return podcastT('hours_ago', { count: diffHours });
+    if (diffDays < 7) return podcastT('days_ago', { count: diffDays });
+    return date.toLocaleDateString(document.documentElement.lang || 'en', { day: 'numeric', month: 'short' });
   }
   window.resetUI = resetUI;
 })();

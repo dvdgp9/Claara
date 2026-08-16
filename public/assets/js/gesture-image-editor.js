@@ -7,6 +7,14 @@
 
   const GESTURE_TYPE = 'image-editor';
   const MAX_GENERATE_REFERENCES = 4;
+  const imageI18n = window.CLAARA_IMAGE_I18N?.messages || {};
+  function imageT(key, vars = {}) {
+    let value = imageI18n[`image_ui.${key}`] || key;
+    Object.entries(vars).forEach(([name, replacement]) => {
+      value = value.replaceAll(`{${name}}`, String(replacement));
+    });
+    return value;
+  }
 
   const descriptionField = document.getElementById('image-description');
   const generateBtn = document.getElementById('generate-image-btn');
@@ -67,37 +75,37 @@
   const intentConfig = {
     'from-scratch': {
       mode: 'generate',
-      placeholder: 'Describe the image you want to create...',
+      placeholder: imageT('description_placeholder'),
       defaultDescription: '',
       promptHint: '',
       preset: {}
     },
     'edit-image': {
       mode: 'edit',
-      placeholder: 'Describe the changes you want to make to the base image...',
+      placeholder: imageT('edit_placeholder'),
       defaultDescription: '',
       promptHint: '',
       preset: {}
     },
     'corporate-image': {
       mode: 'generate',
-      placeholder: 'Describe the corporate scene (context, people, message)...',
-      defaultDescription: 'Escena corporativa moderna, limpia y profesional para comunicacion de marca',
-      promptHint: 'Busca composicion limpia con espacio util para copy.',
+      placeholder: imageT('corporate_placeholder'),
+      defaultDescription: imageT('corporate_default'),
+      promptHint: imageT('corporate_hint'),
       preset: { style: 'corporate', composition: 'negative-space', lighting: 'soft', color: 'corporate', format: '16:9' }
     },
     'product-mockup': {
       mode: 'generate',
-      placeholder: 'Describe el producto o mockup (materiales, entorno, enfoque)...',
-      defaultDescription: 'Presentacion de producto premium en entorno limpio',
-      promptHint: 'Mantener detalle, textura y acabado comercial.',
+      placeholder: imageT('product_placeholder'),
+      defaultDescription: imageT('product_default'),
+      promptHint: imageT('product_hint'),
       preset: { style: 'luxury-product', composition: 'macro', lighting: 'studio', color: '', format: '4:3' }
     },
     'poster-logos': {
       mode: 'generate',
-      placeholder: 'Describe el cartel y como integrar los logos subidos...',
-      defaultDescription: 'Cartel corporativo moderno integrando los logos de referencia',
-      promptHint: 'Upload logos and define hierarchy, placement, and visual balance.',
+      placeholder: imageT('poster_placeholder'),
+      defaultDescription: imageT('poster_default'),
+      promptHint: imageT('poster_hint'),
       preset: { style: 'corporate', composition: 'wide', lighting: 'soft', color: 'corporate', format: '4:3' }
     }
   };
@@ -153,6 +161,46 @@
     '4:3': 'Landscape format (4:3).',
     '16:9': 'Widescreen format (16:9).',
     '9:16': 'Vertical format (9:16).'
+  };
+
+  const summaryOptionLabels = {
+    style: {
+      photographic: imageT('photographic'),
+      'digital-art': imageT('digital_art'),
+      corporate: imageT('corporate_style'),
+      minimalist: imageT('minimalist'),
+      '3d-render': imageT('render_3d'),
+      'flat-design': imageT('flat_design'),
+      isometric: imageT('isometric'),
+      'luxury-product': imageT('luxury_product')
+    },
+    composition: {
+      bokeh: imageT('bokeh'),
+      closeup: imageT('close_up'),
+      wide: imageT('wide_shot'),
+      above: imageT('top_down'),
+      below: imageT('low_angle'),
+      macro: imageT('macro'),
+      'negative-space': imageT('negative_space')
+    },
+    lighting: {
+      natural: imageT('natural'),
+      studio: imageT('studio'),
+      dramatic: imageT('dramatic'),
+      soft: imageT('soft'),
+      golden: imageT('golden_hour'),
+      backlight: imageT('backlight'),
+      volumetric: imageT('volumetric')
+    },
+    color: {
+      warm: imageT('warm'),
+      cool: imageT('cool'),
+      corporate: imageT('corporate_style'),
+      monochrome: imageT('monochrome'),
+      pastel: imageT('pastel'),
+      bw: imageT('black_white'),
+      vibrant: imageT('vibrant')
+    }
   };
 
   function getCurrentIntent() {
@@ -223,14 +271,14 @@
 
     if (descriptionField && !fromIntent) {
       descriptionField.placeholder = isGenerate
-        ? 'Describe the image you want to create...'
-        : 'Describe the changes: "Add sunglasses", "Change the background"...';
+        ? imageT('description_placeholder')
+        : imageT('edit_placeholder');
     }
 
     if (generateBtn) {
       generateBtn.innerHTML = isGenerate
-        ? '<i class="iconoir-sparks"></i><span class="hidden sm:inline">Generate</span>'
-        : '<i class="iconoir-edit"></i><span class="hidden sm:inline">Edit</span>';
+        ? `<i class="iconoir-sparks"></i><span class="hidden sm:inline">${escapeHtml(imageT('generate'))}</span>`
+        : `<i class="iconoir-edit"></i><span class="hidden sm:inline">${escapeHtml(imageT('edit'))}</span>`;
     }
 
     generateReferencesSection?.classList.toggle('hidden', !isGenerate);
@@ -264,7 +312,7 @@
         sourceImageClear?.classList.remove('hidden');
         clearError();
       }).catch(() => {
-        showError('Select a valid image to use as a base.');
+        showError(imageT('invalid_base'));
       });
     });
 
@@ -300,7 +348,7 @@
         targetImagePlaceholder?.classList.add('hidden');
         targetImageClear?.classList.remove('hidden');
       }).catch(() => {
-        showError('Select a valid reference image.');
+        showError(imageT('invalid_target'));
       });
     });
 
@@ -338,7 +386,7 @@
 
       const availableSlots = MAX_GENERATE_REFERENCES - generateReferenceImages.length;
       if (availableSlots <= 0) {
-        showError('Ya tienes 4 referencias. Quita una para subir otra.');
+        showError(imageT('reference_limit'));
         return;
       }
 
@@ -350,10 +398,10 @@
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             base64: result.base64,
             dataUrl: result.dataUrl,
-            name: file.name || 'referencia'
+            name: file.name || imageT('reference_name')
           });
         } catch (_e) {
-          showError('One reference is invalid. Use image files.');
+          showError(imageT('invalid_reference'));
         }
       }
       if (generateReferenceInput) generateReferenceInput.value = '';
@@ -370,18 +418,18 @@
     if (generateReferenceCount) {
       const n = generateReferenceImages.length;
       generateReferenceCount.textContent = n === 0
-        ? '(optional · max 4)'
+        ? imageT('optional_max_four')
         : `(${n}/4)`;
     }
 
     if (generateReferenceImages.length === 0) {
-      generateReferenceList.innerHTML = '<div class="col-span-full text-[11px] text-slate-400 pt-1">No references uploaded. Useful for posters with logos, palettes, or style.</div>';
+      generateReferenceList.innerHTML = `<div class="col-span-full text-[11px] text-slate-400 pt-1">${escapeHtml(imageT('no_references'))}</div>`;
       return;
     }
 
     generateReferenceList.innerHTML = generateReferenceImages.map((item, idx) => `
       <div class="relative border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
-        <img src="${item.dataUrl}" alt="Referencia ${idx + 1}" class="w-full h-20 object-cover" />
+        <img src="${item.dataUrl}" alt="${escapeHtml(imageT('reference_alt', { count: idx + 1 }))}" class="w-full h-20 object-cover" />
         <button type="button" class="remove-generate-reference absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center" data-id="${item.id}">
           <i class="iconoir-xmark text-[10px]"></i>
         </button>
@@ -483,20 +531,22 @@
 
     const parts = [];
     if (format) parts.push(format);
-    if (style) parts.push(style);
-    if (composition) parts.push(composition);
-    if (lighting) parts.push(lighting);
-    if (color) parts.push(color);
+    if (style) parts.push(summaryOptionLabels.style[style] || style);
+    if (composition) parts.push(summaryOptionLabels.composition[composition] || composition);
+    if (lighting) parts.push(summaryOptionLabels.lighting[lighting] || lighting);
+    if (color) parts.push(summaryOptionLabels.color[color] || color);
 
     if (mode === 'generate' && generateReferenceImages.length > 0) {
-      parts.push(`${generateReferenceImages.length} ref${generateReferenceImages.length > 1 ? 's' : ''}`);
+      parts.push(generateReferenceImages.length === 1
+        ? imageT('references_summary_one')
+        : imageT('references_summary_many', { count: generateReferenceImages.length }));
     }
     if (mode === 'edit' && sourceImageBase64) {
-      parts.push(targetImageBase64 ? 'con objetivo' : 'base cargada');
+      parts.push(targetImageBase64 ? imageT('with_target') : imageT('base_loaded'));
     }
 
     summaryText.textContent = parts.length === 0
-      ? 'Automatic settings'
+      ? imageT('automatic_settings')
       : parts.join(' · ');
   }
 
@@ -511,7 +561,7 @@
     if (options.lighting && lightingMap[options.lighting]) specs.push(lightingMap[options.lighting]);
     if (options.composition && compositionMap[options.composition]) specs.push(compositionMap[options.composition]);
 
-    let prompt = `Create a high-quality image based on this request in Spanish context: ${description}.`;
+    let prompt = `Create a high-quality image based on this request: ${description}.`;
     if (cfg.promptHint) {
       prompt += `\nCreative direction: ${cfg.promptHint}`;
     }
@@ -561,10 +611,10 @@
 
   function startLoadingTicker() {
     const steps = [
-      'Analizando instrucciones',
-      'Ajustando composicion',
-      'Refinando color e iluminacion',
-      'Preparando resultado final'
+      imageT('loading_analyzing'),
+      imageT('loading_composition'),
+      imageT('loading_color'),
+      imageT('loading_final')
     ];
     loadingTickerIndex = 0;
     if (loadingDetail) loadingDetail.textContent = steps[0];
@@ -588,13 +638,13 @@
 
     if (!description) {
       showError(mode === 'generate'
-        ? 'Describe the image you want to create.'
-        : 'Describe the changes you want to apply to the base image.');
+        ? imageT('describe_generate')
+        : imageT('describe_edit'));
       descriptionField?.focus();
       return;
     }
     if (mode === 'edit' && !sourceImageBase64) {
-      showError('Upload a base image to use edit mode.');
+      showError(imageT('upload_base'));
       return;
     }
 
@@ -637,10 +687,10 @@
     imageLoading?.classList.remove('hidden');
 
     if (generateBtn) generateBtn.disabled = true;
-    if (loadingTitle) loadingTitle.textContent = inputData.mode === 'edit' ? 'Editing image...' : 'Generating image...';
+    if (loadingTitle) loadingTitle.textContent = inputData.mode === 'edit' ? imageT('editing') : imageT('generating');
     if (loadingMeta) {
       const refs = Array.isArray(inputData.reference_images) ? inputData.reference_images.length : 0;
-      loadingMeta.textContent = refs > 0 ? `Referencias activas: ${refs}` : '';
+      loadingMeta.textContent = refs > 0 ? imageT('active_references', { count: refs }) : '';
     }
     startLoadingTicker();
 
@@ -658,7 +708,7 @@
       if (generateBtn) generateBtn.disabled = false;
 
       if (!res.ok || !data.image) {
-        showError(data.error?.message || 'We could not generate the image. Try adjusting the prompt.');
+        showError(data.error?.message || imageT('generation_error'));
         if (currentModeInput?.value === 'edit') {
           editSourceSection?.classList.remove('hidden');
         } else {
@@ -683,7 +733,7 @@
       stopLoadingTicker();
       imageLoading?.classList.add('hidden');
       if (generateBtn) generateBtn.disabled = false;
-      showError('Connection error while generating the image.');
+      showError(imageT('generation_connection_error'));
       if (currentModeInput?.value === 'edit') {
         editSourceSection?.classList.remove('hidden');
       } else {
@@ -694,7 +744,7 @@
 
   function useCurrentImageAsEditBase() {
     if (!currentImageBase64) {
-      showError('This image cannot be used as an edit base because it does not include reusable base64.');
+      showError(imageT('unusable_base'));
       return;
     }
     sourceImageBase64 = currentImageBase64;
@@ -729,12 +779,12 @@
       const res = await fetch(`/api/gestures/history.php?type=${GESTURE_TYPE}&limit=12`, { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Could not load history</div>';
+        historyList.innerHTML = `<div class="p-4 text-center text-red-500 text-sm">${escapeHtml(imageT('history_load_error'))}</div>`;
         return;
       }
       renderHistory(data.items || []);
     } catch (_err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Connection error</div>';
+      historyList.innerHTML = `<div class="p-4 text-center text-red-500 text-sm">${escapeHtml(imageT('connection_error'))}</div>`;
     }
   }
 
@@ -746,17 +796,17 @@
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-media-image text-xl text-slate-400"></i>
           </div>
-          <p class="text-sm text-slate-500">You have not generated images yet</p>
-          <p class="text-xs text-slate-400 mt-1">Empieza con una intencion arriba</p>
+          <p class="text-sm text-slate-500">${escapeHtml(imageT('no_history'))}</p>
+          <p class="text-xs text-slate-400 mt-1">${escapeHtml(imageT('no_history_help'))}</p>
         </div>
       `;
       return;
     }
 
     historyList.innerHTML = items.map(item => {
-      const title = escapeHtml(item.title || 'Imagen generada');
+      const title = escapeHtml(item.title || imageT('generated_title'));
       const timeAgo = formatTimeAgo(new Date(item.created_at));
-      const mode = item.mode === 'edit' ? 'Edit' : 'Generate';
+      const mode = item.mode === 'edit' ? imageT('mode_edit') : imageT('mode_generate');
       return `
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2" data-id="${item.id}">
           <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
@@ -769,7 +819,7 @@
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" data-id="${item.id}" title="Delete">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" data-id="${item.id}" title="${escapeHtml(imageT('delete'))}">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -793,7 +843,7 @@
       const res = await fetch(`/api/gestures/get.php?id=${id}`, { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.execution) {
-        showError('Could not load this image.');
+        showError(imageT('load_error'));
         return;
       }
 
@@ -822,7 +872,7 @@
           imagePlaceholder?.classList.remove('hidden');
           editSourceSection?.classList.add('hidden');
         }
-        showError('This entry does not contain a recoverable image from history.');
+        showError(imageT('history_image_missing'));
       }
 
       if (outputData.text && imageCaption) {
@@ -856,12 +906,12 @@
       if (currentImageSrc) clearError();
       lastInputData = inputData;
     } catch (_err) {
-      showError('Connection error al cargar la imagen.');
+      showError(imageT('connection_error'));
     }
   }
 
   async function deleteExecution(id) {
-    if (!confirm('Delete this image from history?')) return;
+    if (!confirm(imageT('delete_confirm'))) return;
     try {
       const res = await fetch('/api/gestures/delete.php', {
         method: 'POST',
@@ -871,12 +921,12 @@
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
-        showError('Could not delete the image.');
+        showError(imageT('delete_error'));
         return;
       }
       await loadHistory();
     } catch (_err) {
-      showError('Connection error al eliminar.');
+      showError(imageT('connection_error'));
     }
   }
 
@@ -913,12 +963,12 @@
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return 'now';
-    if (diffMins < 60) return `hace ${diffMins} min`;
-    if (diffHours < 24) return `hace ${diffHours}h`;
-    if (diffDays === 1) return 'yesterday';
-    if (diffDays < 7) return `hace ${diffDays} dias`;
-    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    if (diffMins < 1) return imageT('just_now');
+    if (diffMins < 60) return imageT('minutes_ago', { count: diffMins });
+    if (diffHours < 24) return imageT('hours_ago', { count: diffHours });
+    if (diffDays === 1) return imageT('yesterday');
+    if (diffDays < 7) return imageT('days_ago', { count: diffDays });
+    return date.toLocaleDateString(document.documentElement.lang || 'en', { day: 'numeric', month: 'short' });
   }
 
   function escapeHtml(text) {

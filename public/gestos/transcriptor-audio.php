@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 
 Session::start();
@@ -24,48 +25,16 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'All gestures';
-$headerTitle = 'Audio transcriber';
+$headerBackText = I18n::translate('transcribe_ui.all_gestures');
+$headerTitle = I18n::translate('transcribe_ui.title');
 $headerIcon = 'iconoir-microphone';
 $headerIconColor = 'from-purple-500 to-indigo-600';
 $headerDrawerId = 'transcriber-history-drawer';
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(I18n::htmlLang()) ?>">
 <?php include __DIR__ . '/../includes/head.php'; ?>
-<body class="bg-mesh text-slate-900 overflow-hidden">
-  <style>
-    .audio-drop-zone {
-      border: 2px dashed #cbd5e1;
-      transition: all 0.2s ease;
-    }
-    .audio-drop-zone.dragover {
-      border-color: #8b5cf6;
-      background: rgba(139, 92, 246, 0.05);
-    }
-    .audio-drop-zone:hover {
-      border-color: #a78bfa;
-    }
-    .history-item.active {
-      background-color: rgba(139, 92, 246, 0.05);
-      border-left: 3px solid #8b5cf6;
-    }
-    .history-item.active p {
-      color: #7c3aed;
-      font-weight: 600;
-    }
-    @keyframes pulse-wave {
-      0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
-      50% { transform: scaleY(1); opacity: 1; }
-    }
-    .wave-bar {
-      animation: pulse-wave 1s ease-in-out infinite;
-    }
-    .wave-bar:nth-child(2) { animation-delay: 0.1s; }
-    .wave-bar:nth-child(3) { animation-delay: 0.2s; }
-    .wave-bar:nth-child(4) { animation-delay: 0.3s; }
-    .wave-bar:nth-child(5) { animation-delay: 0.4s; }
-  </style>
-  <div class="min-h-screen flex h-screen">
+<body class="transcriber-page bg-mesh text-slate-900 overflow-hidden">
+  <div class="min-h-[100dvh] flex h-[100dvh]">
     <?php include __DIR__ . '/../includes/left-tabs.php'; ?>
     
     <!-- Sidebar de historial (solo desktop) -->
@@ -74,7 +43,7 @@ $headerDrawerId = 'transcriber-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-purple-500"></i>
-            History
+            <?= htmlspecialchars(I18n::translate('transcribe_ui.history')) ?>
           </h2>
         </div>
       </div>
@@ -82,7 +51,7 @@ $headerDrawerId = 'transcriber-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Loading...
+          <?= htmlspecialchars(I18n::translate('transcribe_ui.loading')) ?>
         </div>
       </div>
     </aside>
@@ -90,7 +59,7 @@ $headerDrawerId = 'transcriber-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'transcriber-history-drawer';
-    $drawerTitle = 'History';
+    $drawerTitle = I18n::translate('transcribe_ui.history');
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-purple-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -107,10 +76,10 @@ $headerDrawerId = 'transcriber-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 mb-2">
-              Audio transcriber
+              <?= htmlspecialchars(I18n::translate('transcribe_ui.title')) ?>
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Convert audio files into text. Upload voice recordings, interviews, meetings, or voice notes and get an accurate transcription.
+              <?= htmlspecialchars(I18n::translate('transcribe_ui.subtitle')) ?>
             </p>
           </div>
 
@@ -122,7 +91,7 @@ $headerDrawerId = 'transcriber-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-3">
                   <i class="iconoir-upload text-purple-500 mr-1"></i>
-                  Audio file
+                  <?= htmlspecialchars(I18n::translate('transcribe_ui.audio_file')) ?>
                 </label>
                 
                 <div id="drop-zone" class="audio-drop-zone rounded-xl p-8 text-center cursor-pointer">
@@ -133,11 +102,11 @@ $headerDrawerId = 'transcriber-history-drawer';
                       <i class="iconoir-music-double-note text-3xl text-purple-500"></i>
                     </div>
                     <div>
-                      <p class="text-slate-700 font-medium">Drag an audio file here</p>
-                      <p class="text-sm text-slate-500">or click to select</p>
+                      <p class="text-slate-700 font-medium"><?= htmlspecialchars(I18n::translate('transcribe_ui.drop_file')) ?></p>
+                      <p class="text-sm text-slate-500"><?= htmlspecialchars(I18n::translate('transcribe_ui.or_select')) ?></p>
                     </div>
                     <p class="text-xs text-slate-400">
-                      Formats: MP3, WAV, M4A, WebM, OGG • Max 50MB
+                      <?= htmlspecialchars(I18n::translate('transcribe_ui.formats')) ?>
                     </p>
                   </div>
                   
@@ -169,7 +138,7 @@ $headerDrawerId = 'transcriber-history-drawer';
                              disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
                              flex items-center justify-center gap-2">
                 <i class="iconoir-microphone"></i>
-                <span>Transcribe audio</span>
+                <span><?= htmlspecialchars(I18n::translate('transcribe_ui.transcribe')) ?></span>
               </button>
               
             </form>
@@ -185,8 +154,8 @@ $headerDrawerId = 'transcriber-history-drawer';
                 <div class="wave-bar w-1 h-8 bg-purple-500 rounded-full"></div>
                 <div class="wave-bar w-1 h-8 bg-purple-500 rounded-full"></div>
               </div>
-              <p class="text-slate-600 font-medium">Transcribing audio...</p>
-              <p class="text-sm text-slate-500">This may take a few seconds depending on duration</p>
+              <p class="text-slate-600 font-medium"><?= htmlspecialchars(I18n::translate('transcribe_ui.transcribing')) ?></p>
+              <p class="text-sm text-slate-500"><?= htmlspecialchars(I18n::translate('transcribe_ui.transcribing_help')) ?></p>
             </div>
           </section>
 
@@ -202,11 +171,11 @@ $headerDrawerId = 'transcriber-history-drawer';
                 </div>
                 <div class="flex items-center gap-2 text-slate-600">
                   <i class="iconoir-text text-purple-500"></i>
-                  <span id="result-words">-- words</span>
+                  <span id="result-words"><?= htmlspecialchars(I18n::translate('transcribe_ui.words', ['count' => '—'])) ?></span>
                 </div>
                 <div class="flex items-center gap-2 text-slate-600">
                   <i class="iconoir-page text-purple-500"></i>
-                  <span id="result-chars">-- characters</span>
+                  <span id="result-chars"><?= htmlspecialchars(I18n::translate('transcribe_ui.characters', ['count' => '—'])) ?></span>
                 </div>
               </div>
             </div>
@@ -216,13 +185,13 @@ $headerDrawerId = 'transcriber-history-drawer';
               <div class="p-4 border-b border-slate-200/50 flex items-center justify-between">
                 <h3 class="font-semibold text-slate-800 flex items-center gap-2">
                   <i class="iconoir-page-edit text-purple-500"></i>
-                  Transcription
+                  <?= htmlspecialchars(I18n::translate('transcribe_ui.transcription')) ?>
                 </h3>
                 <div class="flex items-center gap-2">
-                  <button id="copy-btn" class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all" title="Copy">
+                  <button id="copy-btn" class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all" title="<?= htmlspecialchars(I18n::translate('transcribe_ui.copy')) ?>">
                     <i class="iconoir-copy"></i>
                   </button>
-                  <button id="download-txt-btn" class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all" title="Download TXT">
+                  <button id="download-txt-btn" class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all" title="<?= htmlspecialchars(I18n::translate('transcribe_ui.download_txt')) ?>">
                     <i class="iconoir-download"></i>
                   </button>
                 </div>
@@ -236,7 +205,7 @@ $headerDrawerId = 'transcriber-history-drawer';
             <button id="new-transcription-btn" 
                     class="w-full py-3 rounded-xl font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 transition-all flex items-center justify-center gap-2">
               <i class="iconoir-plus"></i>
-              New transcription
+              <?= htmlspecialchars(I18n::translate('transcribe_ui.new')) ?>
             </button>
             
           </section>
@@ -250,8 +219,17 @@ $headerDrawerId = 'transcriber-history-drawer';
   <?php include __DIR__ . '/../includes/bottom-nav.php'; ?>
 
   <script>
+    window.CLAARA_TRANSCRIBE_I18N = <?= I18n::javascriptCatalogPrefixJson('transcribe_ui.') ?>;
     const csrf = '<?= htmlspecialchars($csrfToken) ?>';
     const gestureType = 'audio-transcriber';
+    const transcribeI18n = window.CLAARA_TRANSCRIBE_I18N?.messages || {};
+    function transcribeT(key, vars = {}) {
+      let value = transcribeI18n[`transcribe_ui.${key}`] || key;
+      Object.entries(vars).forEach(([name, replacement]) => {
+        value = value.replaceAll(`{${name}}`, String(replacement));
+      });
+      return value;
+    }
     
     // DOM Elements
     const dropZone = document.getElementById('drop-zone');
@@ -329,13 +307,13 @@ $headerDrawerId = 'transcriber-history-drawer';
       const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/wave', 'audio/x-wav', 
                           'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/webm', 'audio/ogg'];
       if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a|webm|ogg)$/i)) {
-        alert('Unsupported format. Use: MP3, WAV, M4A, WebM, OGG');
+        alert(transcribeT('invalid_format'));
         return;
       }
       
       // Validate file size
       if (file.size > 50 * 1024 * 1024) {
-        alert('File is too large. Maximum 50MB.');
+        alert(transcribeT('file_too_large'));
         return;
       }
       
@@ -393,17 +371,17 @@ $headerDrawerId = 'transcriber-history-drawer';
         const data = await response.json();
         
         if (!data.success) {
-          throw new Error(data.error?.message || 'Transcription error');
+          throw new Error(data.error?.message || transcribeT('transcription_error'));
         }
 
         if (data.async && data.job_id) {
           startJobPolling(parseInt(data.job_id, 10));
         } else {
-          throw new Error('Invalid async response: missing job_id');
+          throw new Error(transcribeT('invalid_async'));
         }
         
       } catch (err) {
-        alert('Error: ' + err.message);
+        alert(transcribeT('error', { message: err.message }));
         loadingSection.classList.add('hidden');
         uploadSection.classList.remove('hidden');
       }
@@ -449,7 +427,7 @@ $headerDrawerId = 'transcriber-history-drawer';
     function startJobPolling(jobId) {
       currentJobId = jobId;
       sessionStorage.setItem('audio_transcriber_job_id', String(jobId));
-      setLoadingState('Queued transcription job...', 'Processing starts in background.');
+      setLoadingState(transcribeT('queued'), transcribeT('background_start'));
 
       clearJobTimers();
       triggerWorker();
@@ -471,13 +449,13 @@ $headerDrawerId = 'transcriber-history-drawer';
 
         const job = data.job;
         if (job.status === 'pending') {
-          setLoadingState('Queued transcription job...', 'Waiting for the background worker.');
+          setLoadingState(transcribeT('queued'), transcribeT('waiting'));
           triggerWorker();
           return;
         }
 
         if (job.progress_text) {
-          setLoadingState(job.progress_text, 'You can keep this page open while processing.');
+          setLoadingState(job.progress_text, transcribeT('processing_open'));
         }
 
         const partial = job.output_data?.partial_transcription;
@@ -496,9 +474,9 @@ $headerDrawerId = 'transcriber-history-drawer';
           currentTranscription = out.transcription || '';
           currentExecutionId = out.execution_id || null;
 
-          resultDuration.textContent = out.metadata?.duration_estimate || 'N/A';
-          resultWords.textContent = (out.metadata?.word_count || 0) + ' words';
-          resultChars.textContent = (out.metadata?.char_count || 0) + ' characters';
+          resultDuration.textContent = out.metadata?.duration_estimate || transcribeT('not_available');
+          resultWords.textContent = transcribeT('words', { count: out.metadata?.word_count || 0 });
+          resultChars.textContent = transcribeT('characters', { count: out.metadata?.char_count || 0 });
           transcriptionContent.innerHTML = escapeHtml(currentTranscription).replace(/\n/g, '<br>');
 
           loadingSection.classList.add('hidden');
@@ -511,13 +489,13 @@ $headerDrawerId = 'transcriber-history-drawer';
           clearJobTimers();
           sessionStorage.removeItem('audio_transcriber_job_id');
           currentJobId = null;
-          throw new Error(job.error_message || 'Transcription job failed');
+          throw new Error(job.error_message || transcribeT('job_failed'));
         }
       } catch (err) {
         clearJobTimers();
         sessionStorage.removeItem('audio_transcriber_job_id');
         currentJobId = null;
-        alert('Error: ' + err.message);
+        alert(transcribeT('error', { message: err.message }));
         loadingSection.classList.add('hidden');
         uploadSection.classList.remove('hidden');
       }
@@ -533,7 +511,7 @@ $headerDrawerId = 'transcriber-history-drawer';
           copyBtn.innerHTML = '<i class="iconoir-copy"></i>';
         }, 2000);
       } catch (err) {
-        alert('Error copying');
+        alert(transcribeT('copy_error'));
       }
     });
     
@@ -578,7 +556,7 @@ $headerDrawerId = 'transcriber-history-drawer';
         const emptyHtml = `
           <div class="p-4 text-center text-slate-400 text-sm">
             <i class="iconoir-microphone text-2xl mb-2 block opacity-50"></i>
-            <p>No transcriptions yet</p>
+            <p>${escapeHtml(transcribeT('no_history'))}</p>
           </div>
         `;
         historyList.innerHTML = emptyHtml;
@@ -590,10 +568,10 @@ $headerDrawerId = 'transcriber-history-drawer';
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2 ${item.id == currentExecutionId ? 'active' : ''}" data-id="${item.id}">
           <i class="iconoir-microphone text-purple-500 mt-0.5"></i>
           <div class="flex-1 min-w-0 cursor-pointer history-item-main">
-            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-purple-600">${escapeHtml(item.title || 'Untitled')}</p>
-            <span class="text-[10px] text-slate-400">${new Date(item.created_at).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-purple-600">${escapeHtml(item.title || transcribeT('untitled'))}</p>
+            <span class="text-[10px] text-slate-400">${new Date(item.created_at).toLocaleDateString(document.documentElement.lang || 'en', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="${escapeHtml(transcribeT('delete'))}">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -637,7 +615,7 @@ $headerDrawerId = 'transcriber-history-drawer';
     }
     
     async function deleteFromHistory(id) {
-      if (!confirm('Delete this transcription from history?')) return;
+      if (!confirm(transcribeT('delete_confirm'))) return;
       
       try {
         const response = await fetch('/api/gestures/delete.php', {
@@ -660,11 +638,11 @@ $headerDrawerId = 'transcriber-history-drawer';
           }
           loadHistory();
         } else {
-          alert(data.error?.message || 'Error deleting');
+          alert(data.error?.message || transcribeT('delete_error'));
         }
       } catch (err) {
         console.error('Error deleting:', err);
-        alert('Connection error');
+        alert(transcribeT('connection_error'));
       }
     }
     
@@ -692,9 +670,9 @@ $headerDrawerId = 'transcriber-history-drawer';
             }
           }
           
-          resultDuration.textContent = outputData.duration_estimate || 'N/A';
-          resultWords.textContent = (outputData.word_count || 0) + ' words';
-          resultChars.textContent = (outputData.char_count || 0) + ' characters';
+          resultDuration.textContent = outputData.duration_estimate || transcribeT('not_available');
+          resultWords.textContent = transcribeT('words', { count: outputData.word_count || 0 });
+          resultChars.textContent = transcribeT('characters', { count: outputData.char_count || 0 });
           
         // Render transcription preserving line breaks
           transcriptionContent.innerHTML = escapeHtml(currentTranscription).replace(/\n/g, '<br>');
@@ -720,10 +698,10 @@ $headerDrawerId = 'transcriber-history-drawer';
             closeBtn.click();
           }
         } else {
-          alert('Could not load transcription');
+          alert(transcribeT('load_error'));
         }
       } catch (err) {
-        alert('Error loading transcription');
+        alert(transcribeT('load_error'));
       }
     }
     
@@ -736,7 +714,7 @@ $headerDrawerId = 'transcriber-history-drawer';
       uploadSection.classList.add('hidden');
       resultSection.classList.add('hidden');
       loadingSection.classList.remove('hidden');
-      setLoadingState('Resuming transcription job...', 'Recovering background progress.');
+      setLoadingState(transcribeT('resuming'), transcribeT('recovering'));
       startJobPolling(savedJobId);
     }
   </script>

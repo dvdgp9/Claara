@@ -13,12 +13,12 @@
  * - $drawerNewButtonText: Texto del botón nuevo
  */
 $drawerId = $drawerId ?? 'mobile-drawer';
-$drawerTitle = $drawerTitle ?? 'History';
+$drawerTitle = $drawerTitle ?? \I18n\I18n::translate('drawer.history');
 $drawerIcon = $drawerIcon ?? 'iconoir-clock';
 $drawerIconColor = $drawerIconColor ?? 'text-[#B7C9F2]';
 $drawerShowNewButton = $drawerShowNewButton ?? false;
 $drawerNewButtonId = $drawerNewButtonId ?? 'drawer-new-btn';
-$drawerNewButtonText = $drawerNewButtonText ?? 'New';
+$drawerNewButtonText = $drawerNewButtonText ?? \I18n\I18n::translate('drawer.new');
 ?>
 <!-- Mobile Drawer Overlay -->
 <div id="<?php echo $drawerId; ?>-overlay" 
@@ -61,7 +61,7 @@ $drawerNewButtonText = $drawerNewButtonText ?? 'New';
       <!-- Contenido se insertará dinámicamente o via slot -->
       <div class="p-4 text-center text-slate-400 text-sm">
         <i class="iconoir-refresh animate-spin"></i>
-        <span class="ml-2">Loading...</span>
+        <span class="ml-2"><?php echo htmlspecialchars(\I18n\I18n::translate('drawer.loading')); ?></span>
       </div>
     <?php endif; ?>
   </div>

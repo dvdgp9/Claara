@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Repos;
 
 use App\DB;
+use App\Storage;
 use PDO;
 
 /**
@@ -144,6 +145,6 @@ class ChatFilesRepo
      */
     public static function getStoragePath(): string
     {
-        return dirname(__DIR__, 2) . '/storage/chat-files';
+        return Storage::path('chat-files');
     }
 }

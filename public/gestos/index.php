@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 
 Session::start();
@@ -17,13 +18,13 @@ $userId = (int)$user['id'];
 $accessRepo = new UserFeatureAccessRepo();
 
 $headerBackUrl = '/app/';
-$headerBackText = 'Home';
-$headerTitle = 'Gestures';
-$headerSubtitle = 'Automated workflows';
+$headerBackText = I18n::translate('voice_ui.home');
+$headerTitle = I18n::translate('nav.gestures');
+$headerSubtitle = I18n::translate('gestures_catalog.subtitle');
 $headerIcon = 'iconoir-magic-wand';
 $headerIconColor = 'from-cyan-500 to-teal-600';
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(I18n::htmlLang()); ?>">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
@@ -42,9 +43,9 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
             <div class="w-14 h-14 lg:w-20 lg:h-20 rounded-2xl lg:rounded-3xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center mx-auto mb-4 lg:mb-6 shadow-xl animate-float">
               <i class="iconoir-magic-wand text-2xl lg:text-4xl text-white"></i>
             </div>
-            <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 mb-2 lg:mb-3">Gestures</h1>
+            <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 mb-2 lg:mb-3"><?php echo htmlspecialchars(I18n::translate('nav.gestures')); ?></h1>
             <p class="text-sm lg:text-base text-slate-600 max-w-2xl mx-auto px-4 lg:px-0">
-              Guided workflows for common tasks. Each gesture gives you the right structure to produce high-quality work faster.
+              <?php echo htmlspecialchars(I18n::translate('gestures_catalog.hero')); ?>
             </p>
           </div>
 
@@ -59,19 +60,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-page-edit text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Write content</h3>
-                  <p class="text-sm text-slate-500">Articles and blogs</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.write_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.write_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Active</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.active')); ?></span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Generate informative articles, blog posts, or press notes. Set the tone, length, and style you need.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.write_description')); ?>
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-cyan-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -86,19 +87,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-send-diagonal text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Social media</h3>
-                  <p class="text-sm text-slate-500">Posts for social channels</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.social_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.social_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Active</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.active')); ?></span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Build posts with guided editorial decisions. Choose intent, channel, and style, then generate variants in one step.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.social_description')); ?>
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-violet-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -113,19 +114,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-podcast text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Generate podcast</h3>
-                  <p class="text-sm text-slate-500">With Iris and Bruno</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.podcast_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.podcast_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.new')); ?></span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Turn any web article or document into a podcast with two hosts.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.podcast_description')); ?>
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-rose-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -140,19 +141,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-media-image text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Image editor <span class="text-base">🍌</span></h3>
-                  <p class="text-sm text-slate-500">With Nanobanana</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.image_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.image_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.new')); ?></span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Generate brand-ready images with AI. Control style, lighting, composition, and color palette.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.image_description')); ?>
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-amber-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -167,19 +168,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-refresh-double text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Content transformer</h3>
-                  <p class="text-sm text-slate-500">Adapt content</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.repurpose_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.repurpose_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.new')); ?></span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Convert any source content into social posts, blogs, landing pages, newsletters, or FAQs.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.repurpose_description')); ?>
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-indigo-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -194,19 +195,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-clipboard-check text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Process generator</h3>
-                  <p class="text-sm text-slate-500">Operating procedures</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.sop_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.sop_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.new')); ?></span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Turn text, audio, or images into structured procedures with flowcharts and downloadable documents.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.sop_description')); ?>
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-emerald-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -221,19 +222,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-microphone text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Audio transcriber</h3>
-                  <p class="text-sm text-slate-500">Audio to text</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.transcribe_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.transcribe_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">Active</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.active')); ?></span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Convert voice recordings, interviews, or meetings into text. Supports MP3, WAV, M4A, and more.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.transcribe_description')); ?>
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-purple-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -248,19 +249,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-graduation-cap text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Course creator</h3>
-                  <p class="text-sm text-slate-500">Training material</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.course_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.course_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.new')); ?></span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Generate full course material from a PDF: syllabus, handouts, quizzes, flashcards, podcasts, and exams.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.course_description')); ?>
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-emerald-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -275,19 +276,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-folder-settings text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Project analysis</h3>
-                  <p class="text-sm text-slate-500">Tender document review</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.project_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.project_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.new')); ?></span>
               </div>
               
               <p class="text-sm text-slate-600 mb-4">
-                Upload tender documents and extract non-staff costs, work hours, and other key information automatically.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.project_description')); ?>
               </p>
               
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-emerald-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -302,19 +303,19 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-search-window text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">Lead Finder</h3>
-                  <p class="text-sm text-slate-500">Find structured leads</p>
+                  <h3 class="text-lg font-bold text-slate-900 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.lead_title')); ?></h3>
+                  <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.lead_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">New</span>
+                <span class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.new')); ?></span>
               </div>
 
               <p class="text-sm text-slate-600 mb-4">
-                Search for organizations, review structured contact data, validate useful leads, and export your list.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.lead_description')); ?>
               </p>
 
               <div class="flex items-center justify-end text-xs text-slate-400 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-2 text-emerald-600 font-medium">
-                  <span>Use gesture</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.use')); ?></span>
                   <i class="iconoir-arrow-right"></i>
                 </div>
               </div>
@@ -328,20 +329,20 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-search-window text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-500 mb-1">Analyze document</h3>
-                  <p class="text-sm text-slate-400">Information extraction</p>
+                  <h3 class="text-lg font-bold text-slate-500 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.document_title')); ?></h3>
+                  <p class="text-sm text-slate-400"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.document_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-slate-100 text-slate-400 rounded-full">Soon</span>
+                <span class="px-2 py-1 text-xs bg-slate-100 text-slate-400 rounded-full"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.soon')); ?></span>
               </div>
               
               <p class="text-sm text-slate-400 mb-4">
-                Upload a document and get summaries, key points, or answers to specific questions about the content.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.document_description')); ?>
               </p>
               
               <div class="flex items-center justify-between text-xs text-slate-300 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-1">
                   <i class="iconoir-clock"></i>
-                  <span>Coming soon</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.coming_soon')); ?></span>
                 </div>
               </div>
             </div>
@@ -353,20 +354,20 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                   <i class="iconoir-mail text-2xl"></i>
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-bold text-slate-500 mb-1">Generate email</h3>
-                  <p class="text-sm text-slate-400">Professional communication</p>
+                  <h3 class="text-lg font-bold text-slate-500 mb-1"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.email_title')); ?></h3>
+                  <p class="text-sm text-slate-400"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.email_meta')); ?></p>
                 </div>
-                <span class="px-2 py-1 text-xs bg-slate-100 text-slate-400 rounded-full">Soon</span>
+                <span class="px-2 py-1 text-xs bg-slate-100 text-slate-400 rounded-full"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.soon')); ?></span>
               </div>
               
               <p class="text-sm text-slate-400 mb-4">
-                Create professional emails from an idea or context. Adjust the tone for internal or external communication.
+                <?php echo htmlspecialchars(I18n::translate('gestures_catalog.email_description')); ?>
               </p>
               
               <div class="flex items-center justify-between text-xs text-slate-300 pt-4 border-t border-slate-200/50">
                 <div class="flex items-center gap-1">
                   <i class="iconoir-clock"></i>
-                  <span>Coming soon</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('gestures_catalog.coming_soon')); ?></span>
                 </div>
               </div>
             </div>
@@ -380,30 +381,30 @@ $headerIconColor = 'from-cyan-500 to-teal-600';
                 <i class="iconoir-info-circle text-2xl text-cyan-600"></i>
               </div>
               <div>
-                <h3 class="font-semibold text-slate-800 mb-2">What are gestures?</h3>
+                <h3 class="font-semibold text-slate-800 mb-2"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.about_title')); ?></h3>
                 <p class="text-sm text-slate-600 mb-3">
-                  Gestures are guided workflows that help you complete complex tasks step by step. Unlike open chat, each gesture is optimized for a specific goal and asks only for the information it needs.
+                  <?php echo htmlspecialchars(I18n::translate('gestures_catalog.about')); ?>
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div class="flex items-start gap-2">
                     <i class="iconoir-check text-cyan-600 mt-0.5"></i>
                     <div>
-                      <div class="font-medium text-sm text-slate-700">Step-by-step guidance</div>
-                      <div class="text-xs text-slate-500">No extra friction</div>
+                      <div class="font-medium text-sm text-slate-700"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.guidance')); ?></div>
+                      <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.guidance_help')); ?></div>
                     </div>
                   </div>
                   <div class="flex items-start gap-2">
                     <i class="iconoir-check text-cyan-600 mt-0.5"></i>
                     <div>
-                      <div class="font-medium text-sm text-slate-700">Consistent results</div>
-                      <div class="text-xs text-slate-500">Reliable quality</div>
+                      <div class="font-medium text-sm text-slate-700"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.consistent')); ?></div>
+                      <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.consistent_help')); ?></div>
                     </div>
                   </div>
                   <div class="flex items-start gap-2">
                     <i class="iconoir-check text-cyan-600 mt-0.5"></i>
                     <div>
-                      <div class="font-medium text-sm text-slate-700">Saved history</div>
-                      <div class="text-xs text-slate-500">Reuse and edit</div>
+                      <div class="font-medium text-sm text-slate-700"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.history')); ?></div>
+                      <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('gestures_catalog.history_help')); ?></div>
                     </div>
                   </div>
                 </div>

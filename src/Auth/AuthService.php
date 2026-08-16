@@ -3,6 +3,7 @@ namespace Auth;
 
 use App\Response;
 use App\Session;
+use I18n\I18n;
 use Repos\UsersRepo;
 
 class AuthService {
@@ -14,13 +15,13 @@ class AuthService {
         $repo = new UsersRepo();
         $row = $repo->findByEmail($email);
         if (!$row) {
-            Response::error('invalid_credentials', 'Invalid credentials', 401);
+            Response::error('invalid_credentials', I18n::translate('auth.error.invalid_credentials'), 401);
         }
         if (($row['status'] ?? 'active') !== 'active') {
-            Response::error('user_locked', 'User is disabled', 423);
+            Response::error('user_locked', I18n::translate('auth.error.user_locked'), 423);
         }
         if (!Passwords::verify($password, $row['password_hash'])) {
-            Response::error('invalid_credentials', 'Invalid credentials', 401);
+            Response::error('invalid_credentials', I18n::translate('auth.error.invalid_credentials'), 401);
         }
         // OK: actualizar último acceso y preparar payload de sesión
         $repo->updateLastLoginAt((int)$row['id']);
@@ -33,6 +34,7 @@ class AuthService {
             'email' => $row['email'],
             'first_name' => $row['first_name'],
             'last_name' => $row['last_name'],
+            'locale' => $row['locale'] ?? null,
             'job_title' => $row['job_title'] ?? null,
             'department_id' => $row['department_id'] ? (int)$row['department_id'] : null,
             'department_name' => $row['department_name'] ?? null,
@@ -46,7 +48,7 @@ class AuthService {
     public static function requireAuth(): array {
         $user = Session::user();
         if (!$user) {
-            Response::error('unauthorized', 'Not authenticated', 401);
+            Response::error('unauthorized', I18n::translate('auth.error.unauthorized'), 401);
         }
         return $user;
     }

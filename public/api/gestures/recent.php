@@ -25,6 +25,9 @@ if (!$gestureType || !$businessLine) {
     Response::error('missing_params', 'Faltan parámetros: type, business_line', 400);
 }
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireDynamicApi($user, $gestureType, ['social-media']);
+
 $repo = new GestureExecutionsRepo();
 
 try {

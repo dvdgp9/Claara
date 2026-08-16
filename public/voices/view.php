@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 require_once __DIR__ . '/../../src/Repos/VoicesRepo.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 use Repos\VoicesRepo;
 
@@ -38,19 +39,20 @@ $activeTab = 'voices';
 $userName = htmlspecialchars($user['first_name'] ?? 'there');
 $initial = strtoupper(substr($voice['name'] ?: $voice['slug'], 0, 1));
 $headerBackUrl = '/voices/';
-$headerBackText = 'Voices';
+$headerBackText = I18n::translate('voices.page_title');
 $headerTitle = $voice['name'];
-$headerSubtitle = $voice['role'] ?: 'Specialized RAG assistant';
+$headerSubtitle = $voice['role'] ?: I18n::translate('voices.subtitle');
 $headerIconText = $initial;
 $headerIconColor = 'from-slate-700 to-cyan-700';
 $headerCustomButtons = '
   <button id="toggle-docs-panel" class="hidden lg:flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 rounded-lg transition-smooth">
     <i class="iconoir-folder"></i>
-    <span>Documents</span>
+    <span>' . htmlspecialchars(I18n::translate('voice_ui.documents')) . '</span>
     <i class="iconoir-nav-arrow-right text-xs" id="docs-arrow"></i>
   </button>';
+$voiceJs = I18n::javascriptCatalogPrefixJson('voice_ui.');
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(I18n::htmlLang()); ?>">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <script>
@@ -61,6 +63,7 @@ $headerCustomButtons = '
         'description' => $voice['description'],
         'initial' => $initial,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    window.CLAARA_VOICE_I18N = <?php echo $voiceJs; ?>;
   </script>
   <div class="min-h-screen flex h-screen">
     <?php include __DIR__ . '/../includes/left-tabs.php'; ?>
@@ -74,14 +77,14 @@ $headerCustomButtons = '
                 <div class="w-20 h-20 rounded-3xl bg-slate-900 flex items-center justify-center mx-auto mb-6 shadow-xl animate-float">
                   <span class="text-4xl font-bold text-white"><?php echo htmlspecialchars($initial); ?></span>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-900 mb-3">Hi, <?php echo $userName; ?></h2>
-                <p class="text-slate-600 mb-6">I am <strong><?php echo htmlspecialchars($voice['name']); ?></strong>. <?php echo htmlspecialchars($voice['description'] ?: 'Ask me about my indexed knowledge base.'); ?></p>
+                <h2 class="text-2xl font-bold text-slate-900 mb-3"><?php echo htmlspecialchars(I18n::translate('voice_ui.greeting', ['name' => html_entity_decode($userName)])); ?></h2>
+                <p class="text-slate-600 mb-6"><?php echo htmlspecialchars(I18n::translate('voice_ui.introduction', ['voice' => $voice['name'], 'description' => $voice['description'] ?: I18n::translate('voice_ui.default_description')])); ?></p>
                 <div class="space-y-2">
                   <button class="suggestion-btn w-full p-3 glass border border-slate-200/50 hover:border-cyan-300 rounded-xl text-left transition-smooth group">
-                    <span class="text-sm text-slate-700 group-hover:text-cyan-700">What documents do you have available?</span>
+                    <span class="text-sm text-slate-700 group-hover:text-cyan-700"><?php echo htmlspecialchars(I18n::translate('voice_ui.ask_documents')); ?></span>
                   </button>
                   <button class="suggestion-btn w-full p-3 glass border border-slate-200/50 hover:border-cyan-300 rounded-xl text-left transition-smooth group">
-                    <span class="text-sm text-slate-700 group-hover:text-cyan-700">Summarize the most important rules in your knowledge base.</span>
+                    <span class="text-sm text-slate-700 group-hover:text-cyan-700"><?php echo htmlspecialchars(I18n::translate('voice_ui.ask_summary')); ?></span>
                   </button>
                 </div>
               </div>
@@ -98,9 +101,9 @@ $headerCustomButtons = '
           <footer class="fixed lg:relative bottom-16 lg:bottom-0 left-0 right-0 p-3 lg:p-6 bg-white border-t border-slate-200 shadow-lg z-40">
             <form id="chat-form" class="max-w-4xl mx-auto">
               <div class="flex gap-2 lg:gap-3 items-center">
-                <textarea id="chat-input" rows="1" class="voice-chat-input flex-1 min-w-0 border-2 border-slate-200 rounded-xl px-3 lg:px-4 py-2.5 input-focus transition-smooth bg-white/80 resize-none overflow-hidden" placeholder="Ask <?php echo htmlspecialchars($voice['name']); ?>..."></textarea>
+                <textarea id="chat-input" rows="1" class="voice-chat-input flex-1 min-w-0 border-2 border-slate-200 rounded-xl px-3 lg:px-4 py-2.5 input-focus transition-smooth bg-white/80 resize-none overflow-hidden" placeholder="<?php echo htmlspecialchars(I18n::translate('voice_ui.ask_placeholder', ['voice' => $voice['name']])); ?>"></textarea>
                 <button type="submit" class="h-11 p-3 lg:px-6 lg:py-[10px] bg-slate-900 text-white rounded-xl font-medium shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2">
-                  <span class="hidden lg:inline">Send</span>
+                  <span class="hidden lg:inline"><?php echo htmlspecialchars(I18n::translate('voice_ui.send')); ?></span>
                   <i class="iconoir-send-diagonal text-base"></i>
                 </button>
               </div>
@@ -109,7 +112,7 @@ $headerCustomButtons = '
         </div>
         <aside id="docs-panel" class="hidden w-80 glass-strong border-l border-slate-200/50 flex flex-col shrink-0">
           <div class="p-4 border-b border-slate-200/50">
-            <h3 class="font-semibold text-slate-800 flex items-center gap-2"><i class="iconoir-folder text-cyan-700"></i> Documents</h3>
+            <h3 class="font-semibold text-slate-800 flex items-center gap-2"><i class="iconoir-folder text-cyan-700"></i> <?php echo htmlspecialchars(I18n::translate('voice_ui.documents')); ?></h3>
           </div>
           <div id="docs-list" class="flex-1 overflow-auto p-4 space-y-2"></div>
         </aside>
@@ -120,7 +123,7 @@ $headerCustomButtons = '
   <div id="doc-viewer-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="glass-strong rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col border border-slate-200/50">
       <div class="p-5 border-b border-slate-200/50 flex items-center justify-between">
-        <h3 id="doc-viewer-title" class="text-lg font-semibold text-slate-900">Document</h3>
+        <h3 id="doc-viewer-title" class="text-lg font-semibold text-slate-900"><?php echo htmlspecialchars(I18n::translate('voice_ui.document')); ?></h3>
         <button id="close-doc-viewer" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-smooth"><i class="iconoir-xmark text-xl"></i></button>
       </div>
       <div id="doc-viewer-content" class="flex-1 overflow-y-auto p-6"></div>

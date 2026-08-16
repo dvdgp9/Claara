@@ -33,6 +33,9 @@ if ((int)$execution['user_id'] !== $user['id']) {
     Response::error('forbidden', 'No tienes acceso a esta ejecución', 403);
 }
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireExecutionApi($user, $execution);
+
 Response::json([
     'execution' => $execution
 ]);

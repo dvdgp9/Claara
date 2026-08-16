@@ -27,6 +27,8 @@ try {
     $processing = $repo->findByUserAndStatus($user['id'], 'processing');
     
     $activeJobs = array_merge($processing, $pending);
+    $gestureAccess = new \Gestures\GestureAccessGuard();
+    $activeJobs = $gestureAccess->filterJobs($user, $activeJobs);
     
     // Formatear para el frontend
     $jobs = array_map(function($job) {

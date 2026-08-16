@@ -2,6 +2,7 @@
 namespace Chat;
 
 use Claara\CapabilityCatalogService;
+use I18n\I18n;
 use Throwable;
 
 /**
@@ -53,6 +54,8 @@ class ContextBuilder
 
         $temporalContext = "\n\n---\n\n## Temporal Context\nCurrent date: " . $dateStr . "\nCurrent time: " . $timeStr;
         $content .= $temporalContext;
+
+        $content .= "\n\n---\n\n## Response Language\n" . I18n::translate('ai.response_language_instruction');
 
         if ($this->includeCapabilities && $this->user) {
             $capabilities = $this->buildCapabilityContext();

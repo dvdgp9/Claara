@@ -7,7 +7,15 @@
 
   const GESTURE_TYPE = window.GESTURE_TYPE || 'project-admin';
   const CSRF_TOKEN = window.CSRF_TOKEN || '';
+  const projectI18n = window.CLAARA_PROJECT_I18N?.messages || {};
   const MAX_FILE_SIZE_BYTES = 40 * 1024 * 1024;
+  function projectT(key, vars = {}) {
+    let value = projectI18n[`project_ui.${key}`] || key;
+    Object.entries(vars).forEach(([name, replacement]) => {
+      value = value.replaceAll(`{${name}}`, String(replacement));
+    });
+    return value;
+  }
 
   // === DOM References ===
   const form = document.getElementById('project-admin-form');
@@ -57,7 +65,9 @@
 
   function updateSelectedCount() {
     const count = selectedActions.size;
-    selectedCount.textContent = `${count} analysis selected${count !== 1 ? 's' : ''}`;
+    selectedCount.textContent = count === 1
+      ? projectT('selected_one')
+      : projectT('selected_many', { count });
   }
 
   // === File Upload ===
@@ -85,12 +95,12 @@
   async function handleFiles(files) {
     for (const file of files) {
       if (file.type !== 'application/pdf') {
-        showError('Only PDF files are allowed');
+        showError(projectT('pdf_only'));
         continue;
       }
       
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        showError(`${file.name} is too large (maximum 40MB)`);
+        showError(projectT('too_large', { name: file.name }));
         continue;
       }
       
@@ -105,7 +115,7 @@
         renderFilesList();
         updateAnalyzeButton();
       } catch (err) {
-        showError(`Error processing ${file.name}`);
+        showError(projectT('processing_error', { name: file.name }));
       }
     }
   }
@@ -173,14 +183,14 @@
 
   async function analyzeDocuments() {
     if (uploadedFiles.length === 0) {
-      showError('Please upload at least one document');
+      showError(projectT('upload_required'));
       return;
     }
 
     const actions = Array.from(selectedActions);
     const instructions = additionalInstructions.value.trim();
 
-    showProgress('Analyzing documents...', `Processing ${uploadedFiles.length} file${uploadedFiles.length > 1 ? 's' : ''}`);
+    showProgress(projectT('analyzing_documents'), projectT('processing_files', { count: uploadedFiles.length }));
     hideError();
 
     try {
@@ -206,7 +216,7 @@
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error desconocido');
+        throw new Error(data.error?.message || data.message || projectT('unknown_error'));
       }
 
       currentResults = data;
@@ -247,9 +257,9 @@
     inputSection.classList.add('hidden');
     resultSection.classList.remove('hidden');
     
-    resultTitle.textContent = data.title || 'Analysis completed';
-    const fileNames = data.files?.map(f => f.name).join(', ') || 'Pliego';
-    resultSource.textContent = `Archivos: ${fileNames}`;
+    resultTitle.textContent = data.title || projectT('completed');
+    const fileNames = data.files?.map(f => f.name).join(', ') || projectT('tender');
+    resultSource.textContent = projectT('files', { names: fileNames });
     
     let html = '';
     
@@ -273,8 +283,8 @@
               <i class="iconoir-wallet"></i>
             </div>
             <div>
-              <h3 class="font-semibold text-slate-800">Gastos no personales</h3>
-              <p class="text-xs text-slate-500">Equipamiento, materiales, licencias, etc.</p>
+              <h3 class="font-semibold text-slate-800">${escapeHtml(projectT('expenses'))}</h3>
+              <p class="text-xs text-slate-500">${escapeHtml(projectT('expenses_result_help'))}</p>
             </div>
           </div>
         </div>
@@ -296,8 +306,8 @@
               <i class="iconoir-clock"></i>
             </div>
             <div>
-              <h3 class="font-semibold text-slate-800">Conteo de horas</h3>
-              <p class="text-xs text-slate-500">Service hours, training, coordination, etc.</p>
+              <h3 class="font-semibold text-slate-800">${escapeHtml(projectT('hours'))}</h3>
+              <p class="text-xs text-slate-500">${escapeHtml(projectT('hours_result_help'))}</p>
             </div>
           </div>
         </div>
@@ -313,6 +323,7 @@
   function renderMarkdown(text) {
     if (!text) return '';
     if (typeof text !== 'string') text = JSON.stringify(text, null, 2);
+    text = escapeHtml(text);
     
     // Procesar tablas primero (antes de otros reemplazos)
     text = processMarkdownTables(text);
@@ -448,21 +459,21 @@
     let textToCopy = '';
     
     if (currentResults.results?.expenses) {
-      textToCopy += '=== GASTOS NO PERSONALES ===\n\n';
+      textToCopy += `=== ${projectT('expenses').toUpperCase()} ===\n\n`;
       textToCopy += currentResults.results.expenses.content || currentResults.results.expenses;
       textToCopy += '\n\n';
     }
     
     if (currentResults.results?.hours) {
-      textToCopy += '=== CONTEO DE HORAS ===\n\n';
+      textToCopy += `=== ${projectT('hours').toUpperCase()} ===\n\n`;
       textToCopy += currentResults.results.hours.content || currentResults.results.hours;
     }
     
     try {
       await navigator.clipboard.writeText(textToCopy.trim());
-      copyResultBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
+      copyResultBtn.innerHTML = `<i class="iconoir-check"></i> ${escapeHtml(projectT('copied'))}`;
       setTimeout(() => {
-        copyResultBtn.innerHTML = '<i class="iconoir-copy"></i> Copiar';
+        copyResultBtn.innerHTML = `<i class="iconoir-copy"></i> ${escapeHtml(projectT('copy'))}`;
       }, 2000);
     } catch (err) {
       console.error('Error copying:', err);
@@ -508,14 +519,14 @@
       historyList.innerHTML = `
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-archive text-2xl mb-2 block"></i>
-          No analyses yet
+          ${escapeHtml(projectT('no_history'))}
         </div>
       `;
       return;
     }
 
     historyList.innerHTML = items.map(item => {
-      const date = new Date(item.created_at).toLocaleDateString('en-US', {
+      const date = new Date(item.created_at).toLocaleDateString(document.documentElement.lang || 'en', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -529,10 +540,10 @@
               <i class="iconoir-folder-settings text-emerald-600 text-sm"></i>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Analysis')}</p>
+              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || projectT('analysis'))}</p>
               <p class="text-xs text-slate-500 mt-0.5">${date}</p>
             </div>
-            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Delete">
+            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="${escapeHtml(projectT('delete'))}">
               <i class="iconoir-trash text-slate-400 hover:text-red-500 text-sm"></i>
             </button>
           </div>
@@ -590,12 +601,15 @@
   };
 
   async function deleteHistoryItem(id) {
-    if (!confirm('Delete this analysis from history?')) return;
+    if (!confirm(projectT('delete_confirm'))) return;
     
     try {
       const response = await fetch('/api/gestures/delete.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': CSRF_TOKEN
+        },
         credentials: 'include',
         body: JSON.stringify({ id })
       });

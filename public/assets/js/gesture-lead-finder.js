@@ -2,6 +2,14 @@
   'use strict';
 
   const csrf = window.LEAD_FINDER_CSRF || window.CSRF_TOKEN || '';
+  const leadI18n = window.CLAARA_LEAD_I18N || { locale: 'en', messages: {} };
+  const leadT = (key, parameters = {}) => {
+    let value = leadI18n.messages[`lead_ui.${key}`] || key;
+    Object.entries(parameters).forEach(([name, replacement]) => {
+      value = value.replaceAll(`{${name}}`, String(replacement));
+    });
+    return value;
+  };
   const storageJobKey = 'lead_finder_job_id';
   const storageRunKey = 'lead_finder_run_id';
 
@@ -78,7 +86,7 @@
     els.queryError.classList.add('hidden');
 
     setSearchDisabled(true);
-    showStatus('Queued search...', 'Creating the background job.');
+    showStatus(leadT('queued'), leadT('creating_job'));
     showLoadingTable();
 
     try {
@@ -100,7 +108,7 @@
       loadHistory();
     } catch (error) {
       hideLoadingTable();
-      showStatus('Search failed', error.message || 'Could not start Lead Finder.', true);
+      showStatus(leadT('search_failed'), error.message || leadT('start_error'), true);
       setSearchDisabled(false);
     }
   }
@@ -140,16 +148,16 @@
       if (!job) return;
 
       if (job.status === 'pending') {
-        showStatus('Queued search...', 'Waiting for the background worker.');
+        showStatus(leadT('queued'), leadT('waiting_worker'));
         triggerWorker();
         return;
       }
 
       if (job.progress_text) {
         const detail = job.output_data?.found_count
-          ? `${job.output_data.found_count} candidates collected.`
-          : 'The job is running in the background.';
-        showStatus(job.progress_text, detail);
+          ? leadT('candidates_collected', { count: job.output_data.found_count })
+          : leadT('job_running');
+        showStatus(localizeProgress(job.progress_text), detail);
       }
 
       if (job.status === 'completed') {
@@ -166,13 +174,13 @@
         clearJobTimer();
         sessionStorage.removeItem(storageJobKey);
         sessionStorage.removeItem(storageRunKey);
-        throw new Error(job.error_message || 'Lead Finder job failed');
+        throw new Error(job.error_message || leadT('job_failed'));
       }
     } catch (error) {
       clearJobTimer();
       hideLoadingTable();
       setSearchDisabled(false);
-      showStatus('Search failed', error.message || 'Could not process Lead Finder.', true);
+      showStatus(leadT('search_failed'), error.message || leadT('process_error'), true);
     }
   }
 
@@ -202,7 +210,7 @@
     const emptyHtml = `
       <div class="p-4 text-center text-slate-400 text-sm">
         <i class="iconoir-search-window text-2xl mb-2 block opacity-50"></i>
-        <p>No searches yet</p>
+        <p>${leadT('no_history')}</p>
       </div>
     `;
     if (!items.length) {
@@ -218,10 +226,10 @@
         <div class="history-item w-full p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors group flex items-start gap-2 ${active ? 'active' : ''}" data-id="${item.id}">
           <i class="iconoir-search-window text-emerald-600 mt-0.5"></i>
           <button type="button" class="flex-1 min-w-0 text-left history-item-main">
-            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-emerald-700">${escapeHtml(item.query || 'Untitled search')}</p>
-            <span class="text-[10px] text-slate-400">${formatDate(item.created_at)} · ${status}</span>
+            <p class="text-sm font-medium text-slate-700 truncate group-hover:text-emerald-700">${escapeHtml(item.query || leadT('untitled_search'))}</p>
+            <span class="text-[10px] text-slate-400">${formatDate(item.created_at)} · ${localizeStatus(status)}</span>
           </button>
-          <button type="button" class="history-item-delete opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
+          <button type="button" class="history-item-delete opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="${leadT('delete')}">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -261,7 +269,7 @@
   }
 
   async function deleteRun(runId) {
-    if (!confirm('Delete this Lead Finder search?')) return;
+    if (!confirm(leadT('delete_confirm'))) return;
     await jsonFetch('/api/gestures/lead-finder/delete.php', {
       method: 'POST',
       headers: {
@@ -278,7 +286,7 @@
     els.emptyState.classList.add('hidden');
     els.resultsSection.classList.remove('hidden');
     els.runEyebrow.textContent = `${run.provider || 'mock'} · ${run.status || 'completed'}`;
-    els.runTitle.textContent = run.query || 'Lead Finder search';
+    els.runTitle.textContent = run.query || leadT('search_title');
     els.metricTotal.textContent = String(results.length);
     els.metricValidated.textContent = String(results.filter(row => row.status === 'validated').length);
     els.metricRejected.textContent = String(results.filter(row => row.status === 'rejected').length);
@@ -293,7 +301,7 @@
     if (!results.length) {
       els.resultsBody.innerHTML = `
         <tr>
-          <td colspan="8" class="text-center text-slate-400 py-10">No leads found for this search.</td>
+          <td colspan="8" class="text-center text-slate-400 py-10">${leadT('no_leads')}</td>
         </tr>
       `;
       return;
@@ -303,22 +311,22 @@
       <tr data-id="${row.id}">
         <td><input class="lead-finder-cell-input" data-field="name" value="${attr(row.name)}"></td>
         <td><input class="lead-finder-cell-input" data-field="website" value="${attr(row.website)}"></td>
-        <td><input class="lead-finder-cell-input ${emailInputClass(row.email)}" data-field="email" value="${attr(row.email)}" placeholder="Not found yet"></td>
+        <td><input class="lead-finder-cell-input ${emailInputClass(row.email)}" data-field="email" value="${attr(row.email)}" placeholder="${leadT('not_found')}"></td>
         <td><input class="lead-finder-cell-input" data-field="phone" value="${attr(row.phone)}"></td>
         <td><input class="lead-finder-cell-input" data-field="address" value="${attr(row.address)}"></td>
         <td><input class="lead-finder-cell-input" data-field="confidence" value="${attr(confidencePercent(row.confidence))}"></td>
         <td>
           <select class="lead-finder-cell-select" data-field="status">
-            <option value="pending" ${row.status === 'pending' ? 'selected' : ''}>Pending</option>
-            <option value="validated" ${row.status === 'validated' ? 'selected' : ''}>Validated</option>
-            <option value="rejected" ${row.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+            <option value="pending" ${row.status === 'pending' ? 'selected' : ''}>${leadT('pending')}</option>
+            <option value="validated" ${row.status === 'validated' ? 'selected' : ''}>${leadT('validated')}</option>
+            <option value="rejected" ${row.status === 'rejected' ? 'selected' : ''}>${leadT('rejected')}</option>
           </select>
         </td>
         <td>
           <div class="flex items-center gap-1">
-            <button type="button" class="lead-finder-icon-btn" data-action="validate" title="Validate"><i class="iconoir-check"></i></button>
-            <button type="button" class="lead-finder-icon-btn" data-action="reject" title="Reject"><i class="iconoir-xmark"></i></button>
-            <button type="button" class="lead-finder-icon-btn" data-action="source" title="Open source"><i class="iconoir-open-new-window"></i></button>
+            <button type="button" class="lead-finder-icon-btn" data-action="validate" title="${leadT('validate')}"><i class="iconoir-check"></i></button>
+            <button type="button" class="lead-finder-icon-btn" data-action="reject" title="${leadT('reject')}"><i class="iconoir-xmark"></i></button>
+            <button type="button" class="lead-finder-icon-btn" data-action="source" title="${leadT('open_source')}"><i class="iconoir-open-new-window"></i></button>
           </div>
         </td>
       </tr>
@@ -385,7 +393,7 @@
     });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      alert(data.error?.message || 'Export failed');
+      alert(data.error?.message || leadT('export_failed'));
       return;
     }
     const blob = await response.blob();
@@ -407,8 +415,8 @@
     els.query.value = '';
     els.emptyState.classList.remove('hidden');
     els.resultsSection.classList.add('hidden');
-    els.runEyebrow.textContent = 'Workspace';
-    els.runTitle.textContent = 'Ready for a new search';
+    els.runEyebrow.textContent = leadT('workspace');
+    els.runTitle.textContent = leadT('ready');
     els.metricTotal.textContent = '0';
     els.metricValidated.textContent = '0';
     els.metricRejected.textContent = '0';
@@ -462,9 +470,25 @@
     const response = await fetch(url, options);
     const data = await response.json().catch(() => ({}));
     if (!response.ok || data.error) {
-      throw new Error(data.error?.message || 'Request failed');
+      throw new Error(data.error?.message || leadT('request_failed'));
     }
     return data;
+  }
+
+  function localizeProgress(value) {
+    const map = {
+      'Preparing search...': 'preparing',
+      'Collecting sources...': 'collecting_sources',
+      'Normalizing results...': 'normalizing_results',
+      'Saving leads...': 'saving_leads'
+    };
+    return map[value] ? leadT(map[value]) : value;
+  }
+
+  function localizeStatus(value) {
+    return ['pending', 'processing', 'completed', 'failed'].includes(value)
+      ? leadT(`status_${value}`)
+      : value;
   }
 
   function escapeHtml(text) {
@@ -479,7 +503,7 @@
 
   function formatDate(value) {
     if (!value) return '';
-    return new Date(value.replace(' ', 'T')).toLocaleDateString('en-US', {
+    return new Date(value.replace(' ', 'T')).toLocaleDateString(leadI18n.locale === 'es' ? 'es-ES' : 'en-US', {
       month: 'short',
       day: '2-digit',
       hour: '2-digit',

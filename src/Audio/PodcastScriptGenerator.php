@@ -2,6 +2,7 @@
 namespace Audio;
 
 use Chat\OpenRouterClient;
+use I18n\I18n;
 
 /**
  * Genera guiones de podcast en formato diálogo a partir de contenido de artículos
@@ -41,7 +42,7 @@ class PodcastScriptGenerator
         
         // Ajustar si el artículo es muy corto
         if ($wordCount < 100) {
-            return ['success' => false, 'error' => 'El artículo es demasiado corto para generar un podcast (mínimo ~100 palabras)'];
+            return ['success' => false, 'error' => I18n::translate('podcast_ui.article_too_short')];
         }
         
         if ($wordCount < $targetWords / 2) {
@@ -58,7 +59,7 @@ class PodcastScriptGenerator
             $summary = $this->extractSummary($response);
 
             if (empty($script)) {
-                return ['success' => false, 'error' => 'No se pudo generar el guion del podcast'];
+                return ['success' => false, 'error' => I18n::translate('podcast_ui.script_failed')];
             }
 
             return [
@@ -70,7 +71,7 @@ class PodcastScriptGenerator
                 'estimated_duration' => $this->estimateDuration($script)
             ];
         } catch (\Exception $e) {
-            return ['success' => false, 'error' => 'Error generando guion: ' . $e->getMessage()];
+            return ['success' => false, 'error' => I18n::translate('podcast_ui.script_error', ['message' => $e->getMessage()])];
         }
     }
 
@@ -81,6 +82,16 @@ class PodcastScriptGenerator
     {
         $titleSection = $title ? "TÍTULO DEL ARTÍCULO: {$title}\n\n" : '';
         $targetWords = $this->calculateTargetWords($targetMinutes);
+        $isSpanish = I18n::locale() === 'es';
+        $spokenLanguage = $isSpanish
+            ? 'español de España, con pronunciación peninsular neutra y natural'
+            : 'English, with a clear and natural international accent';
+        $colloquialStyle = $isSpanish
+            ? 'Usa español peninsular natural y expresiones coloquiales solo cuando encajen.'
+            : 'Use natural English and occasional conversational expressions only when they fit.';
+        $example = $isSpanish
+            ? "{$this->speaker1}: [warmly] Hoy traemos un tema que parece técnico, pero afecta a decisiones muy cotidianas.\n{$this->speaker2}: Sí, y el artículo plantea una pregunta práctica: qué cambia al aplicarlo en un entorno real.\n{$this->speaker1}: Vale, empecemos por ahí. ¿Cuál es la primera idea importante?\n{$this->speaker2}: La primera es que no basta con entender el concepto en abstracto. Hay que mirar qué implica al tomar decisiones con información incompleta."
+            : "{$this->speaker1}: [warmly] Today we are exploring a topic that sounds technical but affects everyday decisions.\n{$this->speaker2}: Exactly, and the article asks a practical question: what changes when we apply it in the real world?\n{$this->speaker1}: Let us start there. What is the first important idea?\n{$this->speaker2}: The first is that understanding the abstract concept is not enough. We need to see what it means when decisions rely on incomplete information.";
         
         return <<<PROMPT
 Eres un guionista experto en podcasts divulgativos de altísima calidad, estilo NotebookLM o "Deep Dive". Tu trabajo es transformar artículos técnicos en conversaciones naturales, profundas y entretenidas.
@@ -93,7 +104,7 @@ El guion será locutado con Gemini 3.1 Flash TTS, así que debes escribir un tra
 
 ═══════════════════════════════════════════════════════════════
 OBJETIVO: Generar un guion de podcast de {$targetMinutes} minutos (~{$targetWords} palabras)
-entre {$this->speaker1} (mujer, presentadora principal, español de españa, peninsular) y {$this->speaker2} (hombre, co-presentador experto, español de españa, peninsular).
+entre {$this->speaker1} (presentadora principal) y {$this->speaker2} (co-presentador experto). Todo el diálogo hablado debe estar en {$spokenLanguage}.
 ═══════════════════════════════════════════════════════════════
 
 ## ESTILO CONVERSACIONAL (MUY IMPORTANTE)
@@ -115,8 +126,8 @@ El podcast debe sonar como DOS EXPERTOS AMIGOS charlando en un bar, no como pres
    - Evita reutilizar fórmulas demasiado reconocibles o comodines genéricos.
    - Si una idea se entiende mejor en lenguaje directo, no fuerces una metáfora.
 
-4. **EXPRESIONES COLOQUIALES ESPAÑOLAS**:
-   - Usa español peninsular natural, con expresiones coloquiales solo cuando encajen.
+4. **EXPRESIONES COLOQUIALES NATURALES**:
+   - {$colloquialStyle}
    - No conviertas el podcast en una sucesión de frases hechas.
    - Ninguna expresión coloquial debe repetirse dentro del mismo episodio.
    - Prioriza frescura, precisión y variedad sobre ocurrencias llamativas.
@@ -158,12 +169,12 @@ El podcast debe sonar como DOS EXPERTOS AMIGOS charlando en un bar, no como pres
 - Pon [short pause] antes de ideas importantes, cambios de sección o cierres reflexivos.
 - Si hay emoción, escríbela en el texto y apóyala con un tag breve; no fuerces dramatismo.
 - No uses acotaciones narrativas fuera de las líneas de {$this->speaker1} y {$this->speaker2}. Todo debe estar dentro del diálogo.
-- Mantén siempre español de España en el texto hablado; los tags deben quedarse en inglés para que TTS los interprete mejor.
+- Mantén siempre {$spokenLanguage} en el texto hablado; los tags deben quedarse en inglés para que TTS los interprete mejor.
 
 ## REGLAS CRÍTICAS
 
 - SOLO información del artículo. NUNCA inventar datos, cifras, fechas o nombres reales.
-- Español de España (vosotros, expresiones peninsulares, acento español peninsular)
+- Idioma del diálogo: {$spokenLanguage}.
 - Variar la longitud de intervenciones: algunas largas (3-5 frases), otras cortísimas (1 palabra)
 - El guion debe ser MUCHO más largo que un resumen: desarrollar, no resumir
 - No escribir instrucciones tipo "risas", "pausa" o "música" fuera de tags de audio entre corchetes.
@@ -171,13 +182,7 @@ El podcast debe sonar como DOS EXPERTOS AMIGOS charlando en un bar, no como pres
 
 ## EJEMPLO DEL ESTILO DESEADO
 
-{$this->speaker1}: [warmly] Hoy traemos un tema que parece técnico, pero que afecta a decisiones muy del día a día.
-{$this->speaker2}: Sí, y lo interesante es que el artículo no se queda en la superficie. Plantea una pregunta bastante práctica: qué cambia cuando intentamos aplicar esto en un entorno real.
-{$this->speaker1}: Vale, empecemos por ahí. ¿Cuál es la primera idea importante?
-{$this->speaker2}: La primera es que no basta con entender el concepto en abstracto. Hay que mirar qué implica para una persona, un equipo o una organización cuando tiene que tomar decisiones con información incompleta.
-{$this->speaker1}: [short pause] Y eso ya nos lleva a un punto delicado.
-{$this->speaker2}: Claro. Porque en teoría todo parece ordenado, pero en la práctica aparecen prioridades, plazos, dudas y pequeñas excepciones.
-{$this->speaker1}: Ahí es donde el tema empieza a tener vida.
+{$example}
 
 ## FORMATO DE SALIDA
 
@@ -257,7 +262,7 @@ PROMPT;
             if ($this->isValidSummary($sum)) return $sum;
         }
 
-        return 'Podcast generado';
+        return I18n::translate('podcast_ui.summary_fallback');
     }
 
     private function normalizeSummary(string $text): string
@@ -383,6 +388,11 @@ PROMPT;
      */
     public function buildTtsPromptForSegment(string $script, ?int $segmentIndex = null, ?int $totalSegments = null): string
     {
+        $isSpanish = I18n::locale() === 'es';
+        $speakerNationality = $isSpanish ? 'española' : 'international';
+        $spokenLanguage = $isSpanish
+            ? "* Todo el audio debe estar en español de España.\n* Usa pronunciación peninsular neutra y natural."
+            : "* All spoken audio must be in English.\n* Use a clear, natural international English accent.";
         $segmentNote = '';
         if ($segmentIndex !== null && $totalSegments !== null && $totalSegments > 1) {
             $segmentNote = "\nSegment continuity:\n* Este es el segmento {$segmentIndex} de {$totalSegments} de un mismo podcast.\n* Mantén exactamente la misma presencia de estudio, distancia de micro, timbre, claridad, volumen percibido y energía que en el resto de segmentos.\n* No sonar lejos, amortiguado, reverberante, filtrado, dentro de un vaso ni como si las voces estuvieran en otra habitación.\n";
@@ -391,19 +401,17 @@ PROMPT;
         return <<<PROMPT
 # AUDIO PROFILES
 ## {$this->speaker1}: presentadora principal
-{$this->speaker1} es una presentadora española con voz cálida, clara y cercana. Suena natural, inteligente y con una sonrisa vocal ligera. Lleva la conversación, abre secciones, hace preguntas y resume ideas.
+{$this->speaker1} es una presentadora {$speakerNationality} con voz cálida, clara y cercana. Suena natural, inteligente y con una sonrisa vocal ligera. Lleva la conversación, abre secciones, hace preguntas y resume ideas.
 
 ## {$this->speaker2}: co-presentador experto
-{$this->speaker2} es un divulgador español con voz serena, segura y didáctica. Aporta profundidad, matices y ejemplos con tono conversacional, no académico.
+{$this->speaker2} es un divulgador {$speakerNationality} con voz serena, segura y didáctica. Aporta profundidad, matices y ejemplos con tono conversacional, no académico.
 
 # THE SCENE
 Están grabando "The Claara Brief" en un estudio de podcast corporativo moderno, tranquilo y bien sonorizado. La conversación debe sonar como un podcast profesional para escuchar en el coche: entretenido, claro, humano y fácil de seguir sin mirar pantalla.
 
 # DIRECTOR'S NOTES
 Language and accent:
-* Todo el audio debe estar en español de España.
-* Usar pronunciación peninsular neutra y natural.
-* Evitar acento latinoamericano, vocabulario latinoamericano y entonación de doblaje.
+{$spokenLanguage}
 
 Style:
 * Conversación profesional pero cercana, con energía controlada.

@@ -18,6 +18,9 @@ if (!$user) {
     exit;
 }
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'podcast-from-article');
+
 $filename = $_GET['file'] ?? '';
 
 if (empty($filename)) {
@@ -38,7 +41,7 @@ if (!preg_match('/^podcast_[a-f0-9]{32}\.wav$/', $filename)) {
     exit;
 }
 
-$storageDir = dirname(__DIR__, 3) . '/storage/podcasts';
+$storageDir = \App\Storage::path('podcasts');
 $filepath = $storageDir . '/' . $filename;
 
 if (!file_exists($filepath)) {

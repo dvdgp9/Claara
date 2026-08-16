@@ -17,10 +17,8 @@ if (!$user) {
     Response::error('unauthorized', 'Not authenticated', 401);
 }
 
-$accessRepo = new UserFeatureAccessRepo();
-if (!$accessRepo->hasGestureAccess((int)$user['id'], 'lead-finder')) {
-    Response::error('forbidden', 'No access to Lead Finder', 403);
-}
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'lead-finder');
 
 $limit = max(1, min((int)($_GET['limit'] ?? 20), 50));
 

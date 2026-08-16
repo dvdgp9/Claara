@@ -43,6 +43,12 @@ if ($id <= 0 || $title === '') {
 }
 
 $repo = new GestureExecutionsRepo();
+$execution = $repo->findById($id);
+if (!$execution || (int)$execution['user_id'] !== (int)$user['id']) {
+    Response::error('not_found', 'No se ha encontrado el elemento o no tienes permiso', 404);
+}
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireExecutionApi($user, $execution);
 $ok = $repo->updateTitle($id, (int)$user['id'], $title);
 
 if (!$ok) {

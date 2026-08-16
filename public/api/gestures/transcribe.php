@@ -43,6 +43,7 @@ require_once __DIR__ . '/../../../src/App/bootstrap.php';
 use App\Response;
 use App\Session;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
 use Jobs\BackgroundJobsRepo;
 use Repos\ChatFilesRepo;
 use Repos\UsageLogRepo;
@@ -68,6 +69,9 @@ if (!$user) {
     Response::error('unauthorized', 'Not authenticated', 401);
 }
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'audio-transcriber');
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     Response::error('method_not_allowed', 'POST only', 405);
 }
@@ -82,7 +86,7 @@ if (!$csrfHeader || !$csrfSession || !hash_equals($csrfSession, $csrfHeader)) {
 if (!empty($_FILES['audio_file'])) {
     $file = $_FILES['audio_file'];
     if (!is_array($file)) {
-        Response::error('invalid_upload', 'Invalid upload payload', 400);
+        Response::error('invalid_upload', I18n::translate('transcribe_ui.api_invalid_upload'), 400);
     }
 
     $uploadError = (int)($file['error'] ?? UPLOAD_ERR_NO_FILE);
@@ -96,24 +100,24 @@ if (!empty($_FILES['audio_file'])) {
     $mimeType = normalizeMime((string)($file['type'] ?? ''));
 
     if ($tmpName === '' || !is_uploaded_file($tmpName)) {
-        Response::error('upload_error', 'Uploaded file is not valid', 400);
+        Response::error('upload_error', I18n::translate('transcribe_ui.api_invalid_upload'), 400);
     }
 
     if ($sizeBytes <= 0) {
-        Response::error('empty_file', 'Uploaded file is empty', 400);
+        Response::error('empty_file', I18n::translate('transcribe_ui.api_empty_file'), 400);
     }
 
     if ($sizeBytes > MAX_AUDIO_BYTES) {
-        Response::error('file_too_large', 'Audio file exceeds 50MB limit', 400);
+        Response::error('file_too_large', I18n::translate('transcribe_ui.file_too_large'), 400);
     }
 
     if (!in_array($mimeType, VALID_AUDIO_MIME_TYPES, true)) {
-        Response::error('invalid_audio_type', 'Unsupported audio type. Use: mp3, wav, m4a, webm, ogg', 400);
+        Response::error('invalid_audio_type', I18n::translate('transcribe_ui.invalid_format'), 400);
     }
 
-    $storageDir = dirname(__DIR__, 3) . '/storage/transcribe-jobs';
+    $storageDir = \App\Storage::path('transcribe-jobs');
     if (!is_dir($storageDir) && !@mkdir($storageDir, 0775, true)) {
-        Response::error('storage_error', 'Could not create transcription storage directory', 500);
+        Response::error('storage_error', I18n::translate('transcribe_ui.api_storage_error'), 500);
     }
 
     $safeBase = preg_replace('/[^a-zA-Z0-9._-]/', '_', pathinfo($originalName, PATHINFO_FILENAME));
@@ -135,7 +139,7 @@ if (!empty($_FILES['audio_file'])) {
     $storedPath = $storageDir . '/' . $storedName;
 
     if (!move_uploaded_file($tmpName, $storedPath)) {
-        Response::error('storage_error', 'Could not store uploaded audio file', 500);
+        Response::error('storage_error', I18n::translate('transcribe_ui.api_storage_error'), 500);
     }
 
     $jobsRepo = new BackgroundJobsRepo();
@@ -148,6 +152,7 @@ if (!empty($_FILES['audio_file'])) {
             'audio_filename' => $originalName,
             'size_mb' => round($sizeBytes / (1024 * 1024), 2),
             'created_at' => date('c'),
+            'locale' => I18n::locale(),
         ],
     ]);
 
@@ -155,7 +160,7 @@ if (!empty($_FILES['audio_file'])) {
         'success' => true,
         'async' => true,
         'job_id' => $jobId,
-        'message' => 'Transcription job queued',
+        'message' => I18n::translate('transcribe_ui.api_queued'),
     ]);
 }
 
@@ -164,7 +169,7 @@ $rawInput = file_get_contents('php://input');
 $body = json_decode($rawInput, true);
 unset($rawInput);
 if ($body === null && json_last_error() !== JSON_ERROR_NONE) {
-    Response::error('invalid_json', 'Invalid JSON: ' . json_last_error_msg(), 400);
+    Response::error('invalid_json', I18n::translate('transcribe_ui.api_invalid_json'), 400);
 }
 
 $audioBase64 = (string)($body['audio_base64'] ?? '');
@@ -176,13 +181,13 @@ if ($fileId && $audioBase64 === '') {
     $filesRepo = new ChatFilesRepo();
     $storedFile = $filesRepo->findByIdAndUser($fileId, (int)$user['id']);
     if (!$storedFile) {
-        Response::error('file_not_found', 'File not found', 404);
+        Response::error('file_not_found', I18n::translate('transcribe_ui.api_file_not_found'), 404);
     }
 
     $storagePath = ChatFilesRepo::getStoragePath();
     $filePath = $storagePath . '/' . $storedFile['stored_name'];
     if (!file_exists($filePath)) {
-        Response::error('file_not_found', 'Stored file not found', 404);
+        Response::error('file_not_found', I18n::translate('transcribe_ui.api_file_not_found'), 404);
     }
 
     $audioBase64 = base64_encode((string)file_get_contents($filePath));
@@ -191,22 +196,22 @@ if ($fileId && $audioBase64 === '') {
 }
 
 if ($audioBase64 === '' || $audioMime === '') {
-    Response::error('missing_audio', 'Missing audio payload (audio_base64 + audio_mime) or file_id', 400);
+    Response::error('missing_audio', I18n::translate('transcribe_ui.api_missing_audio'), 400);
 }
 
 if (!in_array($audioMime, VALID_AUDIO_MIME_TYPES, true)) {
-    Response::error('invalid_audio_type', 'Unsupported audio type. Use: mp3, wav, m4a, webm, ogg', 400);
+    Response::error('invalid_audio_type', I18n::translate('transcribe_ui.invalid_format'), 400);
 }
 
 $decoded = base64_decode($audioBase64, true);
 if ($decoded === false) {
-    Response::error('invalid_audio', 'audio_base64 is not valid base64', 400);
+    Response::error('invalid_audio', I18n::translate('transcribe_ui.api_invalid_base64'), 400);
 }
 $audioSizeBytes = strlen($decoded);
 unset($decoded);
 
 if ($audioSizeBytes > MAX_AUDIO_BYTES) {
-    Response::error('file_too_large', 'Audio file exceeds 50MB limit', 400);
+    Response::error('file_too_large', I18n::translate('transcribe_ui.file_too_large'), 400);
 }
 
 try {
@@ -225,7 +230,7 @@ try {
         $title .= '...';
     }
     if (trim($title) === '') {
-        $title = 'Transcription - ' . date('Y-m-d H:i');
+        $title = I18n::translate('transcribe_ui.api_title') . ' - ' . date('Y-m-d H:i');
     }
 
     $repo = new GestureExecutionsRepo();
@@ -267,7 +272,7 @@ try {
         ],
     ]);
 } catch (\Exception $e) {
-    Response::serverError('server_error', $e, 'Transcription failed');
+    Response::serverError('server_error', $e, I18n::translate('transcribe_ui.api_failed'));
 }
 
 function normalizeMime(string $mime): string
@@ -297,12 +302,8 @@ function extensionFromMime(string $mime): string
 function mapUploadError(int $code): string
 {
     return match ($code) {
-        UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Uploaded file is too large for server limits',
-        UPLOAD_ERR_PARTIAL => 'Uploaded file was only partially uploaded',
-        UPLOAD_ERR_NO_FILE => 'No audio file uploaded',
-        UPLOAD_ERR_NO_TMP_DIR => 'Temporary upload directory is missing',
-        UPLOAD_ERR_CANT_WRITE => 'Could not write uploaded file to disk',
-        UPLOAD_ERR_EXTENSION => 'Upload blocked by a PHP extension',
-        default => 'Unknown upload error',
+        UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => I18n::translate('transcribe_ui.file_too_large'),
+        UPLOAD_ERR_NO_FILE => I18n::translate('transcribe_ui.api_missing_audio'),
+        default => I18n::translate('transcribe_ui.api_invalid_upload'),
     };
 }

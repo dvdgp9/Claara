@@ -10,6 +10,7 @@ $user = Session::user();
 $userId = $user ? (int)$user['id'] : 0;
 $accessRepo = new UserFeatureAccessRepo();
 $voiceResolver = new \Voices\VoiceAccessResolver();
+$moduleEntitlements = \Modules\ModuleEntitlementService::current();
 
 /**
  * Partial: left navigation rail with hover menus
@@ -24,110 +25,121 @@ $useTabsJs = $useTabsJs ?? false;
 $tabs = [
     'conversations' => [
         'icon' => 'iconoir-chat-bubble',
-        'label' => 'Chat',
+        'label' => \I18n\I18n::translate('nav.chat'),
         'href' => '/app/',
-        'title' => 'Conversations',
-        'hoverTitle' => 'Recent conversations',
+        'title' => \I18n\I18n::translate('nav.conversations'),
+        'hoverTitle' => \I18n\I18n::translate('nav.recent_conversations'),
         'hoverIcon' => 'iconoir-chat-bubble',
-        'newLabel' => 'New conversation',
+        'newLabel' => \I18n\I18n::translate('sidebar.new_conversation'),
         'newHref' => '/app/'
     ],
     'voices' => [
         'icon' => 'iconoir-voice-square',
-        'label' => 'Voices',
+        'label' => \I18n\I18n::translate('nav.voices'),
         'href' => '/voices/',
-        'title' => 'Specialized voices',
-        'hoverTitle' => 'Available voices',
+        'title' => \I18n\I18n::translate('nav.specialized_voices'),
+        'hoverTitle' => \I18n\I18n::translate('nav.available_voices'),
         'hoverIcon' => 'iconoir-voice-square',
-        'newLabel' => 'View all',
+        'newLabel' => \I18n\I18n::translate('nav.view_all'),
         'newHref' => '/voices/'
     ],
     'gestures' => [
         'icon' => 'iconoir-magic-wand',
-        'label' => 'Gestures',
+        'label' => \I18n\I18n::translate('nav.gestures'),
         'href' => '/gestos/',
-        'title' => 'Automated workflows',
-        'hoverTitle' => 'Available gestures',
+        'title' => \I18n\I18n::translate('nav.automated_workflows'),
+        'hoverTitle' => \I18n\I18n::translate('nav.available_gestures'),
         'hoverIcon' => 'iconoir-magic-wand',
-        'newLabel' => 'View all',
+        'newLabel' => \I18n\I18n::translate('nav.view_all'),
         'newHref' => '/gestos/'
     ],
     'connectors' => [
         'icon' => 'iconoir-cloud-sync',
-        'label' => 'Sources',
+        'label' => \I18n\I18n::translate('nav.sources'),
         'href' => '/connectors.php',
-        'title' => 'Connected sources',
-        'hoverTitle' => 'External sources',
+        'title' => \I18n\I18n::translate('nav.connected_sources'),
+        'hoverTitle' => \I18n\I18n::translate('nav.external_sources'),
         'hoverIcon' => 'iconoir-cloud-sync',
-        'newLabel' => 'Manage sources',
+        'newLabel' => \I18n\I18n::translate('nav.manage_sources'),
         'newHref' => '/connectors.php'
     ]
 ];
+$tabModules = [
+    'conversations' => 'core.chat',
+    'voices' => 'core.voices',
+    'gestures' => 'core.gestures',
+    'connectors' => 'core.connectors',
+];
+$tabs = array_filter(
+    $tabs,
+    static fn(array $tab, string $tabId): bool => $moduleEntitlements->isModuleEnabled($tabModules[$tabId]),
+    ARRAY_FILTER_USE_BOTH
+);
 
 // Gestures available in the hover menu
 $gesturesList = [
     [
         'type' => 'podcast-from-article',
-        'name' => 'Article to Podcast',
+        'name' => \I18n\I18n::translate('gesture.podcast.name'),
         'icon' => 'iconoir-podcast',
         'href' => '/gestos/podcast-articulo.php',
-        'description' => 'Turn text into audio'
+        'description' => \I18n\I18n::translate('gesture.podcast.description')
     ],
     [
         'type' => 'write-article',
-        'name' => 'Write Content',
+        'name' => \I18n\I18n::translate('gesture.write.name'),
         'icon' => 'iconoir-edit-pencil',
         'href' => '/gestos/escribir-articulo.php',
-        'description' => 'Generate written content'
+        'description' => \I18n\I18n::translate('gesture.write.description')
     ],
     [
         'type' => 'social-media',
-        'name' => 'Social Media',
+        'name' => \I18n\I18n::translate('gesture.social.name'),
         'icon' => 'iconoir-share-android',
         'href' => '/gestos/redes-sociales.php',
-        'description' => 'Create social posts'
+        'description' => \I18n\I18n::translate('gesture.social.description')
     ],
     [
         'type' => 'image-editor',
-        'name' => 'Image Studio',
+        'name' => \I18n\I18n::translate('gesture.image.name'),
         'icon' => 'iconoir-media-image',
         'href' => '/gestos/editor-imagenes.php',
-        'description' => 'Generate AI images'
+        'description' => \I18n\I18n::translate('gesture.image.description')
     ],
     [
         'type' => 'content-repurposer',
-        'name' => 'Content Repurposer',
+        'name' => \I18n\I18n::translate('gesture.repurpose.name'),
         'icon' => 'iconoir-refresh-double',
         'href' => '/gestos/transformador-contenido.php',
-        'description' => 'Adapt content to formats'
+        'description' => \I18n\I18n::translate('gesture.repurpose.description')
     ],
     [
         'type' => 'sop-generator',
-        'name' => 'SOP Generator',
+        'name' => \I18n\I18n::translate('gesture.sop.name'),
         'icon' => 'iconoir-clipboard-check',
         'href' => '/gestos/sop-generator.php',
-        'description' => 'Create procedures'
+        'description' => \I18n\I18n::translate('gesture.sop.description')
     ],
     [
         'type' => 'audio-transcriber',
-        'name' => 'Audio Transcriber',
+        'name' => \I18n\I18n::translate('gesture.transcribe.name'),
         'icon' => 'iconoir-microphone',
         'href' => '/gestos/transcriptor-audio.php',
-        'description' => 'Turn audio into text'
+        'description' => \I18n\I18n::translate('gesture.transcribe.description')
     ],
     [
         'type' => 'course-creator',
-        'name' => 'Course Creator',
+        'name' => \I18n\I18n::translate('gesture.course.name'),
         'icon' => 'iconoir-graduation-cap',
         'href' => '/gestos/creador-cursos.php',
-        'description' => 'Generate training material'
+        'description' => \I18n\I18n::translate('gesture.course.description')
     ],
     [
         'type' => 'project-admin',
-        'name' => 'Project Analysis',
+        'name' => \I18n\I18n::translate('gesture.project.name'),
         'icon' => 'iconoir-folder-settings',
         'href' => '/gestos/admin-proyectos.php',
-        'description' => 'Analyze project documents'
+        'description' => \I18n\I18n::translate('gesture.project.description')
     ]
 ];
 
@@ -141,7 +153,7 @@ try {
             'name' => $voice['name'],
             'icon' => $voice['icon'] ?: 'iconoir-voice-square',
             'href' => $voice['slug'] === 'lex' ? '/voices/lex.php' : '/voices/view.php?voice=' . urlencode($voice['slug']),
-            'description' => $voice['role'] ?: 'Specialized voice',
+            'description' => $voice['role'] ?: \I18n\I18n::translate('voice.specialized'),
         ];
     }
 } catch (\Throwable $e) {
@@ -151,7 +163,7 @@ try {
             'name' => 'Lex',
             'icon' => 'iconoir-book-stack',
             'href' => '/voices/lex.php',
-            'description' => 'Legal assistant'
+            'description' => \I18n\I18n::translate('voice.legal_assistant')
         ]
     ];
 }
@@ -237,7 +249,7 @@ try {
               </div>
               <div class="hover-panel-item-info">
                 <div class="hover-panel-item-title">Google Drive</div>
-                <div class="hover-panel-item-meta">Selected files first</div>
+                <div class="hover-panel-item-meta"><?php echo htmlspecialchars(\I18n\I18n::translate('connector.selected_files_first')); ?></div>
               </div>
             </a>
             <?php if (!empty($user['is_superadmin']) || in_array('admin', $user['roles'] ?? [], true)): ?>
@@ -246,8 +258,8 @@ try {
                   <i class="iconoir-dashboard-dots"></i>
                 </div>
                 <div class="hover-panel-item-info">
-                  <div class="hover-panel-item-title">Admin overview</div>
-                  <div class="hover-panel-item-meta">Provider health</div>
+                <div class="hover-panel-item-title"><?php echo htmlspecialchars(\I18n\I18n::translate('connector.admin_overview')); ?></div>
+                <div class="hover-panel-item-meta"><?php echo htmlspecialchars(\I18n\I18n::translate('connector.provider_health')); ?></div>
                 </div>
               </a>
             <?php endif; ?>
@@ -275,9 +287,9 @@ try {
     $isAccountActive = ($activeTab === 'account');
     $accountStateClasses = $isAccountActive ? 'active text-white' : 'text-white/60 hover:text-white/90';
   ?>
-  <a href="/account.php" class="tab-item w-[calc(100%-12px)] mx-1.5 py-3 rounded-2xl flex flex-col items-center gap-1.5 <?php echo $accountStateClasses; ?>" title="My account">
+  <a href="/account.php" class="tab-item w-[calc(100%-12px)] mx-1.5 py-3 rounded-2xl flex flex-col items-center gap-1.5 <?php echo $accountStateClasses; ?>" title="<?php echo htmlspecialchars(\I18n\I18n::translate('header.my_account')); ?>">
     <i class="iconoir-user text-2xl"></i>
-    <span class="text-[10px] font-medium">Account</span>
+    <span class="text-[10px] font-medium"><?php echo htmlspecialchars(\I18n\I18n::translate('nav.account')); ?></span>
   </a>
 </aside>
 

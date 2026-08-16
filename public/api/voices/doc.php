@@ -10,33 +10,34 @@ require_once __DIR__ . '/../../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
 use App\Response;
+use I18n\I18n;
 use Voices\VoiceContextBuilder;
 use Voices\VoiceAccessResolver;
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Invalid session', 401);
+    Response::error('unauthorized', I18n::translate('auth.error.unauthorized'), 401);
 }
 
 $voiceId = $_GET['voice_id'] ?? '';
 $docId = $_GET['doc_id'] ?? '';
 
 if (!$voiceId) {
-    Response::error('missing_voice', 'voice_id is required', 400);
+    Response::error('missing_voice', I18n::translate('voice_api.voice_required'), 400);
 }
 if (!$docId) {
-    Response::error('missing_doc', 'doc_id is required', 400);
+    Response::error('missing_doc', I18n::translate('voice_api.document_required'), 400);
 }
 $builder = new VoiceContextBuilder($voiceId);
 
 if (!$builder->voiceExists()) {
-    Response::error('invalid_voice', 'Voice not found', 404);
+    Response::error('invalid_voice', I18n::translate('voice_api.voice_not_found'), 404);
 }
 
 $voice = $builder->getVoiceInfo() ?? ['slug' => $voiceId];
 $resolver = new VoiceAccessResolver();
 if (!$resolver->hasVoiceAccess((int)$user['id'], $voice)) {
-    Response::error('forbidden', 'You do not have access to this voice', 403);
+    Response::error('forbidden', I18n::translate('voice_api.forbidden'), 403);
 }
 $allowedFolderIds = $resolver->hasFullAccess((int)$user['id'], $voice)
     ? null
@@ -54,7 +55,7 @@ foreach ($docs as $d) {
 }
 
 if (!$doc) {
-    Response::error('not_found', 'Document not found', 404);
+    Response::error('not_found', I18n::translate('voice_api.document_not_found'), 404);
 }
 
 // Detectar tipo de archivo
@@ -63,7 +64,7 @@ $isDownload = isset($_GET['download']) && $_GET['download'] == '1';
 
 if ($isDownload) {
     if (!file_exists($doc['path'])) {
-        Response::error('file_not_found', 'File not found on server', 404);
+        Response::error('file_not_found', I18n::translate('voice_api.file_not_found'), 404);
     }
 
     $mimeTypes = [
@@ -91,7 +92,7 @@ if (in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx'])) {
             'size' => $doc['size'],
             'type' => $extension,
             'isBinary' => true,
-            'message' => 'This is a PDF file. Documents are indexed and available for Lex assistant queries. To view full content, open it in a new window.'
+            'message' => I18n::translate('voice_api.binary_document')
         ]
     ]);
 }
@@ -99,7 +100,7 @@ if (in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx'])) {
 // Leer contenido de archivos de texto
 $content = file_get_contents($doc['path']);
 if ($content === false) {
-    Response::error('read_error', 'Error reading document', 500);
+    Response::error('read_error', I18n::translate('voice_api.read_error'), 500);
 }
 
 Response::json([

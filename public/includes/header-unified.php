@@ -19,7 +19,7 @@
  */
 
 $headerBackUrl = $headerBackUrl ?? null;
-$headerBackText = $headerBackText ?? 'Back';
+$headerBackText = $headerBackText ?? \I18n\I18n::translate('header.back');
 $headerTitle = $headerTitle ?? ($pageTitle ?? '');
 $headerSubtitle = $headerSubtitle ?? null;
 $headerIcon = $headerIcon ?? null;
@@ -31,8 +31,12 @@ $headerShowSearch = $headerShowSearch ?? false;
 $headerShowFaq = $headerShowFaq ?? false;
 $headerDrawerId = $headerDrawerId ?? null;
 $headerShowLogo = $headerShowLogo ?? false;
+$moduleEntitlements = \Modules\ModuleEntitlementService::current();
+$chatModuleEnabled = $moduleEntitlements->isModuleEnabled('core.chat');
+$connectorsModuleEnabled = $moduleEntitlements->isModuleEnabled('core.connectors');
+$administrationModuleEnabled = $moduleEntitlements->isModuleEnabled('core.administration');
 $canEditVoices = false;
-if (isset($user)) {
+if (isset($user) && $administrationModuleEnabled) {
     $canEditVoices = !empty($user['is_superadmin']);
     if (!$canEditVoices && class_exists('\Repos\UserFeatureAccessRepo')) {
         try {
@@ -46,7 +50,7 @@ if (isset($user)) {
 // Acceso al panel de reportes (admin o responsable de alguna voz) + contador de abiertos.
 $canSeeFlags = false;
 $flagsOpenCount = 0;
-if (isset($user)) {
+if (isset($user) && $chatModuleEnabled) {
     $flagsUid = (int)($user['id'] ?? 0);
     $flagsRepoFile = dirname(__DIR__, 2) . '/src/Repos/VoiceFlagsRepo.php';
     if (is_file($flagsRepoFile)) {
@@ -100,9 +104,9 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
         <i class="iconoir-chat-bubble text-[#B7C9F2] hidden lg:block"></i>
         <span class="text-sm font-medium leading-tight text-slate-700 truncate max-w-[60vw] lg:max-w-md"></span>
         <span id="conversation-access-chip" class="hidden text-[10px] font-semibold px-2 py-0.5 rounded-full border border-slate-200 text-slate-500 bg-white"></span>
-        <button id="conversation-share-btn" type="button" class="hidden items-center gap-1.5 px-2 py-1 text-xs font-medium text-slate-500 hover:text-[#2F3440] hover:bg-[#B7C9F2]/10 rounded-lg transition-colors" title="Share conversation">
+        <button id="conversation-share-btn" type="button" class="hidden items-center gap-1.5 px-2 py-1 text-xs font-medium text-slate-500 hover:text-[#2F3440] hover:bg-[#B7C9F2]/10 rounded-lg transition-colors" title="<?php echo htmlspecialchars(\I18n\I18n::translate('header.share_conversation')); ?>">
           <i class="iconoir-share-android"></i>
-          <span class="hidden sm:inline">Share</span>
+          <span class="hidden sm:inline"><?php echo htmlspecialchars(\I18n\I18n::translate('header.share')); ?></span>
         </button>
       </div>
     <?php else: ?>
@@ -142,14 +146,14 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
   <div class="flex items-center gap-1 lg:gap-3">
     <?php if ($headerShowSearch): ?>
       <!-- Search (desktop only) -->
-      <button class="hidden lg:flex p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" title="Search (coming soon)">
+      <button class="hidden lg:flex p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" title="<?php echo htmlspecialchars(\I18n\I18n::translate('header.search_coming_soon')); ?>">
         <i class="iconoir-search text-xl"></i>
       </button>
     <?php endif; ?>
     
     <?php if ($headerShowFaq): ?>
       <!-- Claara quick answers (desktop only) -->
-      <button id="faq-btn" class="hidden lg:flex p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-lg transition-colors" title="Ask Claara">
+      <button id="faq-btn" class="hidden lg:flex p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-lg transition-colors" title="<?php echo htmlspecialchars(\I18n\I18n::translate('header.ask_claara')); ?>">
         <i class="iconoir-help-circle text-xl"></i>
       </button>
     <?php endif; ?>
@@ -182,7 +186,7 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
               if (isset($user)) {
                 echo htmlspecialchars(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
               } else {
-              echo 'Loading...';
+              echo htmlspecialchars(\I18n\I18n::translate('common.loading'));
               }
             ?>
           </div>
@@ -192,16 +196,18 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
         </div>
         <a href="/account.php" class="lg:hidden w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
           <i class="iconoir-user"></i>
-          <span>My account</span>
+          <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.my_account')); ?></span>
         </a>
+        <?php if ($connectorsModuleEnabled): ?>
         <a href="/connectors.php" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
           <i class="iconoir-cloud-sync"></i>
-          <span>Connectors</span>
+          <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.connectors')); ?></span>
         </a>
+        <?php endif; ?>
         <?php if ($canSeeFlags): ?>
           <a href="/flags.php" id="flags-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
             <i class="iconoir-warning-triangle"></i>
-            <span>Reports</span>
+            <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.reports')); ?></span>
             <?php if ($flagsOpenCount > 0): ?>
               <span class="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#FF8B73] text-white text-xs font-semibold"><?php echo (int)$flagsOpenCount; ?></span>
             <?php endif; ?>
@@ -210,42 +216,44 @@ $headerStyle .= ' flex items-center justify-between shadow-sm shrink-0 sticky to
         <?php if ($canEditVoices): ?>
           <a href="/admin/voices.php" id="voices-admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
             <i class="iconoir-voice-square"></i>
-            <span>Voice Studio</span>
+            <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.voice_studio')); ?></span>
           </a>
         <?php endif; ?>
         
-        <?php if (isset($user) && in_array('admin', $user['roles'] ?? [], true)): ?>
+        <?php if ($administrationModuleEnabled && isset($user) && in_array('admin', $user['roles'] ?? [], true)): ?>
           <a href="/admin/users.php" id="admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 <?php echo $canEditVoices ? '' : 'border-t border-slate-100'; ?>">
             <i class="iconoir-settings"></i>
-            <span>User management</span>
+            <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.user_management')); ?></span>
           </a>
           <a href="/admin/departments.php" id="departments-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
             <i class="iconoir-community"></i>
-            <span>Departments</span>
+            <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.departments')); ?></span>
           </a>
           <a href="/admin/stats.php" id="stats-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
             <i class="iconoir-graph-up"></i>
-            <span>Dashboard</span>
+            <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.dashboard')); ?></span>
           </a>
           <a href="/admin/context-manager.php" id="context-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
             <i class="iconoir-folder"></i>
-            <span>Context manager</span>
+            <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.context_manager')); ?></span>
           </a>
+          <?php if ($connectorsModuleEnabled): ?>
           <a href="/admin/connectors.php" id="connectors-admin-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
             <i class="iconoir-cloud-sync"></i>
-            <span>Connector overview</span>
+            <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.connector_overview')); ?></span>
           </a>
+          <?php endif; ?>
           <?php if (!empty($user['is_superadmin'])): ?>
             <a href="/admin/models.php" id="models-link" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
               <i class="iconoir-settings"></i>
-              <span>Chat models</span>
+              <span><?php echo htmlspecialchars(\I18n\I18n::translate('header.chat_models')); ?></span>
             </a>
           <?php endif; ?>
         <?php endif; ?>
         
         <button id="logout-btn" class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 border-t border-slate-100">
           <i class="iconoir-log-out"></i>
-          <span>Log out</span>
+          <span><?php echo htmlspecialchars(\I18n\I18n::translate('nav.logout')); ?></span>
         </button>
       </div>
     </div>

@@ -22,6 +22,9 @@ if (!$user) {
     Response::error('unauthorized', 'Not authenticated', 401);
 }
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'course-creator');
+
 Session::requireCsrf();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

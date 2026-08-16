@@ -2,6 +2,7 @@
 namespace Auth;
 
 use App\DB;
+use App\CookieScope;
 
 /**
  * Servicio para manejar tokens de "Recordarme" persistentes.
@@ -11,7 +12,6 @@ use App\DB;
  */
 class RememberService
 {
-    private const COOKIE_NAME = 'claara_remember';
     private const TOKEN_DAYS = 30;
     
     /**
@@ -42,7 +42,7 @@ class RememberService
      */
     public static function validateAndRestore(): ?array
     {
-        $cookieValue = $_COOKIE[self::COOKIE_NAME] ?? '';
+        $cookieValue = $_COOKIE[CookieScope::rememberName()] ?? '';
         if (!$cookieValue) {
             return null;
         }
@@ -62,7 +62,7 @@ class RememberService
         $db = DB::pdo();
         $stmt = $db->prepare('
             SELECT rt.id, rt.user_id, 
-                   u.id as uid, u.email, u.first_name, u.last_name, u.job_title,
+                   u.id as uid, u.email, u.first_name, u.last_name, u.locale, u.job_title,
                    u.department_id, u.is_superadmin, u.status,
                    d.name as department_name
             FROM remember_tokens rt
@@ -97,6 +97,7 @@ class RememberService
             'email' => $row['email'],
             'first_name' => $row['first_name'],
             'last_name' => $row['last_name'],
+            'locale' => $row['locale'] ?? null,
             'job_title' => $row['job_title'] ?? null,
             'department_id' => $row['department_id'] ? (int)$row['department_id'] : null,
             'department_name' => $row['department_name'] ?? null,
@@ -149,17 +150,7 @@ class RememberService
      */
     private static function setCookie(string $value, int $lifetime): void
     {
-        $secure = self::isHttps();
-        $domain = self::getCookieDomain();
-        
-        setcookie(self::COOKIE_NAME, $value, [
-            'expires' => time() + $lifetime,
-            'path' => '/',
-            'domain' => $domain,
-            'secure' => $secure,
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
+        setcookie(CookieScope::rememberName(), $value, CookieScope::persistentOptions($lifetime));
     }
     
     /**
@@ -167,53 +158,6 @@ class RememberService
      */
     private static function clearCookie(): void
     {
-        $domain = self::getCookieDomain();
-        
-        setcookie(self::COOKIE_NAME, '', [
-            'expires' => time() - 86400,
-            'path' => '/',
-            'domain' => $domain,
-            'secure' => self::isHttps(),
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
-    }
-    
-    /**
-     * Detectar si estamos en HTTPS.
-     */
-    private static function isHttps(): bool
-    {
-        $xfp = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
-        $appUrl = $_ENV['APP_URL'] ?? getenv('APP_URL') ?: '';
-        $schemeFromEnv = '';
-        if ($appUrl) {
-            $parsed = parse_url($appUrl);
-            $schemeFromEnv = $parsed['scheme'] ?? '';
-        }
-        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || strtolower($xfp) === 'https'
-            || strtolower($schemeFromEnv) === 'https';
-    }
-    
-    /**
-     * Obtener dominio para cookie.
-     */
-    private static function getCookieDomain(): string
-    {
-        $host = $_SERVER['HTTP_HOST'] ?? '';
-        $appUrl = $_ENV['APP_URL'] ?? getenv('APP_URL') ?: '';
-        if (!$host && $appUrl) {
-            $parsed = parse_url($appUrl);
-            $host = $parsed['host'] ?? '';
-        }
-        
-        if ($host && !preg_match('/^(localhost|127\.|192\.|10\.|172\.)/', $host)) {
-            $parts = explode('.', $host);
-            if (count($parts) >= 2) {
-                return $parts[count($parts)-2] . '.' . $parts[count($parts)-1];
-            }
-        }
-        return '';
+        setcookie(CookieScope::rememberName(), '', CookieScope::expiredOptions());
     }
 }

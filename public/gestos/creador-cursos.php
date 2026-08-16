@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 
 Session::start();
@@ -32,13 +33,14 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'All gestures';
-$headerTitle = 'Course creator';
+$headerBackText = I18n::translate('course_ui.all_gestures');
+$headerTitle = I18n::translate('course_ui.title');
 $headerIcon = 'iconoir-graduation-cap';
 $headerIconColor = 'from-emerald-500 to-teal-600';
 $headerDrawerId = 'course-history-drawer';
+$courseJs = I18n::javascriptCatalogPrefixJson('course_ui.');
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(I18n::htmlLang()); ?>">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <style>
@@ -175,7 +177,7 @@ $headerDrawerId = 'course-history-drawer';
       line-height: 1.6;
     }
   </style>
-  <div class="min-h-screen flex h-screen">
+  <div class="min-h-[100dvh] flex h-[100dvh]">
     <?php include __DIR__ . '/../includes/left-tabs.php'; ?>
     
     <!-- Sidebar de historial (solo desktop) -->
@@ -184,7 +186,7 @@ $headerDrawerId = 'course-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-emerald-500"></i>
-            History
+            <?php echo htmlspecialchars(I18n::translate('course_ui.history')); ?>
           </h2>
         </div>
       </div>
@@ -192,7 +194,7 @@ $headerDrawerId = 'course-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Loading...
+          <?php echo htmlspecialchars(I18n::translate('course_ui.loading')); ?>
         </div>
       </div>
     </aside>
@@ -200,7 +202,7 @@ $headerDrawerId = 'course-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'course-history-drawer';
-    $drawerTitle = 'History';
+    $drawerTitle = I18n::translate('course_ui.history');
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-emerald-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -219,10 +221,10 @@ $headerDrawerId = 'course-history-drawer';
               <i class="iconoir-graduation-cap text-3xl"></i>
             </div>
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 mb-2">
-              Course Creator
+              <?php echo htmlspecialchars(I18n::translate('course_ui.title')); ?>
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Upload a PDF or paste handbook text. Generate an editable learning outline and build the full content for each module.
+              <?php echo htmlspecialchars(I18n::translate('course_ui.subtitle')); ?>
             </p>
           </div>
 
@@ -234,7 +236,7 @@ $headerDrawerId = 'course-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-3">
                   <i class="iconoir-page text-emerald-500 mr-1"></i>
-                  Material de origen
+                  <?php echo htmlspecialchars(I18n::translate('course_ui.source_material')); ?>
                 </label>
                 
                 <!-- Tabs -->
@@ -243,7 +245,7 @@ $headerDrawerId = 'course-history-drawer';
                     <i class="iconoir-page mr-1"></i> PDF
                   </button>
                   <button type="button" data-tab="text" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    <i class="iconoir-text mr-1"></i> Text
+                    <i class="iconoir-text mr-1"></i> <?php echo htmlspecialchars(I18n::translate('course_ui.text')); ?>
                   </button>
                 </div>
 
@@ -251,8 +253,8 @@ $headerDrawerId = 'course-history-drawer';
                 <div id="tab-pdf" class="tab-content">
                   <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-all">
                     <i class="iconoir-upload text-3xl text-slate-400 mb-2"></i>
-                    <span class="text-sm text-slate-500">Drag a PDF or click to select</span>
-                    <span class="text-xs text-slate-400 mt-1">Handbook, syllabus, theory... (max 20MB)</span>
+                    <span class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('course_ui.pdf_drop')); ?></span>
+                    <span class="text-xs text-slate-400 mt-1"><?php echo htmlspecialchars(I18n::translate('course_ui.pdf_help')); ?></span>
                     <input type="file" id="source-pdf" accept=".pdf" class="hidden" />
                   </label>
                   <p id="pdf-filename" class="text-sm text-emerald-600 mt-2 hidden flex items-center gap-2">
@@ -265,8 +267,8 @@ $headerDrawerId = 'course-history-drawer';
                 <div id="tab-text" class="tab-content hidden">
                   <textarea id="source-text" rows="8"
                             class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
-                            placeholder="Paste the handbook, theory, or source material you want to turn into a course..."></textarea>
-                  <p class="text-xs text-slate-500 mt-2">Minimum 100 words to generate quality content</p>
+                            placeholder="<?php echo htmlspecialchars(I18n::translate('course_ui.text_placeholder')); ?>"></textarea>
+                  <p class="text-xs text-slate-500 mt-2"><?php echo htmlspecialchars(I18n::translate('course_ui.minimum_words')); ?></p>
                 </div>
               </div>
 
@@ -276,7 +278,7 @@ $headerDrawerId = 'course-history-drawer';
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-2">
                     <i class="iconoir-clock text-emerald-500 mr-1"></i>
-                    Duration
+                    <?php echo htmlspecialchars(I18n::translate('course_ui.duration')); ?>
                   </label>
                   <div class="grid grid-cols-2 gap-2">
                     <label class="cursor-pointer">
@@ -310,25 +312,25 @@ $headerDrawerId = 'course-history-drawer';
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-2">
                     <i class="iconoir-learning text-emerald-500 mr-1"></i>
-                    Level
+                    <?php echo htmlspecialchars(I18n::translate('course_ui.level')); ?>
                   </label>
                   <div class="space-y-2">
                     <label class="cursor-pointer block">
                       <input type="radio" name="level" value="basico" class="hidden peer" />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🌱 Basic</span>
+                        <span class="text-sm font-medium"><?php echo htmlspecialchars(I18n::translate('course_ui.basic')); ?></span>
                       </div>
                     </label>
                     <label class="cursor-pointer block">
                       <input type="radio" name="level" value="intermedio" class="hidden peer" checked />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🌿 Intermediate</span>
+                        <span class="text-sm font-medium"><?php echo htmlspecialchars(I18n::translate('course_ui.intermediate')); ?></span>
                       </div>
                     </label>
                     <label class="cursor-pointer block">
                       <input type="radio" name="level" value="avanzado" class="hidden peer" />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🌳 Advanced</span>
+                        <span class="text-sm font-medium"><?php echo htmlspecialchars(I18n::translate('course_ui.advanced')); ?></span>
                       </div>
                     </label>
                   </div>
@@ -338,25 +340,25 @@ $headerDrawerId = 'course-history-drawer';
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-2">
                     <i class="iconoir-community text-emerald-500 mr-1"></i>
-                    Format
+                    <?php echo htmlspecialchars(I18n::translate('course_ui.format')); ?>
                   </label>
                   <div class="space-y-2">
                     <label class="cursor-pointer block">
                       <input type="radio" name="course_format" value="presencial" class="hidden peer" />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🏫 On-site</span>
+                        <span class="text-sm font-medium"><?php echo htmlspecialchars(I18n::translate('course_ui.onsite')); ?></span>
                       </div>
                     </label>
                     <label class="cursor-pointer block">
                       <input type="radio" name="course_format" value="online" class="hidden peer" checked />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">💻 Online</span>
+                        <span class="text-sm font-medium"><?php echo htmlspecialchars(I18n::translate('course_ui.online')); ?></span>
                       </div>
                     </label>
                     <label class="cursor-pointer block">
                       <input type="radio" name="course_format" value="hibrido" class="hidden peer" />
                       <div class="config-option p-2 border-2 border-slate-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all">
-                        <span class="text-sm font-medium">🔄 Hybrid</span>
+                        <span class="text-sm font-medium"><?php echo htmlspecialchars(I18n::translate('course_ui.hybrid')); ?></span>
                       </div>
                     </label>
                   </div>
@@ -366,12 +368,12 @@ $headerDrawerId = 'course-history-drawer';
               <!-- Botón generar índice -->
               <button type="submit" id="generate-btn" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 <i class="iconoir-list"></i>
-                <span id="generate-btn-text">Generate course outline</span>
+                <span id="generate-btn-text"><?php echo htmlspecialchars(I18n::translate('course_ui.generate_outline')); ?></span>
               </button>
               
               <p class="text-xs text-slate-500 text-center">
                 <i class="iconoir-info-circle mr-1"></i>
-                Step 1 of 2: Generate an outline you can edit before building the content
+                <?php echo htmlspecialchars(I18n::translate('course_ui.step_one')); ?>
               </p>
               
               <!-- Progress -->
@@ -381,8 +383,8 @@ $headerDrawerId = 'course-history-drawer';
                     <i class="iconoir-refresh animate-spin text-emerald-600"></i>
                   </div>
                   <div>
-                    <p id="progress-text" class="text-sm font-medium text-emerald-700">Processing...</p>
-                    <p id="progress-detail" class="text-xs text-emerald-500">This may take a few minutes depending on selected formats</p>
+                    <p id="progress-text" class="text-sm font-medium text-emerald-700"><?php echo htmlspecialchars(I18n::translate('course_ui.processing')); ?></p>
+                    <p id="progress-detail" class="text-xs text-emerald-500"><?php echo htmlspecialchars(I18n::translate('course_ui.processing_help')); ?></p>
                   </div>
                 </div>
               </div>
@@ -392,7 +394,7 @@ $headerDrawerId = 'course-history-drawer';
                 <div class="flex items-start gap-2">
                   <i class="iconoir-warning-triangle text-red-500 mt-0.5"></i>
                   <div>
-                    <p class="text-sm font-medium text-red-800">Error</p>
+                    <p class="text-sm font-medium text-red-800"><?php echo htmlspecialchars(I18n::translate('course_ui.error')); ?></p>
                     <p id="error-message" class="text-xs text-red-600 mt-0.5"></p>
                   </div>
                 </div>
@@ -408,8 +410,8 @@ $headerDrawerId = 'course-history-drawer';
                   <i class="iconoir-list text-emerald-600 text-xl"></i>
                 </div>
                 <div>
-                  <h2 class="text-lg font-bold text-slate-800">Course outline</h2>
-                  <p class="text-xs text-slate-500">Step 2 of 2: Review and edit the outline, then generate the modules</p>
+                  <h2 class="text-lg font-bold text-slate-800"><?php echo htmlspecialchars(I18n::translate('course_ui.outline')); ?></h2>
+                  <p class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('course_ui.step_two')); ?></p>
                 </div>
               </div>
             </div>
@@ -425,12 +427,12 @@ $headerDrawerId = 'course-history-drawer';
             <!-- Result Header -->
             <div class="flex items-center justify-between mb-4">
               <div>
-                <h2 id="result-title" class="text-xl font-bold text-slate-800">Course generated</h2>
+                <h2 id="result-title" class="text-xl font-bold text-slate-800"><?php echo htmlspecialchars(I18n::translate('course_ui.generated')); ?></h2>
                 <p id="result-source" class="text-sm text-slate-500"></p>
               </div>
               <button type="button" id="new-course-btn" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg transition-colors">
                 <i class="iconoir-plus"></i>
-                <span>New course</span>
+                <span><?php echo htmlspecialchars(I18n::translate('course_ui.new_course')); ?></span>
               </button>
             </div>
             
@@ -445,7 +447,10 @@ $headerDrawerId = 'course-history-drawer';
     </main>
   </div>
 
-  <script>window.CSRF_TOKEN = '<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>';</script>
+  <script>
+    window.CSRF_TOKEN = '<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>';
+    window.CLAARA_COURSE_I18N = <?php echo $courseJs; ?>;
+  </script>
   <script src="/assets/js/gesture-course-creator.js"></script>
   
   <!-- Bottom Navigation (móvil) -->

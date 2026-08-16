@@ -1,6 +1,9 @@
 <?php
 namespace Rag;
 
+use App\Env;
+use Instances\InstanceContext;
+
 /**
  * Cliente HTTP para Qdrant Vector Database
  * Documentación: https://qdrant.tech/documentation/
@@ -9,11 +12,27 @@ class QdrantClient
 {
     private string $baseUrl;
     private int $timeout;
+    private string $apiKey;
+    private string $collectionPrefix;
 
-    public function __construct(string $host = 'localhost', int $port = 6333, int $timeout = 30)
+    public function __construct(?string $host = null, ?int $port = null, int $timeout = 30, ?string $apiKey = null, ?string $collectionPrefix = null)
     {
+        $context = InstanceContext::currentOrNull();
+        $rag = $context?->resources()->ragConfig() ?? [
+            'host' => Env::get('QDRANT_HOST', 'localhost'),
+            'port' => (int)Env::get('QDRANT_PORT', '6333'),
+            'api_key' => Env::get('QDRANT_API_KEY', ''),
+            'collection_prefix' => '',
+        ];
+        $host = $host ?? (string)$rag['host'];
+        $port = $port ?? (int)$rag['port'];
+        if (preg_match('/^[A-Za-z0-9.-]+$/', $host) !== 1 || $port < 1 || $port > 65535) {
+            throw new \InvalidArgumentException('Invalid Qdrant endpoint');
+        }
         $this->baseUrl = "http://{$host}:{$port}";
         $this->timeout = $timeout;
+        $this->apiKey = $apiKey ?? (string)$rag['api_key'];
+        $this->collectionPrefix = $collectionPrefix ?? (string)$rag['collection_prefix'];
     }
 
     /**
@@ -34,6 +53,7 @@ class QdrantClient
      */
     public function createCollection(string $name, int $vectorSize = 1536, string $distance = 'Cosine'): array
     {
+        $name = rawurlencode($this->scopedCollectionName($name));
         return $this->request('PUT', "/collections/{$name}", [
             'vectors' => [
                 'size' => $vectorSize,
@@ -48,6 +68,7 @@ class QdrantClient
     public function collectionExists(string $name): bool
     {
         try {
+            $name = rawurlencode($this->scopedCollectionName($name));
             $this->request('GET', "/collections/{$name}");
             return true;
         } catch (\Exception $e) {
@@ -60,6 +81,7 @@ class QdrantClient
      */
     public function deleteCollection(string $name): array
     {
+        $name = rawurlencode($this->scopedCollectionName($name));
         return $this->request('DELETE', "/collections/{$name}");
     }
 
@@ -71,6 +93,7 @@ class QdrantClient
      */
     public function upsertPoints(string $collection, array $points): array
     {
+        $collection = rawurlencode($this->scopedCollectionName($collection));
         return $this->request('PUT', "/collections/{$collection}/points", [
             'points' => $points
         ]);
@@ -97,6 +120,7 @@ class QdrantClient
             $body['filter'] = $filter;
         }
 
+        $collection = rawurlencode($this->scopedCollectionName($collection));
         $response = $this->request('POST', "/collections/{$collection}/points/search", $body);
         return $response['result'] ?? [];
     }
@@ -106,6 +130,7 @@ class QdrantClient
      */
     public function getCollectionInfo(string $name): array
     {
+        $name = rawurlencode($this->scopedCollectionName($name));
         return $this->request('GET', "/collections/{$name}");
     }
 
@@ -114,6 +139,7 @@ class QdrantClient
      */
     public function countPoints(string $collection): int
     {
+        $collection = rawurlencode($this->scopedCollectionName($collection));
         $response = $this->request('POST', "/collections/{$collection}/points/count", [
             'exact' => true
         ]);
@@ -125,6 +151,7 @@ class QdrantClient
      */
     public function countPointsByFilter(string $collection, array $filter): int
     {
+        $collection = rawurlencode($this->scopedCollectionName($collection));
         $response = $this->request('POST', "/collections/{$collection}/points/count", [
             'filter' => $filter,
             'exact' => true
@@ -140,6 +167,7 @@ class QdrantClient
      */
     public function deletePointsByFilter(string $collection, array $filter): array
     {
+        $collection = rawurlencode($this->scopedCollectionName($collection));
         return $this->request('POST', "/collections/{$collection}/points/delete", [
             'filter' => $filter
         ]);
@@ -155,6 +183,7 @@ class QdrantClient
      */
     public function setPayloadByFilter(string $collection, array $payload, array $filter): array
     {
+        $collection = rawurlencode($this->scopedCollectionName($collection));
         return $this->request('POST', "/collections/{$collection}/points/payload", [
             'payload' => $payload,
             'filter' => $filter
@@ -171,6 +200,18 @@ class QdrantClient
         return $this->countPoints($collection) + 1;
     }
 
+    public function scopedCollectionName(string $collection): string
+    {
+        if (preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]{0,199}$/', $collection) !== 1) {
+            throw new \InvalidArgumentException('Invalid Qdrant collection name');
+        }
+        $scoped = $this->collectionPrefix . $collection;
+        if (strlen($scoped) > 255 || preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]*$/', $scoped) !== 1) {
+            throw new \InvalidArgumentException('Invalid scoped Qdrant collection name');
+        }
+        return $scoped;
+    }
+
     /**
      * Realiza una petición HTTP a Qdrant
      */
@@ -180,15 +221,20 @@ class QdrantClient
 
         $url = $this->baseUrl . $path;
         
+        $headers = [
+            'Content-Type: application/json',
+            'Accept: application/json'
+        ];
+        if ($this->apiKey !== '') {
+            $headers[] = 'api-key: ' . $this->apiKey;
+        }
+
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $this->timeout,
             CURLOPT_CUSTOMREQUEST => $method,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Accept: application/json'
-            ]
+            CURLOPT_HTTPHEADER => $headers,
         ]);
 
         if ($body !== null) {

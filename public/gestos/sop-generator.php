@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../src/App/bootstrap.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 
 $user = Session::user();
@@ -30,13 +31,14 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'All gestures';
-$headerTitle = 'Process generator';
+$headerBackText = I18n::translate('sop_ui.all_gestures');
+$headerTitle = I18n::translate('sop_ui.title');
 $headerIcon = 'iconoir-clipboard-check';
 $headerIconColor = 'from-emerald-500 to-teal-600';
 $headerDrawerId = 'sop-history-drawer';
+$sopJs = I18n::javascriptCatalogPrefixJson('sop_ui.');
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(I18n::htmlLang()); ?>">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <style>
@@ -228,7 +230,7 @@ $headerDrawerId = 'sop-history-drawer';
     }
   </style>
   
-  <div class="min-h-screen flex h-screen">
+  <div class="min-h-[100dvh] flex h-[100dvh]">
     <?php include __DIR__ . '/../includes/left-tabs.php'; ?>
     
     <!-- Sidebar de historial (solo desktop) -->
@@ -237,7 +239,7 @@ $headerDrawerId = 'sop-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-emerald-500"></i>
-            History
+            <?php echo htmlspecialchars(I18n::translate('sop_ui.history')); ?>
           </h2>
         </div>
       </div>
@@ -245,7 +247,7 @@ $headerDrawerId = 'sop-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Loading...
+          <?php echo htmlspecialchars(I18n::translate('sop_ui.loading')); ?>
         </div>
       </div>
     </aside>
@@ -253,7 +255,7 @@ $headerDrawerId = 'sop-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'sop-history-drawer';
-    $drawerTitle = 'History';
+    $drawerTitle = I18n::translate('sop_ui.history');
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-emerald-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -270,10 +272,10 @@ $headerDrawerId = 'sop-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 mb-2">
-              Process generator
+              <?php echo htmlspecialchars(I18n::translate('sop_ui.title')); ?>
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Transform unstructured information into professional operating procedures. Upload text, audio, images, or PDFs.
+              <?php echo htmlspecialchars(I18n::translate('sop_ui.subtitle')); ?>
             </p>
           </div>
 
@@ -285,18 +287,18 @@ $headerDrawerId = 'sop-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">
                   <i class="iconoir-text text-emerald-500 mr-1"></i>
-                  Procedure title <span class="text-slate-400 font-normal">(optional)</span>
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.procedure_title')); ?> <span class="text-slate-400 font-normal"><?php echo htmlspecialchars(I18n::translate('sop_ui.optional')); ?></span>
                 </label>
                 <input type="text" id="sop-title" 
                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none transition-all"
-                       placeholder="Ex: New employee onboarding process">
+                       placeholder="<?php echo htmlspecialchars(I18n::translate('sop_ui.title_placeholder')); ?>">
               </div>
               
               <!-- Fuentes de contenido -->
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-3">
                   <i class="iconoir-input-field text-emerald-500 mr-1"></i>
-                  Content sources <span class="text-slate-400 font-normal">(add one or more)</span>
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.sources')); ?> <span class="text-slate-400 font-normal"><?php echo htmlspecialchars(I18n::translate('sop_ui.add_sources')); ?></span>
                 </label>
                 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -306,8 +308,8 @@ $headerDrawerId = 'sop-history-drawer';
                     <div class="source-icon w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center mb-2">
                       <i class="iconoir-text text-slate-500 text-xl"></i>
                     </div>
-                    <div class="text-sm font-medium text-slate-700">Text</div>
-                    <div class="text-xs text-slate-400">Paste content</div>
+                    <div class="text-sm font-medium text-slate-700"><?php echo htmlspecialchars(I18n::translate('sop_ui.text')); ?></div>
+                    <div class="text-xs text-slate-400"><?php echo htmlspecialchars(I18n::translate('sop_ui.paste_content')); ?></div>
                   </div>
                   
                   <!-- URL -->
@@ -317,7 +319,7 @@ $headerDrawerId = 'sop-history-drawer';
                       <i class="iconoir-link text-slate-500 text-xl"></i>
                     </div>
                     <div class="text-sm font-medium text-slate-700">URL</div>
-                    <div class="text-xs text-slate-400">Extract from web</div>
+                    <div class="text-xs text-slate-400"><?php echo htmlspecialchars(I18n::translate('sop_ui.extract_web')); ?></div>
                   </div>
                   
                   <!-- Audio -->
@@ -327,7 +329,7 @@ $headerDrawerId = 'sop-history-drawer';
                       <i class="iconoir-microphone text-slate-500 text-xl"></i>
                     </div>
                     <div class="text-sm font-medium text-slate-700">Audio</div>
-                    <div class="text-xs text-slate-400">Transcribe</div>
+                    <div class="text-xs text-slate-400"><?php echo htmlspecialchars(I18n::translate('sop_ui.transcribe')); ?></div>
                   </div>
                   
                   <!-- Imágenes -->
@@ -336,8 +338,8 @@ $headerDrawerId = 'sop-history-drawer';
                     <div class="source-icon w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center mb-2">
                       <i class="iconoir-media-image text-slate-500 text-xl"></i>
                     </div>
-                    <div class="text-sm font-medium text-slate-700">Images</div>
-                    <div class="text-xs text-slate-400">Analyze screenshots</div>
+                    <div class="text-sm font-medium text-slate-700"><?php echo htmlspecialchars(I18n::translate('sop_ui.images')); ?></div>
+                    <div class="text-xs text-slate-400"><?php echo htmlspecialchars(I18n::translate('sop_ui.analyze_images')); ?></div>
                   </div>
                 </div>
                 
@@ -347,7 +349,7 @@ $headerDrawerId = 'sop-history-drawer';
                   <div id="panel-text" class="source-panel hidden">
                     <textarea id="input-text" rows="6"
                               class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none transition-all resize-none"
-                              placeholder="Paste process information here: meeting notes, emails, informal instructions, etc."></textarea>
+                              placeholder="<?php echo htmlspecialchars(I18n::translate('sop_ui.text_placeholder')); ?>"></textarea>
                   </div>
                   
                   <!-- Panel URL -->
@@ -362,10 +364,10 @@ $headerDrawerId = 'sop-history-drawer';
                     <!-- Tabs: Subir / Grabar -->
                     <div class="flex gap-2 mb-3">
                       <button type="button" data-audio-tab="upload" class="audio-tab-btn active px-4 py-2 text-sm font-medium rounded-lg transition-all bg-emerald-100 text-emerald-700">
-                        <i class="iconoir-upload mr-1"></i> Upload file
+                        <i class="iconoir-upload mr-1"></i> <?php echo htmlspecialchars(I18n::translate('sop_ui.upload_file')); ?>
                       </button>
                       <button type="button" data-audio-tab="record" class="audio-tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
-                        <i class="iconoir-mic mr-1"></i> Record
+                        <i class="iconoir-mic mr-1"></i> <?php echo htmlspecialchars(I18n::translate('sop_ui.record')); ?>
                       </button>
                     </div>
                     
@@ -375,8 +377,8 @@ $headerDrawerId = 'sop-history-drawer';
                         <input type="file" id="input-audio" accept="audio/*" class="hidden">
                         <div id="audio-placeholder">
                           <i class="iconoir-upload text-4xl text-slate-300 mb-2"></i>
-                          <p class="text-sm text-slate-500">Drag an audio file or click to select</p>
-                          <p class="text-xs text-slate-400 mt-1">MP3, WAV, M4A, WebM (max 25MB)</p>
+                          <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('sop_ui.audio_drop')); ?></p>
+                          <p class="text-xs text-slate-400 mt-1"><?php echo htmlspecialchars(I18n::translate('sop_ui.audio_formats')); ?></p>
                         </div>
                         <div id="audio-preview" class="hidden">
                           <div class="file-preview">
@@ -403,9 +405,9 @@ $headerDrawerId = 'sop-history-drawer';
                           <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
                             <i class="iconoir-mic text-3xl text-emerald-500"></i>
                           </div>
-                          <p class="text-sm text-slate-600">Press the button to start recording</p>
+                          <p class="text-sm text-slate-600"><?php echo htmlspecialchars(I18n::translate('sop_ui.record_help')); ?></p>
                           <button type="button" id="start-record-btn" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all">
-                            <i class="iconoir-mic mr-2"></i> Start recording
+                            <i class="iconoir-mic mr-2"></i> <?php echo htmlspecialchars(I18n::translate('sop_ui.start_recording')); ?>
                           </button>
                         </div>
                         
@@ -415,11 +417,11 @@ $headerDrawerId = 'sop-history-drawer';
                             <i class="iconoir-mic text-3xl text-red-500"></i>
                           </div>
                           <div>
-                            <p class="text-sm font-medium text-red-600">Recording...</p>
+                            <p class="text-sm font-medium text-red-600"><?php echo htmlspecialchars(I18n::translate('sop_ui.recording')); ?></p>
                             <p id="record-timer" class="text-2xl font-bold text-slate-700 mt-1">00:00</p>
                           </div>
                           <button type="button" id="stop-record-btn" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow-md transition-all">
-                            <i class="iconoir-stop mr-2"></i> Stop
+                            <i class="iconoir-stop mr-2"></i> <?php echo htmlspecialchars(I18n::translate('sop_ui.stop')); ?>
                           </button>
                         </div>
                         
@@ -430,13 +432,13 @@ $headerDrawerId = 'sop-history-drawer';
                               <i class="iconoir-mic"></i>
                             </div>
                             <div class="flex-1 text-left">
-                              <div class="font-medium text-slate-700">Audio recording</div>
+                              <div class="font-medium text-slate-700"><?php echo htmlspecialchars(I18n::translate('sop_ui.audio_recording')); ?></div>
                               <div class="text-sm text-slate-400" id="record-duration">0:00</div>
                             </div>
-                            <button type="button" id="play-record-btn" class="text-emerald-500 hover:text-emerald-600 p-2" title="Play">
+                            <button type="button" id="play-record-btn" class="text-emerald-500 hover:text-emerald-600 p-2" title="<?php echo htmlspecialchars(I18n::translate('sop_ui.play')); ?>">
                               <i class="iconoir-play"></i>
                             </button>
-                            <button type="button" id="remove-record-btn" class="text-slate-400 hover:text-red-500 p-2" title="Delete">
+                            <button type="button" id="remove-record-btn" class="text-slate-400 hover:text-red-500 p-2" title="<?php echo htmlspecialchars(I18n::translate('sop_ui.delete')); ?>">
                               <i class="iconoir-xmark"></i>
                             </button>
                           </div>
@@ -452,8 +454,8 @@ $headerDrawerId = 'sop-history-drawer';
                       <input type="file" id="input-images" accept="image/*" multiple class="hidden">
                       <div id="images-placeholder" class="text-center">
                         <i class="iconoir-media-image-list text-4xl text-slate-300 mb-2"></i>
-                        <p class="text-sm text-slate-500">Drag images or click to select</p>
-                        <p class="text-xs text-slate-400 mt-1">Screenshots, diagrams, photos (multiple)</p>
+                        <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('sop_ui.images_drop')); ?></p>
+                        <p class="text-xs text-slate-400 mt-1"><?php echo htmlspecialchars(I18n::translate('sop_ui.images_help')); ?></p>
                       </div>
                       <div id="images-grid" class="images-grid hidden"></div>
                     </div>
@@ -465,8 +467,8 @@ $headerDrawerId = 'sop-history-drawer';
                       <input type="file" id="input-pdf" accept=".pdf" class="hidden">
                       <div id="pdf-placeholder">
                         <i class="iconoir-page text-4xl text-slate-300 mb-2"></i>
-                        <p class="text-sm text-slate-500">Drag a PDF or click to select</p>
-                        <p class="text-xs text-slate-400 mt-1">Documents, handbooks, guides (max 20MB)</p>
+                        <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('sop_ui.pdf_drop')); ?></p>
+                        <p class="text-xs text-slate-400 mt-1"><?php echo htmlspecialchars(I18n::translate('sop_ui.pdf_help')); ?></p>
                       </div>
                       <div id="pdf-preview" class="hidden">
                         <div class="file-preview">
@@ -489,7 +491,7 @@ $headerDrawerId = 'sop-history-drawer';
                 <!-- Botón añadir PDF (siempre visible) -->
                 <button type="button" id="add-pdf-btn" class="mt-3 text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                   <i class="iconoir-plus"></i>
-                  Add PDF
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.add_pdf')); ?>
                 </button>
               </div>
               
@@ -502,7 +504,7 @@ $headerDrawerId = 'sop-history-drawer';
                                disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
                                flex items-center justify-center gap-2">
                   <i class="iconoir-clipboard-check text-xl"></i>
-                  Generate SOP
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.generate')); ?>
                 </button>
               </div>
             </form>
@@ -512,7 +514,7 @@ $headerDrawerId = 'sop-history-drawer';
           <div id="new-process-btn-container" class="hidden">
             <button id="new-process-btn" class="w-full py-3 px-4 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-400 transition-all flex items-center justify-center gap-2 font-medium">
               <i class="iconoir-plus"></i>
-              Generate new process
+              <?php echo htmlspecialchars(I18n::translate('sop_ui.new_process')); ?>
             </button>
           </div>
 
@@ -523,15 +525,15 @@ $headerDrawerId = 'sop-history-drawer';
               <div class="result-tabs">
                 <button class="result-tab active" data-result="markdown">
                   <i class="iconoir-file-text"></i>
-                  Document
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.document')); ?>
                 </button>
                 <button class="result-tab" data-result="mermaid">
                   <i class="iconoir-git-fork"></i>
-                  Diagram
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.diagram')); ?>
                 </button>
                 <button class="result-tab" data-result="downloads">
                   <i class="iconoir-download"></i>
-                  Downloads
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.downloads')); ?>
                 </button>
               </div>
             </div>
@@ -541,11 +543,11 @@ $headerDrawerId = 'sop-history-drawer';
               <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-slate-700">
                   <i class="iconoir-file-text text-emerald-500 mr-1"></i>
-                  Structured procedure
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.structured')); ?>
                 </h3>
                 <button id="copy-markdown-btn" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                   <i class="iconoir-copy"></i>
-                  Copy
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.copy')); ?>
                 </button>
               </div>
               <div id="markdown-content" class="prose prose-slate max-w-none bg-white rounded-xl p-6 border border-slate-100">
@@ -558,16 +560,16 @@ $headerDrawerId = 'sop-history-drawer';
               <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-slate-700">
                   <i class="iconoir-git-fork text-emerald-500 mr-1"></i>
-                  Flowchart
+                  <?php echo htmlspecialchars(I18n::translate('sop_ui.flowchart')); ?>
                 </h3>
                 <div class="flex items-center gap-3">
                   <button id="download-diagram-png" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                     <i class="iconoir-download"></i>
-                    Download PNG
+                    <?php echo htmlspecialchars(I18n::translate('sop_ui.download_png')); ?>
                   </button>
                   <button id="copy-mermaid-btn" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                     <i class="iconoir-copy"></i>
-                    Copy code
+                    <?php echo htmlspecialchars(I18n::translate('sop_ui.copy_code')); ?>
                   </button>
                 </div>
               </div>
@@ -580,7 +582,7 @@ $headerDrawerId = 'sop-history-drawer';
             <div id="result-downloads" class="result-panel p-6">
               <h3 class="font-semibold text-slate-700 mb-4">
                 <i class="iconoir-download text-emerald-500 mr-1"></i>
-                Download document
+                <?php echo htmlspecialchars(I18n::translate('sop_ui.download_document')); ?>
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- PDF -->
@@ -590,7 +592,7 @@ $headerDrawerId = 'sop-history-drawer';
                   </div>
                   <div>
                     <div class="font-semibold text-slate-700">PDF</div>
-                    <div class="text-sm text-slate-400">Portable document</div>
+                    <div class="text-sm text-slate-400"><?php echo htmlspecialchars(I18n::translate('sop_ui.portable_document')); ?></div>
                   </div>
                   <i class="iconoir-download ml-auto text-slate-400"></i>
                 </a>
@@ -602,7 +604,7 @@ $headerDrawerId = 'sop-history-drawer';
                   </div>
                   <div>
                     <div class="font-semibold text-slate-700">Word (DOCX)</div>
-                    <div class="text-sm text-slate-400">Editable in Microsoft Word</div>
+                    <div class="text-sm text-slate-400"><?php echo htmlspecialchars(I18n::translate('sop_ui.editable_word')); ?></div>
                   </div>
                   <i class="iconoir-download ml-auto text-slate-400"></i>
                 </a>
@@ -624,8 +626,8 @@ $headerDrawerId = 'sop-history-drawer';
           <i class="iconoir-clipboard-check text-4xl text-emerald-500 animate-pulse"></i>
         </div>
       </div>
-      <h3 class="text-lg font-semibold text-slate-700 mb-2">Generating SOP</h3>
-      <p id="processing-status" class="text-slate-500 text-sm">Processing content...</p>
+      <h3 class="text-lg font-semibold text-slate-700 mb-2"><?php echo htmlspecialchars(I18n::translate('sop_ui.generating')); ?></h3>
+      <p id="processing-status" class="text-slate-500 text-sm"><?php echo htmlspecialchars(I18n::translate('sop_ui.processing')); ?></p>
       <div class="mt-4 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
         <div id="processing-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500" style="width: 0%"></div>
       </div>
@@ -659,6 +661,7 @@ $headerDrawerId = 'sop-history-drawer';
       }
     });
   </script>
+  <script>window.CLAARA_SOP_I18N = <?php echo $sopJs; ?>;</script>
   <script src="/assets/js/gesture-sop.js"></script>
   <script>
     window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';

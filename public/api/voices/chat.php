@@ -22,25 +22,26 @@ require_once __DIR__ . '/../../../src/Rag/LexRetriever.php';
 
 use App\Session;
 use App\Response;
+use I18n\I18n;
 use Voices\VoiceExecutionsRepo;
 use Voices\VoiceQueryService;
 use Repos\UsageLogRepo;
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Invalid session', 401);
+    Response::error('unauthorized', I18n::translate('auth.error.unauthorized'), 401);
 }
 
 // Validar CSRF
 $csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 $csrfSession = $_SESSION['csrf_token'] ?? '';
 if (!$csrfHeader || !$csrfSession || !hash_equals($csrfSession, $csrfHeader)) {
-    Response::error('csrf_invalid', 'Invalid CSRF token', 403);
+    Response::error('csrf_invalid', I18n::translate('auth.error.csrf_invalid'), 403);
 }
 
 // Solo POST
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
-    Response::error('method_not_allowed', 'POST only', 405);
+    Response::error('method_not_allowed', I18n::translate('auth.error.method_not_allowed'), 405);
 }
 
 $body = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -50,21 +51,25 @@ $history = $body['history'] ?? [];
 $executionId = $body['execution_id'] ?? null;
 
 if (!$voiceId) {
-    Response::error('missing_voice', 'voice_id is required', 400);
+    Response::error('missing_voice', I18n::translate('voice_api.voice_required'), 400);
 }
 if (!$message) {
-    Response::error('missing_message', 'message is required', 400);
+    Response::error('missing_message', I18n::translate('voice_api.message_required'), 400);
 }
 
 try {
     $result = (new VoiceQueryService())->query($user, $voiceId, $message, is_array($history) ? $history : []);
 } catch (\InvalidArgumentException $e) {
-    Response::error('validation_error', $e->getMessage(), 400);
+    Response::error('validation_error', I18n::translate('voice_api.invalid_request'), 400);
 } catch (\RuntimeException $e) {
     $status = in_array($e->getCode(), [403, 404], true) ? $e->getCode() : 500;
-    Response::error($status === 403 ? 'forbidden' : 'voice_query_error', $e->getMessage(), $status);
+    $message = $status === 403
+        ? I18n::translate('voice_api.forbidden')
+        : ($status === 404 ? I18n::translate('voice_api.voice_not_found') : I18n::translate('voice_api.query_error'));
+    Response::error($status === 403 ? 'forbidden' : 'voice_query_error', $message, $status);
 } catch (\Throwable $e) {
-    Response::error('llm_error', 'Error generating response: ' . $e->getMessage(), 500);
+    error_log('Voice query failed: ' . $e->getMessage());
+    Response::error('llm_error', I18n::translate('voice_api.query_error'), 500);
 }
 $answer = $result['answer'];
 $meta = $result['meta'];

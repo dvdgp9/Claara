@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 
 Session::start();
@@ -24,13 +25,14 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'All gestures';
-$headerTitle = 'Social media';
+$headerBackText = I18n::translate('social_ui.all_gestures');
+$headerTitle = I18n::translate('social_ui.title');
 $headerIcon = 'iconoir-send-diagonal';
 $headerIconColor = 'from-violet-500 to-fuchsia-600';
 $headerDrawerId = 'social-history-drawer';
+$socialJs = I18n::javascriptCatalogPrefixJson('social_ui.');
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(I18n::htmlLang()); ?>">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
@@ -42,9 +44,9 @@ $headerDrawerId = 'social-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-violet-500"></i>
-            History
+            <?php echo htmlspecialchars(I18n::translate('social_ui.history')); ?>
           </h2>
-          <button id="new-post-btn" class="p-1.5 text-slate-400 hover:text-violet-500 hover:bg-violet-50 rounded-lg transition-smooth" title="New post">
+          <button id="new-post-btn" class="p-1.5 text-slate-400 hover:text-violet-500 hover:bg-violet-50 rounded-lg transition-smooth" title="<?php echo htmlspecialchars(I18n::translate('social_ui.new_post')); ?>">
             <i class="iconoir-plus text-lg"></i>
           </button>
         </div>
@@ -53,7 +55,7 @@ $headerDrawerId = 'social-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Loading...
+          <?php echo htmlspecialchars(I18n::translate('social_ui.loading')); ?>
         </div>
       </div>
     </aside>
@@ -61,7 +63,7 @@ $headerDrawerId = 'social-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'social-history-drawer';
-    $drawerTitle = 'History';
+    $drawerTitle = I18n::translate('social_ui.history');
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-violet-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -81,48 +83,48 @@ $headerDrawerId = 'social-history-drawer';
             <!-- INPUT DE CONTEXTO -->
             <div>
               <label class="block text-sm font-semibold text-slate-700 mb-2">
-                What is this post about? <span class="text-red-500">*</span>
+                <?php echo htmlspecialchars(I18n::translate('social_ui.context')); ?> <span class="text-red-500">*</span>
               </label>
               <textarea id="post-context" rows="3" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all resize-none bg-white/80 text-sm" placeholder="Ej: Hoy han terminado las obras del nuevo CUBOFIT..."></textarea>
             </div>
             
             <!-- INTENCIÓN PRINCIPAL -->
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Intent</label>
+              <label class="block text-sm font-semibold text-slate-700 mb-2"><?php echo htmlspecialchars(I18n::translate('social_ui.intent')); ?></label>
               <div class="grid grid-cols-3 lg:grid-cols-5 gap-1.5">
                 <label class="cursor-pointer">
                   <input type="radio" name="intention" value="informar" class="hidden peer" checked />
                   <div class="p-2 border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center">
                     <i class="iconoir-megaphone text-lg text-violet-700 block"></i>
-                    <span class="text-[11px] font-medium text-slate-600">Inform</span>
+                    <span class="text-[11px] font-medium text-slate-600"><?php echo htmlspecialchars(I18n::translate('social_ui.inform')); ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="intention" value="reforzar-marca" class="hidden peer" />
                   <div class="p-2 border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center">
                     <i class="iconoir-community text-lg text-violet-700 block"></i>
-                    <span class="text-[11px] font-medium text-slate-600">Brand</span>
+                    <span class="text-[11px] font-medium text-slate-600"><?php echo htmlspecialchars(I18n::translate('social_ui.reinforce_brand')); ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="intention" value="conectar" class="hidden peer" />
                   <div class="p-2 border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center">
                     <i class="iconoir-chat-bubble text-lg text-violet-700 block"></i>
-                    <span class="text-[11px] font-medium text-slate-600">Connect</span>
+                    <span class="text-[11px] font-medium text-slate-600"><?php echo htmlspecialchars(I18n::translate('social_ui.connect')); ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="intention" value="activar" class="hidden peer" />
                   <div class="p-2 border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center">
                     <i class="iconoir-flash text-lg text-violet-700 block"></i>
-                    <span class="text-[11px] font-medium text-slate-600">Activate</span>
+                    <span class="text-[11px] font-medium text-slate-600"><?php echo htmlspecialchars(I18n::translate('social_ui.activate')); ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="intention" value="aportar-valor" class="hidden peer" />
                   <div class="p-2 border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center">
                     <i class="iconoir-light-bulb text-lg text-violet-700 block"></i>
-                    <span class="text-[11px] font-medium text-slate-600">Value</span>
+                    <span class="text-[11px] font-medium text-slate-600"><?php echo htmlspecialchars(I18n::translate('social_ui.value')); ?></span>
                   </div>
                 </label>
               </div>
@@ -130,42 +132,42 @@ $headerDrawerId = 'social-history-drawer';
             
             <!-- BRAND / CONTEXT -->
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Brand / context</label>
+              <label class="block text-sm font-semibold text-slate-700 mb-2"><?php echo htmlspecialchars(I18n::translate('social_ui.brand_context')); ?></label>
               <div class="grid grid-cols-3 gap-2">
                 <label class="cursor-pointer">
                   <input type="radio" name="business-line" value="brand" class="hidden peer" checked />
                   <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 peer-checked:text-violet-700 hover:border-violet-400 transition-all font-medium text-center">
-                    Brand
+                    <?php echo htmlspecialchars(I18n::translate('social_ui.brand')); ?>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="business-line" value="service" class="hidden peer" />
                   <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 peer-checked:text-violet-700 hover:border-violet-400 transition-all font-medium text-center">
-                    Service
+                    <?php echo htmlspecialchars(I18n::translate('social_ui.service')); ?>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="business-line" value="product" class="hidden peer" />
                   <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 peer-checked:text-violet-700 hover:border-violet-400 transition-all font-medium text-center">
-                    Product
+                    <?php echo htmlspecialchars(I18n::translate('social_ui.product')); ?>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="business-line" value="team" class="hidden peer" />
                   <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 peer-checked:text-violet-700 hover:border-violet-400 transition-all font-medium text-center">
-                    Team
+                    <?php echo htmlspecialchars(I18n::translate('social_ui.team')); ?>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="business-line" value="campaign" class="hidden peer" />
                   <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 peer-checked:text-violet-700 hover:border-violet-400 transition-all font-medium text-center">
-                    Campaign
+                    <?php echo htmlspecialchars(I18n::translate('social_ui.campaign')); ?>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="business-line" value="community" class="hidden peer" />
                   <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 peer-checked:text-violet-700 hover:border-violet-400 transition-all font-medium text-center">
-                    Community
+                    <?php echo htmlspecialchars(I18n::translate('social_ui.community')); ?>
                   </div>
                 </label>
               </div>
@@ -173,7 +175,7 @@ $headerDrawerId = 'social-history-drawer';
             
             <!-- CANAL -->
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Channel</label>
+              <label class="block text-sm font-semibold text-slate-700 mb-2"><?php echo htmlspecialchars(I18n::translate('social_ui.channel')); ?></label>
               <div class="grid grid-cols-2 gap-2">
                 <label class="cursor-pointer">
                   <input type="radio" name="channel" value="instagram" class="hidden peer" checked />
@@ -196,7 +198,7 @@ $headerDrawerId = 'social-history-drawer';
                 <label class="cursor-pointer">
                   <input type="radio" name="channel" value="transversal" class="hidden peer" />
                   <div class="px-3 py-2 text-sm border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 peer-checked:text-violet-700 hover:border-violet-400 transition-all font-medium text-center flex items-center justify-center gap-1">
-                    <i class="iconoir-multi-window"></i> Multi
+                    <i class="iconoir-multi-window"></i> <?php echo htmlspecialchars(I18n::translate('social_ui.multi')); ?>
                   </div>
                 </label>
               </div>
@@ -204,23 +206,23 @@ $headerDrawerId = 'social-history-drawer';
 
             <!-- LONGITUD -->
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Length</label>
+              <label class="block text-sm font-semibold text-slate-700 mb-2"><?php echo htmlspecialchars(I18n::translate('social_ui.length')); ?></label>
               <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
                 <label class="cursor-pointer">
                   <input type="radio" name="length" value="" class="hidden peer" checked />
-                  <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center font-medium text-slate-600">Auto</div>
+                  <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center font-medium text-slate-600"><?php echo htmlspecialchars(I18n::translate('social_ui.auto')); ?></div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="length" value="corto" class="hidden peer" />
-                  <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center font-medium text-slate-600">Short</div>
+                  <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center font-medium text-slate-600"><?php echo htmlspecialchars(I18n::translate('social_ui.short')); ?></div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="length" value="medio" class="hidden peer" />
-                  <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center font-medium text-slate-600">Medium</div>
+                  <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center font-medium text-slate-600"><?php echo htmlspecialchars(I18n::translate('social_ui.medium')); ?></div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="length" value="largo" class="hidden peer" />
-                  <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center font-medium text-slate-600">Largo</div>
+                  <div class="px-2 py-2 text-xs border-2 border-slate-200 rounded-lg peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all text-center font-medium text-slate-600"><?php echo htmlspecialchars(I18n::translate('social_ui.long')); ?></div>
                 </label>
               </div>
             </div>
@@ -229,65 +231,65 @@ $headerDrawerId = 'social-history-drawer';
             <details class="group">
               <summary class="cursor-pointer text-xs font-medium text-slate-500 hover:text-violet-600 transition-colors flex items-center gap-1">
                 <i class="iconoir-settings"></i>
-                Advanced options
+                <?php echo htmlspecialchars(I18n::translate('social_ui.advanced_options')); ?>
                 <i class="iconoir-nav-arrow-down text-[10px] transition-transform group-open:rotate-180"></i>
               </summary>
               
               <div class="mt-3 space-y-3 pt-3 border-t border-slate-200/50">
                 <!-- Enfoque narrativo -->
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Narrative focus</label>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5"><?php echo htmlspecialchars(I18n::translate('social_ui.narrative_focus')); ?></label>
                   <div class="flex flex-wrap gap-1.5">
                     <label class="cursor-pointer">
                       <input type="radio" name="narrative" value="" class="hidden peer" checked />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Auto</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.auto')); ?></div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="narrative" value="personas" class="hidden peer" />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">People</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.people')); ?></div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="narrative" value="proyecto" class="hidden peer" />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Project</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.project')); ?></div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="narrative" value="detalle" class="hidden peer" />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Detail</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.detail')); ?></div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="narrative" value="impacto" class="hidden peer" />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Impact</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.impact')); ?></div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="narrative" value="vision" class="hidden peer" />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Vision</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.vision')); ?></div>
                     </label>
                   </div>
                 </div>
                 
                 <!-- Cierre -->
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Closing type</label>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5"><?php echo htmlspecialchars(I18n::translate('social_ui.closing_type')); ?></label>
                   <div class="flex flex-wrap gap-1.5">
                     <label class="cursor-pointer">
                       <input type="radio" name="closing" value="" class="hidden peer" checked />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Auto</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.auto')); ?></div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="closing" value="informativo" class="hidden peer" />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Informative</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.informative')); ?></div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="closing" value="inspirador" class="hidden peer" />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Inspirational</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.inspirational')); ?></div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="closing" value="cta-suave" class="hidden peer" />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Soft CTA</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.soft_cta')); ?></div>
                     </label>
                     <label class="cursor-pointer">
                       <input type="radio" name="closing" value="cta-claro" class="hidden peer" />
-                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all">Clear CTA</div>
+                      <div class="px-2 py-1 text-xs border border-slate-200 rounded peer-checked:border-violet-500 peer-checked:bg-violet-500/10 hover:border-violet-400 transition-all"><?php echo htmlspecialchars(I18n::translate('social_ui.clear_cta')); ?></div>
                     </label>
                   </div>
                 </div>
@@ -297,7 +299,7 @@ $headerDrawerId = 'social-history-drawer';
             <!-- Botón generar -->
             <button type="submit" id="generate-post-btn" class="w-full py-3 bg-gradient-to-r from-violet-500 to-fuchsia-600 hover:from-violet-600 hover:to-fuchsia-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
               <i class="iconoir-sparks"></i>
-              <span>Generate post</span>
+              <span><?php echo htmlspecialchars(I18n::translate('social_ui.generate')); ?></span>
             </button>
             
             <!-- Resumen editorial (colapsado debajo del botón) -->
@@ -305,7 +307,7 @@ $headerDrawerId = 'social-history-drawer';
               <details class="bg-slate-50/80 rounded-lg border border-slate-200/50 p-3" open>
                 <summary class="cursor-pointer text-xs font-semibold text-slate-600 flex items-center gap-1">
                   <i class="iconoir-clipboard-check text-slate-400"></i>
-                  Editorial summary
+                  <?php echo htmlspecialchars(I18n::translate('social_ui.editorial_summary')); ?>
                 </summary>
                 <div id="editorial-summary" class="mt-2 pt-2 border-t border-slate-200/50 text-xs text-slate-500 space-y-0.5"></div>
               </details>
@@ -322,8 +324,8 @@ $headerDrawerId = 'social-history-drawer';
               <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-500/20 to-fuchsia-600/20 flex items-center justify-center mx-auto mb-5">
                 <i class="iconoir-send-diagonal text-4xl text-violet-400"></i>
               </div>
-              <h3 class="text-lg font-semibold text-slate-700 mb-2">Your post will appear here</h3>
-              <p class="text-sm text-slate-500">Configure the options on the left and click "Generate post"</p>
+              <h3 class="text-lg font-semibold text-slate-700 mb-2"><?php echo htmlspecialchars(I18n::translate('social_ui.placeholder_title')); ?></h3>
+              <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('social_ui.placeholder_help')); ?></p>
             </div>
           </div>
           
@@ -333,7 +335,7 @@ $headerDrawerId = 'social-history-drawer';
               <div class="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
                 <div class="w-8 h-8 border-3 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p class="text-violet-700 font-medium">Building post...</p>
+              <p class="text-violet-700 font-medium"><?php echo htmlspecialchars(I18n::translate('social_ui.building')); ?></p>
             </div>
           </div>
           
@@ -345,14 +347,14 @@ $headerDrawerId = 'social-history-drawer';
               <div class="flex items-center justify-between mb-3">
                 <h2 class="text-base font-semibold text-slate-800 flex items-center gap-2">
                   <i class="iconoir-post text-violet-500"></i>
-                  Post
+                  <?php echo htmlspecialchars(I18n::translate('social_ui.post')); ?>
                 </h2>
                 <div class="flex gap-1">
                   <button id="copy-post-btn" class="px-2.5 py-1 text-xs text-slate-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-smooth flex items-center gap-1">
-                    <i class="iconoir-copy"></i> Copy
+                    <i class="iconoir-copy"></i> <?php echo htmlspecialchars(I18n::translate('social_ui.copy')); ?>
                   </button>
                   <button id="regenerate-post-btn" class="px-2.5 py-1 text-xs text-slate-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-smooth flex items-center gap-1">
-                    <i class="iconoir-refresh"></i> Regenerate
+                    <i class="iconoir-refresh"></i> <?php echo htmlspecialchars(I18n::translate('social_ui.regenerate')); ?>
                   </button>
                 </div>
               </div>
@@ -364,10 +366,10 @@ $headerDrawerId = 'social-history-drawer';
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                   <i class="iconoir-hashtag text-violet-500"></i>
-                  Hashtags
+                  <?php echo htmlspecialchars(I18n::translate('social_ui.hashtags')); ?>
                 </h3>
                 <button id="copy-hashtags-btn" class="text-[10px] text-slate-400 hover:text-violet-600 transition-colors flex items-center gap-1">
-                  <i class="iconoir-copy"></i> Copy
+                  <i class="iconoir-copy"></i> <?php echo htmlspecialchars(I18n::translate('social_ui.copy')); ?>
                 </button>
               </div>
               <div id="hashtags-content" class="text-sm text-violet-600 font-medium"></div>
@@ -377,23 +379,23 @@ $headerDrawerId = 'social-history-drawer';
             <div class="glass rounded-xl border border-slate-200/50 p-4">
               <h3 class="text-xs font-semibold text-slate-600 mb-3 flex items-center gap-1.5">
                 <i class="iconoir-refresh-double text-violet-500"></i>
-                Quick variants
+                <?php echo htmlspecialchars(I18n::translate('social_ui.quick_variants')); ?>
               </h3>
               <div class="flex flex-wrap gap-2">
                 <button data-variant="cercano" class="variant-btn px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:border-violet-400 hover:bg-violet-50 transition-all">
-                  More conversational
+                  <?php echo htmlspecialchars(I18n::translate('social_ui.more_conversational')); ?>
                 </button>
                 <button data-variant="institucional" class="variant-btn px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:border-violet-400 hover:bg-violet-50 transition-all">
-                  More formal
+                  <?php echo htmlspecialchars(I18n::translate('social_ui.more_formal')); ?>
                 </button>
                 <button data-variant="corto" class="variant-btn px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:border-violet-400 hover:bg-violet-50 transition-all">
-                  Shorter
+                  <?php echo htmlspecialchars(I18n::translate('social_ui.shorter')); ?>
                 </button>
                 <button data-variant="directo" class="variant-btn px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:border-violet-400 hover:bg-violet-50 transition-all">
-                  More direct
+                  <?php echo htmlspecialchars(I18n::translate('social_ui.more_direct')); ?>
                 </button>
                 <button data-variant="emocional" class="variant-btn px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:border-violet-400 hover:bg-violet-50 transition-all">
-                  More emotional
+                  <?php echo htmlspecialchars(I18n::translate('social_ui.more_emotional')); ?>
                 </button>
               </div>
             </div>
@@ -405,6 +407,7 @@ $headerDrawerId = 'social-history-drawer';
     </main>
   </div><!-- /main container -->
 
+  <script>window.CLAARA_SOCIAL_I18N = <?php echo $socialJs; ?>;</script>
   <script src="/assets/js/gesture-social-media.js"></script>
   
   <!-- Bottom Navigation (móvil) -->

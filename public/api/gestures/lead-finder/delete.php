@@ -24,10 +24,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
 
 Session::requireCsrf();
 
-$accessRepo = new UserFeatureAccessRepo();
-if (!$accessRepo->hasGestureAccess((int)$user['id'], 'lead-finder')) {
-    Response::error('forbidden', 'No access to Lead Finder', 403);
-}
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'lead-finder');
 
 $body = json_decode(file_get_contents('php://input'), true) ?? [];
 $runId = (int)($body['id'] ?? 0);

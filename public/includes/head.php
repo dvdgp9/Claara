@@ -6,7 +6,14 @@
  * - $pageTitle (optional): page title, default "Claara — AI Workspace"
  * - $csrfToken: session CSRF token
  */
-$pageTitle = $pageTitle ?? 'Claara — AI Workspace';
+$pageTitle = $pageTitle ?? \I18n\I18n::translate('meta.workspace_title');
+$sharedI18nJson = \I18n\I18n::javascriptCatalogJson([
+  'common.cancel',
+  'common.close',
+  'common.error',
+  'common.loading',
+  'common.save',
+]);
 ?>
 <head>
   <meta charset="utf-8" />
@@ -31,6 +38,8 @@ $pageTitle = $pageTitle ?? 'Claara — AI Workspace';
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
   <link rel="stylesheet" href="/assets/css/styles.css">
   <script>
+    window.CLAARA_I18N = <?php echo $sharedI18nJson; ?>;
+    window.claaraT = (key) => window.CLAARA_I18N.messages[key] || key;
     window.CSRF_TOKEN = '<?php echo $csrfToken; ?>';
     // Refresh CSRF token periódicamente para evitar expiración por inactividad
     (function() {

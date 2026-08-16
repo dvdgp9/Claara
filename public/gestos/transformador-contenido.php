@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 
 Session::start();
@@ -32,104 +33,17 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'All gestures';
-$headerTitle = 'Content transformer';
+$headerBackText = I18n::translate('repurpose_ui.all_gestures');
+$headerTitle = I18n::translate('repurpose_ui.title');
 $headerIcon = 'iconoir-refresh-double';
 $headerIconColor = 'from-indigo-500 to-purple-600';
 $headerDrawerId = 'repurposer-history-drawer';
+$repurposeJs = I18n::javascriptCatalogPrefixJson('repurpose_ui.');
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(I18n::htmlLang()); ?>">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <link rel="stylesheet" href="/assets/css/social-previews.css">
 <body class="bg-mesh text-slate-900 overflow-hidden">
-  <style>
-    .format-card {
-      transition: all 0.2s ease;
-      position: relative;
-    }
-    .format-card:hover {
-      transform: translateY(-2px);
-    }
-    .format-card.selected {
-      border-color: #6366f1;
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
-    }
-    .format-card.selected .format-icon {
-      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-      color: white;
-    }
-    .format-card .check-badge {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      width: 20px;
-      height: 20px;
-      background: #6366f1;
-      border-radius: 50%;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 12px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    .format-card.selected .check-badge {
-      display: flex;
-    }
-    .history-item.active {
-      background-color: rgba(99, 102, 241, 0.05);
-      border-left: 3px solid #6366f1;
-    }
-    .result-tabs {
-      display: flex;
-      gap: 4px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      scrollbar-width: none;
-    }
-    .result-tabs::-webkit-scrollbar {
-      display: none;
-    }
-    .result-tab {
-      padding: 8px 16px;
-      border-radius: 9999px;
-      font-size: 14px;
-      font-weight: 500;
-      white-space: nowrap;
-      border: 1px solid #e2e8f0;
-      background: white;
-      color: #64748b;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .result-tab:hover {
-      background: #f8fafc;
-    }
-    .result-tab.active {
-      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-      color: white;
-      border-color: transparent;
-    }
-    .result-panel {
-      display: none;
-    }
-    .result-panel.active {
-      display: block;
-    }
-    @media (max-width: 1023px) {
-      .result-panel {
-        display: block !important;
-        margin-bottom: 16px;
-      }
-      .result-tabs {
-        display: none;
-      }
-    }
-  </style>
   <div class="min-h-screen flex h-screen">
     <?php include __DIR__ . '/../includes/left-tabs.php'; ?>
     
@@ -139,7 +53,7 @@ $headerDrawerId = 'repurposer-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-indigo-500"></i>
-            History
+            <?php echo htmlspecialchars(I18n::translate('repurpose_ui.history')); ?>
           </h2>
         </div>
       </div>
@@ -147,7 +61,7 @@ $headerDrawerId = 'repurposer-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Loading...
+          <?php echo htmlspecialchars(I18n::translate('repurpose_ui.loading')); ?>
         </div>
       </div>
     </aside>
@@ -155,7 +69,7 @@ $headerDrawerId = 'repurposer-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'repurposer-history-drawer';
-    $drawerTitle = 'History';
+    $drawerTitle = I18n::translate('repurpose_ui.history');
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-indigo-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -172,10 +86,10 @@ $headerDrawerId = 'repurposer-history-drawer';
           <!-- Intro -->
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
-              Transform your content
+              <?php echo htmlspecialchars(I18n::translate('repurpose_ui.heading')); ?>
             </h1>
             <p class="text-slate-500 max-w-lg mx-auto">
-              Convert any article, document, or text into the format you need: social posts, blogs, newsletters, landing pages, or FAQs.
+              <?php echo htmlspecialchars(I18n::translate('repurpose_ui.subtitle')); ?>
             </p>
           </div>
 
@@ -187,7 +101,7 @@ $headerDrawerId = 'repurposer-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-3">
                   <i class="iconoir-input-field text-indigo-500 mr-1"></i>
-                  Content source
+                  <?php echo htmlspecialchars(I18n::translate('repurpose_ui.source')); ?>
                 </label>
                 
                 <!-- Tabs -->
@@ -196,7 +110,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                     <i class="iconoir-link mr-1"></i> URL
                   </button>
                   <button type="button" data-tab="text" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    <i class="iconoir-text mr-1"></i> Text
+                    <i class="iconoir-text mr-1"></i> <?php echo htmlspecialchars(I18n::translate('repurpose_ui.text')); ?>
                   </button>
                   <button type="button" data-tab="pdf" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
                     <i class="iconoir-page mr-1"></i> PDF
@@ -208,22 +122,22 @@ $headerDrawerId = 'repurposer-history-drawer';
                   <input type="url" id="source-url" 
                          class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                          placeholder="https://example.com/article" />
-                  <p class="text-xs text-slate-500 mt-2">Paste the URL of any web article</p>
+                  <p class="text-xs text-slate-500 mt-2"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.url_help')); ?></p>
                 </div>
 
                 <!-- Text Input -->
                 <div id="tab-text" class="tab-content hidden">
                   <textarea id="source-text" rows="6"
                             class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
-                            placeholder="Paste the text you want to transform here..."></textarea>
-                  <p class="text-xs text-slate-500 mt-2">Minimum 20 words</p>
+                            placeholder="<?php echo htmlspecialchars(I18n::translate('repurpose_ui.text_placeholder')); ?>"></textarea>
+                  <p class="text-xs text-slate-500 mt-2"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.minimum_words')); ?></p>
                 </div>
 
                 <!-- PDF Input -->
                 <div id="tab-pdf" class="tab-content hidden">
                   <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all">
                     <i class="iconoir-upload text-2xl text-slate-400 mb-2"></i>
-                    <span class="text-sm text-slate-500">Drag a PDF or click to select</span>
+                    <span class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.pdf_help')); ?></span>
                     <input type="file" id="source-pdf" accept=".pdf" class="hidden" />
                   </label>
                   <p id="pdf-filename" class="text-xs text-slate-500 mt-2 hidden"></p>
@@ -234,9 +148,9 @@ $headerDrawerId = 'repurposer-history-drawer';
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">
                   <i class="iconoir-sparks text-indigo-500 mr-1"></i>
-                  What do you want to generate? <span class="font-normal text-slate-400">(select multiple)</span>
+                  <?php echo htmlspecialchars(I18n::translate('repurpose_ui.what_generate')); ?> <span class="font-normal text-slate-400"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.select_multiple')); ?></span>
                 </label>
-                <p class="text-xs text-slate-500 mb-3">Click the formats you want to generate. You can select multiple at once.</p>
+                <p class="text-xs text-slate-500 mb-3"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.formats_help')); ?></p>
                 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <!-- Redes Sociales -->
@@ -246,7 +160,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-instagram text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">Instagram</div>
-                    <div class="text-xs text-slate-500">Post + hashtags</div>
+                    <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.post_hashtags')); ?></div>
                   </button>
                   
                   <button type="button" data-format="facebook" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
@@ -255,7 +169,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-facebook text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">Facebook</div>
-                    <div class="text-xs text-slate-500">Post</div>
+                    <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.post')); ?></div>
                   </button>
                   
                   <button type="button" data-format="linkedin" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
@@ -264,7 +178,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-linkedin text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">LinkedIn</div>
-                    <div class="text-xs text-slate-500">Professional</div>
+                    <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.professional')); ?></div>
                   </button>
                   
                   <button type="button" data-format="twitter" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
@@ -273,7 +187,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-x text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">X (Twitter)</div>
-                    <div class="text-xs text-slate-500">Tweet/Thread</div>
+                    <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.tweet_thread')); ?></div>
                   </button>
                   
                   <!-- Contenido largo -->
@@ -283,7 +197,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-post text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">Blog</div>
-                    <div class="text-xs text-slate-500">SEO article</div>
+                    <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.seo_article')); ?></div>
                   </button>
                   
                   <button type="button" data-format="landing" class="format-card p-3 rounded-xl border-2 border-slate-200 text-left">
@@ -310,17 +224,17 @@ $headerDrawerId = 'repurposer-history-drawer';
                       <i class="iconoir-help-circle text-lg"></i>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">FAQs</div>
-                    <div class="text-xs text-slate-500">Questions</div>
+                    <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.questions')); ?></div>
                   </button>
                 </div>
                 
-                <p id="selected-count" class="text-xs text-indigo-600 font-medium mt-3">1 format selected</p>
+                <p id="selected-count" class="text-xs text-indigo-600 font-medium mt-3"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.one_selected')); ?></p>
               </div>
               
               <!-- Botón generar -->
               <button type="submit" id="generate-btn" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 <i class="iconoir-sparks"></i>
-                <span id="generate-btn-text">Transform content</span>
+                <span id="generate-btn-text"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.transform')); ?></span>
               </button>
               
               <!-- Progress -->
@@ -328,8 +242,8 @@ $headerDrawerId = 'repurposer-history-drawer';
                 <div class="flex items-center gap-3">
                   <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                   <div>
-                    <p id="progress-text" class="text-sm font-medium text-indigo-700">Processing...</p>
-                    <p id="progress-detail" class="text-xs text-indigo-500">Extracting and transforming content</p>
+                    <p id="progress-text" class="text-sm font-medium text-indigo-700"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.processing')); ?></p>
+                    <p id="progress-detail" class="text-xs text-indigo-500"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.extracting')); ?></p>
                   </div>
                 </div>
               </div>
@@ -339,7 +253,7 @@ $headerDrawerId = 'repurposer-history-drawer';
                 <div class="flex items-start gap-2">
                   <i class="iconoir-warning-triangle text-red-500"></i>
                   <div>
-                    <p class="text-sm font-medium text-red-800">Error</p>
+                    <p class="text-sm font-medium text-red-800"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.error')); ?></p>
                     <p id="error-message" class="text-xs text-red-600 mt-0.5"></p>
                   </div>
                 </div>
@@ -355,18 +269,18 @@ $headerDrawerId = 'repurposer-history-drawer';
               <div class="flex-1 min-w-0">
                 <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-1">
                   <i class="iconoir-check-circle text-green-500 shrink-0"></i>
-                  <span id="result-title" class="truncate">Generated content</span>
+                  <span id="result-title" class="truncate"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.generated')); ?></span>
                 </h2>
-                <p id="result-source" class="text-sm text-slate-500">Source: URL</p>
+                <p id="result-source" class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('repurpose_ui.source_url')); ?></p>
               </div>
               <div class="flex items-center gap-3 shrink-0">
                 <button type="button" id="copy-all-btn" class="text-sm font-semibold text-slate-600 hover:text-slate-800 flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow transition-all">
                   <i class="iconoir-copy"></i>
-                  <span>Copy all</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('repurpose_ui.copy_all')); ?></span>
                 </button>
                 <button type="button" onclick="resetUI()" class="text-sm font-semibold text-indigo-600 hover:text-white flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-600 rounded-xl transition-all">
                   <i class="iconoir-plus"></i>
-                  <span>New</span>
+                  <span><?php echo htmlspecialchars(I18n::translate('repurpose_ui.new')); ?></span>
                 </button>
               </div>
             </div>
@@ -384,6 +298,7 @@ $headerDrawerId = 'repurposer-history-drawer';
     </main>
   </div>
 
+  <script>window.CLAARA_REPURPOSE_I18N = <?php echo $repurposeJs; ?>;</script>
   <script src="/assets/js/gesture-repurposer.js"></script>
   
   <!-- Bottom Navigation (móvil) -->

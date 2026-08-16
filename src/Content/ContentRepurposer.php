@@ -266,7 +266,11 @@ class ContentRepurposer
     private function buildPrompt(string $content, string $format, string $title, array $options): string
     {
         $tone = $options['tone'] ?? 'profesional';
-        $language = $options['language'] ?? 'es';
+        $language = ($options['language'] ?? 'es') === 'en' ? 'en' : 'es';
+        $languageLabel = $language === 'en' ? 'English' : 'Español de España (peninsular)';
+        $languageRule = $language === 'en'
+            ? 'Write all user-facing content in natural English.'
+            : 'Usa español de España (vosotros y expresiones peninsulares).';
         $titleSection = $title ? "TÍTULO DEL CONTENIDO ORIGINAL: {$title}\n\n" : '';
 
         $baseContext = <<<CONTEXT
@@ -278,14 +282,14 @@ Eres un experto en marketing de contenidos y copywriting. Tu tarea es transforma
 ---
 
 TONO: {$tone}
-IDIOMA: Español de España (peninsular)
+IDIOMA DE SALIDA: {$languageLabel}
 
 REGLAS GENERALES:
 - Mantén la esencia y los puntos clave del contenido original
 - Adapta el lenguaje al formato y plataforma destino
 - NO inventes datos, cifras o información que no esté en el contenido fuente
 - Sé conciso pero completo
-- Usa español de España (vosotros, expresiones peninsulares)
+- {$languageRule}
 CONTEXT;
 
         return match($format) {

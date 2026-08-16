@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "id": "default",
+  "slug": "default",
+  "status": "active",
+  "canonical_domain": "claara.tech",
+  "domains": [
+    "claara.tech",
+    "www.claara.tech"
+  ],
+  "branding": {
+    "product_name": "Claara",
+    "organization_name": "Grupo Ebone",
+    "logo_path": "/assets/images/logo.png",
+    "login_logo_path": "/assets/images/claara-logo.png",
+    "accent_color": "#FF8B73"
+  },
+  "locales": {
+    "default": "en",
+    "allowed": ["en", "es"]
+  },
+  "modules": {
+    "enabled": [
+      "core.chat",
+      "core.voices",
+      "core.gestures",
+      "core.connectors",
+      "core.administration",
+      "feature.image-generation",
+      "gesture.write-article",
+      "gesture.social-media",
+      "gesture.podcast-from-article",
+      "gesture.image-editor",
+      "gesture.content-repurposer",
+      "gesture.sop-generator",
+      "gesture.audio-transcriber",
+      "gesture.course-creator",
+      "gesture.project-admin",
+      "gesture.lead-finder"
+    ]
+  },
+  "limits": {
+    "users": 100,
+    "storage_bytes": 10737418240
+  },
+  "release": {
+    "channel": "legacy",
+    "id": "current"
+  },
+  "resources": {
+    "database": {
+      "env_prefix": "DB"
+    },
+    "storage": {
+      "path_env": "INSTANCE_STORAGE_ROOT"
+    },
+    "rag": {
+      "env_prefix": "QDRANT",
+      "collection_prefix": ""
+    },
+    "session": {
+      "namespace": "2dfa7c360aec"
+    },
+    "secrets": {
+      "scope": "default"
+    },
+    "backups": {
+      "scope": "default"
+    }
+  }
+}

@@ -1,6 +1,10 @@
 <?php
 use App\Env;
 use App\Session;
+use Instances\InstanceConfigurationException;
+use Instances\InstanceResolver;
+use Instances\InstanceUnavailableException;
+use Instances\UnknownInstanceException;
 
 // Autoloader de Composer (para PhpSpreadsheet y otras dependencias)
 $vendorAutoload = dirname(dirname(__DIR__)) . '/vendor/autoload.php';
@@ -10,12 +14,28 @@ if (file_exists($vendorAutoload)) {
 
 require_once __DIR__ . '/Env.php';
 require_once __DIR__ . '/Response.php';
+require_once dirname(__DIR__) . '/Instances/InstanceException.php';
+require_once dirname(__DIR__) . '/Modules/ModuleConfigurationException.php';
+require_once dirname(__DIR__) . '/Modules/ModuleDefinition.php';
+require_once dirname(__DIR__) . '/Modules/ModuleRegistry.php';
+require_once dirname(__DIR__) . '/Modules/ModuleEntitlementService.php';
+require_once dirname(__DIR__) . '/Modules/ModulePresentationState.php';
+require_once dirname(__DIR__) . '/Modules/ModuleStateResolver.php';
+require_once dirname(__DIR__) . '/Modules/ModuleCatalogPresenter.php';
+require_once dirname(__DIR__) . '/Modules/CoreRouteRegistry.php';
+require_once dirname(__DIR__) . '/Modules/CoreModuleGuard.php';
+require_once dirname(__DIR__) . '/Instances/InstanceManifest.php';
+require_once dirname(__DIR__) . '/Instances/InstanceResources.php';
+require_once dirname(__DIR__) . '/Instances/InstanceContext.php';
+require_once dirname(__DIR__) . '/Instances/InstanceResolver.php';
+require_once dirname(__DIR__) . '/I18n/LocaleResolver.php';
+require_once dirname(__DIR__) . '/I18n/Translator.php';
+require_once dirname(__DIR__) . '/I18n/I18n.php';
+require_once __DIR__ . '/CookieScope.php';
 require_once __DIR__ . '/Session.php';
 require_once __DIR__ . '/DB.php';
+require_once __DIR__ . '/Storage.php';
 require_once __DIR__ . '/SecurityHeaders.php';
-
-// Enviar security headers en todas las respuestas
-\App\SecurityHeaders::send();
 
 // Gestures
 require_once dirname(__DIR__) . '/Gestures/GestureExecutionsRepo.php';
@@ -26,6 +46,7 @@ require_once dirname(__DIR__) . '/Jobs/BackgroundJobsRepo.php';
 // Repos
 require_once dirname(__DIR__) . '/Repos/UsageLogRepo.php';
 require_once dirname(__DIR__) . '/Repos/UserFeatureAccessRepo.php';
+require_once dirname(__DIR__) . '/Gestures/GestureAccessGuard.php';
 require_once dirname(__DIR__) . '/Repos/VoicesRepo.php';
 require_once dirname(__DIR__) . '/Repos/ContextDocsRepo.php';
 require_once dirname(__DIR__) . '/Repos/OrganizationResponsibilityRepo.php';
@@ -93,9 +114,34 @@ require_once dirname(__DIR__) . '/Connectors/OneDriveImporter.php';
 // Utils
 require_once dirname(__DIR__) . '/Utils/DocumentGenerator.php';
 
-// Cargar .env desde la raíz del proyecto
+// Load deployment secrets before resolving the non-secret instance manifest.
 $root = dirname(dirname(__DIR__));
 Env::load($root . '/.env');
 
+// Security headers are present even when instance resolution fails closed.
+\App\SecurityHeaders::send();
+
+try {
+    InstanceResolver::bootFromEnvironment($root);
+} catch (UnknownInstanceException $error) {
+    \App\Response::error('instance_not_found', 'This domain is not assigned to an active Claara instance', 421);
+} catch (InstanceUnavailableException $error) {
+    \App\Response::error('instance_unavailable', 'This Claara instance is temporarily unavailable', 503);
+} catch (InstanceConfigurationException $error) {
+    error_log('Instance configuration error: ' . $error->getMessage());
+    \App\Response::error('instance_configuration_error', 'Claara instance configuration is unavailable', 500);
+}
+
 // Iniciar sesión y CSRF
 Session::start();
+
+// Resolve one deterministic UI locale: user preference, then instance default,
+// then the English safety fallback enforced by LocaleResolver.
+\I18n\I18n::boot(
+    \Instances\InstanceContext::current(),
+    $root . '/resources/i18n',
+    $_SESSION['user']['locale'] ?? null
+);
+
+// Enforce the active instance's module contract at the shared HTTP boundary.
+\Modules\CoreModuleGuard::enforceCurrentRequest();

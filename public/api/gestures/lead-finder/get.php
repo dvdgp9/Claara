@@ -17,14 +17,12 @@ if (!$user) {
     Response::error('unauthorized', 'Not authenticated', 401);
 }
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'lead-finder');
+
 $runId = (int)($_GET['id'] ?? 0);
 if ($runId <= 0) {
     Response::error('missing_id', 'Run id is required', 400);
-}
-
-$accessRepo = new UserFeatureAccessRepo();
-if (!$accessRepo->hasGestureAccess((int)$user['id'], 'lead-finder')) {
-    Response::error('forbidden', 'No access to Lead Finder', 403);
 }
 
 try {

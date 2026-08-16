@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../src/App/bootstrap.php';
 require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 
 Session::start();
@@ -24,16 +25,16 @@ $activeTab = 'gestures';
 
 // Configuración del header unificado
 $headerBackUrl = '/gestos/';
-$headerBackText = 'All gestures';
-$headerTitle = 'Image editor';
+$headerBackText = I18n::translate('image_ui.all_gestures');
+$headerTitle = I18n::translate('image_ui.title');
 $headerIcon = 'iconoir-media-image';
 $headerIconColor = 'from-amber-500 to-orange-600';
 $headerDrawerId = 'gesture-history-drawer';
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(I18n::htmlLang()) ?>">
 <?php include __DIR__ . '/../includes/head.php'; ?>
-<body class="bg-mesh text-slate-900 overflow-hidden">
-  <div class="min-h-screen flex h-screen">
+<body class="image-editor-page bg-mesh text-slate-900 overflow-hidden">
+  <div class="min-h-[100dvh] flex h-[100dvh]">
     <?php include __DIR__ . '/../includes/left-tabs.php'; ?>
     
     <!-- Sidebar de historial (solo desktop) -->
@@ -42,9 +43,9 @@ $headerDrawerId = 'gesture-history-drawer';
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-slate-800 flex items-center gap-2">
             <i class="iconoir-clock text-amber-500"></i>
-            History
+            <?= htmlspecialchars(I18n::translate('image_ui.history')) ?>
           </h2>
-          <button id="new-image-btn" class="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="New image">
+          <button id="new-image-btn" class="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="<?= htmlspecialchars(I18n::translate('image_ui.new_image')) ?>">
             <i class="iconoir-plus text-lg"></i>
           </button>
         </div>
@@ -53,7 +54,7 @@ $headerDrawerId = 'gesture-history-drawer';
       <div id="history-list" class="flex-1 overflow-auto">
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-refresh animate-spin"></i>
-          Loading...
+          <?= htmlspecialchars(I18n::translate('image_ui.loading')) ?>
         </div>
       </div>
     </aside>
@@ -61,7 +62,7 @@ $headerDrawerId = 'gesture-history-drawer';
     <!-- Mobile Drawer para historial -->
     <?php 
     $drawerId = 'gesture-history-drawer';
-    $drawerTitle = 'History';
+    $drawerTitle = I18n::translate('image_ui.history');
     $drawerIcon = 'iconoir-clock';
     $drawerIconColor = 'text-amber-500';
     include __DIR__ . '/../includes/mobile-drawer.php'; 
@@ -82,37 +83,37 @@ $headerDrawerId = 'gesture-history-drawer';
               <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all active" data-intent="from-scratch">
                 <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-sparks text-amber-500"></i>
-                  Create from scratch
+                  <?= htmlspecialchars(I18n::translate('image_ui.intent_scratch')) ?>
                 </div>
-                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Open concept</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate"><?= htmlspecialchars(I18n::translate('image_ui.intent_scratch_help')) ?></div>
               </button>
               <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="edit-image">
                 <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-edit text-amber-500"></i>
-                  Edit image
+                  <?= htmlspecialchars(I18n::translate('image_ui.intent_edit')) ?>
                 </div>
-                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Edits from source</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate"><?= htmlspecialchars(I18n::translate('image_ui.intent_edit_help')) ?></div>
               </button>
               <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="corporate-image">
                 <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-building text-amber-500"></i>
-                  Corporate
+                  <?= htmlspecialchars(I18n::translate('image_ui.intent_corporate')) ?>
                 </div>
-                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Brand and communications</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate"><?= htmlspecialchars(I18n::translate('image_ui.intent_corporate_help')) ?></div>
               </button>
               <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="product-mockup">
                 <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-box text-amber-500"></i>
-                  Product
+                  <?= htmlspecialchars(I18n::translate('image_ui.intent_product')) ?>
                 </div>
-                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Commercial mockup</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate"><?= htmlspecialchars(I18n::translate('image_ui.intent_product_help')) ?></div>
               </button>
               <button type="button" class="intent-card p-2.5 text-left bg-white border border-slate-200 rounded-xl hover:border-amber-400 transition-all" data-intent="poster-logos">
                 <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <i class="iconoir-media-image text-amber-500"></i>
-                  Poster + logos
+                  <?= htmlspecialchars(I18n::translate('image_ui.intent_poster')) ?>
                 </div>
-                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate">Up to 4 references</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 pl-5 truncate"><?= htmlspecialchars(I18n::translate('image_ui.intent_poster_help')) ?></div>
               </button>
             </div>
 
@@ -122,21 +123,21 @@ $headerDrawerId = 'gesture-history-drawer';
             <div class="relative">
               <textarea id="image-description" rows="3"
                 class="w-full border-2 border-slate-200 rounded-xl pl-4 pr-4 pt-3 pb-14 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none bg-white text-sm"
-                placeholder="Describe the image you want to create..."></textarea>
+                placeholder="<?= htmlspecialchars(I18n::translate('image_ui.description_placeholder')) ?>"></textarea>
 
               <!-- Barra inferior dentro del textarea: resumen params + botón generar -->
               <div class="absolute left-2 right-2 bottom-2 flex items-center gap-2 pointer-events-none">
                 <div class="flex-1 min-w-0 flex items-center gap-1.5 text-[11px] text-slate-500 pointer-events-auto">
                   <button type="button" id="open-params-mobile" class="lg:hidden px-2 py-1 text-[11px] font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors flex items-center gap-1 shrink-0">
-                    <i class="iconoir-settings"></i> Adjust
+                    <i class="iconoir-settings"></i> <?= htmlspecialchars(I18n::translate('image_ui.adjust')) ?>
                   </button>
                   <i class="iconoir-frame shrink-0 hidden lg:inline text-slate-400"></i>
-                  <span id="summary-text" class="truncate hidden lg:inline">Automatic settings</span>
+                  <span id="summary-text" class="truncate hidden lg:inline"><?= htmlspecialchars(I18n::translate('image_ui.automatic_settings')) ?></span>
                 </div>
                 <button type="button" id="generate-image-btn"
                   class="pointer-events-auto px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 shrink-0">
                   <i class="iconoir-sparks"></i>
-                  <span>Generate</span>
+                  <span><?= htmlspecialchars(I18n::translate('image_ui.generate')) ?></span>
                 </button>
               </div>
 
@@ -150,11 +151,11 @@ $headerDrawerId = 'gesture-history-drawer';
               <summary class="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer list-none">
                 <div class="flex items-center gap-1.5 min-w-0">
                   <i class="iconoir-media-image text-amber-500 shrink-0"></i>
-                  <span class="text-xs font-semibold text-slate-700">Visual references</span>
-                  <span id="generate-reference-count" class="text-[11px] text-slate-500 truncate">(optional · max 4)</span>
+                  <span class="text-xs font-semibold text-slate-700"><?= htmlspecialchars(I18n::translate('image_ui.visual_references')) ?></span>
+                  <span id="generate-reference-count" class="text-[11px] text-slate-500 truncate"><?= htmlspecialchars(I18n::translate('image_ui.optional_max_four')) ?></span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <span id="add-generate-reference-btn" class="px-2 py-0.5 text-[11px] font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-md transition-colors">Add</span>
+                  <span id="add-generate-reference-btn" class="px-2 py-0.5 text-[11px] font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-md transition-colors"><?= htmlspecialchars(I18n::translate('image_ui.add')) ?></span>
                   <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
                 </div>
               </summary>
@@ -165,12 +166,12 @@ $headerDrawerId = 'gesture-history-drawer';
             <!-- Acciones rápidas para modo edición -->
             <div id="edit-quick-actions" class="hidden rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
               <div class="flex flex-wrap gap-1.5">
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Replace the background with a more professional one">Change background</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Add a logo naturally and with proper proportions">Add logo</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Remove the foreground object and fill the background">Remove object</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Improve lighting and contrast while keeping realism">Improve lighting</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Adjust the color palette while preserving composition">Change colors</button>
-                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="Extend the framing with more space around the subject">Extend framing</button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="<?= htmlspecialchars(I18n::translate('image_ui.quick_background_prompt'), ENT_QUOTES) ?>"><?= htmlspecialchars(I18n::translate('image_ui.quick_background')) ?></button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="<?= htmlspecialchars(I18n::translate('image_ui.quick_logo_prompt'), ENT_QUOTES) ?>"><?= htmlspecialchars(I18n::translate('image_ui.quick_logo')) ?></button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="<?= htmlspecialchars(I18n::translate('image_ui.quick_remove_prompt'), ENT_QUOTES) ?>"><?= htmlspecialchars(I18n::translate('image_ui.quick_remove')) ?></button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="<?= htmlspecialchars(I18n::translate('image_ui.quick_lighting_prompt'), ENT_QUOTES) ?>"><?= htmlspecialchars(I18n::translate('image_ui.quick_lighting')) ?></button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="<?= htmlspecialchars(I18n::translate('image_ui.quick_colors_prompt'), ENT_QUOTES) ?>"><?= htmlspecialchars(I18n::translate('image_ui.quick_colors')) ?></button>
+                <button type="button" class="edit-quick-chip px-2.5 py-1 text-xs text-slate-600 bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 rounded-lg transition-colors" data-text="<?= htmlspecialchars(I18n::translate('image_ui.quick_extend_prompt'), ENT_QUOTES) ?>"><?= htmlspecialchars(I18n::translate('image_ui.quick_extend')) ?></button>
               </div>
             </div>
           </div>
@@ -182,8 +183,8 @@ $headerDrawerId = 'gesture-history-drawer';
               <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mb-4">
                 <i class="iconoir-media-image text-4xl text-amber-500"></i>
               </div>
-              <h3 class="text-lg font-semibold text-slate-700 mb-2">Generate your first image</h3>
-              <p class="text-sm text-slate-500 max-w-sm">Describe what you want to create and tune the settings</p>
+              <h3 class="text-lg font-semibold text-slate-700 mb-2"><?= htmlspecialchars(I18n::translate('image_ui.first_title')) ?></h3>
+              <p class="text-sm text-slate-500 max-w-sm"><?= htmlspecialchars(I18n::translate('image_ui.first_help')) ?></p>
             </div>
             
             <!-- Sección imágenes (modo edición) -->
@@ -195,16 +196,16 @@ $headerDrawerId = 'gesture-history-drawer';
                     <input type="file" id="source-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div id="source-image-placeholder" class="flex flex-col items-center gap-2 p-2">
                       <i class="iconoir-upload text-2xl sm:text-3xl text-slate-400"></i>
-                      <span class="text-xs sm:text-sm font-medium text-slate-700">Imagen fuente</span>
-                      <span class="text-[10px] sm:text-xs text-slate-400">Drag or click</span>
+                      <span class="text-xs sm:text-sm font-medium text-slate-700"><?= htmlspecialchars(I18n::translate('image_ui.source_image')) ?></span>
+                      <span class="text-[10px] sm:text-xs text-slate-400"><?= htmlspecialchars(I18n::translate('image_ui.drag_or_click')) ?></span>
                     </div>
-                    <img id="source-image-preview" src="" alt="Imagen fuente" class="hidden w-full h-full object-contain rounded-xl" />
+                    <img id="source-image-preview" src="" alt="<?= htmlspecialchars(I18n::translate('image_ui.source_image')) ?>" class="hidden w-full h-full object-contain rounded-xl" />
                     <button type="button" id="source-image-clear" class="hidden absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 shadow-lg">
                       <i class="iconoir-xmark text-xs"></i>
                     </button>
                   </div>
-                  <p class="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-600">Imagen a editar</p>
-                  <p class="text-[10px] text-slate-400">(requerida)</p>
+                  <p class="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-600"><?= htmlspecialchars(I18n::translate('image_ui.image_to_edit')) ?></p>
+                  <p class="text-[10px] text-slate-400"><?= htmlspecialchars(I18n::translate('image_ui.required')) ?></p>
                 </div>
                 
                 <!-- Imagen objetivo (opcional) -->
@@ -213,16 +214,16 @@ $headerDrawerId = 'gesture-history-drawer';
                     <input type="file" id="target-image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div id="target-image-placeholder" class="flex flex-col items-center gap-2 p-2">
                       <i class="iconoir-add-media-image text-2xl sm:text-3xl text-slate-400"></i>
-                      <span class="text-xs sm:text-sm font-medium text-slate-700">Referencia</span>
-                      <span class="text-[10px] sm:text-xs text-slate-400">Drag or click</span>
+                      <span class="text-xs sm:text-sm font-medium text-slate-700"><?= htmlspecialchars(I18n::translate('image_ui.reference')) ?></span>
+                      <span class="text-[10px] sm:text-xs text-slate-400"><?= htmlspecialchars(I18n::translate('image_ui.drag_or_click')) ?></span>
                     </div>
-                    <img id="target-image-preview" src="" alt="Imagen referencia" class="hidden w-full h-full object-contain rounded-xl" />
+                    <img id="target-image-preview" src="" alt="<?= htmlspecialchars(I18n::translate('image_ui.reference')) ?>" class="hidden w-full h-full object-contain rounded-xl" />
                     <button type="button" id="target-image-clear" class="hidden absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 shadow-lg">
                       <i class="iconoir-xmark text-xs"></i>
                     </button>
                   </div>
-                  <p class="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-600">Imagen objetivo</p>
-                  <p class="text-[10px] text-slate-400">(opcional)</p>
+                  <p class="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-600"><?= htmlspecialchars(I18n::translate('image_ui.target_image')) ?></p>
+                  <p class="text-[10px] text-slate-400"><?= htmlspecialchars(I18n::translate('image_ui.optional')) ?></p>
                 </div>
               </div>
             </div>
@@ -230,21 +231,21 @@ $headerDrawerId = 'gesture-history-drawer';
             <!-- Imagen generada -->
             <div id="image-result" class="hidden absolute inset-0 flex items-center justify-center p-4">
               <div class="relative max-w-full max-h-full">
-                <img id="generated-image" src="" alt="Imagen generada" 
+                <img id="generated-image" src="" alt="<?= htmlspecialchars(I18n::translate('image_ui.generated_alt')) ?>"
                   class="max-w-full max-h-[calc(100vh-320px)] object-contain rounded-xl shadow-2xl cursor-pointer hover:shadow-3xl transition-shadow" />
                 <!-- Overlay de acciones sobre la imagen -->
                 <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/50 backdrop-blur-md rounded-xl p-2">
-                  <button id="edit-this-image-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="Usar como base">
+                  <button id="edit-this-image-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="<?= htmlspecialchars(I18n::translate('image_ui.use_as_base')) ?>">
                     <i class="iconoir-edit"></i>
-                    <span class="hidden sm:inline">Usar como base</span>
+                    <span class="hidden sm:inline"><?= htmlspecialchars(I18n::translate('image_ui.use_as_base')) ?></span>
                   </button>
-                  <button id="regenerate-image-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="Regenerate">
+                  <button id="regenerate-image-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="<?= htmlspecialchars(I18n::translate('image_ui.regenerate')) ?>">
                     <i class="iconoir-refresh"></i>
                   </button>
-                  <button id="download-image-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="Download">
+                  <button id="download-image-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="<?= htmlspecialchars(I18n::translate('image_ui.download')) ?>">
                     <i class="iconoir-download"></i>
                   </button>
-                  <button id="fullscreen-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="Ver grande">
+                  <button id="fullscreen-btn" class="px-3 py-2 text-white hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 text-sm" title="<?= htmlspecialchars(I18n::translate('image_ui.fullscreen')) ?>">
                     <i class="iconoir-expand"></i>
                   </button>
                 </div>
@@ -259,8 +260,8 @@ $headerDrawerId = 'gesture-history-drawer';
                   <div class="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
                   <div class="absolute inset-0 flex items-center justify-center text-amber-600"><i class="iconoir-sparks text-xl"></i></div>
                 </div>
-                <span id="loading-title" class="text-amber-700 font-medium">Generating image...</span>
-                <span id="loading-detail" class="text-amber-600 text-sm">This may take a few seconds</span>
+                <span id="loading-title" class="text-amber-700 font-medium"><?= htmlspecialchars(I18n::translate('image_ui.generating')) ?></span>
+                <span id="loading-detail" class="text-amber-600 text-sm"><?= htmlspecialchars(I18n::translate('image_ui.loading_help')) ?></span>
                 <span id="loading-meta" class="text-amber-500 text-xs"></span>
               </div>
             </div>
@@ -276,7 +277,7 @@ $headerDrawerId = 'gesture-history-drawer';
           <div class="p-4 border-b border-slate-200/50">
             <h3 class="font-semibold text-slate-800 flex items-center gap-2">
               <i class="iconoir-settings text-amber-500"></i>
-              Parameters
+              <?= htmlspecialchars(I18n::translate('image_ui.parameters')) ?>
             </h3>
           </div>
           
@@ -285,7 +286,7 @@ $headerDrawerId = 'gesture-history-drawer';
             <details class="group" open>
               <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
                 <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
-                  <i class="iconoir-frame text-amber-500"></i> Format
+                  <i class="iconoir-frame text-amber-500"></i> <?= htmlspecialchars(I18n::translate('image_ui.format')) ?>
                 </span>
                 <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
               </summary>
@@ -294,7 +295,7 @@ $headerDrawerId = 'gesture-history-drawer';
                   <input type="radio" name="format" value="" class="hidden peer" checked />
                   <div class="format-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex flex-col items-center justify-center h-full min-h-[52px]">
                     <i class="iconoir-prohibition text-lg"></i>
-                    <span class="text-[10px] mt-1 font-medium">None</span>
+                    <span class="text-[10px] mt-1 font-medium"><?= htmlspecialchars(I18n::translate('image_ui.none')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
@@ -339,7 +340,7 @@ $headerDrawerId = 'gesture-history-drawer';
             <details class="group">
               <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
                 <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
-                  <i class="iconoir-frame-select text-amber-500"></i> Composition
+                  <i class="iconoir-frame-select text-amber-500"></i> <?= htmlspecialchars(I18n::translate('image_ui.composition')) ?>
                 </span>
                 <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
               </summary>
@@ -348,56 +349,56 @@ $headerDrawerId = 'gesture-history-drawer';
                   <input type="radio" name="composition" value="" class="hidden peer" checked />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-prohibition text-sm"></i>
-                    <span class="text-[10px] font-medium">None</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.none')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="composition" value="bokeh" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-focus text-sm"></i>
-                    <span class="text-[10px] font-medium">Bokeh</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.bokeh')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="composition" value="closeup" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-zoom-in text-sm"></i>
-                    <span class="text-[10px] font-medium">Close-up</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.close_up')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="composition" value="wide" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-zoom-out text-sm"></i>
-                    <span class="text-[10px] font-medium">Wide shot</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.wide_shot')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="composition" value="above" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-arrow-down text-sm"></i>
-                    <span class="text-[10px] font-medium">Top-down</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.top_down')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="composition" value="below" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-arrow-up text-sm"></i>
-                    <span class="text-[10px] font-medium">Low angle</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.low_angle')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="composition" value="macro" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-eye-alt text-sm"></i>
-                    <span class="text-[10px] font-medium">Macro</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.macro')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="composition" value="negative-space" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-square text-sm"></i>
-                    <span class="text-[10px] font-medium">Neg. space</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.negative_space')) ?></span>
                   </div>
                 </label>
               </div>
@@ -407,7 +408,7 @@ $headerDrawerId = 'gesture-history-drawer';
             <details class="group">
               <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
                 <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
-                  <i class="iconoir-design-pencil text-amber-500"></i> Style
+                  <i class="iconoir-design-pencil text-amber-500"></i> <?= htmlspecialchars(I18n::translate('image_ui.style')) ?>
                 </span>
                 <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
               </summary>
@@ -416,63 +417,63 @@ $headerDrawerId = 'gesture-history-drawer';
                   <input type="radio" name="style" value="" class="hidden peer" checked />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-prohibition text-sm"></i>
-                    <span class="text-[10px] font-medium">None</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.none')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="style" value="photographic" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-camera text-sm"></i>
-                    <span class="text-[10px] font-medium">Photographic</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.photographic')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="style" value="digital-art" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-design-pencil text-sm"></i>
-                    <span class="text-[10px] font-medium">Digital Art</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.digital_art')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="style" value="corporate" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-building text-sm"></i>
-                    <span class="text-[10px] font-medium">Corporate</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.corporate_style')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="style" value="minimalist" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-minus text-sm"></i>
-                    <span class="text-[10px] font-medium">Minimalist</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.minimalist')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="style" value="3d-render" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-3d-select-face text-sm"></i>
-                    <span class="text-[10px] font-medium">3D Render</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.render_3d')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="style" value="flat-design" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-crop text-sm"></i>
-                    <span class="text-[10px] font-medium">Flat Design</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.flat_design')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="style" value="isometric" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-cube text-sm"></i>
-                    <span class="text-[10px] font-medium">Isometric</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.isometric')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="style" value="luxury-product" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-diamond text-sm"></i>
-                    <span class="text-[10px] font-medium">Luxury product</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.luxury_product')) ?></span>
                   </div>
                 </label>
               </div>
@@ -482,7 +483,7 @@ $headerDrawerId = 'gesture-history-drawer';
             <details class="group">
               <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
                 <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
-                  <i class="iconoir-sun-light text-amber-500"></i> Lighting
+                  <i class="iconoir-sun-light text-amber-500"></i> <?= htmlspecialchars(I18n::translate('image_ui.lighting')) ?>
                 </span>
                 <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
               </summary>
@@ -491,56 +492,56 @@ $headerDrawerId = 'gesture-history-drawer';
                   <input type="radio" name="lighting" value="" class="hidden peer" checked />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-prohibition text-sm"></i>
-                    <span class="text-[10px] font-medium">None</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.none')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="lighting" value="natural" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-sun-light text-sm"></i>
-                    <span class="text-[10px] font-medium">Natural</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.natural')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="lighting" value="studio" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-flash text-sm"></i>
-                    <span class="text-[10px] font-medium">Studio</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.studio')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="lighting" value="dramatic" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-half-moon text-sm"></i>
-                    <span class="text-[10px] font-medium">Dramatic</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.dramatic')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="lighting" value="soft" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-cloud text-sm"></i>
-                    <span class="text-[10px] font-medium">Soft</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.soft')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="lighting" value="golden" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-sunrise text-sm"></i>
-                    <span class="text-[10px] font-medium">Golden hour</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.golden_hour')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="lighting" value="backlight" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-lens text-sm"></i>
-                    <span class="text-[10px] font-medium">Backlight</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.backlight')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="lighting" value="volumetric" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-sparks text-sm"></i>
-                    <span class="text-[10px] font-medium">Volumetric</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.volumetric')) ?></span>
                   </div>
                 </label>
               </div>
@@ -550,7 +551,7 @@ $headerDrawerId = 'gesture-history-drawer';
             <details class="group">
               <summary class="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
                 <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
-                  <i class="iconoir-color-filter text-amber-500"></i> Color
+                  <i class="iconoir-color-filter text-amber-500"></i> <?= htmlspecialchars(I18n::translate('image_ui.color')) ?>
                 </span>
                 <i class="iconoir-nav-arrow-down text-slate-400 group-open:rotate-180 transition-transform"></i>
               </summary>
@@ -559,61 +560,60 @@ $headerDrawerId = 'gesture-history-drawer';
                   <input type="radio" name="color" value="" class="hidden peer" checked />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <i class="iconoir-prohibition text-sm"></i>
-                    <span class="text-[10px] font-medium">None</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.none')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="color" value="warm" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <div class="w-4 h-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500"></div>
-                    <span class="text-[10px] font-medium">Warm</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.warm')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="color" value="cool" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <div class="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500"></div>
-                    <span class="text-[10px] font-medium">Cool</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.cool')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="color" value="corporate" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <div class="w-4 h-4 rounded-full bg-gradient-to-br from-[#B7C9F2] to-[#2F3440]"></div>
-                    <span class="text-[10px] font-medium">Corporate</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.corporate_style')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="color" value="monochrome" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <div class="w-4 h-4 rounded-full bg-gradient-to-br from-slate-300 to-slate-600"></div>
-                    <span class="text-[10px] font-medium">Monochrome</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.monochrome')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="color" value="pastel" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <div class="w-4 h-4 rounded-full bg-gradient-to-br from-pink-200 to-purple-200"></div>
-                    <span class="text-[10px] font-medium">Pastel</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.pastel')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="color" value="bw" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <div class="w-4 h-4 rounded-full bg-gradient-r from-black to-white"></div>
-                    <span class="text-[10px] font-medium">B/N</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.black_white')) ?></span>
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="color" value="vibrant" class="hidden peer" />
                   <div class="style-pill peer-checked:active p-2 border border-slate-200 rounded-lg hover:border-amber-400 transition-all flex items-center gap-1.5">
                     <div class="w-4 h-4 rounded-full bg-gradient-to-br from-red-500 via-yellow-500 to-green-500"></div>
-                    <span class="text-[10px] font-medium">Vibrant</span>
+                    <span class="text-[10px] font-medium"><?= htmlspecialchars(I18n::translate('image_ui.vibrant')) ?></span>
                   </div>
                 </label>
               </div>
             </details>
-          </div>  
           </div><!-- /controles scroll -->
         </aside>
         
@@ -626,7 +626,7 @@ $headerDrawerId = 'gesture-history-drawer';
     <button id="lightbox-close" class="absolute top-4 right-4 text-white/80 hover:text-white p-2 z-10">
       <i class="iconoir-xmark text-3xl"></i>
     </button>
-    <img id="lightbox-image" src="" alt="Enlarged image" class="max-w-full max-h-full object-contain" />
+    <img id="lightbox-image" src="" alt="<?= htmlspecialchars(I18n::translate('image_ui.enlarged_alt')) ?>" class="max-w-full max-h-full object-contain" />
   </div>
 
   <!-- Modal de parámetros para móvil -->
@@ -636,7 +636,7 @@ $headerDrawerId = 'gesture-history-drawer';
       <div class="p-4 border-b border-slate-200 flex items-center justify-between">
         <h3 class="font-semibold text-slate-800 flex items-center gap-2">
           <i class="iconoir-settings text-amber-500"></i>
-          Image parameters
+          <?= htmlspecialchars(I18n::translate('image_ui.image_parameters')) ?>
         </h3>
         <button id="close-params-modal" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
           <i class="iconoir-xmark text-xl"></i>
@@ -650,39 +650,14 @@ $headerDrawerId = 'gesture-history-drawer';
     </div>
   </div>
 
-  <script>window.CSRF_TOKEN = '<?php echo htmlspecialchars($csrfToken); ?>';</script>
+  <script>
+    window.CSRF_TOKEN = <?= json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    window.CLAARA_IMAGE_I18N = <?= I18n::javascriptCatalogPrefixJson('image_ui.') ?>;
+  </script>
   <script src="/assets/js/gesture-image-editor.js"></script>
   
   <!-- Bottom Navigation (móvil) -->
   <?php include __DIR__ . '/../includes/bottom-nav.php'; ?>
-  
-  <!-- Estilos adicionales -->
-  <style>
-    .format-pill.active, .format-pill:has(input:checked),
-    .style-pill.active, .style-pill:has(input:checked) {
-      border-color: #f59e0b !important;
-      background: rgba(245, 158, 11, 0.1);
-      color: #b45309;
-    }
-    
-    .intent-card.active {
-      border-color: #f59e0b;
-      background: rgba(245, 158, 11, 0.08);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    }
-
-    .intent-card {
-      cursor: pointer;
-      transform: translateY(0);
-      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background-color .18s ease;
-    }
-
-    .intent-card:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 24px -22px rgba(2, 6, 23, .55);
-    }
-    
-  </style>
   
   <script>
     // === Parámetros Modal (Móvil) ===

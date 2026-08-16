@@ -20,19 +20,23 @@ use Audio\ContentExtractor;
 use Audio\PodcastScriptGenerator;
 use Audio\GeminiTtsClient;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
 
 Session::start();
 $user = Session::user();
 
 if (!$user) {
-    Response::error('unauthorized', 'Not authenticated', 401);
+    Response::error('unauthorized', I18n::translate('auth.error.unauthorized'), 401);
 }
+
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'podcast-from-article');
 
 Session::requireCsrf();
 
 // Verificar método
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'POST only', 405);
+    Response::error('method_not_allowed', I18n::translate('auth.error.method_not_allowed'), 405);
 }
 
 // Parsear body
@@ -46,20 +50,20 @@ $action = $body['action'] ?? 'full'; // 'extract', 'script', 'audio', 'full'
 
 // Validaciones
 if ($sourceType === 'url' && empty($sourceUrl)) {
-    Response::error('missing_url', 'Se requiere una URL', 400);
+    Response::error('missing_url', I18n::translate('podcast_ui.api_missing_url'), 400);
 }
 if ($sourceType === 'text' && empty($sourceText)) {
-    Response::error('missing_text', 'Se requiere el texto del artículo', 400);
+    Response::error('missing_text', I18n::translate('podcast_ui.api_missing_text'), 400);
 }
 if ($sourceType === 'pdf' && empty($sourcePdf)) {
-    Response::error('missing_pdf', 'Se requiere el PDF en base64', 400);
+    Response::error('missing_pdf', I18n::translate('podcast_ui.api_missing_pdf'), 400);
 }
 
 // Verificar API Key de Gemini para TTS
 if ($action !== 'extract' && $action !== 'script') {
     $geminiKey = Env::get('GEMINI_API_KEY');
     if (empty($geminiKey)) {
-        Response::error('missing_gemini_key', 'Falta GEMINI_API_KEY en .env para generar audio', 500);
+        Response::error('missing_gemini_key', I18n::translate('podcast_ui.api_missing_key'), 500);
     }
 }
 
@@ -98,7 +102,7 @@ try {
             }
             $content = $result['content'];
             $title = $result['title'];
-            $source = 'Texto';
+            $source = I18n::translate('podcast_ui.api_source_text');
             break;
     }
 
@@ -188,7 +192,7 @@ try {
     $executionId = $repo->create([
         'user_id' => $user['id'],
         'gesture_type' => 'podcast-from-article',
-        'title' => $title ?: 'Podcast: ' . substr($summary, 0, 50),
+        'title' => $title ?: I18n::translate('podcast_ui.generated') . ': ' . substr($summary, 0, 50),
         'input_data' => [
             'source_type' => $sourceType,
             'source' => $source,
@@ -234,5 +238,5 @@ try {
     ]);
 
 } catch (\Exception $e) {
-    Response::serverError('server_error', $e, 'Error al generar podcast');
+    Response::serverError('server_error', $e, I18n::translate('podcast_ui.api_failed'));
 }

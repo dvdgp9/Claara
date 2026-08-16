@@ -12,6 +12,7 @@ use App\Session;
 use App\Response;
 use Content\CourseGenerator;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
 use Repos\UsageLogRepo;
 use App\DB;
 
@@ -26,6 +27,9 @@ if (!$user) {
     Response::error('unauthorized', 'Invalid session', 401);
 }
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'course-creator');
+
 Session::requireCsrf();
 
 try {
@@ -34,13 +38,13 @@ try {
     $executionId = $body['execution_id'] ?? null;
     $materialType = $body['material_type'] ?? null; // flashcards, quiz, final_exam, podcast
     $moduleIndices = $body['module_indices'] ?? []; // Para podcast: qué módulos incluir
-    $courseTitle = $body['course_title'] ?? 'Curso';
+    $courseTitle = $body['course_title'] ?? I18n::translate('course_ui.course');
     $modulesContent = $body['modules_content'] ?? null; // Contenido de módulos en texto
     
     // Validar tipo de material
     $validTypes = ['flashcards', 'quiz', 'final_exam', 'podcast'];
     if (!in_array($materialType, $validTypes)) {
-        Response::error('invalid_type', 'Tipo de material no válido. Opciones: ' . implode(', ', $validTypes), 400);
+        Response::error('invalid_type', I18n::translate('course_ui.invalid_material'), 400);
     }
     
     // Obtener contenido de módulos
@@ -62,7 +66,7 @@ try {
         $modules = $outputData['modules'] ?? [];
         
         if (empty($modules)) {
-            Response::error('no_modules', 'No hay módulos desarrollados en esta ejecución', 400);
+            Response::error('no_modules', I18n::translate('course_ui.no_modules'), 400);
         }
         
         // Filtrar módulos si se especifican índices (para podcast)
@@ -86,7 +90,7 @@ try {
     }
     
     if (empty(trim($content))) {
-        Response::error('no_content', 'No hay contenido para generar el material', 400);
+        Response::error('no_content', I18n::translate('course_ui.no_content'), 400);
     }
     
     // === GENERAR MATERIAL ===

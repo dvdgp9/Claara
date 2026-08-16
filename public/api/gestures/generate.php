@@ -65,6 +65,9 @@ if (!$gestureType || !$prompt) {
     Response::error('missing_params', 'Faltan parámetros requeridos', 400);
 }
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireDynamicApi($user, $gestureType, ['write-article', 'social-media']);
+
 // Modelo específico por tipo de gesto
 $modelByGesture = [
     'social-media' => 'google/gemini-3-flash-preview',

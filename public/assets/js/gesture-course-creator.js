@@ -10,6 +10,14 @@
   'use strict';
 
   const GESTURE_TYPE = 'course-creator';
+  const courseI18n = window.CLAARA_COURSE_I18N || { locale: 'en', messages: {} };
+  const courseT = (key, parameters = {}) => {
+    let value = courseI18n.messages[`course_ui.${key}`] || key;
+    Object.entries(parameters).forEach(([name, replacement]) => {
+      value = value.replaceAll(`{${name}}`, String(replacement));
+    });
+    return value;
+  };
 
   // === DOM Elements ===
   const form = document.getElementById('course-form');
@@ -73,13 +81,13 @@
       if (!file) return;
       
       if (file.type !== 'application/pdf') {
-        alert('Please select a PDF file');
+        alert(courseT('select_pdf'));
         sourcePdf.value = '';
         return;
       }
       
       if (file.size > 20 * 1024 * 1024) {
-        alert('The PDF file is too large (maximum 20MB)');
+        alert(courseT('pdf_too_large'));
         sourcePdf.value = '';
         return;
       }
@@ -124,11 +132,11 @@
       case 'text':
         const text = sourceText?.value?.trim();
         if (!text) {
-          showError('Please enter the training material text');
+          showError(courseT('enter_text'));
           return;
         }
         if (text.split(/\s+/).length < 50) {
-          showError('The text is too short (minimum 50 words)');
+          showError(courseT('text_too_short'));
           return;
         }
         inputData.text = text;
@@ -137,20 +145,20 @@
       case 'pdf':
       default:
         if (!pdfBase64) {
-          showError('Please select a PDF file');
+          showError(courseT('select_pdf'));
           return;
         }
         inputData.pdf_base64 = pdfBase64;
         break;
     }
 
-    showProgress('Analyzing content...', 'Generating course outline');
+    showProgress(courseT('analyzing'), courseT('generating_outline'));
     hideError();
 
     try {
       const response = await fetch('/api/gestures/course-creator.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
         credentials: 'include',
         body: JSON.stringify(inputData)
       });
@@ -158,7 +166,7 @@
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error generating outline');
+        throw new Error(data.error?.message || data.message || courseT('outline_error'));
       }
 
       currentOutline = data.outline;
@@ -184,7 +192,7 @@
     
     const outline = data.outline;
     if (!outline) {
-      showError('Could not generate the outline. Please try again.');
+      showError(courseT('outline_retry'));
       return;
     }
 
@@ -193,7 +201,7 @@
       <div class="glass-strong rounded-2xl border border-slate-200/50 p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-xl font-bold text-slate-800">${escapeHtml(outline.course_title || 'Course Outline')}</h2>
+            <h2 class="text-xl font-bold text-slate-800">${escapeHtml(outline.course_title || courseT('outline'))}</h2>
             <p class="text-sm text-slate-500">${escapeHtml(outline.course_description || '')}</p>
           </div>
           <div class="flex items-center gap-2">
@@ -203,7 +211,7 @@
         </div>
         
         <div class="mb-4">
-          <h3 class="font-semibold text-slate-700 mb-2">General objectives</h3>
+          <h3 class="font-semibold text-slate-700 mb-2">${courseT('general_objectives')}</h3>
           <ul class="text-sm text-slate-600 space-y-1">
             ${(outline.objectives || []).map(obj => `<li class="flex items-start gap-2"><i class="iconoir-check-circle text-emerald-500 mt-0.5"></i> ${escapeHtml(obj)}</li>`).join('')}
           </ul>
@@ -216,11 +224,11 @@
 
       <div class="flex items-center justify-between">
         <button type="button" id="back-to-input-btn" class="px-4 py-2 text-slate-600 hover:text-slate-800 flex items-center gap-2">
-          <i class="iconoir-arrow-left"></i> Back
+          <i class="iconoir-arrow-left"></i> ${courseT('back')}
         </button>
         <button type="button" id="develop-modules-btn" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2">
           <i class="iconoir-play"></i>
-          <span>Develop ${outline.modules?.length || 0} modules</span>
+          <span>${courseT('develop_modules', { count: outline.modules?.length || 0 })}</span>
         </button>
       </div>
     `;
@@ -250,7 +258,7 @@
             </div>
             <div class="flex-1">
               <input type="text" class="module-title-input w-full font-semibold text-slate-800 bg-white/50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30" value="${escapeHtml(module.title || '')}">
-              <p class="text-xs text-slate-500">${module.duration_hours || 2}h · ${lessons.length} lessons</p>
+              <p class="text-xs text-slate-500">${module.duration_hours || 2}h · ${courseT('lessons', { count: lessons.length })}</p>
             </div>
             <button type="button" class="toggle-module-btn p-2 hover:bg-white/50 rounded-lg transition-colors">
               <i class="iconoir-nav-arrow-down text-slate-600"></i>
@@ -258,7 +266,7 @@
           </div>
         </div>
         <div class="module-content p-4 space-y-3">
-          <div class="text-xs text-slate-500 mb-2">Objectives: ${(module.objectives || []).join(', ')}</div>
+          <div class="text-xs text-slate-500 mb-2">${courseT('objectives')}: ${(module.objectives || []).join(', ')}</div>
           ${lessons.map((lesson, li) => `
             <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
               <span class="text-xs font-medium text-slate-400">${lesson.id || (index + 1) + '.' + (li + 1)}</span>
@@ -279,7 +287,7 @@
   // =========================================================================
   async function developModules() {
     if (!currentOutline || !currentExecutionId) {
-      alert('No outline available to develop');
+      alert(courseT('no_outline'));
       return;
     }
 
@@ -295,7 +303,7 @@
       developBtn.disabled = true;
       developBtn.innerHTML = `
         <i class="iconoir-refresh animate-spin"></i>
-        <span>Generating module 1 of ${totalModules}...</span>
+        <span>${courseT('generating_module', { current: 1, total: totalModules })}</span>
       `;
       developBtn.classList.add('opacity-75', 'cursor-wait');
     }
@@ -308,8 +316,8 @@
             <i class="iconoir-refresh animate-spin text-emerald-600 text-xl"></i>
           </div>
           <div class="flex-1">
-            <p class="font-semibold text-emerald-800">Developing course content...</p>
-            <p class="text-sm text-emerald-600">Generating module 1 of ${totalModules}. This may take several minutes.</p>
+            <p class="font-semibold text-emerald-800">${courseT('developing_content')}</p>
+            <p class="text-sm text-emerald-600">${courseT('generating_module_help', { current: 1, total: totalModules })}</p>
           </div>
         </div>
         <div class="mt-3 bg-emerald-200 rounded-full h-2 overflow-hidden">
@@ -327,7 +335,7 @@
     try {
       const response = await fetch('/api/gestures/course-develop.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
         credentials: 'include',
         body: JSON.stringify({
           execution_id: currentExecutionId,
@@ -343,11 +351,11 @@
       document.getElementById('develop-progress')?.remove();
 
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error developing modules');
+        throw new Error(data.error?.message || data.message || courseT('develop_error'));
       }
 
       if (!data.modules || data.modules.length === 0) {
-        throw new Error('No modules were generated. Review the source content.');
+        throw new Error(courseT('no_modules'));
       }
 
       console.log('Módulos generated:', data.modules.length); // Debug
@@ -365,12 +373,12 @@
         developBtn.disabled = false;
         developBtn.innerHTML = `
           <i class="iconoir-play"></i>
-          <span>Develop ${totalModules} modules</span>
+          <span>${courseT('develop_modules', { count: totalModules })}</span>
         `;
         developBtn.classList.remove('opacity-75', 'cursor-wait');
       }
       
-      alert('Error: ' + err.message);
+      alert(courseT('error_message', { message: err.message }));
     }
   }
 
@@ -404,11 +412,11 @@
     
     // Guardar para paso 3
     currentModules = data.modules || [];
-    currentCourseTitle = data.course_title || 'Developed course';
+    currentCourseTitle = data.course_title || courseT('developed_course');
     currentExecutionId = data.execution_id || currentExecutionId;
     
     if (resultTitle) resultTitle.textContent = currentCourseTitle;
-    if (resultSource) resultSource.textContent = `${data.total_developed} module${data.total_developed !== 1 ? 's' : ''} generated${data.total_developed !== 1 ? 's' : ''}`;
+    if (resultSource) resultSource.textContent = courseT('modules_generated', { count: data.total_developed });
     
     const modules = data.modules || [];
     
@@ -417,12 +425,12 @@
       const exportAllHtml = `
         <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
           <div>
-            <p class="font-semibold text-blue-800">Export full course</p>
-            <p class="text-xs text-blue-600">Download all modules in a single Word document</p>
+            <p class="font-semibold text-blue-800">${courseT('export_full')}</p>
+            <p class="text-xs text-blue-600">${courseT('export_full_help')}</p>
           </div>
           <button id="export-all-course-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2">
             <i class="iconoir-page"></i>
-            <span>Export to Word</span>
+            <span>${courseT('export_word')}</span>
           </button>
         </div>
       `;
@@ -437,12 +445,12 @@
                 </div>
                 <div>
                   <h3 class="font-semibold text-slate-800">${escapeHtml(module.title)}</h3>
-                  <p class="text-xs text-slate-500">${module.word_count || 0} words</p>
+                  <p class="text-xs text-slate-500">${courseT('words', { count: module.word_count || 0 })}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
                 <button class="copy-module-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5" data-index="${i}">
-                  <i class="iconoir-copy"></i> Copy
+                  <i class="iconoir-copy"></i> ${courseT('copy')}
                 </button>
                 <button class="export-module-word-btn px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-index="${i}">
                   <i class="iconoir-page"></i> Word
@@ -453,7 +461,7 @@
           
           <div class="p-4">
             <div class="preview-toggle mb-4">
-              <button class="active" data-view="preview">Preview</button>
+              <button class="active" data-view="preview">${courseT('preview')}</button>
               <button data-view="raw">Markdown</button>
             </div>
             <div class="preview-view content-preview max-h-96 overflow-auto">${module.html || renderMarkdownPreview(module.content)}</div>
@@ -471,9 +479,9 @@
           const module = modules[idx];
           try {
             await navigator.clipboard.writeText(module.content);
-            btn.innerHTML = '<i class="iconoir-check"></i> Copied';
+            btn.innerHTML = `<i class="iconoir-check"></i> ${courseT('copied')}`;
             setTimeout(() => {
-              btn.innerHTML = '<i class="iconoir-copy"></i> Copy';
+              btn.innerHTML = `<i class="iconoir-copy"></i> ${courseT('copy')}`;
             }, 2000);
           } catch (err) {
             console.error('Error copying:', err);
@@ -486,7 +494,7 @@
           const idx = parseInt(btn.dataset.index);
           const module = modules[idx];
           btn.disabled = true;
-          btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exporting...';
+          btn.innerHTML = `<i class="iconoir-refresh animate-spin"></i> ${courseT('exporting')}`;
           await exportToWord('module', module.content, module.title);
           btn.disabled = false;
           btn.innerHTML = '<i class="iconoir-page"></i> Word';
@@ -519,14 +527,14 @@
       document.getElementById('export-all-course-btn')?.addEventListener('click', async function() {
         const btn = this;
         btn.disabled = true;
-        btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exporting...';
+        btn.innerHTML = `<i class="iconoir-refresh animate-spin"></i> ${courseT('exporting')}`;
         
         // Concatenar todo el contenido de los modules
         const allContent = modules.map(m => m.content).join('\n\n---\n\n');
         await exportToWord('course', allContent, currentCourseTitle);
         
         btn.disabled = false;
-        btn.innerHTML = '<i class="iconoir-page"></i> Export to Word';
+        btn.innerHTML = `<i class="iconoir-page"></i> ${courseT('export_word')}`;
       });
       
       // Añadir panel de materiales complementarios (Paso 3)
@@ -567,37 +575,37 @@
               <i class="iconoir-spark text-violet-600 text-xl"></i>
             </div>
             <div>
-              <h3 class="font-bold text-slate-800">Supplementary materials</h3>
-              <p class="text-xs text-slate-500">Step 3 (optional): Select a type and generate additional resources</p>
+              <h3 class="font-bold text-slate-800">${courseT('supplementary')}</h3>
+              <p class="text-xs text-slate-500">${courseT('step_three')}</p>
             </div>
           </div>
         </div>
         
         <div class="p-4">
-          <p class="text-sm text-slate-600 mb-3">Select what you want to generate:</p>
+          <p class="text-sm text-slate-600 mb-3">${courseT('select_material')}</p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-violet-400 transition-all text-left" data-type="flashcards">
               <i class="iconoir-multiple-pages text-2xl text-violet-500 mb-2 block"></i>
-              <p class="font-semibold text-slate-700 text-sm">Flashcards</p>
-              <p class="text-xs text-slate-500">Study cards</p>
+              <p class="font-semibold text-slate-700 text-sm">${courseT('flashcards')}</p>
+              <p class="text-xs text-slate-500">${courseT('study_cards')}</p>
             </div>
             
             <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-400 transition-all text-left" data-type="quiz">
               <i class="iconoir-check-circle text-2xl text-emerald-500 mb-2 block"></i>
-              <p class="font-semibold text-slate-700 text-sm">Tests</p>
-              <p class="text-xs text-slate-500">5-10 questions/module</p>
+              <p class="font-semibold text-slate-700 text-sm">${courseT('tests')}</p>
+              <p class="text-xs text-slate-500">${courseT('quiz_help')}</p>
             </div>
             
             <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-orange-400 transition-all text-left" data-type="final_exam">
               <i class="iconoir-graduation-cap text-2xl text-orange-500 mb-2 block"></i>
-              <p class="font-semibold text-slate-700 text-sm">Final exam</p>
-              <p class="text-xs text-slate-500">20 multiple-choice questions</p>
+              <p class="font-semibold text-slate-700 text-sm">${courseT('final_exam')}</p>
+              <p class="text-xs text-slate-500">${courseT('exam_help')}</p>
             </div>
             
             <div class="material-card cursor-pointer p-4 rounded-xl border-2 border-slate-200 hover:border-pink-400 transition-all text-left" data-type="podcast">
               <i class="iconoir-microphone text-2xl text-pink-500 mb-2 block"></i>
-              <p class="font-semibold text-slate-700 text-sm">Podcast</p>
-              <p class="text-xs text-slate-500">Audio script</p>
+              <p class="font-semibold text-slate-700 text-sm">${courseT('podcast')}</p>
+              <p class="text-xs text-slate-500">${courseT('audio_script')}</p>
             </div>
           </div>
           
@@ -605,12 +613,12 @@
           <div id="generate-material-action" class="hidden mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
             <div class="flex items-center justify-between">
               <div>
-                <p class="font-semibold text-slate-700">Selected: <span id="selected-material-name" class="text-violet-600"></span></p>
-                <p class="text-xs text-slate-500">Click Generate to create the material</p>
+                <p class="font-semibold text-slate-700">${courseT('selected')}: <span id="selected-material-name" class="text-violet-600"></span></p>
+                <p class="text-xs text-slate-500">${courseT('generate_help')}</p>
               </div>
               <button id="confirm-generate-btn" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2">
                 <i class="iconoir-spark"></i>
-                <span>Generate</span>
+                <span>${courseT('generate')}</span>
               </button>
             </div>
           </div>
@@ -621,16 +629,16 @@
               <h4 id="material-result-title" class="font-semibold text-slate-700"></h4>
               <div class="flex gap-2">
                 <button id="copy-material-btn" class="px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
-                  <i class="iconoir-copy"></i> Copy
+                  <i class="iconoir-copy"></i> ${courseT('copy')}
                 </button>
                 <button id="download-material-btn" class="px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
-                  <i class="iconoir-download"></i> Download
+                  <i class="iconoir-download"></i> ${courseT('download')}
                 </button>
               </div>
             </div>
             <div class="preview-toggle mb-3">
-              <button class="active" data-view="preview">Preview</button>
-              <button data-view="raw">Text</button>
+              <button class="active" data-view="preview">${courseT('preview')}</button>
+              <button data-view="raw">${courseT('text')}</button>
             </div>
             <div id="material-preview" class="content-preview max-h-96 overflow-auto border border-slate-200 rounded-xl p-4 bg-white"></div>
             <div id="material-raw" class="hidden">
@@ -643,8 +651,8 @@
             <div class="flex items-center gap-3">
               <i class="iconoir-refresh animate-spin text-violet-600 text-xl"></i>
               <div>
-                <p class="font-semibold text-violet-800">Generating material...</p>
-                <p id="material-progress-text" class="text-sm text-violet-600">This may take a few seconds</p>
+                <p class="font-semibold text-violet-800">${courseT('generating_material')}</p>
+                <p id="material-progress-text" class="text-sm text-violet-600">${courseT('material_help')}</p>
               </div>
             </div>
           </div>
@@ -655,10 +663,10 @@
     modulesContainer.insertAdjacentHTML('beforebegin', panelHtml);
     
     const typeNames = {
-      'flashcards': 'Flashcards',
-      'quiz': 'Module quizzes',
-      'final_exam': 'Final exam',
-      'podcast': 'Podcast script'
+      'flashcards': courseT('flashcards'),
+      'quiz': courseT('module_quizzes'),
+      'final_exam': courseT('final_exam'),
+      'podcast': courseT('podcast_script')
     };
     
     // Event listeners para tarjetas de selección
@@ -714,10 +722,10 @@
   
   async function generateMaterial(type) {
     const typeNames = {
-      'flashcards': 'Flashcards',
-      'quiz': 'Module quizzes',
-      'final_exam': 'Final exam',
-      'podcast': 'Podcast script'
+      'flashcards': courseT('flashcards'),
+      'quiz': courseT('module_quizzes'),
+      'final_exam': courseT('final_exam'),
+      'podcast': courseT('podcast_script')
     };
     
     const progress = document.getElementById('material-progress');
@@ -728,7 +736,7 @@
     // Mostrar progreso
     progress?.classList.remove('hidden');
     result?.classList.add('hidden');
-    if (progressText) progressText.textContent = `Generating ${typeNames[type]}...`;
+    if (progressText) progressText.textContent = courseT('generating_named_material', { name: typeNames[type] });
     btns.forEach(b => b.disabled = true);
     
     try {
@@ -739,7 +747,7 @@
       
       const response = await fetch('/api/gestures/course-materials.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
         credentials: 'include',
         body: JSON.stringify({
           execution_id: currentExecutionId,
@@ -752,7 +760,7 @@
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error generating material');
+        throw new Error(data.error?.message || data.message || courseT('material_error'));
       }
       
       // Guardar y mostrar resultado
@@ -768,7 +776,7 @@
       }
       
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert(courseT('error_message', { message: err.message }));
     } finally {
       progress?.classList.add('hidden');
       btns.forEach(b => b.disabled = false);
@@ -792,9 +800,9 @@
         await navigator.clipboard.writeText(currentMaterialOutput);
         const btn = document.getElementById('copy-material-btn');
         if (btn) {
-          btn.innerHTML = '<i class="iconoir-check"></i> Copied';
+          btn.innerHTML = `<i class="iconoir-check"></i> ${courseT('copied')}`;
           setTimeout(() => {
-            btn.innerHTML = '<i class="iconoir-copy"></i> Copy';
+            btn.innerHTML = `<i class="iconoir-copy"></i> ${courseT('copy')}`;
           }, 2000);
         }
       } catch (err) {
@@ -807,22 +815,22 @@
       const btn = document.getElementById('download-material-btn');
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exporting...';
+        btn.innerHTML = `<i class="iconoir-refresh animate-spin"></i> ${courseT('exporting')}`;
       }
       
       const typeNames = {
-        'flashcards': 'Flashcards',
-        'quiz': 'Tests',
-        'final_exam': 'Final Exam',
-        'podcast': 'Podcast'
+        'flashcards': courseT('flashcards'),
+        'quiz': courseT('tests'),
+        'final_exam': courseT('final_exam'),
+        'podcast': courseT('podcast')
       };
-      const materialTitle = `${currentCourseTitle} - ${typeNames[currentMaterialType] || 'Material'}`;
+      const materialTitle = `${currentCourseTitle} - ${typeNames[currentMaterialType] || courseT('material')}`;
       
       await exportToWord('material', currentMaterialOutput, materialTitle);
       
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<i class="iconoir-download"></i> Download';
+        btn.innerHTML = `<i class="iconoir-download"></i> ${courseT('download')}`;
       }
     });
   }
@@ -834,7 +842,7 @@
     try {
       const response = await fetch('/api/gestures/course-export.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
         credentials: 'include',
         body: JSON.stringify({
           export_type: exportType,
@@ -847,7 +855,7 @@
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.error?.message || data.message || 'Error exporting document');
+        throw new Error(data.error?.message || data.message || courseT('export_error'));
       }
       
       // Decodificar base64 y descargar
@@ -870,7 +878,7 @@
       
     } catch (err) {
       console.error('Error exporting to Word:', err);
-      alert('Error exporting: ' + err.message);
+      alert(courseT('export_error_message', { message: err.message }));
     }
   }
 
@@ -916,22 +924,22 @@
     const materialTypeMap = {
       'course_material_flashcards': { 
         icon: 'iconoir-multiple-pages', 
-        label: 'Flashcards', 
+        label: courseT('flashcards'), 
         btnClass: 'border-violet-300 hover:bg-violet-50 text-violet-700'
       },
       'course_material_quiz': { 
         icon: 'iconoir-check-circle', 
-        label: 'Tests', 
+        label: courseT('tests'), 
         btnClass: 'border-emerald-300 hover:bg-emerald-50 text-emerald-700'
       },
       'course_material_final_exam': { 
         icon: 'iconoir-graduation-cap', 
-        label: 'Exam', 
+        label: courseT('exam'), 
         btnClass: 'border-orange-300 hover:bg-orange-50 text-orange-700'
       },
       'course_material_podcast': { 
         icon: 'iconoir-microphone', 
-        label: 'Podcast', 
+        label: courseT('podcast'), 
         btnClass: 'border-pink-300 hover:bg-pink-50 text-pink-700'
       }
     };
@@ -948,17 +956,17 @@
     const materialsHtml = `
       <div class="existing-materials mb-4 p-4 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-xl">
         <p class="text-sm font-semibold text-violet-800 mb-3 flex items-center gap-2">
-          <i class="iconoir-check-circle"></i> Materials already generated (click to view)
+          <i class="iconoir-check-circle"></i> ${courseT('existing_materials')}
         </p>
         <div class="flex flex-wrap gap-2">
           ${materials.map(mat => {
             const info = materialTypeMap[mat.content_type] || { 
               icon: 'iconoir-spark', 
-              label: 'Material', 
+              label: courseT('material'), 
               btnClass: 'border-gray-300 hover:bg-gray-50 text-gray-700'
             };
             // Formatear fecha corta
-            const date = mat.created_at ? new Date(mat.created_at).toLocaleDateString('en-US', { 
+            const date = mat.created_at ? new Date(mat.created_at).toLocaleDateString(courseI18n.locale === 'es' ? 'es-ES' : 'en-US', { 
               day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
             }) : '';
             return `
@@ -1055,7 +1063,7 @@
 
   // === Markdown Preview ===
   function renderMarkdownPreview(text) {
-    if (!text) return '<p class="text-slate-400">No content</p>';
+    if (!text) return `<p class="text-slate-400">${courseT('no_content')}</p>`;
     
     let html = escapeHtml(text);
     
@@ -1114,23 +1122,21 @@
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-graduation-cap text-xl text-emerald-400"></i>
           </div>
-          <p class="text-sm text-slate-500">You have not created courses yet</p>
-          <p class="text-xs text-slate-400 mt-1">Upload a PDF to get started</p>
+          <p class="text-sm text-slate-500">${courseT('no_history')}</p>
+          <p class="text-xs text-slate-400 mt-1">${courseT('no_history_help')}</p>
         </div>
       `;
       return;
     }
 
-    const levelIcons = { basico: '🌱', intermediate: '🌿', avanzado: '🌳' };
-    
     // Mapeo de content_type a fase y etiqueta
     const contentTypeMap = {
-      'course_outline': { phase: 1, label: 'Outline', icon: 'iconoir-list', bgClass: 'bg-emerald-100', iconClass: 'text-emerald-600' },
-      'course_developed': { phase: 2, label: 'Developed', icon: 'iconoir-graduation-cap', bgClass: 'bg-emerald-600', iconClass: 'text-white' },
-      'course_material_flashcards': { phase: 3, label: 'Flashcards', icon: 'iconoir-multiple-pages', bgClass: 'bg-violet-500', iconClass: 'text-white' },
-      'course_material_quiz': { phase: 3, label: 'Tests', icon: 'iconoir-check-circle', bgClass: 'bg-emerald-500', iconClass: 'text-white' },
-      'course_material_final_exam': { phase: 3, label: 'Exam', icon: 'iconoir-graduation-cap', bgClass: 'bg-orange-500', iconClass: 'text-white' },
-      'course_material_podcast': { phase: 3, label: 'Podcast', icon: 'iconoir-microphone', bgClass: 'bg-pink-500', iconClass: 'text-white' }
+      'course_outline': { phase: 1, label: courseT('outline'), icon: 'iconoir-list', bgClass: 'bg-emerald-100', iconClass: 'text-emerald-600' },
+      'course_developed': { phase: 2, label: courseT('developed'), icon: 'iconoir-graduation-cap', bgClass: 'bg-emerald-600', iconClass: 'text-white' },
+      'course_material_flashcards': { phase: 3, label: courseT('flashcards'), icon: 'iconoir-multiple-pages', bgClass: 'bg-violet-500', iconClass: 'text-white' },
+      'course_material_quiz': { phase: 3, label: courseT('tests'), icon: 'iconoir-check-circle', bgClass: 'bg-emerald-500', iconClass: 'text-white' },
+      'course_material_final_exam': { phase: 3, label: courseT('exam'), icon: 'iconoir-graduation-cap', bgClass: 'bg-orange-500', iconClass: 'text-white' },
+      'course_material_podcast': { phase: 3, label: courseT('podcast'), icon: 'iconoir-microphone', bgClass: 'bg-pink-500', iconClass: 'text-white' }
     };
 
     historyList.innerHTML = mainItems.map(item => {
@@ -1141,14 +1147,12 @@
       const typeInfo = contentTypeMap[item.content_type] || contentTypeMap['course_outline'];
       const phase = typeInfo.phase;
       
-      const date = new Date(item.created_at).toLocaleDateString('en-US', {
+      const date = new Date(item.created_at).toLocaleDateString(courseI18n.locale === 'es' ? 'es-ES' : 'en-US', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
         minute: '2-digit'
       });
-      const levelIcon = levelIcons[config.level] || '📚';
-
       return `
         <div class="history-item group border-b border-slate-100 last:border-0" data-id="${item.id}" data-phase="${phase}" data-content-type="${item.content_type || ''}">
           <div class="history-item-main p-3 hover:bg-slate-50 cursor-pointer flex items-start gap-3">
@@ -1156,12 +1160,12 @@
               <i class="${typeInfo.icon} ${typeInfo.iconClass} text-sm"></i>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Untitled')}</p>
+              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || courseT('untitled'))}</p>
               <p class="text-xs text-slate-500 mt-0.5">
                 ${typeInfo.label} · ${date}
               </p>
             </div>
-            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Delete">
+            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="${courseT('delete')}">
               <i class="iconoir-trash text-slate-400 hover:text-red-500 text-sm"></i>
             </button>
           </div>
@@ -1204,14 +1208,14 @@
         // Fase 3: Material complementario
         if (phase === 3 || contentType.startsWith('course_material_')) {
           const materialTypeNames = {
-            'course_material_flashcards': 'Flashcards',
-            'course_material_quiz': 'Module quizzes',
-            'course_material_final_exam': 'Final exam',
-            'course_material_podcast': 'Podcast script'
+            'course_material_flashcards': courseT('flashcards'),
+            'course_material_quiz': courseT('module_quizzes'),
+            'course_material_final_exam': courseT('final_exam'),
+            'course_material_podcast': courseT('podcast_script')
           };
           
           const materialOutput = outputData?.raw || item.output_content || '';
-          const materialTitle = materialTypeNames[contentType] || 'Material';
+          const materialTitle = materialTypeNames[contentType] || courseT('material');
           
           // Obtener input_data para el botón "volver al curso"
           const inputData = typeof item.input_data === 'string' 
@@ -1224,7 +1228,7 @@
           if (outlineSection) outlineSection.classList.add('hidden');
           if (resultSection) resultSection.classList.remove('hidden');
           
-          if (resultTitle) resultTitle.textContent = outputData?.course_title || 'Course';
+          if (resultTitle) resultTitle.textContent = outputData?.course_title || courseT('course');
           if (resultSource) resultSource.textContent = materialTitle;
           
           if (modulesContainer) {
@@ -1233,7 +1237,7 @@
               <div class="mb-4">
                 <button id="back-to-course-btn" class="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium" data-course-id="${sourceExecutionId}">
                   <i class="iconoir-arrow-left"></i>
-                  <span>Back to course</span>
+                  <span>${courseT('back_to_course')}</span>
                 </button>
               </div>
               ` : ''}
@@ -1251,18 +1255,18 @@
                     </div>
                     <div class="flex items-center gap-2">
                       <button class="copy-material-hist-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
-                        <i class="iconoir-copy"></i> Copy
+                        <i class="iconoir-copy"></i> ${courseT('copy')}
                       </button>
                       <button class="download-material-hist-btn px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
-                        <i class="iconoir-download"></i> Download
+                        <i class="iconoir-download"></i> ${courseT('download')}
                       </button>
                     </div>
                   </div>
                 </div>
                 <div class="p-4">
                   <div class="preview-toggle mb-4">
-                    <button class="active" data-view="preview">Preview</button>
-                    <button data-view="raw">Text</button>
+                    <button class="active" data-view="preview">${courseT('preview')}</button>
+                    <button data-view="raw">${courseT('text')}</button>
                   </div>
                   <div class="preview-view content-preview max-h-96 overflow-auto">${renderMarkdownPreview(materialOutput)}</div>
                   <div class="raw-view hidden">
@@ -1278,8 +1282,8 @@
                 await navigator.clipboard.writeText(materialOutput);
                 const btn = modulesContainer.querySelector('.copy-material-hist-btn');
                 if (btn) {
-                  btn.innerHTML = '<i class="iconoir-check"></i> Copied';
-                  setTimeout(() => btn.innerHTML = '<i class="iconoir-copy"></i> Copy', 2000);
+                  btn.innerHTML = `<i class="iconoir-check"></i> ${courseT('copied')}`;
+                  setTimeout(() => btn.innerHTML = `<i class="iconoir-copy"></i> ${courseT('copy')}`, 2000);
                 }
               } catch (err) { console.error(err); }
             });
@@ -1288,22 +1292,22 @@
               const btn = modulesContainer.querySelector('.download-material-hist-btn');
               if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Exporting...';
+                btn.innerHTML = `<i class="iconoir-refresh animate-spin"></i> ${courseT('exporting')}`;
               }
               
               const typeNames = {
-                'course_material_flashcards': 'Flashcards',
-                'course_material_quiz': 'Tests',
-                'course_material_final_exam': 'Final Exam',
-                'course_material_podcast': 'Podcast'
+                'course_material_flashcards': courseT('flashcards'),
+                'course_material_quiz': courseT('tests'),
+                'course_material_final_exam': courseT('final_exam'),
+                'course_material_podcast': courseT('podcast')
               };
-              const title = `${outputData?.course_title || 'Course'} - ${typeNames[contentType] || 'Material'}`;
+              const title = `${outputData?.course_title || courseT('course')} - ${typeNames[contentType] || courseT('material')}`;
               
               await exportToWord('material', materialOutput, title);
               
               if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="iconoir-download"></i> Download';
+                btn.innerHTML = `<i class="iconoir-download"></i> ${courseT('download')}`;
               }
             });
             
@@ -1367,7 +1371,7 @@
   }
 
   async function deleteHistoryItem(id) {
-    if (!confirm('Delete this course from history?')) return;
+    if (!confirm(courseT('delete_confirm'))) return;
     
     try {
       const response = await fetch('/api/gestures/delete.php', {

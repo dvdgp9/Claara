@@ -37,6 +37,14 @@ The product direction is **managed company intelligence**, not a generic AI tool
 - For dashboard/admin UX, prefer compact tables, drawers, tabs, chips, inline states, and clear actions over large standalone cards.
 - Avoid exposing technical routes or internal identifiers to end users unless needed for admins.
 
+## Active Feature Planning: Multi-instance Platform & Internationalization
+
+This initiative now has a dedicated planning file because the main scratchpad contains several long-running feature histories. The source of truth for this work is:
+
+- `.cursor/scratchpad-instancing-i18n.md`
+
+Current objective: turn Claara into a single maintainable product that can run isolated, configurable client instances, beginning with GP Andalucia, and add runtime English/Spanish support.
+
 ## Implemented Core Capabilities
 
 ### Voice Platform

@@ -7,6 +7,7 @@ require_once __DIR__ . '/../src/Repos/OrganizationResponsibilityRepo.php';
 
 use App\Session;
 use Auth\AuthService;
+use I18n\I18n;
 use Repos\UsersRepo;
 use Repos\UserFeatureAccessRepo;
 use Repos\OrganizationResponsibilityRepo;
@@ -28,31 +29,37 @@ $responsibilityRepo = new OrganizationResponsibilityRepo();
 $departmentResponsibilities = $responsibilityRepo->getUserDepartmentResponsibilitiesMap()[(int)$user['id']] ?? [];
 $voiceResponsibilities = $responsibilityRepo->getUserVoiceResponsibilitiesMap()[(int)$user['id']] ?? [];
 $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
+$accountJs = I18n::javascriptCatalogJson([
+    'account.save_changes',
+    'account.saving',
+    'account.change_password',
+    'account.changing_password',
+    'account.password_mismatch',
+    'account.password_updated',
+    'account.error_loading_stats',
+    'account.error_updating_profile',
+    'account.language_save',
+    'account.language_saving',
+    'account.language_error',
+    'common.error',
+]);
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(I18n::htmlLang()); ?>">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>My account — Claara</title>
+  <title><?php echo htmlspecialchars(I18n::translate('account.page_title')); ?></title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/assets/images/isotipo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
   <link rel="stylesheet" href="/assets/css/styles.css">
-  <style>
-    /* Base layout styles */
-    .gradient-brand { background: linear-gradient(135deg, #B7C9F2 0%, #2F3440 100%); }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-  </style>
 </head>
-<body class="bg-slate-50 text-slate-900 overflow-hidden">
+<body class="claara-account-page bg-slate-50 text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
     <?php 
     $activeTab = 'account';
-    $pageTitle = 'My Account';
+    $pageTitle = I18n::translate('account.title');
     include __DIR__ . '/includes/left-tabs.php'; 
     ?>
 
@@ -73,43 +80,43 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
                   ?>
                 </div>
                 <div>
-                  <h2 class="text-xl font-bold text-slate-800">Personal information</h2>
-                  <p class="text-slate-500 text-sm">Manage your details and preferences</p>
+                  <h2 class="text-xl font-bold text-slate-800"><?php echo htmlspecialchars(I18n::translate('account.personal_information')); ?></h2>
+                  <p class="text-slate-500 text-sm"><?php echo htmlspecialchars(I18n::translate('account.personal_information_help')); ?></p>
                 </div>
               </div>
               <button id="edit-toggle-btn" class="text-sm text-[#B7C9F2] hover:text-[#2F3440] font-medium flex items-center gap-1">
                 <i class="iconoir-edit-pencil"></i>
-                <span>Edit</span>
+                <span><?php echo htmlspecialchars(I18n::translate('account.edit')); ?></span>
               </button>
             </div>
             
             <!-- Read-only view -->
             <div id="profile-view" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider">First name</label>
+          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider"><?php echo htmlspecialchars(I18n::translate('account.first_name')); ?></label>
           <div class="mt-1 text-slate-800 font-medium" id="display-first-name"><?php echo htmlspecialchars($user['first_name']); ?></div>
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider">Last name</label>
+          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider"><?php echo htmlspecialchars(I18n::translate('account.last_name')); ?></label>
           <div class="mt-1 text-slate-800 font-medium" id="display-last-name"><?php echo htmlspecialchars($user['last_name']); ?></div>
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider">Email</label>
+          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider"><?php echo htmlspecialchars(I18n::translate('account.email')); ?></label>
           <div class="mt-1 text-slate-800 font-medium"><?php echo htmlspecialchars($user['email']); ?></div>
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider">Job title</label>
-          <div class="mt-1 text-slate-800 font-medium"><?php echo htmlspecialchars($user['job_title'] ?? 'Not set'); ?></div>
+          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider"><?php echo htmlspecialchars(I18n::translate('account.job_title')); ?></label>
+          <div class="mt-1 text-slate-800 font-medium"><?php echo htmlspecialchars($user['job_title'] ?? I18n::translate('account.not_set')); ?></div>
         </div>
         <div>
-          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider">Department</label>
-          <div class="mt-1 text-slate-800 font-medium"><?php echo htmlspecialchars($user['department_name'] ?? 'Unassigned'); ?></div>
+          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider"><?php echo htmlspecialchars(I18n::translate('account.department')); ?></label>
+          <div class="mt-1 text-slate-800 font-medium"><?php echo htmlspecialchars($user['department_name'] ?? I18n::translate('account.unassigned')); ?></div>
         </div>
       </div>
 
       <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Department responsibility</div>
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3"><?php echo htmlspecialchars(I18n::translate('account.department_responsibility')); ?></div>
           <?php if ($departmentResponsibilities): ?>
             <div class="flex flex-wrap gap-2">
               <?php foreach ($departmentResponsibilities as $department): ?>
@@ -117,11 +124,11 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
               <?php endforeach; ?>
             </div>
           <?php else: ?>
-            <p class="text-sm text-slate-500">No department responsibility.</p>
+            <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('account.no_department_responsibility')); ?></p>
           <?php endif; ?>
         </div>
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Voice responsibility</div>
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3"><?php echo htmlspecialchars(I18n::translate('account.voice_responsibility')); ?></div>
           <?php if ($voiceResponsibilities): ?>
             <div class="flex flex-wrap gap-2">
               <?php foreach ($voiceResponsibilities as $voice): ?>
@@ -129,11 +136,11 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
               <?php endforeach; ?>
             </div>
           <?php else: ?>
-            <p class="text-sm text-slate-500">No voice responsibility.</p>
+            <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('account.no_voice_responsibility')); ?></p>
           <?php endif; ?>
         </div>
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Voice access</div>
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3"><?php echo htmlspecialchars(I18n::translate('account.voice_access')); ?></div>
           <?php if ($accessibleVoices): ?>
             <div class="flex flex-wrap gap-2">
               <?php foreach ($accessibleVoices as $voice): ?>
@@ -141,7 +148,7 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
               <?php endforeach; ?>
             </div>
           <?php else: ?>
-            <p class="text-sm text-slate-500">No voice access yet.</p>
+            <p class="text-sm text-slate-500"><?php echo htmlspecialchars(I18n::translate('account.no_voice_access')); ?></p>
           <?php endif; ?>
         </div>
       </div>
@@ -150,34 +157,34 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
       <form id="profile-edit-form" class="hidden space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">First name</label>
+            <label for="edit-first-name" class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2"><?php echo htmlspecialchars(I18n::translate('account.first_name')); ?></label>
             <input type="text" id="edit-first-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
           </div>
           <div>
-            <label class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">Last name</label>
+            <label for="edit-last-name" class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2"><?php echo htmlspecialchars(I18n::translate('account.last_name')); ?></label>
             <input type="text" id="edit-last-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
           </div>
           <div>
-            <label class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">Email</label>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2"><?php echo htmlspecialchars(I18n::translate('account.email')); ?></label>
             <input type="email" value="<?php echo htmlspecialchars($user['email']); ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-600 cursor-not-allowed" disabled>
           </div>
           <div>
-            <label class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">Department</label>
-            <input type="text" value="<?php echo htmlspecialchars($user['department_name'] ?? 'Unassigned'); ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-600 cursor-not-allowed" disabled>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2"><?php echo htmlspecialchars(I18n::translate('account.department')); ?></label>
+            <input type="text" value="<?php echo htmlspecialchars($user['department_name'] ?? I18n::translate('account.unassigned')); ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-600 cursor-not-allowed" disabled>
           </div>
         </div>
         <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-start gap-3">
           <i class="iconoir-info-circle text-blue-600 text-lg flex-shrink-0 mt-0.5"></i>
           <p class="text-sm text-blue-800">
-            If you need to change your email or department, contact your workspace administrator.
+            <?php echo htmlspecialchars(I18n::translate('account.admin_help')); ?>
           </p>
         </div>
         <div class="flex gap-3 pt-2">
           <button type="submit" class="px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
-            Save changes
+            <?php echo htmlspecialchars(I18n::translate('account.save_changes')); ?>
           </button>
           <button type="button" id="cancel-edit-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
-            Cancel
+            <?php echo htmlspecialchars(I18n::translate('common.cancel')); ?>
           </button>
         </div>
       </form>
@@ -185,26 +192,58 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
 
     <!-- Security -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-      <h2 class="text-lg font-semibold text-slate-800 mb-6">Security</h2>
+      <h2 class="text-lg font-semibold text-slate-800 mb-6"><?php echo htmlspecialchars(I18n::translate('account.security')); ?></h2>
       
       <div class="flex items-center justify-between py-3">
         <div>
-          <div class="font-medium text-slate-800">Password</div>
+          <div class="font-medium text-slate-800"><?php echo htmlspecialchars(I18n::translate('account.password')); ?></div>
           <div class="text-sm text-slate-500 mt-0.5">••••••••</div>
         </div>
         <button id="change-password-btn" class="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-          Change password
+          <?php echo htmlspecialchars(I18n::translate('account.change_password')); ?>
         </button>
       </div>
     </div>
 
+    <!-- Language -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-800"><?php echo htmlspecialchars(I18n::translate('account.language')); ?></h2>
+          <p class="text-sm text-slate-500 mt-1"><?php echo htmlspecialchars(I18n::translate('account.language_help')); ?></p>
+        </div>
+        <form id="language-form" class="flex flex-col sm:flex-row gap-2 sm:items-center shrink-0">
+          <label for="language-select" class="sr-only"><?php echo htmlspecialchars(I18n::translate('account.language')); ?></label>
+          <select id="language-select" class="min-w-52 px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-700 focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20">
+            <?php
+              $instanceDefaultLocale = \Instances\InstanceContext::current()->defaultLocale();
+              $languageLabels = [
+                'en' => I18n::translate('account.language_en'),
+                'es' => I18n::translate('account.language_es'),
+              ];
+              $defaultLanguageName = $languageLabels[$instanceDefaultLocale] ?? strtoupper($instanceDefaultLocale);
+              $selectedLocale = $user['locale'] ?? '';
+            ?>
+            <option value="" <?php echo $selectedLocale === '' ? 'selected' : ''; ?>><?php echo htmlspecialchars(I18n::translate('account.language_default', ['language' => $defaultLanguageName])); ?></option>
+            <?php foreach (\Instances\InstanceContext::current()->allowedLocales() as $localeOption): ?>
+              <option value="<?php echo htmlspecialchars($localeOption); ?>" <?php echo $selectedLocale === $localeOption ? 'selected' : ''; ?>><?php echo htmlspecialchars($languageLabels[$localeOption] ?? strtoupper($localeOption)); ?></option>
+            <?php endforeach; ?>
+          </select>
+          <button type="submit" class="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm whitespace-nowrap">
+            <?php echo htmlspecialchars(I18n::translate('account.language_save')); ?>
+          </button>
+        </form>
+      </div>
+      <div id="language-error" class="hidden mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
+    </div>
+
     <!-- Activity -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-      <h2 class="text-lg font-semibold text-slate-800 mb-6">Recent activity</h2>
+      <h2 class="text-lg font-semibold text-slate-800 mb-6"><?php echo htmlspecialchars(I18n::translate('account.recent_activity')); ?></h2>
       
       <div id="activity-loading" class="text-center py-8">
         <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#B7C9F2] border-r-transparent"></div>
-        <p class="text-sm text-slate-500 mt-3">Loading stats...</p>
+        <p class="text-sm text-slate-500 mt-3"><?php echo htmlspecialchars(I18n::translate('account.loading_stats')); ?></p>
       </div>
 
       <div id="activity-content" class="hidden space-y-4">
@@ -213,10 +252,10 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
             <i class="iconoir-chat-bubble text-[#B7C9F2]"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-slate-800">Conversations created</div>
+            <div class="text-sm font-medium text-slate-800"><?php echo htmlspecialchars(I18n::translate('account.conversations_created')); ?></div>
             <div class="text-sm text-slate-500 mt-0.5">
-              <span id="stats-conversations-week" class="font-semibold text-slate-800">0</span> this week · 
-              <span id="stats-conversations-total" class="text-slate-600">0</span> total
+              <span id="stats-conversations-week" class="font-semibold text-slate-800">0</span> <?php echo htmlspecialchars(I18n::translate('account.this_week')); ?> ·
+              <span id="stats-conversations-total" class="text-slate-600">0</span> <?php echo htmlspecialchars(I18n::translate('account.total')); ?>
             </div>
           </div>
         </div>
@@ -226,10 +265,10 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
             <i class="iconoir-message-text text-indigo-600"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-slate-800">Messages sent</div>
+            <div class="text-sm font-medium text-slate-800"><?php echo htmlspecialchars(I18n::translate('account.messages_sent')); ?></div>
             <div class="text-sm text-slate-500 mt-0.5">
-              <span id="stats-messages-week" class="font-semibold text-slate-800">0</span> this week · 
-              <span id="stats-messages-total" class="text-slate-600">0</span> total
+              <span id="stats-messages-week" class="font-semibold text-slate-800">0</span> <?php echo htmlspecialchars(I18n::translate('account.this_week')); ?> ·
+              <span id="stats-messages-total" class="text-slate-600">0</span> <?php echo htmlspecialchars(I18n::translate('account.total')); ?>
             </div>
           </div>
         </div>
@@ -239,14 +278,14 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
             <i class="iconoir-clock text-emerald-600"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-slate-800">Last login</div>
+            <div class="text-sm font-medium text-slate-800"><?php echo htmlspecialchars(I18n::translate('account.last_login')); ?></div>
             <div class="text-sm text-slate-500 mt-0.5">
               <?php 
                 if ($user['last_login_at']) {
                   $date = new DateTime($user['last_login_at']);
                   echo $date->format('d/m/Y H:i');
                 } else {
-                  echo 'First session';
+                  echo htmlspecialchars(I18n::translate('account.first_session'));
                 }
               ?>
             </div>
@@ -258,7 +297,7 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
             <i class="iconoir-calendar text-blue-600"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-slate-800">Account created</div>
+            <div class="text-sm font-medium text-slate-800"><?php echo htmlspecialchars(I18n::translate('account.created')); ?></div>
             <div class="text-sm text-slate-500 mt-0.5">
               <?php 
                 $created = new DateTime($user['created_at']);
@@ -272,7 +311,7 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
 
     <!-- Footer -->
     <div class="mt-8 text-center text-sm text-slate-500">
-      <p>© 2025 Claara. All rights reserved.</p>
+      <p><?php echo htmlspecialchars(I18n::translate('account.footer', ['year' => date('Y')])); ?></p>
     </div>
   </div>
 </div>
@@ -286,7 +325,7 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
   <div id="password-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
       <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold text-slate-800">Change password</h3>
+        <h3 class="text-lg font-semibold text-slate-800"><?php echo htmlspecialchars(I18n::translate('account.change_password')); ?></h3>
         <button id="close-modal-btn" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
           <i class="iconoir-xmark text-xl"></i>
         </button>
@@ -294,18 +333,18 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
 
       <form id="password-form" class="space-y-4">
         <div>
-          <label class="text-sm font-medium text-slate-700 block mb-2">Current password</label>
+          <label for="current-password" class="text-sm font-medium text-slate-700 block mb-2"><?php echo htmlspecialchars(I18n::translate('account.current_password')); ?></label>
           <input type="password" id="current-password" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
         </div>
 
         <div>
-          <label class="text-sm font-medium text-slate-700 block mb-2">New password</label>
+          <label for="new-password" class="text-sm font-medium text-slate-700 block mb-2"><?php echo htmlspecialchars(I18n::translate('account.new_password')); ?></label>
           <input type="password" id="new-password" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required minlength="8">
-          <p class="text-xs text-slate-500 mt-1">Minimum 8 characters</p>
+          <p class="text-xs text-slate-500 mt-1"><?php echo htmlspecialchars(I18n::translate('account.password_minimum')); ?></p>
         </div>
 
         <div>
-          <label class="text-sm font-medium text-slate-700 block mb-2">Confirm password</label>
+          <label for="confirm-password" class="text-sm font-medium text-slate-700 block mb-2"><?php echo htmlspecialchars(I18n::translate('account.confirm_password')); ?></label>
           <input type="password" id="confirm-password" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-colors" required>
         </div>
 
@@ -314,10 +353,10 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
 
         <div class="flex gap-3 pt-2">
           <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-[#B7C9F2] to-[#2F3440] text-white rounded-lg font-medium hover:opacity-90 transition-all text-sm shadow-md">
-            Change password
+            <?php echo htmlspecialchars(I18n::translate('account.change_password')); ?>
           </button>
           <button type="button" id="cancel-password-btn" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm">
-            Cancel
+            <?php echo htmlspecialchars(I18n::translate('common.cancel')); ?>
           </button>
         </div>
       </form>
@@ -325,6 +364,14 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
   </div>
 
   <script>
+    const accountI18n = <?php echo $accountJs; ?>;
+    const accountT = (key, parameters = {}) => {
+      let message = accountI18n.messages[key] || key;
+      Object.entries(parameters).forEach(([name, value]) => {
+        message = message.split(`{${name}}`).join(String(value));
+      });
+      return message;
+    };
     const csrf = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
     
     // API helper
@@ -339,9 +386,32 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
         credentials: 'include'
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error?.message || res.statusText);
+      if (!res.ok) throw new Error(data?.error?.message || accountT('common.error'));
       return data;
     }
+
+    const languageForm = document.getElementById('language-form');
+    const languageSelect = document.getElementById('language-select');
+    const languageError = document.getElementById('language-error');
+    languageForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const submitButton = languageForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.textContent = accountT('account.language_saving');
+      languageError.classList.add('hidden');
+      try {
+        await api('/api/account/update_locale.php', {
+          method: 'POST',
+          body: { locale: languageSelect.value }
+        });
+        window.location.reload();
+      } catch (error) {
+        languageError.textContent = error.message || accountT('account.language_error');
+        languageError.classList.remove('hidden');
+        submitButton.disabled = false;
+        submitButton.textContent = accountT('account.language_save');
+      }
+    });
 
     // Load stats
     async function loadActivity() {
@@ -355,7 +425,10 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
         document.getElementById('activity-loading').classList.add('hidden');
         document.getElementById('activity-content').classList.remove('hidden');
       } catch (err) {
-        document.getElementById('activity-loading').innerHTML = '<p class="text-sm text-red-600">Error loading stats</p>';
+        const errorMessage = document.createElement('p');
+        errorMessage.className = 'text-sm text-red-600';
+        errorMessage.textContent = accountT('account.error_loading_stats');
+        document.getElementById('activity-loading').replaceChildren(errorMessage);
       }
     }
 
@@ -387,7 +460,7 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
       e.preventDefault();
       const submitBtn = profileForm.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Saving...';
+      submitBtn.textContent = accountT('account.saving');
 
       try {
         const data = await api('/api/account/update_profile.php', {
@@ -408,10 +481,10 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
         profileView.classList.remove('hidden');
         profileForm.classList.add('hidden');
       } catch (err) {
-        alert('Error updating profile: ' + err.message);
+        alert(accountT('account.error_updating_profile', { message: err.message }));
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Save changes';
+        submitBtn.textContent = accountT('account.save_changes');
       }
     });
 
@@ -448,14 +521,14 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
       const confirm = document.getElementById('confirm-password').value;
 
       if (newPass !== confirm) {
-        passwordError.textContent = 'Passwords do not match';
+        passwordError.textContent = accountT('account.password_mismatch');
         passwordError.classList.remove('hidden');
         return;
       }
 
       const submitBtn = passwordForm.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Changing...';
+      submitBtn.textContent = accountT('account.changing_password');
 
       try {
         await api('/api/account/change_password.php', {
@@ -467,7 +540,7 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
           }
         });
 
-        passwordSuccess.textContent = 'Password updated successfully';
+        passwordSuccess.textContent = accountT('account.password_updated');
         passwordSuccess.classList.remove('hidden');
         passwordForm.reset();
 
@@ -480,7 +553,7 @@ $accessibleVoices = $accessRepo->getAccessibleVoices((int)$user['id']);
         passwordError.classList.remove('hidden');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Change password';
+        submitBtn.textContent = accountT('account.change_password');
       }
     });
 

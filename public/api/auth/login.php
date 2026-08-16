@@ -9,9 +9,10 @@ use App\Session;
 use Auth\AuthService;
 use Auth\RememberService;
 use Auth\RateLimiter;
+use I18n\I18n;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'POST only', 405);
+    Response::error('method_not_allowed', I18n::translate('auth.error.method_not_allowed'), 405);
 }
 
 // Rate limiting: máx 5 intentos cada 15 minutos por IP
@@ -22,7 +23,8 @@ $rateLimiter = new RateLimiter(5, 900);
 if ($rateLimiter->isBlocked($clientIp)) {
     $remaining = $rateLimiter->getBlockedSeconds($clientIp);
     $minutes = ceil($remaining / 60);
-    Response::error('rate_limited', "Too many failed attempts. Try again in {$minutes} minutes.", 429);
+    $rateLimitKey = $minutes === 1.0 ? 'auth.error.rate_limited_one' : 'auth.error.rate_limited';
+    Response::error('rate_limited', I18n::translate($rateLimitKey, ['minutes' => $minutes]), 429);
 }
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -31,7 +33,7 @@ $password = (string)($input['password'] ?? '');
 $remember = !empty($input['remember']);
 
 if ($email === '' || $password === '') {
-    Response::error('validation_error', 'Email and password are required', 400);
+    Response::error('validation_error', I18n::translate('auth.error.required'), 400);
 }
 
 try {

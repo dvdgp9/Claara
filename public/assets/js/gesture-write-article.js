@@ -5,6 +5,14 @@
   'use strict';
 
   const GESTURE_TYPE = 'write-article';
+  const writeI18n = window.CLAARA_WRITE_I18N || { locale: 'en', messages: {} };
+  const writeT = (key, params = {}) => {
+    let message = writeI18n.messages[key] || key;
+    Object.entries(params).forEach(([name, value]) => {
+      message = message.split(`{${name}}`).join(String(value));
+    });
+    return message;
+  };
 
   // === Referencias DOM ===
   const writeArticleForm = document.getElementById('write-article-form');
@@ -86,7 +94,7 @@
     // === ARTÍCULO INFORMATIVO ===
     if (contentType === 'informativo') {
       const topic = document.getElementById('info-topic').value.trim();
-      if (!topic) { alert('Please enter the article topic'); return; }
+      if (!topic) { alert(writeT('write_ui.enter_article_topic')); return; }
       
       const category = document.getElementById('info-category').value;
       const length = document.getElementById('info-length').value;
@@ -126,7 +134,7 @@ Write ONLY the article, with no comments or explanations.`;
     // === POST DE BLOG ===
     else if (contentType === 'blog') {
       const topic = document.getElementById('blog-topic').value.trim();
-      if (!topic) { alert('Please enter the post topic'); return; }
+      if (!topic) { alert(writeT('write_ui.enter_post_topic')); return; }
       
       const keywords = document.getElementById('blog-keywords').value.trim();
       const details = document.getElementById('blog-details').value.trim();
@@ -161,7 +169,7 @@ Write ONLY the post, with no comments or explanations.`;
     else if (contentType === 'nota-prensa') {
       const pressType = document.querySelector('input[name="press-type"]:checked')?.value || 'lanzamiento';
       const what = document.getElementById('press-what').value.trim();
-      if (!what) { alert('Please enter what happened (the main fact)'); return; }
+      if (!what) { alert(writeT('write_ui.enter_main_fact')); return; }
       
       const who = document.getElementById('press-who').value.trim();
       const when = document.getElementById('press-when').value.trim();
@@ -250,7 +258,7 @@ Write ONLY the press release, with no comments or explanations.`;
       generateArticleBtn.disabled = false;
       
       if (!res.ok) {
-        alert('Error generating content: ' + (data.error?.message || 'Unknown error'));
+        alert(writeT('write_ui.generation_error', { message: data.error?.message || writeT('write_ui.unknown_error') }));
         return;
       }
       
@@ -267,7 +275,7 @@ Write ONLY the press release, with no comments or explanations.`;
     } catch (err) {
       articleLoading.classList.add('hidden');
       generateArticleBtn.disabled = false;
-      alert('Connection error while generating content');
+      alert(writeT('write_ui.connection_error'));
     }
   }
 
@@ -277,7 +285,7 @@ Write ONLY the press release, with no comments or explanations.`;
       const text = articleContent.innerText;
       navigator.clipboard.writeText(text).then(() => {
         const originalText = copyArticleBtn.innerHTML;
-        copyArticleBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
+        copyArticleBtn.innerHTML = `<i class="iconoir-check"></i> ${escapeHtml(writeT('write_ui.copied'))}`;
         setTimeout(() => {
           copyArticleBtn.innerHTML = originalText;
         }, 2000);
@@ -324,13 +332,13 @@ Write ONLY the press release, with no comments or explanations.`;
       const data = await res.json();
       
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Could not load</div>';
+        historyList.innerHTML = `<div class="p-4 text-center text-red-500 text-sm">${escapeHtml(writeT('write_ui.could_not_load'))}</div>`;
         return;
       }
       
       renderHistory(data.items || []);
     } catch (err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Connection error</div>';
+      historyList.innerHTML = `<div class="p-4 text-center text-red-500 text-sm">${escapeHtml(writeT('write_ui.connection_error'))}</div>`;
     }
   }
   
@@ -341,8 +349,8 @@ Write ONLY the press release, with no comments or explanations.`;
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-page-edit text-xl text-slate-400"></i>
           </div>
-          <p class="text-sm text-slate-500">You have not generated content yet</p>
-          <p class="text-xs text-slate-400 mt-1">Usa el formulario para empezar</p>
+          <p class="text-sm text-slate-500">${escapeHtml(writeT('write_ui.no_history'))}</p>
+          <p class="text-xs text-slate-400 mt-1">${escapeHtml(writeT('write_ui.no_history_help'))}</p>
         </div>
       `;
       return;
@@ -376,7 +384,7 @@ Write ONLY the press release, with no comments or explanations.`;
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="${escapeHtml(writeT('write_ui.delete'))}">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -406,7 +414,7 @@ Write ONLY the press release, with no comments or explanations.`;
       const data = await res.json();
       
       if (!res.ok || !data.execution) {
-        alert('Error loading content');
+        alert(writeT('write_ui.load_error'));
         return;
       }
       
@@ -425,12 +433,12 @@ Write ONLY the press release, with no comments or explanations.`;
       articleResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
       
     } catch (err) {
-      alert('Connection error');
+      alert(writeT('write_ui.connection_error'));
     }
   }
 
   async function deleteExecution(id) {
-    if (!confirm('Delete this content from history?')) return;
+    if (!confirm(writeT('write_ui.delete_confirm'))) return;
     
     try {
       const res = await fetch('/api/gestures/delete.php', {
@@ -445,14 +453,14 @@ Write ONLY the press release, with no comments or explanations.`;
       
       const data = await res.json();
       if (!res.ok || !data.success) {
-        alert('Could not delete the item');
+        alert(writeT('write_ui.delete_error'));
         return;
       }
       
       // Recargar historial tras borrar
       loadHistory();
     } catch (err) {
-      alert('Connection error while deleting');
+      alert(writeT('write_ui.connection_error'));
     }
   }
   

@@ -5,10 +5,11 @@ require_once __DIR__ . '/../../../src/Repos/UsersRepo.php';
 
 use App\Response;
 use Auth\AuthService;
+use I18n\I18n;
 use Repos\UsersRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    Response::error('method_not_allowed', 'GET only', 405);
+    Response::error('method_not_allowed', I18n::translate('auth.error.method_not_allowed'), 405);
 }
 
 $user = AuthService::requireAuth();

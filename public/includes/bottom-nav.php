@@ -17,6 +17,9 @@ $user = Session::user();
 $userId = $user ? (int)$user['id'] : 0;
 $accessRepo = new UserFeatureAccessRepo();
 $voiceResolver = new \Voices\VoiceAccessResolver();
+$moduleEntitlements = \Modules\ModuleEntitlementService::current();
+$coreVoicesEnabled = $moduleEntitlements->isModuleEnabled('core.voices');
+$coreGesturesEnabled = $moduleEntitlements->isModuleEnabled('core.gestures');
 
 $activeTab = $activeTab ?? 'conversations';
 
@@ -27,7 +30,7 @@ $voicesList = [
         'name' => 'Lex',
         'icon' => 'iconoir-book-stack',
         'href' => '/voices/lex.php',
-        'description' => 'Legal assistant',
+        'description' => \I18n\I18n::translate('voice.legal_assistant'),
         'gradient' => 'from-rose-500 to-pink-600'
     ]
 ];
@@ -36,42 +39,42 @@ $voicesList = [
 $gesturesList = [
     [
         'type' => 'podcast-from-article',
-        'name' => 'Generate Podcast',
+        'name' => \I18n\I18n::translate('gesture.podcast.name'),
         'icon' => 'iconoir-podcast',
         'href' => '/gestos/podcast-articulo.php',
-        'description' => 'Turn text into audio',
+        'description' => \I18n\I18n::translate('gesture.podcast.description'),
         'gradient' => 'from-rose-500 to-orange-500'
     ],
     [
         'type' => 'write-article',
-        'name' => 'Write Content',
+        'name' => \I18n\I18n::translate('gesture.write.name'),
         'icon' => 'iconoir-edit-pencil',
         'href' => '/gestos/escribir-articulo.php',
-        'description' => 'Generate articles and blogs',
+        'description' => \I18n\I18n::translate('gesture.write.description'),
         'gradient' => 'from-cyan-500 to-teal-600'
     ],
     [
         'type' => 'social-media',
-        'name' => 'Social Media',
+        'name' => \I18n\I18n::translate('gesture.social.name'),
         'icon' => 'iconoir-share-android',
         'href' => '/gestos/redes-sociales.php',
-        'description' => 'Create social posts',
+        'description' => \I18n\I18n::translate('gesture.social.description'),
         'gradient' => 'from-violet-500 to-fuchsia-600'
     ],
     [
         'type' => 'image-editor',
-        'name' => 'Image Studio',
+        'name' => \I18n\I18n::translate('gesture.image.name'),
         'icon' => 'iconoir-media-image',
         'href' => '/gestos/editor-imagenes.php',
-        'description' => 'Generate AI images',
+        'description' => \I18n\I18n::translate('gesture.image.description'),
         'gradient' => 'from-amber-500 to-orange-600'
     ],
     [
         'type' => 'audio-transcriber',
-        'name' => 'Audio Transcriber',
+        'name' => \I18n\I18n::translate('gesture.transcribe.name'),
         'icon' => 'iconoir-microphone',
         'href' => '/gestos/transcriptor-audio.php',
-        'description' => 'Turn audio into text',
+        'description' => \I18n\I18n::translate('gesture.transcribe.description'),
         'gradient' => 'from-purple-500 to-indigo-600'
     ]
 ];
@@ -80,39 +83,51 @@ $tabs = [
     'conversations' => [
         'icon' => 'iconoir-chat-bubble',
         'iconActive' => 'iconoir-chat-bubble-solid',
-        'label' => 'Chat',
+        'label' => \I18n\I18n::translate('nav.chat'),
         'href' => '/app/',
         'modal' => false
     ],
     'voices' => [
         'icon' => 'iconoir-voice-square',
         'iconActive' => 'iconoir-voice-square',
-        'label' => 'Voices',
+        'label' => \I18n\I18n::translate('nav.voices'),
         'href' => '/voices/',
         'modal' => 'mobile-voices-modal'
     ],
     'gestures' => [
         'icon' => 'iconoir-magic-wand',
         'iconActive' => 'iconoir-magic-wand',
-        'label' => 'Gestures',
+        'label' => \I18n\I18n::translate('nav.gestures'),
         'href' => '/gestos/',
         'modal' => 'mobile-gestures-modal'
     ],
     'connectors' => [
         'icon' => 'iconoir-cloud-sync',
         'iconActive' => 'iconoir-cloud-sync',
-        'label' => 'Sources',
+        'label' => \I18n\I18n::translate('nav.sources'),
         'href' => '/connectors.php',
         'modal' => false
     ],
     'account' => [
         'icon' => 'iconoir-user',
         'iconActive' => 'iconoir-user',
-        'label' => 'Account',
+        'label' => \I18n\I18n::translate('nav.account'),
         'href' => '/account.php',
         'modal' => false
     ]
 ];
+$tabModules = [
+    'conversations' => 'core.chat',
+    'voices' => 'core.voices',
+    'gestures' => 'core.gestures',
+    'connectors' => 'core.connectors',
+];
+$tabs = array_filter(
+    $tabs,
+    static fn(array $tab, string $tabId): bool => !isset($tabModules[$tabId])
+        || $moduleEntitlements->isModuleEnabled($tabModules[$tabId]),
+    ARRAY_FILTER_USE_BOTH
+);
 ?>
 <!-- Bottom Navigation - mobile only -->
 <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg safe-area-bottom">
@@ -148,6 +163,7 @@ $tabs = [
   </div>
 </nav>
 
+<?php if ($coreVoicesEnabled): ?>
 <!-- Modal: Voices (mobile) -->
 <div id="mobile-voices-modal" class="mobile-quick-modal hidden lg:hidden fixed inset-0 z-[60]">
   <!-- Backdrop -->
@@ -167,8 +183,8 @@ $tabs = [
           <i class="iconoir-voice-square text-xl text-white"></i>
         </div>
         <div>
-          <h3 class="font-semibold text-slate-900 text-lg">Voices</h3>
-          <p class="text-xs text-slate-500">Specialized assistants</p>
+          <h3 class="font-semibold text-slate-900 text-lg"><?php echo htmlspecialchars(\I18n\I18n::translate('nav.voices')); ?></h3>
+          <p class="text-xs text-slate-500"><?php echo htmlspecialchars(\I18n\I18n::translate('voice.specialized_assistants')); ?></p>
         </div>
       </div>
     </div>
@@ -203,7 +219,7 @@ $tabs = [
             <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
               <i class="iconoir-voice-square text-3xl text-slate-300"></i>
             </div>
-            <p class="text-slate-500 text-sm">No voices available</p>
+            <p class="text-slate-500 text-sm"><?php echo htmlspecialchars(\I18n\I18n::translate('voice.none_available')); ?></p>
           </div>
         <?php endif; ?>
       </div>
@@ -212,13 +228,15 @@ $tabs = [
     <!-- Footer -->
     <div class="px-4 py-4 border-t border-slate-100">
       <a href="/voices/" class="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium rounded-xl shadow-lg active:scale-[0.98] transition-transform">
-        <span>View all voices</span>
+        <span><?php echo htmlspecialchars(\I18n\I18n::translate('nav.available_voices')); ?></span>
         <i class="iconoir-arrow-right"></i>
       </a>
     </div>
   </div>
 </div>
+<?php endif; ?>
 
+<?php if ($coreGesturesEnabled): ?>
 <!-- Modal: Gestures (mobile) -->
 <div id="mobile-gestures-modal" class="mobile-quick-modal hidden lg:hidden fixed inset-0 z-[60]">
   <!-- Backdrop -->
@@ -238,8 +256,8 @@ $tabs = [
           <i class="iconoir-magic-wand text-xl text-white"></i>
         </div>
         <div>
-          <h3 class="font-semibold text-slate-900 text-lg">Gestures</h3>
-          <p class="text-xs text-slate-500">Automated workflows</p>
+          <h3 class="font-semibold text-slate-900 text-lg"><?php echo htmlspecialchars(\I18n\I18n::translate('nav.gestures')); ?></h3>
+          <p class="text-xs text-slate-500"><?php echo htmlspecialchars(\I18n\I18n::translate('nav.automated_workflows')); ?></p>
         </div>
       </div>
     </div>
@@ -274,7 +292,7 @@ $tabs = [
             <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
               <i class="iconoir-magic-wand text-3xl text-slate-300"></i>
             </div>
-            <p class="text-slate-500 text-sm">No gestures available</p>
+            <p class="text-slate-500 text-sm"><?php echo htmlspecialchars(\I18n\I18n::translate('gesture.none_available')); ?></p>
           </div>
         <?php endif; ?>
       </div>
@@ -283,12 +301,13 @@ $tabs = [
     <!-- Footer -->
     <div class="px-4 py-4 border-t border-slate-100">
       <a href="/gestos/" class="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-600 text-white font-medium rounded-xl shadow-lg active:scale-[0.98] transition-transform">
-        <span>View all gestures</span>
+        <span><?php echo htmlspecialchars(\I18n\I18n::translate('nav.available_gestures')); ?></span>
         <i class="iconoir-arrow-right"></i>
       </a>
     </div>
   </div>
 </div>
+<?php endif; ?>
 
 <style>
   /* Safe area for devices with a notch */

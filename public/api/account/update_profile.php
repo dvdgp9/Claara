@@ -6,10 +6,11 @@ require_once __DIR__ . '/../../../src/Repos/UsersRepo.php';
 use App\Response;
 use App\Session;
 use Auth\AuthService;
+use I18n\I18n;
 use Repos\UsersRepo;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    Response::error('method_not_allowed', 'POST only', 405);
+    Response::error('method_not_allowed', I18n::translate('auth.error.method_not_allowed'), 405);
 }
 
 Session::requireCsrf();
@@ -20,7 +21,7 @@ $firstName = trim($input['first_name'] ?? '');
 $lastName = trim($input['last_name'] ?? '');
 
 if ($firstName === '' || $lastName === '') {
-    Response::error('validation_error', 'First name and last name are required', 400);
+    Response::error('validation_error', I18n::translate('account.api.names_required'), 400);
 }
 
 $repo = new UsersRepo();

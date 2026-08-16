@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../src/Repos/UserFeatureAccessRepo.php';
 require_once __DIR__ . '/../../src/Repos/VoicesRepo.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 use Repos\VoicesRepo;
 
@@ -17,9 +18,9 @@ if (!$user) {
 $csrfToken = $_SESSION['csrf_token'] ?? '';
 $activeTab = 'voices';
 $headerBackUrl = '/app/';
-$headerBackText = 'Home';
-$headerTitle = 'Voices';
-$headerSubtitle = 'Specialized RAG assistants';
+$headerBackText = I18n::translate('header.back');
+$headerTitle = I18n::translate('voices.page_title');
+$headerSubtitle = I18n::translate('voices.subtitle');
 $headerIcon = 'iconoir-voice-square';
 $headerIconColor = 'from-slate-700 to-cyan-700';
 
@@ -31,7 +32,7 @@ $voices = array_values(array_filter(
     static fn(array $voice): bool => $voiceResolver->hasVoiceAccess($userId, $voice)
 ));
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(I18n::htmlLang()); ?>">
 <?php include __DIR__ . '/../includes/head.php'; ?>
 <body class="bg-slate-50 text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
@@ -44,14 +45,14 @@ $voices = array_values(array_filter(
         <div class="voices-catalog-shell">
           <section class="voices-catalog-hero">
             <div>
-              <p class="voices-catalog-kicker">Company assistants</p>
-              <h1>Voices</h1>
-              <p>Each voice is a focused RAG assistant with its own instructions, knowledge base, and access permissions.</p>
+              <p class="voices-catalog-kicker"><?php echo htmlspecialchars(I18n::translate('voices.company_assistants')); ?></p>
+              <h1><?php echo htmlspecialchars(I18n::translate('voices.page_title')); ?></h1>
+              <p><?php echo htmlspecialchars(I18n::translate('voices.hero')); ?></p>
             </div>
             <?php if (!empty($user['is_superadmin'])): ?>
               <a class="voices-catalog-admin-link" href="/admin/voices.php">
                 <i class="iconoir-settings"></i>
-                <span>Manage voices</span>
+                <span><?php echo htmlspecialchars(I18n::translate('voices.manage')); ?></span>
               </a>
             <?php endif; ?>
           </section>
@@ -59,8 +60,8 @@ $voices = array_values(array_filter(
           <?php if (!$voices): ?>
             <section class="voices-catalog-empty">
               <i class="iconoir-voice-square"></i>
-              <h2>No voices available</h2>
-              <p>Your account does not have access to any published voice yet.</p>
+              <h2><?php echo htmlspecialchars(I18n::translate('voices.none')); ?></h2>
+              <p><?php echo htmlspecialchars(I18n::translate('voices.none_help')); ?></p>
             </section>
           <?php else: ?>
             <section class="voices-catalog-grid">
@@ -72,14 +73,14 @@ $voices = array_values(array_filter(
                 <a class="voices-catalog-card" href="<?php echo htmlspecialchars($href); ?>">
                   <div class="voices-catalog-card-head">
                     <span class="voices-catalog-avatar" data-color="<?php echo htmlspecialchars($voice['color'] ?? 'slate'); ?>"><?php echo htmlspecialchars($initial); ?></span>
-                    <span class="voices-catalog-state">Published</span>
+                    <span class="voices-catalog-state"><?php echo htmlspecialchars(I18n::translate('voices.published')); ?></span>
                   </div>
                   <h2><?php echo htmlspecialchars($voice['name']); ?></h2>
-                  <p class="voices-catalog-role"><?php echo htmlspecialchars($voice['role'] ?: 'Specialized assistant'); ?></p>
-                  <p class="voices-catalog-description"><?php echo htmlspecialchars($voice['description'] ?: 'Answers with its own indexed knowledge base.'); ?></p>
+                  <p class="voices-catalog-role"><?php echo htmlspecialchars($voice['role'] ?: I18n::translate('voices.specialized_assistant')); ?></p>
+                  <p class="voices-catalog-description"><?php echo htmlspecialchars($voice['description'] ?: I18n::translate('voices.knowledge_help')); ?></p>
                   <div class="voices-catalog-foot">
-                    <span><i class="iconoir-database"></i> RAG voice</span>
-                    <span>Open <i class="iconoir-arrow-right"></i></span>
+                    <span><i class="iconoir-database"></i> <?php echo htmlspecialchars(I18n::translate('voices.rag')); ?></span>
+                    <span><?php echo htmlspecialchars(I18n::translate('voices.open')); ?> <i class="iconoir-arrow-right"></i></span>
                   </div>
                 </a>
               <?php endforeach; ?>

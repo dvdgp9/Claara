@@ -5,6 +5,14 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  const repurposeI18n = window.CLAARA_REPURPOSE_I18N || { locale: 'en', messages: {} };
+  const repurposeT = (key, parameters = {}) => {
+    let value = repurposeI18n.messages[`repurpose_ui.${key}`] || key;
+    Object.entries(parameters).forEach(([name, replacement]) => {
+      value = value.replaceAll(`{${name}}`, String(replacement));
+    });
+    return value;
+  };
   // === DOM Elements ===
   const form = document.getElementById('repurposer-form');
   const tabBtns = document.querySelectorAll('.tab-btn');
@@ -47,10 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
     facebook: { name: 'Facebook', icon: 'iconoir-facebook', color: 'bg-blue-600' },
     linkedin: { name: 'LinkedIn', icon: 'iconoir-linkedin', color: 'bg-sky-700' },
     twitter: { name: 'X (Twitter)', icon: 'iconoir-x', color: 'bg-slate-900' },
-    blog: { name: 'Blog', icon: 'iconoir-post', color: 'bg-emerald-600' },
-    landing: { name: 'Landing', icon: 'iconoir-code', color: 'bg-violet-600' },
-    newsletter: { name: 'Newsletter', icon: 'iconoir-mail', color: 'bg-amber-600' },
-    faq: { name: 'FAQs', icon: 'iconoir-help-circle', color: 'bg-rose-600' }
+    blog: { name: repurposeT('blog'), icon: 'iconoir-post', color: 'bg-emerald-600' },
+    landing: { name: repurposeT('landing'), icon: 'iconoir-code', color: 'bg-violet-600' },
+    newsletter: { name: repurposeT('newsletter'), icon: 'iconoir-mail', color: 'bg-amber-600' },
+    faq: { name: repurposeT('faqs'), icon: 'iconoir-help-circle', color: 'bg-rose-600' }
   };
 
   // === Tab switching ===
@@ -92,8 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateSelectedCount() {
     const count = selectedFormats.size;
-    selectedCount.textContent = `${count} format${count !== 1 ? 's' : ''} selected`;
-    generateBtnText.textContent = count > 1 ? `Generate ${count} formats` : 'Transform content';
+    selectedCount.textContent = count === 1 ? repurposeT('one_selected') : repurposeT('many_selected', { count });
+    generateBtnText.textContent = count > 1 ? repurposeT('generate_formats', { count }) : repurposeT('transform');
   }
 
   // === PDF handling ===
@@ -103,13 +111,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!file) return;
       
       if (file.type !== 'application/pdf') {
-        alert('Please select a PDF file');
+        alert(repurposeT('select_pdf'));
         sourcePdf.value = '';
         return;
       }
       
       if (file.size > 20 * 1024 * 1024) {
-        alert('The PDF file is too large (maximum 20MB)');
+        alert(repurposeT('pdf_too_large'));
         sourcePdf.value = '';
         return;
       }
@@ -118,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       reader.onload = (ev) => {
         const base64 = ev.target.result.split(',')[1];
         pdfBase64 = base64;
-        pdfFilename.textContent = `File: ${file.name}`;
+        pdfFilename.textContent = repurposeT('file_name', { name: file.name });
         pdfFilename.classList.remove('hidden');
       };
       reader.readAsDataURL(file);
@@ -137,14 +145,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let inputData = { 
       source_type: currentTab,
       output_formats: formats,
-      options: {}
+      options: { language: repurposeI18n.locale }
     };
     
     switch (currentTab) {
       case 'url':
         const url = sourceUrl.value.trim();
         if (!url) {
-          showError('Please enter a URL');
+          showError(repurposeT('enter_url'));
           return;
         }
         inputData.url = url;
@@ -153,11 +161,11 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'text':
         const text = sourceText.value.trim();
         if (!text) {
-          showError('Please enter text');
+          showError(repurposeT('enter_text'));
           return;
         }
         if (text.split(/\s+/).length < 20) {
-          showError('The text is too short (minimum 20 words)');
+          showError(repurposeT('text_too_short'));
           return;
         }
         inputData.text = text;
@@ -165,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
       case 'pdf':
         if (!pdfBase64) {
-          showError('Please select a PDF file');
+          showError(repurposeT('select_pdf'));
           return;
         }
         inputData.pdf_base64 = pdfBase64;
@@ -173,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const formatCount = formats.length;
-    showProgress(`Generating ${formatCount} format${formatCount > 1 ? 's' : ''}...`, 'Extracting and transforming content');
+    showProgress(repurposeT('generating_formats', { count: formatCount }), repurposeT('extracting'));
     hideError();
 
     try {
@@ -187,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (!data.success) {
-        const errorMsg = data.error?.message || data.message || 'Unknown error';
+        const errorMsg = data.error?.message || data.message || repurposeT('unknown_error');
         throw new Error(errorMsg);
       }
 
@@ -231,8 +239,8 @@ document.addEventListener('DOMContentLoaded', () => {
     inputSection.classList.add('hidden');
     resultSection.classList.remove('hidden');
     
-    resultTitle.textContent = data.title || 'Generated content';
-    resultSource.textContent = `Source: ${data.source} · ${data.total_generated} format${data.total_generated > 1 ? 's' : ''} generated`;
+    resultTitle.textContent = data.title || repurposeT('generated');
+    resultSource.textContent = repurposeT('result_source', { source: data.source, count: data.total_generated });
     
     const formats = Object.keys(data.results);
     let activeFormat = formats[0];
@@ -281,9 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
           await navigator.clipboard.writeText(textToCopy);
-          btn.innerHTML = '<i class="iconoir-check"></i> Copied';
+          btn.innerHTML = `<i class="iconoir-check"></i> ${repurposeT('copied')}`;
           setTimeout(() => {
-            btn.innerHTML = '<i class="iconoir-copy"></i> Copy';
+            btn.innerHTML = `<i class="iconoir-copy"></i> ${repurposeT('copy')}`;
           }, 2000);
         } catch (err) {
           console.error('Error copying:', err);
@@ -347,15 +355,15 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <div>
                 <h3 class="font-semibold text-slate-800">${config.name}</h3>
-                <p class="text-xs text-slate-500">Model: ${result.model || 'AI'}</p>
+                <p class="text-xs text-slate-500">${repurposeT('model')}: ${result.model || 'AI'}</p>
               </div>
             </div>
             <div class="flex items-center gap-2">
               <button class="copy-format-btn px-3 py-1.5 text-sm bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5" data-format="${format}">
-                <i class="iconoir-copy"></i> Copy
+                <i class="iconoir-copy"></i> ${repurposeT('copy')}
               </button>
               <button class="download-format-btn px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors flex items-center gap-1.5" data-format="${format}">
-                <i class="iconoir-download"></i> Download
+                <i class="iconoir-download"></i> ${repurposeT('download')}
               </button>
             </div>
           </div>
@@ -363,8 +371,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         <div class="p-4">
           <div class="preview-toggle mb-4">
-            <button class="active" data-view="preview">Preview</button>
-            <button data-view="raw">Code</button>
+            <button class="active" data-view="preview">${repurposeT('preview')}</button>
+            <button data-view="raw">${repurposeT('code')}</button>
           </div>
           <div class="preview-view">${previewHtml}</div>
           <div class="raw-view hidden">
@@ -389,14 +397,14 @@ document.addEventListener('DOMContentLoaded', () => {
           <i class="iconoir-more-horiz ig-more"></i>
         </div>
         <div class="ig-image">
-          <span>${visual ? escapeHtml(visual) : '📷 Suggested image'}</span>
+          <span>${visual ? escapeHtml(visual) : repurposeT('suggested_image')}</span>
         </div>
         <div class="ig-actions">
           <i class="iconoir-heart ig-action"></i>
           <i class="iconoir-chat-bubble ig-action"></i>
           <i class="iconoir-send ig-action"></i>
         </div>
-        <div class="ig-likes">1,234 Likes</div>
+        <div class="ig-likes">1,234 ${repurposeT('likes')}</div>
         <div class="ig-caption">
           <span class="username">tu_marca</span>
           ${escapeHtml(caption).replace(/\n/g, '<br>')}
@@ -415,21 +423,21 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="fb-header">
           <div class="fb-avatar">E</div>
           <div class="fb-info">
-            <div class="fb-name">Your Brand</div>
-            <div class="fb-meta">Now · <i class="iconoir-globe"></i></div>
+            <div class="fb-name">${repurposeT('your_brand')}</div>
+            <div class="fb-meta">${repurposeT('now')} · <i class="iconoir-globe"></i></div>
           </div>
         </div>
         <div class="fb-content">${escapeHtml(post).replace(/\n/g, '<br>')}</div>
         <div class="fb-reactions">
           <span>👍 ❤️ 42</span>
-          <span>12 comments · 5 shares</span>
+          <span>${repurposeT('comments_shares', { comments: 12, shares: 5 })}</span>
         </div>
         <div class="fb-actions">
-          <div class="fb-action"><i class="iconoir-thumbs-up"></i> Likes</div>
-          <div class="fb-action"><i class="iconoir-chat-bubble"></i> Comment</div>
-          <div class="fb-action"><i class="iconoir-share-android"></i> Share</div>
+          <div class="fb-action"><i class="iconoir-thumbs-up"></i> ${repurposeT('likes')}</div>
+          <div class="fb-action"><i class="iconoir-chat-bubble"></i> ${repurposeT('comment')}</div>
+          <div class="fb-action"><i class="iconoir-share-android"></i> ${repurposeT('share')}</div>
         </div>
-        ${suggestions ? `<div class="p-3 bg-amber-50 border-t border-amber-200 text-sm text-amber-800"><strong>💡 Suggestions:</strong> ${escapeHtml(suggestions)}</div>` : ''}
+        ${suggestions ? `<div class="p-3 bg-amber-50 border-t border-amber-200 text-sm text-amber-800"><strong>${repurposeT('suggestions')}:</strong> ${escapeHtml(suggestions)}</div>` : ''}
       </div>
     `;
   }
@@ -443,21 +451,21 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="li-header">
           <div class="li-avatar">E</div>
           <div class="li-info">
-            <div class="li-name">Your Name</div>
-            <div class="li-title">CEO at Your Company</div>
-            <div class="li-meta">Now · <i class="iconoir-globe"></i></div>
+            <div class="li-name">${repurposeT('your_name')}</div>
+            <div class="li-title">${repurposeT('sample_role')}</div>
+            <div class="li-meta">${repurposeT('now')} · <i class="iconoir-globe"></i></div>
           </div>
         </div>
         <div class="li-content">${escapeHtml(post).replace(/\n/g, '<br>')}</div>
         ${hashtags ? `<div class="li-hashtags">${escapeHtml(hashtags)}</div>` : ''}
         <div class="li-engagement">
           <span>👍 💡 ❤️ 156</span>
-          <span>23 comments</span>
+          <span>${repurposeT('comments', { count: 23 })}</span>
         </div>
         <div class="li-actions">
-          <div class="li-action"><i class="iconoir-thumbs-up"></i> Recommend</div>
-          <div class="li-action"><i class="iconoir-chat-bubble"></i> Comment</div>
-          <div class="li-action"><i class="iconoir-redo"></i> Share</div>
+          <div class="li-action"><i class="iconoir-thumbs-up"></i> ${repurposeT('recommend')}</div>
+          <div class="li-action"><i class="iconoir-chat-bubble"></i> ${repurposeT('comment')}</div>
+          <div class="li-action"><i class="iconoir-redo"></i> ${repurposeT('share')}</div>
         </div>
       </div>
     `;
@@ -480,8 +488,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="tweet-avatar">E</div>
               <div class="tweet-info">
                 <div class="tweet-author">
-                  <span class="tweet-name">Your Brand</span>
-                  <span class="tweet-handle">@your_brand · now</span>
+                  <span class="tweet-name">${repurposeT('your_brand')}</span>
+                  <span class="tweet-handle">@your_brand · ${repurposeT('now')}</span>
                 </div>
               </div>
             </div>
@@ -500,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderNewsletterPreview(parsed) {
-    const subject = parsed.subject || 'Email subject';
+    const subject = parsed.subject || repurposeT('email_subject');
     const preheader = parsed.preheader || '';
     const body = parsed.body || parsed.raw || '';
     
@@ -508,17 +516,17 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="newsletter-preview">
         <div class="email-container">
           <div class="email-header">
-            <div class="email-logo">📧</div>
+            <div class="email-logo"><i class="iconoir-mail"></i></div>
             <h2 class="email-subject">${escapeHtml(subject)}</h2>
             ${preheader ? `<p class="email-preheader">${escapeHtml(preheader)}</p>` : ''}
           </div>
           <div class="email-body">${renderMarkdown(body)}</div>
           <div class="email-cta">
-            <a href="#" class="email-btn">Read more</a>
+            <a href="#" class="email-btn">${repurposeT('read_more')}</a>
           </div>
           <div class="email-footer">
-            © 2025 Your Company. All rights reserved.<br>
-            <a href="#">Unsubscribe</a>
+            © 2025 ${repurposeT('your_company')}. ${repurposeT('rights_reserved')}<br>
+            <a href="#">${repurposeT('unsubscribe')}</a>
           </div>
         </div>
       </div>
@@ -526,14 +534,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderBlogPreview(parsed) {
-    const title = parsed.seo_title || 'Article title';
+    const title = parsed.seo_title || repurposeT('article_title');
     const description = parsed.meta_description || '';
     const article = parsed.article || parsed.raw || '';
     
     return `
       <div class="blog-preview">
         <div class="blog-header">
-          <div class="blog-meta">ARTICLE · ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+          <div class="blog-meta">${repurposeT('article')} · ${new Date().toLocaleDateString(repurposeI18n.locale === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
           <h1 class="blog-title">${escapeHtml(title)}</h1>
           ${description ? `<p class="blog-description">${escapeHtml(description)}</p>` : ''}
         </div>
@@ -553,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return `
       <div class="faq-preview">
         <div class="faq-header">
-          <h2 class="faq-title">Frequently Asked Questions</h2>
+          <h2 class="faq-title">${repurposeT('frequently_asked')}</h2>
         </div>
         ${faqItems.map(faq => `
           <div class="faq-item">
@@ -568,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderLandingPreview(parsed) {
     const html = parsed.html || '';
     if (!html) {
-      return `<div class="text-center text-slate-500 py-8">Could not extract HTML from the landing page</div>`;
+      return `<div class="text-center text-slate-500 py-8">${repurposeT('landing_html_error')}</div>`;
     }
     
     return `
@@ -678,9 +686,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       try {
         await navigator.clipboard.writeText(allContent.trim());
-        copyAllBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
+        copyAllBtn.innerHTML = `<i class="iconoir-check"></i> ${repurposeT('copied')}`;
         setTimeout(() => {
-          copyAllBtn.innerHTML = '<i class="iconoir-copy"></i> Copy all';
+          copyAllBtn.innerHTML = `<i class="iconoir-copy"></i> ${repurposeT('copy_all')}`;
         }, 2000);
       } catch (err) {
         console.error('Error copying:', err);
@@ -733,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
       historyList.innerHTML = `
         <div class="p-4 text-center text-slate-400 text-sm">
           <i class="iconoir-archive text-2xl mb-2 block"></i>
-          No transformations yet
+          ${repurposeT('no_history')}
         </div>
       `;
       return;
@@ -747,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formatCount = formats.length;
       const firstFormat = formats[0];
       const config = formatConfig[firstFormat] || { icon: 'iconoir-sparks' };
-      const date = new Date(item.created_at).toLocaleDateString('en-US', {
+      const date = new Date(item.created_at).toLocaleDateString(repurposeI18n.locale === 'es' ? 'es-ES' : 'en-US', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -761,10 +769,10 @@ document.addEventListener('DOMContentLoaded', () => {
               <i class="${config.icon} text-indigo-600 text-sm"></i>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || 'Untitled')}</p>
-              <p class="text-xs text-slate-500 mt-0.5">${formatCount > 1 ? `${formatCount} formats · ` : ''}${date}</p>
+              <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(item.title || repurposeT('untitled'))}</p>
+              <p class="text-xs text-slate-500 mt-0.5">${formatCount > 1 ? `${repurposeT('formats', { count: formatCount })} · ` : ''}${date}</p>
             </div>
-            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="Delete">
+            <button class="history-item-delete opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 rounded transition-all" title="${repurposeT('delete')}">
               <i class="iconoir-trash text-slate-400 hover:text-red-500 text-sm"></i>
             </button>
           </div>
@@ -809,7 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: item.title,
             results: outputData.results,
             formats: outputData.formats,
-            source: outputData.original_title || 'History',
+            source: outputData.original_title || repurposeT('history'),
             total_generated: outputData.total_generated || Object.keys(outputData.results).length
           };
           showResults(currentResults);
@@ -828,7 +836,7 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             },
             formats: [format],
-            source: outputData?.original_title || 'History',
+            source: outputData?.original_title || repurposeT('history'),
             total_generated: 1
           };
           showResults(currentResults);
@@ -846,7 +854,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function deleteHistoryItem(id) {
-    if (!confirm('Delete this transformation from history?')) return;
+    if (!confirm(repurposeT('delete_confirm'))) return;
     
     try {
       const response = await fetch('/api/gestures/delete.php', {

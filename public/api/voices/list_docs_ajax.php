@@ -10,29 +10,30 @@ require_once __DIR__ . '/../../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
 use App\Response;
+use I18n\I18n;
 use Voices\VoiceContextBuilder;
 use Voices\VoiceAccessResolver;
 
 Session::start();
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Invalid session', 401);
+    Response::error('unauthorized', I18n::translate('auth.error.unauthorized'), 401);
 }
 
 $voiceId = $_GET['voice_id'] ?? '';
 if (!$voiceId) {
-    Response::error('missing_voice', 'voice_id is required', 400);
+    Response::error('missing_voice', I18n::translate('voice_api.voice_required'), 400);
 }
 
 $builder = new VoiceContextBuilder($voiceId);
 if (!$builder->voiceExists()) {
-    Response::error('invalid_voice', 'Voice not found', 404);
+    Response::error('invalid_voice', I18n::translate('voice_api.voice_not_found'), 404);
 }
 
 $voice = $builder->getVoiceInfo() ?? ['slug' => $voiceId];
 $resolver = new VoiceAccessResolver();
 if (!$resolver->hasVoiceAccess((int)$user['id'], $voice)) {
-    Response::error('forbidden', 'You do not have access to this voice', 403);
+    Response::error('forbidden', I18n::translate('voice_api.forbidden'), 403);
 }
 $allowedFolderIds = $resolver->hasFullAccess((int)$user['id'], $voice)
     ? null

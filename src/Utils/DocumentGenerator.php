@@ -2,6 +2,7 @@
 
 namespace Utils;
 
+use App\Storage;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use PhpOffice\PhpWord\Style\Font;
@@ -19,7 +20,7 @@ class DocumentGenerator
     
     public function __construct(?string $outputDir = null)
     {
-        $this->outputDir = $outputDir ?? dirname(__DIR__, 2) . '/storage/documents';
+        $this->outputDir = $outputDir ?? Storage::path('documents');
         
         if (!is_dir($this->outputDir)) {
             @mkdir($this->outputDir, 0775, true);

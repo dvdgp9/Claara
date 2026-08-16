@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "local",
+  "slug": "local",
+  "status": "active",
+  "canonical_domain": "localhost",
+  "domains": ["localhost", "127.0.0.1"],
+  "branding": {
+    "product_name": "Claara",
+    "organization_name": "Local development",
+    "logo_path": "/assets/images/logo.png",
+    "login_logo_path": "/assets/images/claara-logo.png",
+    "accent_color": "#FF8B73"
+  },
+  "locales": {
+    "default": "en",
+    "allowed": ["en", "es"]
+  },
+  "modules": {
+    "enabled": [
+      "core.chat", "core.voices", "core.gestures", "core.connectors", "core.administration",
+      "feature.image-generation", "gesture.write-article", "gesture.social-media",
+      "gesture.podcast-from-article", "gesture.image-editor", "gesture.content-repurposer",
+      "gesture.sop-generator", "gesture.audio-transcriber", "gesture.course-creator",
+      "gesture.project-admin", "gesture.lead-finder"
+    ]
+  },
+  "limits": {
+    "users": 20,
+    "storage_bytes": 1073741824
+  },
+  "release": {
+    "channel": "development",
+    "id": "working-tree"
+  },
+  "resources": {
+    "database": {"env_prefix": "DB"},
+    "storage": {"path_env": "INSTANCE_STORAGE_ROOT"},
+    "rag": {"env_prefix": "QDRANT", "collection_prefix": "local__"},
+    "session": {"namespace": "25bf8e1a2393"},
+    "secrets": {"scope": "local"},
+    "backups": {"scope": "local"}
+  }
+}

@@ -16,6 +16,7 @@ use App\Session;
 use App\Response;
 use Content\CourseGenerator;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
 use Repos\UsageLogRepo;
 use Utils\DocumentGenerator;
 
@@ -25,6 +26,9 @@ $user = Session::user();
 if (!$user) {
     Response::error('unauthorized', 'Not authenticated', 401);
 }
+
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'course-creator');
 
 Session::requireCsrf();
 
@@ -40,11 +44,11 @@ $sourceContent = $body['source_content'] ?? null;
 
 // Validaciones
 if (!$executionId && !$outline) {
-    Response::error('missing_data', 'Se requiere execution_id o outline', 400);
+    Response::error('missing_data', I18n::translate('course_ui.missing_data'), 400);
 }
 
 if (!$outline || !isset($outline['modules'])) {
-    Response::error('invalid_outline', 'El índice no tiene una estructura válida', 400);
+    Response::error('invalid_outline', I18n::translate('course_ui.invalid_outline'), 400);
 }
 
 try {
@@ -60,19 +64,19 @@ try {
         }
         
         if (!$execution) {
-            Response::error('not_found', 'No se encontró la ejecución de la fase 1', 404);
+            Response::error('not_found', I18n::translate('course_ui.execution_not_found'), 404);
         }
         
         // El contenido original está guardado en output_content
         $sourceContent = $execution['output_content'] ?? '';
         
         if (empty($sourceContent)) {
-            Response::error('missing_content', 'No se encontró el contenido original', 400);
+            Response::error('missing_content', I18n::translate('course_ui.original_content_missing'), 400);
         }
     }
 
     if (empty($sourceContent)) {
-        Response::error('missing_content', 'Se requiere el contenido fuente', 400);
+        Response::error('missing_content', I18n::translate('course_ui.source_content_required'), 400);
     }
 
     // === DESARROLLAR MÓDULOS ===
@@ -86,7 +90,7 @@ try {
     }
 
     $modules = $developResult['modules'];
-    $courseTitle = $developResult['course_title'] ?? 'Curso';
+    $courseTitle = $developResult['course_title'] ?? I18n::translate('course_ui.course');
     $model = $developResult['model'] ?? 'unknown';
 
     // === GUARDAR EN HISTORIAL (Fase 2) ===

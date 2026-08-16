@@ -10,22 +10,23 @@ require_once __DIR__ . '/../../../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
 use App\Response;
+use I18n\I18n;
 use Voices\VoiceExecutionsRepo;
 use Voices\VoiceAccessResolver;
 use Repos\VoicesRepo;
 
 $user = Session::user();
 if (!$user) {
-    Response::error('unauthorized', 'Invalid session', 401);
+    Response::error('unauthorized', I18n::translate('auth.error.unauthorized'), 401);
 }
 
 $voiceId = $_GET['voice_id'] ?? '';
 if (!$voiceId) {
-    Response::error('missing_voice', 'voice_id is required', 400);
+    Response::error('missing_voice', I18n::translate('voice_api.voice_required'), 400);
 }
 $voice = (new VoicesRepo())->findBySlug($voiceId) ?? ['slug' => $voiceId];
 if (!(new VoiceAccessResolver())->hasVoiceAccess((int)$user['id'], $voice)) {
-    Response::error('forbidden', 'You do not have access to this voice', 403);
+    Response::error('forbidden', I18n::translate('voice_api.forbidden'), 403);
 }
 
 $repo = new VoiceExecutionsRepo();

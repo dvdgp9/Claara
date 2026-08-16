@@ -4,6 +4,7 @@ namespace Sop;
 
 use App\Env;
 use Audio\ContentExtractor;
+use I18n\I18n;
 use Utils\DocumentGenerator;
 
 /**
@@ -38,7 +39,8 @@ class SopGenerator
      */
     public function generate(array $input): array
     {
-        $sopTitle = $input['title'] ?? 'Procedimiento Operativo';
+        $defaultTitle = I18n::locale() === 'es' ? 'Procedimiento operativo' : 'Operating procedure';
+        $sopTitle = trim((string)($input['title'] ?? '')) ?: $defaultTitle;
         $extractedContent = [];
         $errors = [];
         
@@ -60,7 +62,7 @@ class SopGenerator
                     'title' => $result['title'],
                     'content' => $result['content']
                 ];
-                if (empty($sopTitle) || $sopTitle === 'Procedimiento Operativo') {
+                if ($sopTitle === $defaultTitle) {
                     $sopTitle = $result['title'];
                 }
             } else {
@@ -77,7 +79,7 @@ class SopGenerator
                     'title' => $result['title'],
                     'content' => $result['content']
                 ];
-                if (empty($sopTitle) || $sopTitle === 'Procedimiento Operativo') {
+                if ($sopTitle === $defaultTitle) {
                     $sopTitle = $result['title'];
                 }
             } else {
@@ -198,6 +200,9 @@ class SopGenerator
      */
     private function generateMarkdown(string $content, string $title): array
     {
+        $languageInstruction = I18n::locale() === 'es'
+            ? 'Escribe todo el documento en español de España.'
+            : 'Write the entire document in English, including every heading, label, checklist item, and note.';
         $prompt = <<<PROMPT
 Eres un experto en documentación de procesos y procedimientos operativos estándar (SOPs). Tu tarea es transformar el siguiente contenido en bruto en un SOP profesional y bien estructurado.
 
@@ -242,7 +247,7 @@ Genera un SOP completo con la siguiente estructura:
 - Excepciones
 
 ## REGLAS
-- Usa español de España
+- {$languageInstruction}
 - Sé preciso y profesional
 - No inventes información que no esté en el contenido original
 - Si algo no está claro, indica que necesita definirse
@@ -259,6 +264,9 @@ PROMPT;
      */
     private function generateMermaid(string $sopMarkdown, string $title): array
     {
+        $languageInstruction = I18n::locale() === 'es'
+            ? 'Usa español de España en todo el texto visible de los nodos.'
+            : 'Use English for all visible node text and branch labels.';
         $prompt = <<<PROMPT
 Analiza el siguiente SOP y genera un diagrama de flujo LIMPIO y ORDENADO en formato Mermaid.
 
@@ -269,6 +277,8 @@ Analiza el siguiente SOP y genera un diagrama de flujo LIMPIO y ORDENADO en form
 ---
 
 ## INSTRUCCIONES CRÍTICAS PARA UN DIAGRAMA ORDENADO
+
+{$languageInstruction}
 
 Genera SOLO el código Mermaid (sin bloques de código markdown) siguiendo estas reglas:
 

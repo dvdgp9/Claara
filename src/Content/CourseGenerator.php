@@ -2,6 +2,7 @@
 namespace Content;
 
 use Chat\OpenRouterClient;
+use I18n\I18n;
 
 /**
  * Generador de material de cursos a partir de contenido fuente (PDF, texto)
@@ -177,6 +178,7 @@ class CourseGenerator
      */
     private function buildOutlinePrompt(string $content, string $title, array $config): string
     {
+        $languageInstruction = $this->outputLanguageInstruction();
         $duration = $config['duration'] ?? '8h';
         $level = $config['level'] ?? 'intermedio';
         $courseFormat = $config['course_format'] ?? 'online';
@@ -203,6 +205,7 @@ CONFIGURACIÓN DEL CURSO:
 - Modalidad: {$formatDesc}
 
 INSTRUCCIONES:
+0. {$languageInstruction}
 1. Analiza TODO el contenido fuente y extrae los conceptos principales
 2. Reorganiza el contenido de forma PEDAGÓGICA (no copies la estructura original)
 3. Crea un índice progresivo: de lo básico a lo avanzado
@@ -361,6 +364,7 @@ PROMPT;
      */
     private function buildModuleDevelopmentPrompt(string $content, array $module, array $outline, string $courseTitle): string
     {
+        $languageInstruction = $this->outputLanguageInstruction();
         $moduleTitle = $module['title'] ?? 'Módulo';
         $moduleDescription = $module['description'] ?? '';
         $moduleObjectives = implode("\n- ", $module['objectives'] ?? []);
@@ -413,6 +417,7 @@ MATERIAL FUENTE (ÚNICA FUENTE DE VERDAD):
 
 INSTRUCCIONES DE DESARROLLO:
 
+0. **Idioma:** {$languageInstruction}
 1. **Fidelidad Absoluta:** No utilices conocimientos externos. Si el material dice "A", tú explicas "A". Si el material no menciona "B", tú NO hablas de "B", por mucho que creas que falta.
 2. **Estructura de cada lección:**
    - Título de la lección
@@ -422,7 +427,7 @@ INSTRUCCIONES DE DESARROLLO:
    - Transición: Conecta con la siguiente lección.
 3. **Estilo:**
    - Tono profesional, didáctico y directo.
-   - Usa español de España (normativo/peninsular).
+   - Mantén el idioma de salida indicado arriba.
    - Usa analogías para explicar conceptos difíciles.
    - Máxima claridad pedagógica.
 4. **Formato Markdown:**
@@ -650,6 +655,7 @@ PROMPT;
      */
     private function buildPrompt(string $content, string $format, string $title, array $config): string
     {
+        $languageInstruction = $this->outputLanguageInstruction();
         $duration = $config['duration'] ?? '8h';
         $level = $config['level'] ?? 'intermedio';
         $courseFormat = $config['course_format'] ?? 'online';
@@ -684,10 +690,10 @@ CONFIGURACIÓN DEL CURSO:
 {$syllabusContext}
 
 REGLAS GENERALES:
+- {$languageInstruction}
 - Extrae y estructura TODOS los conceptos importantes del contenido fuente
 - NO inventes información que no esté en el material
 - Adapta la complejidad al nivel especificado
-- Usa español de España (vosotros, expresiones peninsulares)
 - Sé didáctico, claro y práctico
 - Incluye ejemplos cuando sea posible
 CONTEXT;
@@ -701,6 +707,13 @@ CONTEXT;
             'final_exam' => $this->buildFinalExamPrompt($baseContext, $durationInfo),
             default => $baseContext
         };
+    }
+
+    private function outputLanguageInstruction(): string
+    {
+        return I18n::locale() === 'es'
+            ? 'Escribe todo el contenido visible en español de España.'
+            : 'Write all visible content in English, including titles, headings, questions, answers, and labels.';
     }
 
     private function buildSyllabusPrompt(string $context, array $durationInfo): string

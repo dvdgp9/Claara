@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   first_name VARCHAR(80) NOT NULL,
   last_name VARCHAR(120) NOT NULL,
+  locale VARCHAR(10) NULL,
   is_superadmin TINYINT(1) NOT NULL DEFAULT 0,
   status ENUM('active','disabled') NOT NULL DEFAULT 'active',
   last_login_at DATETIME NULL,

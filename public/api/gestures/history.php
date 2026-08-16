@@ -27,6 +27,8 @@ if ($id) {
     if (!$item || $item['user_id'] != $user['id']) {
         Response::error('not_found', 'Elemento no encontrado', 404);
     }
+    $gestureAccess = new \Gestures\GestureAccessGuard();
+    $gestureAccess->requireExecutionApi($user, $item);
     Response::json([
         'success' => true,
         'item' => $item
@@ -34,9 +36,13 @@ if ($id) {
 }
 
 if ($gestureType) {
+    $gestureAccess = new \Gestures\GestureAccessGuard();
+    $gestureAccess->requireDynamicApi($user, $gestureType);
     $items = $repo->listByUserAndType($user['id'], $gestureType, $limit);
 } else {
     $items = $repo->listByUser($user['id'], $limit);
+    $gestureAccess = new \Gestures\GestureAccessGuard();
+    $items = $gestureAccess->filterExecutions($user, $items);
 }
 
 if ($gestureType === 'image-editor' && !empty($items)) {

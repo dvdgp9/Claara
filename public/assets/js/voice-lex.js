@@ -15,6 +15,14 @@
     initial: 'L'
   };
   const VOICE_ID = VOICE.slug || 'lex';
+  const VOICE_I18N = window.CLAARA_VOICE_I18N || { locale: 'en', messages: {} };
+  const voiceT = (key, params = {}) => {
+    let message = VOICE_I18N.messages[key] || key;
+    Object.entries(params).forEach(([name, value]) => {
+      message = message.split(`{${name}}`).join(String(value));
+    });
+    return message;
+  };
   let currentUser = null;
   let currentExecutionId = null;
   let messageHistory = [];
@@ -102,10 +110,10 @@
   function timeAgo(date) {
     const now = new Date();
     const diff = Math.floor((now - new Date(date)) / 1000);
-    if (diff < 60) return 'now';
-    if (diff < 3600) return `${Math.floor(diff/60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
-    return new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    if (diff < 60) return voiceT('voice_ui.now');
+    if (diff < 3600) return voiceT('voice_ui.minutes_ago', { count: Math.floor(diff/60) });
+    if (diff < 86400) return voiceT('voice_ui.hours_ago', { count: Math.floor(diff/3600) });
+    return new Date(date).toLocaleDateString(VOICE_I18N.locale, { day: 'numeric', month: 'short' });
   }
 
   // ===== DOCUMENTS =====
@@ -117,7 +125,7 @@
       });
       
       if (!res.ok) {
-        docsList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Error loading</div>';
+        docsList.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">${escapeHtml(voiceT('voice_ui.error_loading'))}</div>`;
         return;
       }
       
@@ -125,7 +133,7 @@
       const docs = data.documents || [];
       
       if (docs.length === 0) {
-        docsList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No documents</div>';
+        docsList.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">${escapeHtml(voiceT('voice_ui.no_documents'))}</div>`;
         return;
       }
       
@@ -156,14 +164,14 @@
       
     } catch (e) {
       console.error('Error loading documents:', e);
-      docsList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Error loading</div>';
+      docsList.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">${escapeHtml(voiceT('voice_ui.error_loading'))}</div>`;
     }
   }
   
   async function openDocViewer(docId) {
     docViewerModal?.classList.remove('hidden');
-    docViewerTitle.textContent = 'Loading...';
-    docViewerContent.innerHTML = '<div class="text-center text-slate-400 py-8"><i class="iconoir-refresh animate-spin text-2xl mb-2"></i><p>Loading document...</p></div>';
+    docViewerTitle.textContent = voiceT('voice_ui.loading');
+    docViewerContent.innerHTML = `<div class="text-center text-slate-400 py-8"><i class="iconoir-refresh animate-spin text-2xl mb-2"></i><p>${escapeHtml(voiceT('voice_ui.loading_document'))}</p></div>`;
     
     try {
       const res = await fetch(`/api/voices/doc.php?voice_id=${VOICE_ID}&doc_id=${encodeURIComponent(docId)}`, {
@@ -172,7 +180,7 @@
       });
       
       if (!res.ok) {
-        docViewerContent.innerHTML = '<div class="text-center text-red-600 py-8"><i class="iconoir-warning-circle text-2xl mb-2"></i><p>Error loading document</p></div>';
+        docViewerContent.innerHTML = `<div class="text-center text-red-600 py-8"><i class="iconoir-warning-circle text-2xl mb-2"></i><p>${escapeHtml(voiceT('voice_ui.error_loading_document'))}</p></div>`;
         return;
       }
       
@@ -185,15 +193,15 @@
         docViewerContent.innerHTML = `
           <div class="text-center py-12 px-6">
             <i class="iconoir-page text-6xl text-gray-400 mb-4"></i>
-            <h3 class="text-xl font-semibold mb-2">PDF file</h3>
+            <h3 class="text-xl font-semibold mb-2">${escapeHtml(voiceT('voice_ui.pdf_file'))}</h3>
             <p class="text-gray-600 mb-4">${data.document.message}</p>
             <a href="${downloadUrl}" target="_blank" 
                class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium mb-4">
               <i class="iconoir-download"></i>
-              <span>Open PDF in a new window</span>
+              <span>${escapeHtml(voiceT('voice_ui.open_pdf'))}</span>
             </a>
             <div class="flex flex-col gap-2 max-w-md mx-auto mt-6">
-            <p class="text-sm text-gray-500">You can ask ${escapeHtml(VOICE.name || 'this voice')} about this document and it will answer using the indexed information.</p>
+            <p class="text-sm text-gray-500">${escapeHtml(voiceT('voice_ui.ask_about_document', { voice: VOICE.name || VOICE_ID }))}</p>
             </div>
           </div>
         `;
@@ -205,7 +213,7 @@
       
     } catch (e) {
       console.error('Error loading document:', e);
-      docViewerContent.innerHTML = '<div class="text-center text-red-600 py-8"><i class="iconoir-warning-circle text-2xl mb-2"></i><p>Connection error</p></div>';
+      docViewerContent.innerHTML = `<div class="text-center text-red-600 py-8"><i class="iconoir-warning-circle text-2xl mb-2"></i><p>${escapeHtml(voiceT('voice_ui.connection_error'))}</p></div>`;
     }
   }
   
@@ -234,7 +242,7 @@
     if (!docsList) return;
     
     if (docs.length === 0) {
-      docsList.innerHTML = '<div class="text-center text-slate-400 py-8 text-sm">No documents found</div>';
+      docsList.innerHTML = `<div class="text-center text-slate-400 py-8 text-sm">${escapeHtml(voiceT('voice_ui.no_documents_found'))}</div>`;
       return;
     }
 
@@ -246,7 +254,7 @@
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-slate-700 truncate group-hover:text-rose-600 transition-smooth">${doc.name}</div>
-            <div class="text-[10px] text-slate-400 uppercase tracking-wider">${doc.type === 'rag' ? 'Agreement' : 'Reference'}</div>
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider">${escapeHtml(doc.type === 'rag' ? voiceT('voice_ui.agreement') : voiceT('voice_ui.reference'))}</div>
           </div>
         </div>
       </button>
@@ -303,7 +311,7 @@
       });
       
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No history</div>';
+        historyList.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">${escapeHtml(voiceT('voice_ui.no_history'))}</div>`;
         return;
       }
       
@@ -311,7 +319,7 @@
       const items = data.items || [];
       
       if (items.length === 0) {
-        historyList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No previous queries</div>';
+        historyList.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">${escapeHtml(voiceT('voice_ui.no_previous_queries'))}</div>`;
         return;
       }
       
@@ -322,7 +330,7 @@
             <p class="text-sm font-medium text-slate-700 truncate group-hover:text-rose-600">${escapeHtml(item.title)}</p>
             <span class="text-xs text-slate-400">${timeAgo(item.created_at)}</span>
           </div>
-          <button class="history-delete opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 rounded transition-smooth" title="Delete">
+          <button class="history-delete opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 rounded transition-smooth" title="${escapeHtml(voiceT('voice_ui.delete'))}">
             <i class="iconoir-trash text-sm"></i>
           </button>
         </div>
@@ -348,7 +356,7 @@
       
     } catch (e) {
       console.error('Error loading history:', e);
-      historyList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Error loading</div>';
+      historyList.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">${escapeHtml(voiceT('voice_ui.error_loading'))}</div>`;
     }
   }
 
@@ -382,7 +390,7 @@
   }
 
   async function deleteExecution(id) {
-    if (!confirm('Delete this query from history?')) return;
+    if (!confirm(voiceT('voice_ui.delete_query'))) return;
     
     try {
       const res = await fetch('/api/voices/delete.php', {
@@ -437,13 +445,13 @@
         medium: 'bg-amber-50 text-amber-700 border-amber-200',
         low: 'bg-rose-50 text-rose-700 border-rose-200'
       };
-      const bandLabel = { high: 'High', medium: 'Medium', low: 'Low' };
+      const bandLabel = { high: voiceT('voice_ui.high'), medium: voiceT('voice_ui.medium'), low: voiceT('voice_ui.low') };
       const cls = bandStyles[sm.band] || bandStyles.low;
       const label = bandLabel[sm.band] || '';
-      const tip = 'Indicates how much of the answer is backed by retrieved source text. It is not a guarantee of factual accuracy.';
+      const tip = voiceT('voice_ui.evidence_tip');
       parts.push(
         `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${cls}" title="${escapeHtml(tip)}">` +
-        `<i class="iconoir-database-check text-[13px]"></i>Evidence match: ${sm.percent}%${label ? ' · ' + label : ''}</span>`
+        `<i class="iconoir-database-check text-[13px]"></i>${escapeHtml(voiceT('voice_ui.evidence_match', { percent: sm.percent }))}${label ? ' · ' + escapeHtml(label) : ''}</span>`
       );
     }
 
@@ -465,7 +473,7 @@
     if (conflictSummary && Array.isArray(conflictSummary.positions) && conflictSummary.positions.length > 1) {
       const topic = conflictSummary.topic ? ` · ${escapeHtml(conflictSummary.topic)}` : '';
       const docCount = Number.isFinite(conflictSummary.documents_considered)
-        ? `${conflictSummary.documents_considered} docs considered` : 'Multiple docs considered';
+        ? voiceT('voice_ui.docs_considered', { count: conflictSummary.documents_considered }) : voiceT('voice_ui.multiple_docs');
       const positions = conflictSummary.positions.map(p => {
         const count = Number.isFinite(p.document_count) ? `${p.document_count} doc${p.document_count === 1 ? '' : 's'}` : '';
         const srcs = Array.isArray(p.sources) && p.sources.length
@@ -473,11 +481,11 @@
         return `<li><span class="font-medium">${escapeHtml(p.claim || '')}</span>${count ? ` <span class="text-amber-600">(${count})</span>` : ''}${srcs}</li>`;
       }).join('');
       const recent = conflictSummary.most_recent && conflictSummary.most_recent.claim
-        ? `<div class="mt-2 text-amber-700"><span class="font-medium">Most recent:</span> ${escapeHtml(conflictSummary.most_recent.claim)}${conflictSummary.most_recent.date ? ` <span class="text-amber-600">(${escapeHtml(conflictSummary.most_recent.date)})</span>` : ''}</div>` : '';
+        ? `<div class="mt-2 text-amber-700"><span class="font-medium">${escapeHtml(voiceT('voice_ui.most_recent'))}</span> ${escapeHtml(conflictSummary.most_recent.claim)}${conflictSummary.most_recent.date ? ` <span class="text-amber-600">(${escapeHtml(conflictSummary.most_recent.date)})</span>` : ''}</div>` : '';
       const official = conflictSummary.official_source_note
         ? `<div class="mt-1 text-amber-700">${escapeHtml(conflictSummary.official_source_note)}</div>` : '';
       html += `<div class="mt-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">` +
-        `<div class="flex items-center gap-1 font-semibold mb-1"><i class="iconoir-warning-triangle"></i>Potential source conflict<span class="font-normal">${topic}</span></div>` +
+        `<div class="flex items-center gap-1 font-semibold mb-1"><i class="iconoir-warning-triangle"></i>${escapeHtml(voiceT('voice_ui.potential_conflict'))}<span class="font-normal">${topic}</span></div>` +
         `<div class="mb-1 text-amber-700">${escapeHtml(docCount)}</div>` +
         `<ul class="list-disc pl-4 space-y-1">${positions}</ul>${recent}${official}</div>`;
     } else if (Array.isArray(meta.conflicts) && meta.conflicts.length) {
@@ -488,7 +496,7 @@
         return `<li>${topic}${escapeHtml(c.note || '')}${srcs}</li>`;
       }).join('');
       html += `<div class="mt-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">` +
-        `<div class="flex items-center gap-1 font-semibold mb-1"><i class="iconoir-warning-triangle"></i>Sources disagree</div>` +
+        `<div class="flex items-center gap-1 font-semibold mb-1"><i class="iconoir-warning-triangle"></i>${escapeHtml(voiceT('voice_ui.sources_disagree'))}</div>` +
         `<ul class="list-disc pl-4 space-y-0.5">${items}</ul></div>`;
     }
 
@@ -553,7 +561,7 @@
       
       if (!res.ok) {
         const err = await res.json();
-        appendMessage('assistant', 'Error: ' + (err.error?.message || 'Could not process the query'));
+        appendMessage('assistant', voiceT('voice_ui.query_error', { message: err.error?.message || voiceT('voice_ui.could_not_process') }));
         return;
       }
       
@@ -565,7 +573,7 @@
       }
       
       // Add response
-      const reply = data.reply || data.message?.content || 'No response';
+      const reply = data.reply || data.message?.content || voiceT('voice_ui.no_response');
       const meta = data.meta || null;
       messageHistory.push({ role: 'assistant', content: reply, meta });
       appendMessage('assistant', reply, true, meta);
@@ -575,7 +583,7 @@
       
     } catch (e) {
       typingIndicator?.classList.add('hidden');
-      appendMessage('assistant', 'Connection error. Please try again.');
+      appendMessage('assistant', voiceT('voice_ui.try_again'));
     }
   }
 

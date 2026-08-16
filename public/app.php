@@ -3,6 +3,7 @@ require_once __DIR__ . '/../src/App/bootstrap.php';
 require_once __DIR__ . '/../src/Repos/UserFeatureAccessRepo.php';
 
 use App\Session;
+use I18n\I18n;
 use Repos\UserFeatureAccessRepo;
 
 Session::start();
@@ -28,8 +29,9 @@ $headerShowSearch = true;
 $headerShowFaq = true;
 $headerDrawerId = 'conversations-drawer';
 $headerShowLogo = true;
+$chatJs = I18n::javascriptCatalogPrefixJson('chat.');
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(I18n::htmlLang()); ?>">
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="bg-mesh text-slate-900 overflow-hidden">
   <div class="min-h-screen flex h-screen">
@@ -42,15 +44,15 @@ $headerShowLogo = true;
           <img src="/assets/images/logo.png" alt="Claara" class="h-9">
         </div>
         <button id="new-conv-btn" class="w-full py-2.5 px-4 rounded-lg gradient-brand-btn text-[#2F3440] font-medium shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2">
-          <span class="text-lg">+</span> New conversation
+          <span class="text-lg">+</span> <?php echo htmlspecialchars(I18n::translate('sidebar.new_conversation')); ?>
         </button>
       </div>
       <div class="flex-1 overflow-y-auto p-3">
         <!-- Folders -->
         <div class="mb-4">
           <div class="flex items-center justify-between mb-2 px-2">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Folders</div>
-            <button id="new-folder-btn" class="p-1 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded transition-colors" title="New folder">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider"><?php echo htmlspecialchars(I18n::translate('sidebar.folders')); ?></div>
+            <button id="new-folder-btn" class="p-1 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded transition-colors" title="<?php echo htmlspecialchars(I18n::translate('sidebar.new_folder')); ?>">
               <i class="iconoir-folder-plus text-sm"></i>
             </button>
           </div>
@@ -59,7 +61,7 @@ $headerShowLogo = true;
             <li>
               <button data-folder-id="-1" class="folder-item w-full text-left p-2 rounded-lg transition-all duration-200 flex items-center gap-2 hover:bg-slate-50 group">
                 <i class="iconoir-folder text-[#B7C9F2]"></i>
-                <span class="flex-1 text-sm text-slate-700">All</span>
+                <span class="flex-1 text-sm text-slate-700"><?php echo htmlspecialchars(I18n::translate('sidebar.all')); ?></span>
                 <span class="text-xs text-slate-400" id="all-count">0</span>
               </button>
             </li>
@@ -67,7 +69,7 @@ $headerShowLogo = true;
             <li>
               <button data-folder-id="0" class="folder-item w-full text-left p-2 rounded-lg transition-all duration-200 flex items-center gap-2 hover:bg-slate-50 group">
                 <i class="iconoir-folder text-[#B7C9F2]"></i>
-                <span class="flex-1 text-sm text-slate-700">No folder</span>
+                <span class="flex-1 text-sm text-slate-700"><?php echo htmlspecialchars(I18n::translate('sidebar.no_folder')); ?></span>
                 <span class="text-xs text-slate-400" id="root-count">0</span>
               </button>
             </li>
@@ -78,16 +80,16 @@ $headerShowLogo = true;
         <!-- Conversations -->
         <div>
           <div class="flex items-center justify-between mb-2 px-2">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Conversations</div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider"><?php echo htmlspecialchars(I18n::translate('nav.conversations')); ?></div>
             <select id="sort-select" class="text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:border-[#B7C9F2]">
-              <option value="updated_at">Recent</option>
-              <option value="favorite">Favorites</option>
-              <option value="created_at">Created</option>
-              <option value="title">Alphabetical</option>
+              <option value="updated_at"><?php echo htmlspecialchars(I18n::translate('sidebar.recent')); ?></option>
+              <option value="favorite"><?php echo htmlspecialchars(I18n::translate('sidebar.favorites')); ?></option>
+              <option value="created_at"><?php echo htmlspecialchars(I18n::translate('sidebar.created')); ?></option>
+              <option value="title"><?php echo htmlspecialchars(I18n::translate('sidebar.alphabetical')); ?></option>
             </select>
           </div>
           <ul id="conv-list" class="space-y-1">
-            <li class="text-slate-400 text-sm px-3 py-2">(empty)</li>
+            <li class="text-slate-400 text-sm px-3 py-2"><?php echo htmlspecialchars(I18n::translate('sidebar.empty')); ?></li>
           </ul>
         </div>
       </div>
@@ -96,12 +98,12 @@ $headerShowLogo = true;
     <!-- Mobile drawer for conversations -->
     <?php 
     $drawerId = 'conversations-drawer';
-    $drawerTitle = 'Conversations';
+    $drawerTitle = I18n::translate('nav.conversations');
     $drawerIcon = 'iconoir-chat-bubble';
     $drawerIconColor = 'text-[#B7C9F2]';
     $drawerShowNewButton = true;
     $drawerNewButtonId = 'mobile-new-conv-btn';
-    $drawerNewButtonText = 'New conversation';
+    $drawerNewButtonText = I18n::translate('sidebar.new_conversation');
     include __DIR__ . '/includes/mobile-drawer.php'; 
     ?>
 
@@ -113,23 +115,23 @@ $headerShowLogo = true;
         <div id="context-warning" class="hidden mx-6 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
           <i class="iconoir-info-circle text-amber-600 text-lg mt-0.5"></i>
           <div class="flex-1 text-sm">
-            <div class="font-medium text-amber-900">Long conversation</div>
-            <div class="text-amber-700 mt-0.5">To keep performance stable, only the most recent messages are sent to the assistant. The full history remains saved.</div>
+            <div class="font-medium text-amber-900"><?php echo htmlspecialchars(I18n::translate('chat.long_conversation')); ?></div>
+            <div class="text-amber-700 mt-0.5"><?php echo htmlspecialchars(I18n::translate('chat.long_conversation_help')); ?></div>
           </div>
         </div>
         <div id="conversation-activity-notice" class="conversation-activity-notice hidden mx-6 mt-4">
           <div class="conversation-activity-card">
             <div class="conversation-activity-copy">
               <i class="iconoir-message-text"></i>
-              <span>New activity in this conversation</span>
+              <span><?php echo htmlspecialchars(I18n::translate('chat.new_activity')); ?></span>
             </div>
-            <button id="conversation-activity-refresh" type="button">Refresh</button>
+            <button id="conversation-activity-refresh" type="button"><?php echo htmlspecialchars(I18n::translate('chat.refresh')); ?></button>
           </div>
         </div>
         <div id="conversation-ai-busy" class="conversation-ai-busy hidden mx-6 mt-4">
           <div class="conversation-ai-busy-card">
             <span class="conversation-ai-busy-dots"><span></span><span></span><span></span></span>
-            <span>Claara is responding to a teammate&hellip; You can send your message when she finishes.</span>
+            <span><?php echo htmlspecialchars(I18n::translate('chat.teammate_busy')); ?></span>
           </div>
         </div>
         <div id="empty-state" class="absolute inset-0 overflow-auto px-4 py-5 pb-36 sm:px-6 lg:px-8 lg:pb-8">
@@ -141,13 +143,13 @@ $headerShowLogo = true;
                 <!-- Status indicator -->
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-slate-200/50 shadow-sm mb-5">
                   <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                  <span class="text-sm text-slate-600">Ready to help</span>
+                  <span class="text-sm text-slate-600"><?php echo htmlspecialchars(I18n::translate('chat.ready')); ?></span>
                 </div>
 
                 <h2 class="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 mb-3">
-                  <span id="empty-greeting">Hi</span>, <span class="text-[#2F3440]"><?php echo $userName; ?></span>
+                  <span id="empty-greeting"><?php echo htmlspecialchars(I18n::translate('chat.greeting.default')); ?></span>, <span class="text-[#2F3440]"><?php echo $userName; ?></span>
                 </h2>
-                <p class="text-base text-slate-500 leading-relaxed max-w-xl">Start with a question, attach a file, or jump into a focused workspace.</p>
+                <p class="text-base text-slate-500 leading-relaxed max-w-xl"><?php echo htmlspecialchars(I18n::translate('chat.start_help')); ?></p>
               </div>
               
               <!-- Main input -->
@@ -157,7 +159,7 @@ $headerShowLogo = true;
                   <div id="files-preview-empty" class="hidden mb-3 space-y-2">
                     <div id="files-list-empty" class="space-y-1"></div>
                     <button type="button" id="clear-all-files-empty" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1">
-                      <i class="iconoir-xmark"></i> Remove all
+                      <i class="iconoir-xmark"></i> <?php echo htmlspecialchars(I18n::translate('chat.remove_all')); ?>
                     </button>
                   </div>
                   
@@ -165,8 +167,8 @@ $headerShowLogo = true;
                   
                   <!-- Top row: textarea + submit button -->
                   <div class="flex items-start gap-3 mb-3">
-                    <textarea id="chat-input-empty" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-[1.05rem] lg:text-lg text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Ask Claara anything" style="min-height: 34px; max-height: 180px; overflow-y: hidden;"></textarea>
-                    <button type="submit" class="w-11 h-11 flex items-center justify-center text-slate-500 hover:text-[#2F3440] hover:bg-[#B7C9F2]/15 active:scale-[0.98] rounded-2xl transition-smooth shrink-0" title="Send">
+                    <textarea id="chat-input-empty" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-[1.05rem] lg:text-lg text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="<?php echo htmlspecialchars(I18n::translate('chat.ask_anything')); ?>" style="min-height: 34px; max-height: 180px; overflow-y: hidden;"></textarea>
+                    <button type="submit" class="w-11 h-11 flex items-center justify-center text-slate-500 hover:text-[#2F3440] hover:bg-[#B7C9F2]/15 active:scale-[0.98] rounded-2xl transition-smooth shrink-0" title="<?php echo htmlspecialchars(I18n::translate('chat.send')); ?>">
                       <i class="iconoir-arrow-up text-xl"></i>
                     </button>
                   </div>
@@ -174,29 +176,29 @@ $headerShowLogo = true;
                   <div class="flex items-center justify-between px-1">
                     <!-- Bottom row: action buttons -->
                     <div class="flex items-center gap-1">
-                      <button type="button" id="attach-btn-empty" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-lg transition-smooth" title="Attach file (PDF, image, CSV, or Excel)">
+                      <button type="button" id="attach-btn-empty" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-lg transition-smooth" title="<?php echo htmlspecialchars(I18n::translate('chat.attach_file')); ?>">
                         <i class="iconoir-attachment text-lg"></i>
                       </button>
-                      <button type="button" id="image-mode-btn-empty" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generate image">
+                      <button type="button" id="image-mode-btn-empty" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="<?php echo htmlspecialchars(I18n::translate('chat.generate_image')); ?>">
                         <i class="iconoir-media-image text-lg"></i>
                       </button>
-                      <button type="button" id="web-search-btn-empty" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="Search the web">
+                      <button type="button" id="web-search-btn-empty" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="<?php echo htmlspecialchars(I18n::translate('chat.search_web')); ?>">
                         <i class="iconoir-globe text-lg"></i>
                       </button>
                       <?php if ($user['is_superadmin']): ?>
-                      <select id="model-select-empty" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#B7C9F2] transition-colors" title="Select model (Superadmin only)">
-                        <option value="google/gemini-3-flash-preview">Loading models...</option>
+                      <select id="model-select-empty" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#B7C9F2] transition-colors" title="<?php echo htmlspecialchars(I18n::translate('chat.select_model')); ?>">
+                        <option value="google/gemini-3-flash-preview"><?php echo htmlspecialchars(I18n::translate('chat.loading_models')); ?></option>
                       </select>
-                      <button type="button" id="manage-models-btn-empty" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-smooth" title="Manage models (Superadmin only)">
+                      <button type="button" id="manage-models-btn-empty" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-smooth" title="<?php echo htmlspecialchars(I18n::translate('chat.manage_models')); ?>">
                         <i class="iconoir-settings text-lg"></i>
                       </button>
                       <?php endif; ?>
                     </div>
-                    <span id="shortcut-hint-empty" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter to send</span>
+                    <span id="shortcut-hint-empty" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1"><?php echo htmlspecialchars(I18n::translate('chat.shortcut')); ?></span>
                   </div>
                   <div id="image-mode-files-warning-empty" class="hidden mt-2 px-1 text-xs text-amber-600 flex items-center gap-1.5">
                     <i class="iconoir-warning-triangle"></i>
-                    <span>Files cannot be attached, dragged, or pasted in image mode.</span>
+                    <span><?php echo htmlspecialchars(I18n::translate('chat.files_disabled_image_mode')); ?></span>
                   </div>
                 </form>
               </div>
@@ -205,7 +207,7 @@ $headerShowLogo = true;
             <!-- "Or" divider -->
             <div class="flex items-center gap-4 max-w-3xl mx-auto mb-4 lg:mb-5">
               <div class="flex-1 h-px bg-slate-200"></div>
-              <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Or choose an option</span>
+              <span class="text-xs font-medium text-slate-400 uppercase tracking-wider"><?php echo htmlspecialchars(I18n::translate('chat.choose_option')); ?></span>
               <div class="flex-1 h-px bg-slate-200"></div>
             </div>
 
@@ -219,8 +221,8 @@ $headerShowLogo = true;
                     <i class="iconoir-voice-square text-xl text-white"></i>
                   </div>
                   <div>
-                    <h3 class="text-base font-bold text-slate-900">Voices</h3>
-                    <p class="text-xs text-slate-500">Specialized assistants</p>
+                    <h3 class="text-base font-bold text-slate-900"><?php echo htmlspecialchars(I18n::translate('nav.voices')); ?></h3>
+                    <p class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('voice.specialized_assistants')); ?></p>
                   </div>
                 </div>
                 
@@ -232,7 +234,7 @@ $headerShowLogo = true;
                       <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm group-hover:scale-110 transition-smooth">L</div>
                       <div class="flex-1 min-w-0">
                         <div class="font-semibold text-slate-800 group-hover:text-rose-600 transition-smooth">Lex</div>
-                        <div class="text-xs text-slate-500">Your legal assistant</div>
+                        <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('voice.legal_assistant')); ?></div>
                       </div>
                       <i class="iconoir-arrow-right text-slate-300 group-hover:text-rose-500 group-hover:translate-x-1 transition-smooth"></i>
                     </div>
@@ -241,14 +243,14 @@ $headerShowLogo = true;
 
                   <div class="w-full px-3 py-2 bg-white/35 border border-slate-200/70 rounded-2xl">
                     <div class="flex items-center justify-between gap-3 text-xs text-slate-400">
-                      <span class="truncate">Operations and Knowledge</span>
-                      <span class="px-2 py-0.5 bg-slate-100 rounded-full shrink-0">2 more soon</span>
+                      <span class="truncate"><?php echo htmlspecialchars(I18n::translate('chat.operations_knowledge')); ?></span>
+                      <span class="px-2 py-0.5 bg-slate-100 rounded-full shrink-0"><?php echo htmlspecialchars(I18n::translate('chat.more_soon')); ?></span>
                     </div>
                   </div>
 
                   <button id="view-all-voices" class="w-full p-2 mt-0.5 hover:bg-rose-50 border border-dashed border-slate-200 hover:border-rose-300 rounded-2xl transition-smooth text-center group">
                     <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-rose-600 transition-smooth">
-                      <span>View all voices</span>
+                      <span><?php echo htmlspecialchars(I18n::translate('nav.available_voices')); ?></span>
                       <i class="iconoir-arrow-right group-hover:translate-x-1 transition-smooth"></i>
                     </div>
                   </button>
@@ -262,8 +264,8 @@ $headerShowLogo = true;
                     <i class="iconoir-magic-wand text-xl text-white"></i>
                   </div>
                   <div>
-                    <h3 class="text-base font-bold text-slate-900">Gestures</h3>
-                    <p class="text-xs text-slate-500">Quick actions</p>
+                    <h3 class="text-base font-bold text-slate-900"><?php echo htmlspecialchars(I18n::translate('nav.gestures')); ?></h3>
+                    <p class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('chat.quick_actions')); ?></p>
                   </div>
                 </div>
                 
@@ -275,8 +277,8 @@ $headerShowLogo = true;
                         <i class="iconoir-page-edit text-base text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-800 group-hover:text-[#2F3440] transition-smooth">Write Content</div>
-                        <div class="text-xs text-slate-500">Blogs, updates, press notes</div>
+                        <div class="font-semibold text-slate-800 group-hover:text-[#2F3440] transition-smooth"><?php echo htmlspecialchars(I18n::translate('gesture.write.name')); ?></div>
+                        <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('chat.write_description')); ?></div>
                       </div>
                       <i class="iconoir-arrow-right text-slate-300 group-hover:text-[#B7C9F2] group-hover:translate-x-1 transition-smooth"></i>
                     </div>
@@ -290,8 +292,8 @@ $headerShowLogo = true;
                         <i class="iconoir-send-diagonal text-base text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-800 group-hover:text-[#2F3440] transition-smooth">Social Media</div>
-                        <div class="text-xs text-slate-500">Posts for social channels</div>
+                        <div class="font-semibold text-slate-800 group-hover:text-[#2F3440] transition-smooth"><?php echo htmlspecialchars(I18n::translate('gesture.social.name')); ?></div>
+                        <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('chat.social_description')); ?></div>
                       </div>
                       <i class="iconoir-arrow-right text-slate-300 group-hover:text-[#2F3440] group-hover:translate-x-1 transition-smooth"></i>
                     </div>
@@ -305,8 +307,8 @@ $headerShowLogo = true;
                         <i class="iconoir-podcast text-base text-white"></i>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-slate-800 group-hover:text-rose-600 transition-smooth">Article to Podcast</div>
-                        <div class="text-xs text-slate-500">Audio with 2 AI voices</div>
+                        <div class="font-semibold text-slate-800 group-hover:text-rose-600 transition-smooth"><?php echo htmlspecialchars(I18n::translate('gesture.podcast.name')); ?></div>
+                        <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('chat.podcast_description')); ?></div>
                       </div>
                       <i class="iconoir-arrow-right text-slate-300 group-hover:text-rose-500 group-hover:translate-x-1 transition-smooth"></i>
                     </div>
@@ -317,7 +319,7 @@ $headerShowLogo = true;
 
                   <button id="view-all-gestures" class="w-full p-2 mt-0.5 hover:bg-[#B7C9F2]/5 border border-dashed border-slate-200 hover:border-[#B7C9F2]/50 rounded-2xl transition-smooth text-center group">
                     <div class="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 group-hover:text-[#B7C9F2] transition-smooth">
-                      <span>View all gestures</span>
+                      <span><?php echo htmlspecialchars(I18n::translate('nav.available_gestures')); ?></span>
                       <i class="iconoir-arrow-right group-hover:translate-x-1 transition-smooth"></i>
                     </div>
                   </button>
@@ -343,13 +345,13 @@ $headerShowLogo = true;
         <div id="drop-overlay" class="hidden fixed inset-0 z-[65] pointer-events-none p-4 lg:p-8">
           <div class="w-full h-full rounded-2xl border-2 border-dashed border-[#B7C9F2] bg-[#B7C9F2]/10 flex items-center justify-center">
             <div class="px-5 py-3 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm text-center">
-              <div class="text-sm font-medium text-[#2F3440]">Drop files here to attach them</div>
-              <div class="mt-1 text-[11px] text-slate-400">PDF, PNG, JPG, GIF, WEBP, CSV, XLS, XLSX (max. 30MB)</div>
+              <div class="text-sm font-medium text-[#2F3440]"><?php echo htmlspecialchars(I18n::translate('chat.drop_files')); ?></div>
+              <div class="mt-1 text-[11px] text-slate-400"><?php echo htmlspecialchars(I18n::translate('chat.file_types')); ?></div>
             </div>
           </div>
         </div>
         <!-- Scroll-to-bottom floating button (positioned by JS inside the conversation viewport) -->
-        <button id="scroll-to-bottom" class="scroll-bottom-btn fixed z-40 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg text-slate-500 hover:text-[#2F3440] hover:shadow-xl transition-all" title="Scroll to latest" aria-label="Scroll to latest">
+        <button id="scroll-to-bottom" class="scroll-bottom-btn fixed z-40 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg text-slate-500 hover:text-[#2F3440] hover:shadow-xl transition-all" title="<?php echo htmlspecialchars(I18n::translate('chat.scroll_latest')); ?>" aria-label="<?php echo htmlspecialchars(I18n::translate('chat.scroll_latest')); ?>">
         <i class="iconoir-arrow-down text-xl"></i>
         </button>
       </section>
@@ -361,7 +363,7 @@ $headerShowLogo = true;
             <div id="files-preview" class="hidden mb-3 space-y-2">
               <div id="files-list" class="space-y-1"></div>
               <button type="button" id="clear-all-files" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1">
-                <i class="iconoir-xmark"></i> Remove all
+                <i class="iconoir-xmark"></i> <?php echo htmlspecialchars(I18n::translate('chat.remove_all')); ?>
               </button>
             </div>
             
@@ -369,8 +371,8 @@ $headerShowLogo = true;
             
             <!-- Top row: textarea + submit button -->
             <div class="flex items-start gap-3 mb-2">
-              <textarea id="chat-input" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="Write a message..." style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
-              <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-xl transition-smooth shrink-0" title="Send">
+              <textarea id="chat-input" rows="1" class="flex-1 min-w-0 bg-transparent border-0 px-1 py-1 text-base text-slate-700 placeholder:text-slate-400 placeholder:italic focus:outline-none focus:ring-0 resize-none" placeholder="<?php echo htmlspecialchars(I18n::translate('chat.write_message')); ?>" style="min-height: 28px; max-height: 160px; overflow-y: hidden;"></textarea>
+              <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-xl transition-smooth shrink-0" title="<?php echo htmlspecialchars(I18n::translate('chat.send')); ?>">
                 <i class="iconoir-arrow-up text-xl"></i>
               </button>
             </div>
@@ -378,29 +380,29 @@ $headerShowLogo = true;
             <div class="flex items-center justify-between px-1">
               <!-- Bottom row: action buttons -->
               <div class="flex items-center gap-1">
-                <button type="button" id="attach-btn" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-lg transition-smooth" title="Attach file (PDF, image, CSV, or Excel)">
+                <button type="button" id="attach-btn" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded-lg transition-smooth" title="<?php echo htmlspecialchars(I18n::translate('chat.attach_file')); ?>">
                   <i class="iconoir-attachment text-lg"></i>
                 </button>
-                <button type="button" id="image-mode-btn" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="Generate image">
+                <button type="button" id="image-mode-btn" class="<?php echo $hasImageGenAccess ? '' : 'hidden'; ?> p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-smooth" title="<?php echo htmlspecialchars(I18n::translate('chat.generate_image')); ?>">
                   <i class="iconoir-media-image text-lg"></i>
                 </button>
-                <button type="button" id="web-search-btn" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="Search the web">
+                <button type="button" id="web-search-btn" class="p-2 text-slate-400 hover:text-cyan-500 hover:bg-cyan-50 rounded-lg transition-smooth" title="<?php echo htmlspecialchars(I18n::translate('chat.search_web')); ?>">
                   <i class="iconoir-globe text-lg"></i>
                 </button>
                 <?php if ($user['is_superadmin']): ?>
-                <select id="model-select-chat" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#B7C9F2] transition-colors" title="Select model (Superadmin only)">
-                  <option value="google/gemini-3-flash-preview">Loading models...</option>
+                <select id="model-select-chat" class="ml-1 text-[10px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 text-slate-500 focus:outline-none focus:border-[#B7C9F2] transition-colors" title="<?php echo htmlspecialchars(I18n::translate('chat.select_model')); ?>">
+                  <option value="google/gemini-3-flash-preview"><?php echo htmlspecialchars(I18n::translate('chat.loading_models')); ?></option>
                 </select>
-                <button type="button" id="manage-models-btn-chat" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-smooth" title="Manage models (Superadmin only)">
+                <button type="button" id="manage-models-btn-chat" class="p-2 text-slate-400 hover:text-[#B7C9F2] hover:bg-cyan-50 rounded-lg transition-smooth" title="<?php echo htmlspecialchars(I18n::translate('chat.manage_models')); ?>">
                   <i class="iconoir-settings text-lg"></i>
                 </button>
                 <?php endif; ?>
               </div>
-              <span id="shortcut-hint-chat" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1">⌘ + Enter to send</span>
+              <span id="shortcut-hint-chat" class="text-[10px] text-slate-400 font-medium opacity-50 select-none pr-1"><?php echo htmlspecialchars(I18n::translate('chat.shortcut')); ?></span>
             </div>
             <div id="image-mode-files-warning-chat" class="hidden mt-2 px-1 text-xs text-amber-600 flex items-center gap-1.5">
               <i class="iconoir-warning-triangle"></i>
-              <span>Files cannot be attached, dragged, or pasted in image mode.</span>
+              <span><?php echo htmlspecialchars(I18n::translate('chat.files_disabled_image_mode')); ?></span>
             </div>
           </div>
         </form>
@@ -415,14 +417,14 @@ $headerShowLogo = true;
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
         </svg>
-        Edit
+        <?php echo htmlspecialchars(I18n::translate('chat.edit')); ?>
       </button>
       <div class="w-px h-5 bg-white/20"></div>
       <button id="selection-regenerate-btn" class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors text-sm font-medium">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
-        Regenerate
+        <?php echo htmlspecialchars(I18n::translate('chat.regenerate')); ?>
       </button>
     </div>
     <div class="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3 h-3 bg-slate-900 rotate-45"></div>
@@ -434,18 +436,18 @@ $headerShowLogo = true;
       <div class="flex items-center gap-3">
         <!-- Selected text (truncated) -->
         <div class="flex-1 min-w-0">
-          <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1 font-bold">Active selection</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1 font-bold"><?php echo htmlspecialchars(I18n::translate('chat.active_selection')); ?></div>
           <div id="mobile-selection-preview" class="text-sm truncate opacity-90 italic"></div>
         </div>
         <!-- Botones -->
         <div class="flex items-center gap-2 flex-shrink-0">
           <button id="mobile-edit-btn" class="flex items-center gap-1.5 px-3 py-2 bg-white/10 active:bg-white/20 rounded-xl transition-colors text-sm font-semibold">
             <i class="iconoir-edit-pencil text-base"></i>
-            Edit
+            <?php echo htmlspecialchars(I18n::translate('chat.edit')); ?>
           </button>
           <button id="mobile-regenerate-btn" class="flex items-center gap-1.5 px-3 py-2 bg-[#B7C9F2] active:bg-[#FF8B73] rounded-xl transition-colors text-sm font-semibold shadow-lg shadow-[#B7C9F2]/30">
             <i class="iconoir-refresh text-base"></i>
-            Regen
+            <?php echo htmlspecialchars(I18n::translate('chat.regen_short')); ?>
           </button>
           <button id="mobile-close-selection" class="p-2 text-slate-400 active:text-white active:bg-white/10 rounded-full transition-colors">
             <i class="iconoir-xmark text-xl"></i>
@@ -459,40 +461,40 @@ $headerShowLogo = true;
   <div id="selection-edit-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
       <div class="p-5 border-b border-slate-200">
-        <h3 id="edit-modal-title" class="text-lg font-semibold text-slate-900">Edit selection</h3>
-        <p class="text-sm text-slate-500 mt-1">Tell the AI how you want this part changed</p>
+        <h3 id="edit-modal-title" class="text-lg font-semibold text-slate-900"><?php echo htmlspecialchars(I18n::translate('chat.edit_selection')); ?></h3>
+        <p class="text-sm text-slate-500 mt-1"><?php echo htmlspecialchars(I18n::translate('chat.edit_selection_help')); ?></p>
       </div>
       
       <div class="p-5 space-y-4">
         <!-- Preview del texto seleccionado -->
         <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
-          <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Selected text</div>
+          <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2"><?php echo htmlspecialchars(I18n::translate('chat.selected_text')); ?></div>
           <div id="edit-modal-selection" class="text-sm text-slate-700 max-h-24 overflow-y-auto"></div>
         </div>
         
         <!-- Input de instrucciones -->
         <div>
           <label for="edit-modal-instructions" class="block text-sm font-medium text-slate-700 mb-2">
-            Your instructions
+            <?php echo htmlspecialchars(I18n::translate('chat.instructions')); ?>
           </label>
           <textarea 
             id="edit-modal-instructions" 
             class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-all text-sm resize-none"
             rows="3"
-            placeholder="Example: Make it more formal, add more detail about..., simplify this explanation..."
+            placeholder="<?php echo htmlspecialchars(I18n::translate('chat.instructions_example')); ?>"
           ></textarea>
         </div>
       </div>
       
       <div class="p-5 border-t border-slate-200 flex items-center justify-end gap-3 bg-slate-50">
         <button id="edit-modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
-          Cancel
+          <?php echo htmlspecialchars(I18n::translate('common.cancel')); ?>
         </button>
         <button id="edit-modal-submit" class="px-5 py-2 text-sm font-medium text-white gradient-brand-btn rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
           </svg>
-          Apply changes
+          <?php echo htmlspecialchars(I18n::translate('chat.apply_changes')); ?>
         </button>
       </div>
     </div>
@@ -503,32 +505,32 @@ $headerShowLogo = true;
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
       <div class="p-5 border-b border-slate-200">
         <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
-          <i class="iconoir-warning-triangle text-[#FF8B73]"></i> Report an issue
+          <i class="iconoir-warning-triangle text-[#FF8B73]"></i> <?php echo htmlspecialchars(I18n::translate('chat.report.title')); ?>
         </h3>
-        <p class="text-sm text-slate-500 mt-1">This goes to the people responsible for <span id="flag-modal-voice" class="font-medium text-slate-700"></span>.</p>
+        <p id="flag-modal-help" class="text-sm text-slate-500 mt-1"></p>
       </div>
 
       <div class="p-5 space-y-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">What's wrong?</label>
+          <label class="block text-sm font-medium text-slate-700 mb-2"><?php echo htmlspecialchars(I18n::translate('chat.report.whats_wrong')); ?></label>
           <div id="flag-modal-types" class="flex flex-wrap gap-2">
-            <button type="button" data-flag-type="missing_info" class="flag-type-btn px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600 hover:border-[#B7C9F2] transition-colors">Missing information</button>
-            <button type="button" data-flag-type="incorrect" class="flag-type-btn px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600 hover:border-[#B7C9F2] transition-colors">Incorrect answer</button>
-            <button type="button" data-flag-type="other" class="flag-type-btn px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600 hover:border-[#B7C9F2] transition-colors">Other</button>
+            <button type="button" data-flag-type="missing_info" class="flag-type-btn px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600 hover:border-[#B7C9F2] transition-colors"><?php echo htmlspecialchars(I18n::translate('chat.report.missing_information')); ?></button>
+            <button type="button" data-flag-type="incorrect" class="flag-type-btn px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600 hover:border-[#B7C9F2] transition-colors"><?php echo htmlspecialchars(I18n::translate('chat.report.incorrect_answer')); ?></button>
+            <button type="button" data-flag-type="other" class="flag-type-btn px-3 py-1.5 rounded-full border border-slate-200 text-sm text-slate-600 hover:border-[#B7C9F2] transition-colors"><?php echo htmlspecialchars(I18n::translate('chat.report.other')); ?></button>
           </div>
         </div>
         <div>
-          <label for="flag-modal-note" class="block text-sm font-medium text-slate-700 mb-2">Details <span class="text-slate-400 font-normal">(optional)</span></label>
+          <label for="flag-modal-note" class="block text-sm font-medium text-slate-700 mb-2"><?php echo htmlspecialchars(I18n::translate('chat.report.details')); ?> <span class="text-slate-400 font-normal"><?php echo htmlspecialchars(I18n::translate('chat.report.optional')); ?></span></label>
           <textarea id="flag-modal-note" rows="3" maxlength="2000"
             class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B7C9F2] focus:ring-2 focus:ring-[#B7C9F2]/20 transition-all text-sm resize-none"
-            placeholder="What information is missing or wrong?"></textarea>
+            placeholder="<?php echo htmlspecialchars(I18n::translate('chat.report.placeholder')); ?>"></textarea>
         </div>
       </div>
 
       <div class="p-5 border-t border-slate-200 flex items-center justify-end gap-3 bg-slate-50">
-        <button id="flag-modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+        <button id="flag-modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"><?php echo htmlspecialchars(I18n::translate('common.cancel')); ?></button>
         <button id="flag-modal-submit" class="px-5 py-2 text-sm font-medium text-white gradient-brand-btn rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
-          <i class="iconoir-warning-triangle"></i> Send report
+          <i class="iconoir-warning-triangle"></i> <?php echo htmlspecialchars(I18n::translate('chat.report.send')); ?>
         </button>
       </div>
     </div>
@@ -540,11 +542,11 @@ $headerShowLogo = true;
       <div class="p-5 border-b border-slate-200 flex items-center justify-between">
         <div>
           <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
-            <i class="iconoir-share-android text-[#B7C9F2]"></i> Share conversation
+            <i class="iconoir-share-android text-[#B7C9F2]"></i> <?php echo htmlspecialchars(I18n::translate('chat.share.title')); ?>
           </h3>
-          <p class="text-sm text-slate-500 mt-1">Give people or departments access to this conversation.</p>
+          <p class="text-sm text-slate-500 mt-1"><?php echo htmlspecialchars(I18n::translate('chat.share.help')); ?></p>
         </div>
-        <button id="share-modal-close" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Close">
+        <button id="share-modal-close" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="<?php echo htmlspecialchars(I18n::translate('common.close')); ?>">
           <i class="iconoir-xmark text-xl"></i>
         </button>
       </div>
@@ -553,28 +555,28 @@ $headerShowLogo = true;
         <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
           <div class="space-y-2">
             <div class="flex items-center gap-2">
-              <button type="button" id="share-target-people" class="share-target-tab px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-900 text-white">People</button>
-              <button type="button" id="share-target-departments" class="share-target-tab px-3 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100">Departments</button>
+              <button type="button" id="share-target-people" class="share-target-tab px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-900 text-white"><?php echo htmlspecialchars(I18n::translate('chat.share.people')); ?></button>
+              <button type="button" id="share-target-departments" class="share-target-tab px-3 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100"><?php echo htmlspecialchars(I18n::translate('chat.share.departments')); ?></button>
             </div>
             <select id="share-target-select" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#B7C9F2]"></select>
           </div>
           <div class="space-y-2">
-            <label for="share-permission-select" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Permission</label>
+            <label for="share-permission-select" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider"><?php echo htmlspecialchars(I18n::translate('chat.share.permission')); ?></label>
             <select id="share-permission-select" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#B7C9F2]">
-              <option value="view">Can view</option>
-              <option value="chat">Can chat</option>
+              <option value="view"><?php echo htmlspecialchars(I18n::translate('chat.share.can_view')); ?></option>
+              <option value="chat"><?php echo htmlspecialchars(I18n::translate('chat.share.can_chat')); ?></option>
             </select>
           </div>
         </div>
 
         <button id="share-add-btn" type="button" class="w-full py-2.5 px-4 rounded-xl gradient-brand-btn text-[#2F3440] font-medium shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2">
-          <i class="iconoir-plus"></i> Save access
+          <i class="iconoir-plus"></i> <?php echo htmlspecialchars(I18n::translate('chat.share.save')); ?>
         </button>
 
         <div>
-          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Current access</div>
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2"><?php echo htmlspecialchars(I18n::translate('chat.share.current')); ?></div>
           <div id="share-list" class="space-y-2">
-            <div class="text-sm text-slate-400 px-3 py-3 border border-dashed border-slate-200 rounded-xl">No shared access yet.</div>
+            <div class="text-sm text-slate-400 px-3 py-3 border border-dashed border-slate-200 rounded-xl"><?php echo htmlspecialchars(I18n::translate('chat.share.none')); ?></div>
           </div>
         </div>
       </div>
@@ -599,8 +601,8 @@ $headerShowLogo = true;
             <i class="iconoir-folder-settings text-xl text-white"></i>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-slate-900">Move conversation</h3>
-            <p class="text-xs text-slate-500" id="move-conv-title">Choose the destination folder</p>
+            <h3 class="text-lg font-semibold text-slate-900"><?php echo htmlspecialchars(I18n::translate('chat.move.title')); ?></h3>
+            <p class="text-xs text-slate-500" id="move-conv-title"><?php echo htmlspecialchars(I18n::translate('chat.move.choose')); ?></p>
           </div>
         </div>
         <button id="close-move-modal" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
@@ -618,8 +620,8 @@ $headerShowLogo = true;
                 <i class="iconoir-folder-minus text-xl text-slate-500 group-hover:text-[#B7C9F2]"></i>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="font-semibold text-slate-800 group-hover:text-[#B7C9F2] transition-colors">No folder</div>
-                <div class="text-xs text-slate-500">Move to root</div>
+                <div class="font-semibold text-slate-800 group-hover:text-[#B7C9F2] transition-colors"><?php echo htmlspecialchars(I18n::translate('sidebar.no_folder')); ?></div>
+                <div class="text-xs text-slate-500"><?php echo htmlspecialchars(I18n::translate('chat.move.root')); ?></div>
               </div>
               <i class="iconoir-nav-arrow-right text-slate-300 group-hover:text-[#B7C9F2] transition-colors"></i>
             </div>
@@ -630,40 +632,40 @@ $headerShowLogo = true;
         
         <div id="empty-folders" class="hidden text-center py-8 text-slate-400 text-sm">
           <i class="iconoir-folder text-4xl mb-2"></i>
-          <p>You do not have any folders yet</p>
+          <p><?php echo htmlspecialchars(I18n::translate('chat.move.no_folders')); ?></p>
         </div>
       </div>
       
       <!-- Footer -->
       <div class="p-6 border-t border-slate-200 flex gap-3">
         <button id="cancel-move" class="flex-1 px-4 py-2.5 border-2 border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors">
-          Cancel
+          <?php echo htmlspecialchars(I18n::translate('common.cancel')); ?>
         </button>
       </div>
     </div>
   </div>
   
   <!-- Attach source menu (anchored to whichever attach button opened it) -->
-  <div id="attach-menu" class="attach-menu hidden" role="menu" aria-label="Attach a file">
+  <div id="attach-menu" class="attach-menu hidden" role="menu" aria-label="<?php echo htmlspecialchars(I18n::translate('chat.source.menu')); ?>">
     <button type="button" class="attach-menu-item" data-attach-source="device" role="menuitem">
       <span class="attach-menu-icon"><i class="iconoir-laptop"></i></span>
       <span class="attach-menu-copy">
-        <span>From this device</span>
-        <small>PDF, image, CSV or Excel</small>
+        <span><?php echo htmlspecialchars(I18n::translate('chat.source.device')); ?></span>
+        <small><?php echo htmlspecialchars(I18n::translate('chat.source.device_help')); ?></small>
       </span>
     </button>
     <button type="button" class="attach-menu-item" data-attach-source="drive" role="menuitem">
       <span class="attach-menu-icon"><i class="iconoir-google-drive"></i></span>
       <span class="attach-menu-copy">
-        <span>From Google Drive</span>
-        <small>Docs and Sheets convert automatically</small>
+        <span><?php echo htmlspecialchars(I18n::translate('chat.source.drive')); ?></span>
+        <small><?php echo htmlspecialchars(I18n::translate('chat.source.drive_help')); ?></small>
       </span>
     </button>
     <button type="button" class="attach-menu-item" data-attach-source="onedrive" role="menuitem">
       <span class="attach-menu-icon"><i class="iconoir-cloud"></i></span>
       <span class="attach-menu-copy">
-        <span>From OneDrive</span>
-        <small>Word and PowerPoint convert automatically</small>
+        <span><?php echo htmlspecialchars(I18n::translate('chat.source.onedrive')); ?></span>
+        <small><?php echo htmlspecialchars(I18n::translate('chat.source.onedrive_help')); ?></small>
       </span>
     </button>
   </div>
@@ -671,6 +673,16 @@ $headerShowLogo = true;
   <script src="/assets/js/drive-picker.js"></script>
   <script src="/assets/js/onedrive-picker.js"></script>
   <script type="module">
+    const chatI18n = <?php echo $chatJs; ?>;
+    const chatT = (key, params = {}) => {
+      let message = chatI18n.messages[key] || key;
+      Object.entries(params).forEach(([name, value]) => {
+        message = message.split(`{${name}}`).join(String(value));
+      });
+      return message;
+    };
+    const chatLocale = chatI18n.locale;
+
     const messagesEl = document.getElementById('messages');
     const messagesContainer = document.getElementById('messages-container');
     const conversationActivityNotice = document.getElementById('conversation-activity-notice');
@@ -836,7 +848,7 @@ $headerShowLogo = true;
       const warning = document.createElement('div');
       warning.id = warningId;
       warning.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-amber-500 text-white px-4 py-2 rounded-xl shadow-lg z-[70] text-sm flex items-center gap-2';
-      warning.innerHTML = '<i class="iconoir-warning-triangle"></i><span>Disable image mode to attach files.</span>';
+      warning.innerHTML = `<i class="iconoir-warning-triangle"></i><span>${escapeHtml(chatT('chat.disable_image_mode'))}</span>`;
       document.body.appendChild(warning);
 
       setTimeout(() => {
@@ -856,11 +868,11 @@ $headerShowLogo = true;
 
       const hour = new Date().getHours();
       if (hour < 12) {
-        greetingEl.textContent = 'Good morning';
+        greetingEl.textContent = chatT('chat.greeting.morning');
       } else if (hour < 18) {
-        greetingEl.textContent = 'Good afternoon';
+        greetingEl.textContent = chatT('chat.greeting.afternoon');
       } else {
-        greetingEl.textContent = 'Good evening';
+        greetingEl.textContent = chatT('chat.greeting.evening');
       }
     }
 
@@ -877,11 +889,11 @@ $headerShowLogo = true;
       let addedCount = 0;
       for (const file of files) {
         if (file.size > MAX_FILE_SIZE) {
-          alert(`The file "${file.name}" is too large. Maximum size is 30MB.`);
+          alert(chatT('chat.error.file_too_large', { name: file.name }));
           continue;
         }
         if (!VALID_FILE_TYPES.includes(file.type)) {
-          alert(`The file "${file.name}" is not a supported type.`);
+          alert(chatT('chat.error.file_type', { name: file.name }));
           continue;
         }
         targetArray.push(file);
@@ -984,10 +996,10 @@ $headerShowLogo = true;
       const composerEnabled = canChat && !remoteAiBusy;
       inputEl.disabled = !composerEnabled;
       inputEl.placeholder = !canChat
-        ? 'You have read-only access to this conversation'
+        ? chatT('chat.read_only')
         : remoteAiBusy
-          ? 'Claara is responding to a teammate...'
-          : 'Write a message...';
+          ? chatT('chat.teammate_busy')
+          : chatT('chat.write_message');
       formEl.querySelector('button[type="submit"]').disabled = !composerEnabled;
       formEl.querySelector('button[type="submit"]').classList.toggle('opacity-40', !composerEnabled);
       attachBtn.disabled = !composerEnabled;
@@ -1000,11 +1012,11 @@ $headerShowLogo = true;
 
       if (conversationAccessChip) {
         const label = permission === 'owner'
-          ? (access?.is_shared ? 'Shared' : 'Private')
+          ? (access?.is_shared ? chatT('chat.shared') : chatT('chat.private'))
           : permission === 'chat'
-            ? 'Can chat'
+            ? chatT('chat.share.can_chat')
             : permission === 'view'
-              ? 'Read only'
+              ? chatT('chat.share.read_only')
               : '';
         conversationAccessChip.textContent = label;
         conversationAccessChip.classList.toggle('hidden', !label || !currentConversationId);
@@ -1314,11 +1326,11 @@ $headerShowLogo = true;
       button.classList.add('is-loading');
       const label = button.querySelector('.capability-action-label');
       const originalLabel = label ? label.textContent : '';
-      if (label) label.textContent = 'Asking...';
+      if (label) label.textContent = chatT('chat.asking');
 
       isGenerating = true;
       const { wrap, bubble } = append('assistant', '', null, [], null, { isStreaming: true, voiceSlug: voiceSlug });
-      updateStreamingMessage(bubble, 'Asking the specialized voice...');
+      updateStreamingMessage(bubble, chatT('chat.asking_voice'));
 
       try {
         const result = await api('/api/capabilities/voice-query.php', {
@@ -1474,7 +1486,7 @@ $headerShowLogo = true;
         btn.type = 'button';
         btn.className = 'code-copy-btn';
         btn.innerHTML = '<i class="iconoir-copy"></i>';
-        btn.title = 'Copy code';
+        btn.title = chatT('chat.copy_code');
         btn.addEventListener('click', async () => {
           try {
             await navigator.clipboard.writeText(codeEl.innerText);
@@ -1507,7 +1519,7 @@ $headerShowLogo = true;
       const copyBtn = document.createElement('button');
       copyBtn.type = 'button';
       copyBtn.className = 'msg-action-btn';
-      copyBtn.title = 'Copy response';
+      copyBtn.title = chatT('chat.copy_response');
       copyBtn.innerHTML = '<i class="iconoir-copy"></i>';
       copyBtn.addEventListener('click', async () => {
         try {
@@ -1523,7 +1535,7 @@ $headerShowLogo = true;
         const regenBtn = document.createElement('button');
         regenBtn.type = 'button';
         regenBtn.className = 'msg-action-btn';
-        regenBtn.title = 'Regenerate response';
+        regenBtn.title = chatT('chat.regenerate_response');
         regenBtn.innerHTML = '<i class="iconoir-refresh-double"></i>';
         regenBtn.addEventListener('click', () => regenerateMessage(messageId, bubble, regenBtn));
         actions.appendChild(regenBtn);
@@ -1550,7 +1562,7 @@ $headerShowLogo = true;
     function openFlagModal(voiceSlug, messageId){
       flagModalState = { voiceSlug, messageId, type: 'missing_info' };
       const modal = document.getElementById('flag-modal');
-      document.getElementById('flag-modal-voice').textContent = voiceSlug;
+      document.getElementById('flag-modal-help').textContent = chatT('chat.report.help', { voice: voiceSlug });
       document.getElementById('flag-modal-note').value = '';
       // reset type selection (default missing_info)
       document.querySelectorAll('.flag-type-btn').forEach(b => {
@@ -1593,7 +1605,7 @@ $headerShowLogo = true;
       const btn = document.getElementById('flag-modal-submit');
       btn.disabled = true;
       const original = btn.innerHTML;
-      btn.innerHTML = '<i class="iconoir-warning-triangle"></i> Sending...';
+      btn.innerHTML = `<i class="iconoir-warning-triangle"></i> ${escapeHtml(chatT('chat.report.sending'))}`;
       try {
         await api('/api/flags/create.php', {
           method: 'POST',
@@ -1606,9 +1618,9 @@ $headerShowLogo = true;
           }
         });
         closeFlagModal();
-        flagToast('Report sent. Thanks!');
+        flagToast(chatT('chat.report.sent'));
       } catch (e) {
-        alert('Could not send report: ' + e.message);
+        alert(chatT('chat.report.error', { message: e.message }));
       } finally {
         btn.disabled = false;
         btn.innerHTML = original;
@@ -1783,13 +1795,13 @@ $headerShowLogo = true;
         const pdfBtn = document.createElement('button');
         pdfBtn.type = 'button';
         pdfBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 text-red-700 hover:bg-red-100 rounded-lg transition-colors';
-        pdfBtn.innerHTML = '<i class="iconoir-page"></i> Download PDF';
+        pdfBtn.innerHTML = `<i class="iconoir-page"></i> ${escapeHtml(chatT('chat.download_pdf'))}`;
         pdfBtn.addEventListener('click', (e) => downloadDocument(content, 'pdf', e.currentTarget));
         
         const docxBtn = document.createElement('button');
         docxBtn.type = 'button';
         docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
-        docxBtn.innerHTML = '<i class="iconoir-page-star"></i> Download Word';
+        docxBtn.innerHTML = `<i class="iconoir-page-star"></i> ${escapeHtml(chatT('chat.download_word'))}`;
         docxBtn.addEventListener('click', (e) => downloadDocument(content, 'docx', e.currentTarget));
         
         downloadActionsEl.appendChild(pdfBtn);
@@ -1804,7 +1816,7 @@ $headerShowLogo = true;
         
         const citationsTitle = document.createElement('div');
         citationsTitle.className = 'text-xs font-medium text-slate-500 mb-2 flex items-center gap-1.5';
-        citationsTitle.innerHTML = '<i class="iconoir-globe text-cyan-500"></i> Sources';
+        citationsTitle.innerHTML = `<i class="iconoir-globe text-cyan-500"></i> ${escapeHtml(chatT('chat.sources'))}`;
         citationsContainer.appendChild(citationsTitle);
         
         const citationsList = document.createElement('div');
@@ -1849,7 +1861,7 @@ $headerShowLogo = true;
       const timestamp = document.createElement('div');
       timestamp.className = 'msg-time text-xs text-slate-400 mt-1 ' + (role === 'user' ? 'px-3' : 'ml-12');
       const now = new Date();
-      timestamp.textContent = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      timestamp.textContent = now.toLocaleTimeString(chatLocale, { hour: '2-digit', minute: '2-digit' });
       
       wrap.appendChild(msgContainer);
       wrap.appendChild(timestamp);
@@ -1952,13 +1964,13 @@ $headerShowLogo = true;
         const pdfBtn = document.createElement('button');
         pdfBtn.type = 'button';
         pdfBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-50 text-red-700 hover:bg-red-100 rounded-lg transition-colors';
-        pdfBtn.innerHTML = '<i class="iconoir-page"></i> Download PDF';
+        pdfBtn.innerHTML = `<i class="iconoir-page"></i> ${escapeHtml(chatT('chat.download_pdf'))}`;
         pdfBtn.addEventListener('click', (e) => downloadDocument(content, 'pdf', e.currentTarget));
         
         const docxBtn = document.createElement('button');
         docxBtn.type = 'button';
         docxBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors';
-        docxBtn.innerHTML = '<i class="iconoir-page-star"></i> Download Word';
+        docxBtn.innerHTML = `<i class="iconoir-page-star"></i> ${escapeHtml(chatT('chat.download_word'))}`;
         docxBtn.addEventListener('click', (e) => downloadDocument(content, 'docx', e.currentTarget));
         
         downloadActionsEl.appendChild(pdfBtn);
@@ -1973,7 +1985,7 @@ $headerShowLogo = true;
         
         const citationsTitle = document.createElement('div');
         citationsTitle.className = 'text-xs font-medium text-slate-500 mb-2 flex items-center gap-1.5';
-        citationsTitle.innerHTML = '<i class="iconoir-globe text-cyan-500"></i> Sources';
+        citationsTitle.innerHTML = `<i class="iconoir-globe text-cyan-500"></i> ${escapeHtml(chatT('chat.sources'))}`;
         citationsContainer.appendChild(citationsTitle);
         
         const citationsList = document.createElement('div');
@@ -2387,7 +2399,7 @@ $headerShowLogo = true;
       
       hideSelectionToolbar();
       
-      editModalTitle.textContent = 'Edit selection';
+      editModalTitle.textContent = chatT('chat.edit_selection');
       editModalSelection.textContent = selectedText;
       editModalInstructions.value = '';
       
@@ -2436,7 +2448,7 @@ $headerShowLogo = true;
       
       if (isFromModal) {
         const originalBtnText = editModalSubmit.innerHTML;
-        editModalSubmit.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...';
+        editModalSubmit.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> ${escapeHtml(chatT('chat.processing'))}`;
         editModalSubmit.disabled = true;
       }
       
@@ -2602,7 +2614,7 @@ $headerShowLogo = true;
     
     // Create new folder
     newFolderBtn.addEventListener('click', async () => {
-      const name = prompt('Folder name:');
+      const name = prompt(chatT('chat.folder_name'));
       if (!name || name.trim() === '') return;
       try {
         await api('/api/folders/create.php', { method: 'POST', body: { name: name.trim() } });
@@ -2691,7 +2703,7 @@ $headerShowLogo = true;
         renameBtn.title = 'Rename';
         renameBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          const newName = prompt('New name:', folder.name);
+          const newName = prompt(chatT('chat.new_name'), folder.name);
           if (!newName || newName.trim() === '') return;
           try {
             await api('/api/folders/rename.php', { method: 'POST', body: { id: folder.id, name: newName.trim() } });
@@ -2853,14 +2865,14 @@ $headerShowLogo = true;
 
       const placeholder = document.createElement('option');
       placeholder.value = '';
-      placeholder.textContent = shareTargetType === 'user' ? 'Select a person' : 'Select a department';
+      placeholder.textContent = shareTargetType === 'user' ? chatT('chat.share.select_person') : chatT('chat.share.select_department');
       shareTargetSelect.appendChild(placeholder);
 
       if (!items || items.length === 0) {
         const option = document.createElement('option');
         option.value = '';
         option.disabled = true;
-        option.textContent = shareTargetType === 'user' ? 'No more people available' : 'No more departments available';
+        option.textContent = shareTargetType === 'user' ? chatT('chat.share.no_people') : chatT('chat.share.no_departments');
         shareTargetSelect.appendChild(option);
         shareAddBtn.disabled = true;
         return;
@@ -2883,7 +2895,7 @@ $headerShowLogo = true;
       renderShareTargetOptions();
 
       if (!shares || shares.length === 0) {
-        shareList.innerHTML = '<div class="text-sm text-slate-400 px-3 py-3 border border-dashed border-slate-200 rounded-xl">No shared access yet.</div>';
+        shareList.innerHTML = `<div class="text-sm text-slate-400 px-3 py-3 border border-dashed border-slate-200 rounded-xl">${escapeHtml(chatT('chat.share.none'))}</div>`;
         return;
       }
 
@@ -2897,12 +2909,12 @@ $headerShowLogo = true;
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-slate-800 truncate">${escapeHtml(share.target_name || 'Unknown target')}</div>
-            <div class="text-xs text-slate-400 truncate">${share.permission === 'chat' ? 'Can chat' : 'Can view'}${share.target_email ? ` · ${escapeHtml(share.target_email)}` : ''}</div>
+            <div class="text-xs text-slate-400 truncate">${escapeHtml(share.permission === 'chat' ? chatT('chat.share.can_chat') : chatT('chat.share.can_view'))}${share.target_email ? ` · ${escapeHtml(share.target_email)}` : ''}</div>
           </div>
         `;
         const removeBtn = document.createElement('button');
         removeBtn.className = 'p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors';
-        removeBtn.title = 'Remove access';
+        removeBtn.title = chatT('chat.share.remove');
         removeBtn.innerHTML = '<i class="iconoir-trash"></i>';
         removeBtn.addEventListener('click', async () => {
           try {
@@ -2933,7 +2945,7 @@ $headerShowLogo = true;
       if (!shareAddBtn) return;
       if (state === 'saving') {
         shareAddBtn.disabled = true;
-        shareAddBtn.innerHTML = '<i class="iconoir-refresh animate-spin"></i> Saving...';
+        shareAddBtn.innerHTML = `<i class="iconoir-refresh animate-spin"></i> ${escapeHtml(chatT('chat.share.saving'))}`;
         return;
       }
       if (state === 'saved') {
@@ -3116,7 +3128,7 @@ $headerShowLogo = true;
           ownerEl.textContent = c.owner_name || 'Owner';
           const permissionEl = document.createElement('span');
           permissionEl.className = 'shared-conversation-permission ' + (c.effective_permission === 'chat' ? 'can-chat' : 'read-only');
-          permissionEl.textContent = c.effective_permission === 'chat' ? 'Can chat' : 'Read only';
+          permissionEl.textContent = c.effective_permission === 'chat' ? chatT('chat.share.can_chat') : chatT('chat.share.read_only');
           metaEl.appendChild(ownerEl);
           metaEl.appendChild(permissionEl);
           textContainer.appendChild(metaEl);
@@ -3125,7 +3137,7 @@ $headerShowLogo = true;
           timeEl.className = 'conversation-row-meta';
           const dateEl = document.createElement('span');
           dateEl.className = 'conversation-row-date';
-          dateEl.textContent = new Date(c.updated_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+          dateEl.textContent = new Date(c.updated_at).toLocaleDateString(chatLocale, {month: 'short', day: 'numeric'});
           timeEl.appendChild(dateEl);
           if (Number(c.share_count || 0) > 0) {
             const sharedEl = document.createElement('span');
@@ -3157,7 +3169,7 @@ $headerShowLogo = true;
         renameBtn.title = 'Rename';
         renameBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          const title = prompt('New title', c.title || '');
+          const title = prompt(chatT('chat.new_title'), c.title || '');
           if (!title) return;
           try {
             await api('/api/conversations/rename.php', { method: 'POST', body: { id: c.id, title } });
@@ -3174,7 +3186,7 @@ $headerShowLogo = true;
         moveBtn.className = 'p-1.5 text-slate-400 hover:text-[#B7C9F2] hover:bg-[#B7C9F2]/10 rounded transition-colors';
         moveBtn.setAttribute('data-action', 'move');
         moveBtn.innerHTML = '<i class="iconoir-folder-settings"></i>';
-        moveBtn.title = 'Move to folder';
+        moveBtn.title = chatT('chat.move_to_folder');
         moveBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
           openMoveModal(c);
@@ -3187,7 +3199,7 @@ $headerShowLogo = true;
         delBtn.title = 'Delete';
         delBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          if(!confirm('Delete conversation?')) return;
+          if(!confirm(chatT('chat.delete_conversation'))) return;
           try {
             await api('/api/conversations/delete.php', { method: 'POST', body: { id: c.id } });
             if(currentConversationId === c.id){
@@ -3289,7 +3301,7 @@ $headerShowLogo = true;
     async function handleSubmit(text, files = []){
       if(!text && (!files || files.length === 0)) return;
       if (currentConversationAccess && !currentConversationAccess.can_chat && !currentConversationAccess.can_manage) {
-        alert('You have read-only access to this conversation.');
+        alert(chatT('chat.read_only'));
         return;
       }
       
@@ -3624,7 +3636,7 @@ $headerShowLogo = true;
     const webSearchBtnEmpty = document.getElementById('web-search-btn-empty');
     const chatInput = document.getElementById('chat-input');
     const chatInputEmpty = document.getElementById('chat-input-empty');
-    const defaultPlaceholder = 'Write a message...';
+    const defaultPlaceholder = chatT('chat.write_message');
     const defaultPlaceholderEmpty = 'Ask Claara anything';
     const imagePlaceholder = 'Describe the image you want to create...';
     const webSearchPlaceholder = 'Ask something and I will search the web...';
@@ -3996,7 +4008,7 @@ $headerShowLogo = true;
         // Show a temporary message for voices that are not implemented yet.
         const tempMsg = document.createElement('div');
         tempMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-[#2F3440] text-white px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2';
-        tempMsg.innerHTML = `<i class="iconoir-voice-square"></i><span><strong>${voiceName}</strong> will be available soon</span>`;
+        tempMsg.innerHTML = `<i class="iconoir-voice-square"></i><span>${escapeHtml(chatT('chat.available_soon', { name: voiceName }))}</span>`;
         document.body.appendChild(tempMsg);
         
         setTimeout(() => {

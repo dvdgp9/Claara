@@ -17,6 +17,8 @@ use Audio\ContentExtractor;
 use Audio\PodcastScriptGenerator;
 use Audio\GeminiTtsClient;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
+use Instances\InstanceContext;
 use LeadFinder\ApifyLeadSearchProvider;
 use LeadFinder\LeadFinderRepo;
 use LeadFinder\LeadSearchProvider;
@@ -105,6 +107,36 @@ $jobType = $job['job_type'];
 $inputData = $job['input_data'];
 $userId = (int)$job['user_id'];
 
+// Background workers do not have the originating browser session. Rehydrate
+// the validated locale captured when the job was created so progress, errors,
+// generated text, and TTS all use the initiating user's language.
+I18n::boot(
+    InstanceContext::current(),
+    dirname(__DIR__, 3) . '/resources/i18n',
+    is_string($inputData['locale'] ?? null) ? $inputData['locale'] : null
+);
+
+// Re-check the captured module and the originating user's effective access.
+// A module disabled after queueing must prevent the pending work from running.
+$gestureAccess = new \Gestures\GestureAccessGuard();
+try {
+    $gestureAccess->requireJobWorker($job);
+} catch (\RuntimeException $error) {
+    $repo->markFailed($jobId, 'feature_unavailable');
+    if ($isCliOrCron) {
+        echo "Job #{$jobId} unavailable\n";
+        exit(1);
+    }
+    echo json_encode([
+        'success' => true,
+        'processed' => true,
+        'job_id' => $jobId,
+        'status' => 'failed',
+        'error' => 'feature_unavailable',
+    ]);
+    exit;
+}
+
 // Log inicio
 if ($isCliOrCron) {
     echo "Procesando job #{$jobId} (tipo: {$jobType})\n";
@@ -174,7 +206,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     $sourcePdf = $inputData['pdf_base64'] ?? '';
     
     // === PASO 1: Extraer contenido ===
-    $repo->updateProgress($jobId, 'Extrayendo contenido del artículo...');
+    $repo->updateProgress($jobId, I18n::translate('podcast_ui.extracting'));
     
     $extractor = new ContentExtractor();
     $content = null;
@@ -184,7 +216,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     switch ($sourceType) {
         case 'url':
             if (empty($sourceUrl)) {
-                throw new \Exception('URL no proporcionada');
+                throw new \Exception(I18n::translate('podcast_ui.api_missing_url'));
             }
             $result = $extractor->extractFromUrl($sourceUrl);
             if (!$result['success']) {
@@ -197,7 +229,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
             
         case 'pdf':
             if (empty($sourcePdf)) {
-                throw new \Exception('PDF no proporcionado');
+                throw new \Exception(I18n::translate('podcast_ui.api_missing_pdf'));
             }
             $result = $extractor->extractFromPdf($sourcePdf);
             if (!$result['success']) {
@@ -210,7 +242,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
             
         case 'text':
             if (empty($sourceText)) {
-                throw new \Exception('Texto no proporcionado');
+                throw new \Exception(I18n::translate('podcast_ui.api_missing_text'));
             }
             $result = $extractor->extractFromText($sourceText);
             if (!$result['success']) {
@@ -218,7 +250,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
             }
             $content = $result['content'];
             $title = $result['title'];
-            $source = 'Texto';
+            $source = I18n::translate('podcast_ui.api_source_text');
             break;
             
         default:
@@ -226,13 +258,13 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     }
     
     // === PASO 2: Generar guion ===
-    $repo->updateProgress($jobId, 'Generando guion del podcast...');
+    $repo->updateProgress($jobId, I18n::translate('podcast_ui.generating_script'));
     
     $scriptGenerator = new PodcastScriptGenerator();
     $scriptResult = $scriptGenerator->generate($content, $title, 15);
     
     if (!$scriptResult['success']) {
-        throw new \Exception('Error generando guion: ' . $scriptResult['error']);
+        throw new \Exception((string)$scriptResult['error']);
     }
     
     $script = $scriptResult['script'];
@@ -243,7 +275,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     $scriptDisplay = PodcastScriptGenerator::cleanAudioTags($script);
     
     // === PASO 3: Generar audio ===
-    $repo->updateProgress($jobId, 'Sintetizando audio con IA por bloques...');
+    $repo->updateProgress($jobId, I18n::translate('podcast_ui.synthesizing'));
     
     $geminiKey = Env::get('GEMINI_API_KEY');
     if (empty($geminiKey)) {
@@ -268,8 +300,8 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
         function (int $current, int $total) use ($repo, $jobId) {
             $repo->updateProgress(
                 $jobId,
-                "Sintetizando audio con IA ({$current}/{$total})...",
-                'Generando el podcast por bloques para mantener la calidad de voz.'
+                I18n::translate('podcast_ui.synthesizing_part', ['current' => $current, 'total' => $total]),
+                I18n::translate('podcast_ui.synthesizing_help')
             );
         }
     );
@@ -282,7 +314,7 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     $pcmData = base64_decode($audioResult['audio_data']);
     $wavData = GeminiTtsClient::pcmToWav($pcmData);
     
-    $storageDir = dirname(__DIR__, 3) . '/storage/podcasts';
+    $storageDir = \App\Storage::path('podcasts');
     if (!is_dir($storageDir)) {
         @mkdir($storageDir, 0775, true);
     }
@@ -293,13 +325,13 @@ function processPodcastJob(int $jobId, array $inputData, int $userId, Background
     $wavUrl = '/api/files/podcast.php?file=' . urlencode($fileName);
     
     // === PASO 4: Guardar en historial de gestos ===
-    $repo->updateProgress($jobId, 'Guardando resultado...');
+    $repo->updateProgress($jobId, I18n::translate('podcast_ui.saving'));
     
     $gesturesRepo = new GestureExecutionsRepo();
     $executionId = $gesturesRepo->create([
         'user_id' => $userId,
         'gesture_type' => 'podcast-from-article',
-        'title' => $title ?: 'Podcast: ' . substr($summary, 0, 50),
+        'title' => $title ?: I18n::translate('podcast_ui.generated') . ': ' . substr($summary, 0, 50),
         'input_data' => [
             'source_type' => $sourceType,
             'source' => $source,
@@ -362,7 +394,7 @@ function processAudioTranscribeJob(int $jobId, array $inputData, int $userId, Ba
         throw new \Exception('Temporary audio file not found');
     }
 
-    $repo->updateProgress($jobId, 'Transcribing audio...');
+    $repo->updateProgress($jobId, I18n::translate('transcribe_ui.api_processing'));
 
     $transcriber = new AudioTranscriber();
     $result = $transcriber->transcribeFile(

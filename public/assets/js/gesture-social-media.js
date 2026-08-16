@@ -5,6 +5,14 @@
   'use strict';
 
   const GESTURE_TYPE = 'social-media';
+  const socialI18n = window.CLAARA_SOCIAL_I18N || { locale: 'en', messages: {} };
+  const socialT = (key, parameters = {}) => {
+    let value = socialI18n.messages[`social_ui.${key}`] || key;
+    Object.entries(parameters).forEach(([name, replacement]) => {
+      value = value.replaceAll(`{${name}}`, String(replacement));
+    });
+    return value;
+  };
 
   // === Referencias DOM ===
   const socialMediaForm = document.getElementById('social-media-form');
@@ -25,51 +33,51 @@
 
   // === Mapas de valores ===
   const businessLineMap = {
-    'brand': 'Brand',
-    'service': 'Service',
-    'product': 'Product',
-    'team': 'Team',
-    'campaign': 'Campaign',
-    'community': 'Community'
+    'brand': socialT('brand'),
+    'service': socialT('service'),
+    'product': socialT('product'),
+    'team': socialT('team'),
+    'campaign': socialT('campaign'),
+    'community': socialT('community')
   };
 
   const intentionMap = {
-    'informar': 'Inform',
-    'reforzar-marca': 'Reinforce brand',
-    'conectar': 'Emotional connection',
-    'activar': 'Activate interest',
-    'aportar-valor': 'Deliver value / explain'
+    'informar': socialT('inform'),
+    'reforzar-marca': socialT('reinforce_brand'),
+    'conectar': socialT('connect'),
+    'activar': socialT('activate'),
+    'aportar-valor': socialT('value')
   };
 
   const channelMap = {
     'instagram': 'Instagram',
     'facebook': 'Facebook',
     'linkedin': 'LinkedIn',
-    'transversal': 'Cross-channel text'
+    'transversal': socialT('multi')
   };
 
   const narrativeMap = {
-    '': 'Automatic',
-    'personas': 'People / team',
-    'proyecto': 'Project / action',
-    'detalle': 'Differentiating detail',
-    'impacto': 'User impact',
-    'vision': 'Vision / purpose'
+    '': socialT('automatic'),
+    'personas': socialT('people'),
+    'proyecto': socialT('project'),
+    'detalle': socialT('detail'),
+    'impacto': socialT('impact'),
+    'vision': socialT('vision')
   };
 
   const lengthMap = {
-    '': 'Automatic',
-    'corto': 'Short (quick impact)',
-    'medio': 'Medium (balanced)',
-    'largo': 'Long (full development)'
+    '': socialT('automatic'),
+    'corto': socialT('short'),
+    'medio': socialT('medium'),
+    'largo': socialT('long')
   };
 
   const closingMap = {
-    '': 'Automatic',
-    'informativo': 'Informative',
-    'inspirador': 'Inspirational',
-    'cta-suave': 'Soft CTA',
-    'cta-claro': 'Clear CTA'
+    '': socialT('automatic'),
+    'informativo': socialT('informative'),
+    'inspirador': socialT('inspirational'),
+    'cta-suave': socialT('soft_cta'),
+    'cta-claro': socialT('clear_cta')
   };
 
   // Estado para regenerar y variantes
@@ -91,7 +99,7 @@
   async function generatePost() {
     const context = document.getElementById('post-context').value.trim();
     if (!context) {
-      alert('Please describe what the post is about');
+      alert(socialT('context_required'));
       return;
     }
 
@@ -248,7 +256,10 @@
 - Connect the message to shared value and participation`
     };
 
+    const outputLanguage = socialI18n.locale === 'es' ? 'Spanish' : 'English';
     return `You are the community manager for ${businessName}. Create a social media post.
+
+OUTPUT LANGUAGE: Write the complete response in ${outputLanguage}.
 
 CONTEXTO DE LA PUBLICACIÓN:
 "${context}"
@@ -319,7 +330,7 @@ IMPORTANT:
       variantBtns.forEach(btn => btn.disabled = false);
 
       if (!res.ok) {
-        alert('Error generating the post: ' + (data.error?.message || 'Unknown error'));
+        alert(socialT('generation_error', { message: data.error?.message || socialT('unknown_error') }));
         return;
       }
 
@@ -352,7 +363,7 @@ IMPORTANT:
       postLoading.classList.add('hidden');
       generatePostBtn.disabled = false;
       variantBtns.forEach(btn => btn.disabled = false);
-      alert('Connection error while generating the post');
+      alert(socialT('connection_error'));
     }
   }
 
@@ -390,12 +401,12 @@ IMPORTANT:
   // === Renderizar resumen editorial ===
   function renderEditorialSummary(data) {
     const items = [
-      { label: 'Intent', value: intentionMap[data.intention] || data.intention },
-      { label: 'Line', value: businessLineMap[data.businessLine] || data.businessLine },
-      { label: 'Channel', value: channelMap[data.channel] || data.channel },
-      { label: 'Focus', value: narrativeMap[data.narrative] || 'Automatic' },
-      { label: 'Length', value: lengthMap[data.length] || 'Automatic' },
-      { label: 'Closing', value: closingMap[data.closing] || 'Automatic' }
+      { label: socialT('intent'), value: intentionMap[data.intention] || data.intention },
+      { label: socialT('brand_context'), value: businessLineMap[data.businessLine] || data.businessLine },
+      { label: socialT('channel'), value: channelMap[data.channel] || data.channel },
+      { label: socialT('narrative_focus'), value: narrativeMap[data.narrative] || socialT('automatic') },
+      { label: socialT('length'), value: lengthMap[data.length] || socialT('automatic') },
+      { label: socialT('closing_type'), value: closingMap[data.closing] || socialT('automatic') }
     ];
 
     editorialSummary.innerHTML = items.map(item => 
@@ -409,7 +420,7 @@ IMPORTANT:
       const text = postContent.textContent;
       navigator.clipboard.writeText(text).then(() => {
         const originalText = copyPostBtn.innerHTML;
-        copyPostBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
+        copyPostBtn.innerHTML = `<i class="iconoir-check"></i> ${socialT('copied')}`;
         setTimeout(() => {
           copyPostBtn.innerHTML = originalText;
         }, 2000);
@@ -423,7 +434,7 @@ IMPORTANT:
       const text = hashtagsContent.textContent;
       navigator.clipboard.writeText(text).then(() => {
         const originalText = copyHashtagsBtn.innerHTML;
-        copyHashtagsBtn.innerHTML = '<i class="iconoir-check"></i> Copied';
+        copyHashtagsBtn.innerHTML = `<i class="iconoir-check"></i> ${socialT('copied')}`;
         setTimeout(() => {
           copyHashtagsBtn.innerHTML = originalText;
         }, 2000);
@@ -502,13 +513,13 @@ Return ONLY the rewritten post text, with no explanations or markers. Keep hasht
       const data = await res.json();
 
       if (!res.ok) {
-        historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Could not load</div>';
+        historyList.innerHTML = `<div class="p-4 text-center text-red-500 text-sm">${socialT('could_not_load')}</div>`;
         return;
       }
 
       renderHistory(data.items || []);
     } catch (err) {
-      historyList.innerHTML = '<div class="p-4 text-center text-red-500 text-sm">Connection error</div>';
+      historyList.innerHTML = `<div class="p-4 text-center text-red-500 text-sm">${socialT('history_connection_error')}</div>`;
     }
   }
 
@@ -519,8 +530,8 @@ Return ONLY the rewritten post text, with no explanations or markers. Keep hasht
           <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
             <i class="iconoir-send-diagonal text-xl text-slate-400"></i>
           </div>
-          <p class="text-sm text-slate-500">You have not created posts yet</p>
-          <p class="text-xs text-slate-400 mt-1">Use the form to get started</p>
+          <p class="text-sm text-slate-500">${socialT('no_history')}</p>
+          <p class="text-xs text-slate-400 mt-1">${socialT('no_history_help')}</p>
         </div>
       `;
       return;
@@ -559,7 +570,7 @@ Return ONLY the rewritten post text, with no explanations or markers. Keep hasht
               <span class="text-[10px] text-slate-400">${timeAgo}</span>
             </div>
           </div>
-          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="Delete">
+          <button class="history-item-delete opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1 rounded" title="${socialT('delete')}">
             <i class="iconoir-trash"></i>
           </button>
         </div>
@@ -589,7 +600,7 @@ Return ONLY the rewritten post text, with no explanations or markers. Keep hasht
       const data = await res.json();
 
       if (!res.ok || !data.execution) {
-        alert('Error loading the post');
+        alert(socialT('load_error'));
         return;
       }
 
@@ -620,7 +631,7 @@ Return ONLY the rewritten post text, with no explanations or markers. Keep hasht
       postResult.classList.remove('hidden');
 
     } catch (err) {
-      alert('Connection error');
+      alert(socialT('history_connection_error'));
     }
   }
 
@@ -653,7 +664,7 @@ Return ONLY the rewritten post text, with no explanations or markers. Keep hasht
   }
 
   async function deleteExecution(id) {
-    if (!confirm('Delete this post from history?')) return;
+    if (!confirm(socialT('delete_confirm'))) return;
 
     try {
       const res = await fetch('/api/gestures/delete.php', {
@@ -668,13 +679,13 @@ Return ONLY the rewritten post text, with no explanations or markers. Keep hasht
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        alert('Could not delete the item');
+        alert(socialT('delete_error'));
         return;
       }
 
       loadHistory();
     } catch (err) {
-      alert('Connection error while deleting');
+      alert(socialT('delete_connection_error'));
     }
   }
 
@@ -699,12 +710,12 @@ Return ONLY the rewritten post text, with no explanations or markers. Keep hasht
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return 'yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    if (diffMins < 1) return socialT('now');
+    if (diffMins < 60) return socialT('minutes_ago', { count: diffMins });
+    if (diffHours < 24) return socialT('hours_ago', { count: diffHours });
+    if (diffDays === 1) return socialT('yesterday');
+    if (diffDays < 7) return socialT('days_ago', { count: diffDays });
+    return date.toLocaleDateString(socialI18n.locale === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
   }
 
   function escapeHtml(text) {

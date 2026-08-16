@@ -3,6 +3,7 @@
 namespace Sop;
 
 use App\Env;
+use App\Storage;
 
 class AudioTranscriber
 {
@@ -31,7 +32,7 @@ class AudioTranscriber
             return ['success' => false, 'error' => 'Missing audio payload'];
         }
 
-        $tmpDir = dirname(__DIR__, 2) . '/storage/transcribe-tmp';
+        $tmpDir = Storage::path('transcribe-tmp');
         if (!is_dir($tmpDir) && !@mkdir($tmpDir, 0775, true)) {
             return ['success' => false, 'error' => 'Could not create temporary directory'];
         }
@@ -91,7 +92,7 @@ class AudioTranscriber
         }
 
         if ($shouldSegment) {
-            $segmentTmpDir = dirname(__DIR__, 2) . '/storage/transcribe-segments/' . bin2hex(random_bytes(8));
+            $segmentTmpDir = Storage::path('transcribe-segments/' . bin2hex(random_bytes(8)));
             $this->notifyProgress($onProgress, [
                 'phase' => 'segmenting',
                 'segments_done' => 0,

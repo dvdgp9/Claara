@@ -5,6 +5,7 @@ use Repos\VoicesRepo;
 use Rag\QdrantClient;
 use Rag\EmbeddingService;
 use Rag\LexRetriever;
+use I18n\I18n;
 
 /**
  * Builds specialized context for each Voice.
@@ -107,7 +108,7 @@ class VoiceContextBuilder
         
         // General instructions.
         $prompt .= "## Instructions\n";
-        $prompt .= "- Respond in English by default, unless the user asks for another language.\n";
+        $prompt .= "- " . I18n::translate('ai.response_language_instruction') . "\n";
         $prompt .= "- Be concise but complete.\n";
         $prompt .= "- When citing documents, name the source.\n";
         $prompt .= "- If you do not have enough information, say so clearly.\n";
@@ -307,7 +308,7 @@ class VoiceContextBuilder
 
         // General instructions.
         $prompt .= "## Instructions\n";
-        $prompt .= "- Respond in English by default, unless the user asks for another language.\n";
+        $prompt .= "- " . I18n::translate('ai.response_language_instruction') . "\n";
         $prompt .= "- Be concise but complete.\n";
         $prompt .= "- **IMPORTANT**: Always cite the exact document name used as the source.\n";
         $prompt .= "- If the user asks what documents or agreements you have, provide the list above.\n";

@@ -45,6 +45,9 @@ try {
     if ((int)$job['user_id'] !== $user['id']) {
         Response::error('forbidden', 'No tienes acceso a este job', 403);
     }
+
+    $gestureAccess = new \Gestures\GestureAccessGuard();
+    $gestureAccess->requireJobApi($user, $job);
     
     // Solo se pueden cancelar jobs pending o processing
     if (!in_array($job['status'], ['pending', 'processing'])) {

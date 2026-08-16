@@ -12,6 +12,7 @@ require_once __DIR__ . '/../../../src/App/bootstrap.php';
 use App\Session;
 use App\Response;
 use Jobs\BackgroundJobsRepo;
+use I18n\I18n;
 
 Session::start();
 $user = Session::user();
@@ -30,6 +31,10 @@ $body = json_decode(file_get_contents('php://input'), true) ?? [];
 
 $jobType = $body['job_type'] ?? '';
 $inputData = $body['input_data'] ?? [];
+if (!is_array($inputData)) {
+    $inputData = [];
+}
+$inputData['locale'] = I18n::locale();
 
 if (empty($jobType)) {
     Response::error('missing_job_type', 'Se requiere job_type', 400);
@@ -40,6 +45,10 @@ $allowedTypes = ['podcast'];
 if (!in_array($jobType, $allowedTypes)) {
     Response::error('invalid_job_type', 'Tipo de job no válido', 400);
 }
+
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gesture = \Gestures\GestureAccessGuard::gestureForJobType($jobType);
+$gestureAccess->requireDynamicApi($user, (string)$gesture, ['podcast-from-article']);
 
 try {
     $repo = new BackgroundJobsRepo();

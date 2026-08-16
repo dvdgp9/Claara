@@ -25,6 +25,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
 
 Session::requireCsrf();
 
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'lead-finder');
+
 $body = json_decode(file_get_contents('php://input'), true) ?? [];
 $query = trim((string)($body['query'] ?? ''));
 $maxResults = (int)($body['max_results'] ?? 25);
@@ -32,11 +35,6 @@ $maxResults = max(1, min($maxResults, 100));
 
 if ($query === '') {
     Response::error('missing_query', 'Query is required', 400);
-}
-
-$accessRepo = new UserFeatureAccessRepo();
-if (!$accessRepo->hasGestureAccess((int)$user['id'], 'lead-finder')) {
-    Response::error('forbidden', 'No access to Lead Finder', 403);
 }
 
 try {

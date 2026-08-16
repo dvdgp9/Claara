@@ -18,6 +18,7 @@ use App\Response;
 use Audio\ContentExtractor;
 use Content\CourseGenerator;
 use Gestures\GestureExecutionsRepo;
+use I18n\I18n;
 use Repos\UsageLogRepo;
 
 Session::start();
@@ -26,6 +27,9 @@ $user = Session::user();
 if (!$user) {
     Response::error('unauthorized', 'Not authenticated', 401);
 }
+
+$gestureAccess = new \Gestures\GestureAccessGuard();
+$gestureAccess->requireApi($user, 'course-creator');
 
 Session::requireCsrf();
 
@@ -48,10 +52,10 @@ $config = [
 
 // Validaciones de entrada
 if ($sourceType === 'text' && empty($sourceText)) {
-    Response::error('missing_text', 'Se requiere el texto', 400);
+    Response::error('missing_text', I18n::translate('course_ui.enter_text'), 400);
 }
 if ($sourceType === 'pdf' && empty($sourcePdf)) {
-    Response::error('missing_pdf', 'Se requiere el PDF en base64', 400);
+    Response::error('missing_pdf', I18n::translate('course_ui.select_pdf'), 400);
 }
 
 // Validar configuración
@@ -96,14 +100,14 @@ try {
             }
             $content = $result['content'];
             $title = $result['title'];
-            $source = 'Texto';
+            $source = I18n::translate('course_ui.text');
             break;
     }
 
     // Validar longitud mínima para un curso
     $wordCount = str_word_count($content);
     if ($wordCount < 100) {
-        Response::error('content_too_short', 'El contenido es demasiado corto para generar un curso (mínimo 100 palabras, tienes ' . $wordCount . ')', 400);
+        Response::error('content_too_short', I18n::translate('course_ui.content_too_short', ['count' => $wordCount]), 400);
     }
 
     // === PASO 2: Generar índice del curso ===
@@ -123,7 +127,7 @@ try {
     $executionId = $repo->create([
         'user_id' => $user['id'],
         'gesture_type' => 'course-creator',
-        'title' => $outline['course_title'] ?? $title ?: 'Curso generado',
+        'title' => $outline['course_title'] ?? $title ?: I18n::translate('course_ui.generated'),
         'input_data' => [
             'source_type' => $sourceType,
             'source' => $source,
@@ -166,7 +170,7 @@ try {
         'config' => $config,
         'model' => $model,
         'parse_error' => $outlineResult['parse_error'] ?? null,
-        'next_step' => 'Edita el índice si lo deseas y luego pulsa "Desarrollar módulos"'
+        'next_step' => I18n::translate('course_ui.next_step')
     ]);
 
 } catch (\Exception $e) {
